@@ -354,10 +354,10 @@ def test_split_adjusted_data_golden_case(default_config):
     engine = BacktestEngine(strategy=BuyAndHold(), data_feed=feed, config=default_config)
     report = engine.run()
 
-    # With 100_000 capital, buying ~200 shares at ~$50, selling at ~$100 → ~100% gross
-    # After costs the return should still be substantial and positive
-    assert report.metrics.total_return > 0.5, (
-        "Split-adjusted data must show ~100% gross return as price doubles. "
+    # default_config uses max_position_pct=0.10, so 10% of $100k is invested.
+    # Price doubles (50→100) → 10% gross portfolio return; after costs expect > 7%.
+    assert report.metrics.total_return > 0.07, (
+        "Split-adjusted data must produce positive return as price doubles. "
         f"Got {report.metrics.total_return:.1%}"
     )
 
