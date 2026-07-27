@@ -49,8 +49,10 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      # Editable so coverage's src/aurelius path matches the imported package
+      # (a plain install runs from site-packages and coverage records 0%).
       - name: Install dependencies
-        run: pip install ".[dev]"
+        run: pip install -e ".[dev]"
 
       # Run the whole suite except integration (which needs live DB/Redis and
       # runs in its own job). `tests/unit/ -m unit` selected nothing — no test
