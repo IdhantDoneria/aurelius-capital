@@ -76,10 +76,15 @@ class TradingEngine:
     def process_tick(self, tick: Tick) -> None:
         """Handle a single tick. Any exception here is caught by run() — a bad
         tick must never kill the loop."""
-        for fill in self._broker.on_tick(tick):        # resting limit fills
+        for fill in self._broker.on_tick(tick):  # resting limit fills
             self.health.fills += 1
-            self._journal.record("fill", symbol=fill.symbol, side=fill.side.value,
-                                  qty=fill.quantity, price=fill.fill_price)
+            self._journal.record(
+                "fill",
+                symbol=fill.symbol,
+                side=fill.side.value,
+                qty=fill.quantity,
+                price=fill.fill_price,
+            )
 
         if self._strategy:
             for req in self._strategy(tick, self._broker):
@@ -91,9 +96,13 @@ class TradingEngine:
                     self._alert("warning", f"order rejected {req.symbol}: {res.reason}")
                 elif res.fill is not None:
                     self.health.fills += 1
-                    self._journal.record("fill", symbol=res.fill.symbol,
-                                         side=res.fill.side.value, qty=res.fill.quantity,
-                                         price=res.fill.fill_price)
+                    self._journal.record(
+                        "fill",
+                        symbol=res.fill.symbol,
+                        side=res.fill.side.value,
+                        qty=res.fill.quantity,
+                        price=res.fill.fill_price,
+                    )
                 else:
                     self._journal.record("order", symbol=req.symbol, resting=res.resting)
 
@@ -101,8 +110,9 @@ class TradingEngine:
         self.health.ticks += 1
         self.health.last_tick_ts = tick.timestamp.isoformat()
         if self.health.ticks % self._heartbeat_every == 0:
-            self._journal.record("heartbeat", ticks=self.health.ticks,
-                                 equity=self._broker.state.total_value)
+            self._journal.record(
+                "heartbeat", ticks=self.health.ticks, equity=self._broker.state.total_value
+            )
 
     # ── run: error recovery per tick ──────────────────────────────────────────
 
@@ -144,7 +154,7 @@ class TradingEngine:
         while True:
             try:
                 self.run(source_factory())
-                return                                   # source exhausted cleanly
+                return  # source exhausted cleanly
             except Exception as exc:
                 attempts += 1
                 self.health.restarts += 1
@@ -164,8 +174,11 @@ class TradingEngine:
         import json
         from pathlib import Path
 
-        snap = {"health": asdict(self.health), "account": _jsonable_account(self._broker.account()),
-                "saved_at": datetime.now(UTC).isoformat()}
+        snap = {
+            "health": asdict(self.health),
+            "account": _jsonable_account(self._broker.account()),
+            "saved_at": datetime.now(UTC).isoformat(),
+        }
         Path(self._checkpoint_path).write_text(json.dumps(snap, indent=2))
 
     def health_snapshot(self) -> dict:
@@ -174,9 +187,17 @@ class TradingEngine:
 
 def _jsonable_account(acc: dict) -> dict:
     from decimal import Decimal
-    return {k: (float(v) if isinstance(v, Decimal) else
-                {s: float(q) for s, q in v.items()} if isinstance(v, dict) else v)
-            for k, v in acc.items()}
+
+    return {
+        k: (
+            float(v)
+            if isinstance(v, Decimal)
+            else {s: float(q) for s, q in v.items()}
+            if isinstance(v, dict)
+            else v
+        )
+        for k, v in acc.items()
+    }
 
 
 def replay(ticks: list[Tick]) -> Iterator[Tick]:

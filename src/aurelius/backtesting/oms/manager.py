@@ -53,8 +53,11 @@ class OrderManager:
 
     @property
     def pending_orders(self) -> list[Order]:
-        return [o for o in self._orders.values()
-                if o.status in (OrderStatus.SUBMITTED, OrderStatus.PARTIAL)]
+        return [
+            o
+            for o in self._orders.values()
+            if o.status in (OrderStatus.SUBMITTED, OrderStatus.PARTIAL)
+        ]
 
     @property
     def rejected_orders(self) -> list[Order]:

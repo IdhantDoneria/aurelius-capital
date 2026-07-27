@@ -27,6 +27,7 @@ def _tick(sym, price, i=0):
 
 # ── broker ────────────────────────────────────────────────────────────────────
 
+
 def test_market_order_fills_and_updates_balance():
     b = PaperBroker(cash=Decimal("100000"), commission_rate=Decimal("0"), slippage_bps=Decimal("0"))
     b.on_tick(_tick("AAA", 100))
@@ -34,7 +35,7 @@ def test_market_order_fills_and_updates_balance():
     assert res.accepted
     assert res.fill is not None
     assert b.state.position("AAA").quantity == Decimal("10")
-    assert b.state.cash == Decimal("99000")            # 100k - 10*100
+    assert b.state.cash == Decimal("99000")  # 100k - 10*100
 
 
 def test_market_order_needs_market_data():
@@ -47,7 +48,7 @@ def test_market_order_needs_market_data():
 def test_insufficient_buying_power_rejected():
     b = PaperBroker(cash=Decimal("500"))
     b.on_tick(_tick("AAA", 100))
-    res = b.submit(OrderRequest("AAA", Side.BUY, Decimal("10")))   # needs 1000
+    res = b.submit(OrderRequest("AAA", Side.BUY, Decimal("10")))  # needs 1000
     assert not res.accepted
     assert "buying power" in res.reason
 
@@ -55,25 +56,27 @@ def test_insufficient_buying_power_rejected():
 def test_limit_order_rests_then_fills_on_cross():
     b = PaperBroker(cash=Decimal("100000"), commission_rate=Decimal("0"), slippage_bps=Decimal("0"))
     b.on_tick(_tick("AAA", 100, 0))
-    res = b.submit(OrderRequest("AAA", Side.BUY, Decimal("5"),
-                                OrderType.LIMIT, limit_price=Decimal("95")))
+    res = b.submit(
+        OrderRequest("AAA", Side.BUY, Decimal("5"), OrderType.LIMIT, limit_price=Decimal("95"))
+    )
     assert res.accepted
     assert res.resting
     assert b.open_orders == 1
-    fills = b.on_tick(_tick("AAA", 96, 1))             # above limit -> no fill
+    fills = b.on_tick(_tick("AAA", 96, 1))  # above limit -> no fill
     assert fills == []
-    fills = b.on_tick(_tick("AAA", 94, 2))             # crosses 95 -> fills
+    fills = b.on_tick(_tick("AAA", 94, 2))  # crosses 95 -> fills
     assert len(fills) == 1
     assert b.open_orders == 0
     assert b.state.position("AAA").quantity == Decimal("5")
 
 
 def test_slippage_hurts_the_taker():
-    b = PaperBroker(cash=Decimal("100000"), commission_rate=Decimal("0"),
-                    slippage_bps=Decimal("10"))
+    b = PaperBroker(
+        cash=Decimal("100000"), commission_rate=Decimal("0"), slippage_bps=Decimal("10")
+    )
     b.on_tick(_tick("AAA", 100))
     res = b.submit(OrderRequest("AAA", Side.BUY, Decimal("1")))
-    assert res.fill.fill_price > Decimal("100")        # buy pays up
+    assert res.fill.fill_price > Decimal("100")  # buy pays up
 
 
 def test_risk_engine_screens_orders():
@@ -82,10 +85,11 @@ def test_risk_engine_screens_orders():
     b = PaperBroker(cash=Decimal("100000"), risk_engine=eng)
     b.on_tick(_tick("AAA", 100))
     res = b.submit(OrderRequest("AAA", Side.BUY, Decimal("1")))
-    assert not res.accepted                            # kill switch blocks it
+    assert not res.accepted  # kill switch blocks it
 
 
 # ── journal ─────────────────────────────────────────────────────────────────
+
 
 def test_journal_round_trip(tmp_path):
     j = TradeJournal(tmp_path / "j.jsonl")
@@ -94,10 +98,11 @@ def test_journal_round_trip(tmp_path):
     assert len(j.read()) == 2
     fills = j.read("fill")
     assert len(fills) == 1
-    assert fills[0]["price"] == 100.5                  # Decimal serialized to float
+    assert fills[0]["price"] == 100.5  # Decimal serialized to float
 
 
 # ── engine: error recovery + restart ─────────────────────────────────────────
+
 
 def _buy_once_strategy():
     placed = {"done": False}
@@ -107,6 +112,7 @@ def _buy_once_strategy():
             placed["done"] = True
             return [OrderRequest(tick.symbol, Side.BUY, Decimal("10"))]
         return []
+
     return strat
 
 
@@ -131,34 +137,37 @@ def test_bad_tick_does_not_kill_loop(tmp_path):
 
     def source():
         yield good[0]
-        yield "NOT_A_TICK"        # will blow up in process_tick
+        yield "NOT_A_TICK"  # will blow up in process_tick
         yield good[1]
 
     eng.run(source())
-    assert eng.health.errors == 1          # one bad tick caught
-    assert eng.health.ticks == 2           # both good ticks still processed
+    assert eng.health.errors == 1  # one bad tick caught
+    assert eng.health.ticks == 2  # both good ticks still processed
     assert any(lvl == "error" for lvl, _ in alerts)
 
 
 def test_run_forever_restarts_on_source_failure(tmp_path):
     b = PaperBroker(cash=Decimal("100000"))
-    eng = TradingEngine(b, TradeJournal(tmp_path / "j.jsonl"),
-                        checkpoint_path=str(tmp_path / "ckpt.json"))
+    eng = TradingEngine(
+        b, TradeJournal(tmp_path / "j.jsonl"), checkpoint_path=str(tmp_path / "ckpt.json")
+    )
     ticks = [_tick("AAA", 100 + i, i) for i in range(3)]
     calls = {"n": 0}
 
     def factory():
         calls["n"] += 1
         if calls["n"] == 1:
+
             def boom():
                 yield ticks[0]
                 raise ConnectionError("dropped")
+
             return boom()
         return replay(ticks)
 
     eng.run_forever(factory, max_restarts=3, sleep=lambda _s: None)
     assert eng.health.restarts == 1
-    assert (tmp_path / "ckpt.json").exists()           # checkpointed on shutdown
+    assert (tmp_path / "ckpt.json").exists()  # checkpointed on shutdown
 
 
 def test_run_forever_gives_up_at_max_restarts(tmp_path):
@@ -169,13 +178,15 @@ def test_run_forever_gives_up_at_max_restarts(tmp_path):
         def boom():
             raise ConnectionError("dead feed")
             yield  # unreachable, makes it a generator
+
         return boom()
 
     eng.run_forever(always_fails, max_restarts=2, sleep=lambda _s: None)
-    assert eng.health.restarts == 2                    # bounded, does not hang
+    assert eng.health.restarts == 2  # bounded, does not hang
 
 
 # ── dashboard ─────────────────────────────────────────────────────────────────
+
 
 def test_dashboard_snapshot(tmp_path):
     b = PaperBroker(cash=Decimal("100000"))
@@ -188,4 +199,5 @@ def test_dashboard_snapshot(tmp_path):
 
 def test_demo_self_check():
     from aurelius.paper import demo
+
     demo()

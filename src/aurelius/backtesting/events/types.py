@@ -30,7 +30,7 @@ _SEQ: itertools.count = itertools.count()
 class Direction(StrEnum):
     LONG = "long"
     SHORT = "short"
-    FLAT = "flat"   # exit all positions in this symbol
+    FLAT = "flat"  # exit all positions in this symbol
 
 
 class Side(StrEnum):
@@ -46,6 +46,7 @@ class OrderType(StrEnum):
 
 # ── FILL ─────────────────────────────────────────────────────────────────────
 
+
 @dataclass(slots=True)
 class FillEvent:
     """Confirmed execution. Immutable once created."""
@@ -58,7 +59,7 @@ class FillEvent:
     quantity: Decimal
     fill_price: Decimal
     commission: Decimal
-    slippage_cost: Decimal   # monetary cost of slippage, already embedded in fill_price
+    slippage_cost: Decimal  # monetary cost of slippage, already embedded in fill_price
     order_id: str
     _seq: int = field(default_factory=_next_seq, repr=False)
 
@@ -80,6 +81,7 @@ class FillEvent:
 
 # ── MARKET ───────────────────────────────────────────────────────────────────
 
+
 @dataclass(slots=True)
 class MarketEvent:
     """One OHLCV bar. Drives strategy execution."""
@@ -100,6 +102,7 @@ class MarketEvent:
 
 # ── SIGNAL ───────────────────────────────────────────────────────────────────
 
+
 @dataclass(slots=True)
 class SignalEvent:
     """Strategy output: direction + strength for one symbol.
@@ -113,12 +116,13 @@ class SignalEvent:
     timestamp: datetime
     symbol: str
     direction: Direction
-    strength: float = 1.0       # 1.0 = full allocation per config.max_position_pct
+    strength: float = 1.0  # 1.0 = full allocation per config.max_position_pct
     strategy_id: str = ""
     _seq: int = field(default_factory=_next_seq, repr=False)
 
 
 # ── ORDER ────────────────────────────────────────────────────────────────────
+
 
 @dataclass(slots=True)
 class OrderEvent:
@@ -131,8 +135,8 @@ class OrderEvent:
     order_type: OrderType
     side: Side
     quantity: Decimal
-    limit_price: Decimal | None = None   # required for LIMIT orders
-    stop_price: Decimal | None = None    # required for STOP orders
+    limit_price: Decimal | None = None  # required for LIMIT orders
+    stop_price: Decimal | None = None  # required for STOP orders
     order_id: str = field(default_factory=lambda: str(uuid4()))
     strategy_id: str = ""
     _seq: int = field(default_factory=_next_seq, repr=False)

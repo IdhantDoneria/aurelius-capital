@@ -98,6 +98,7 @@ class DuckDBDataFeed(DataFeed):
 
     def symbols(self) -> list[str]:
         import duckdb
+
         where = self._where_clause()
         with duckdb.connect(self._db_path) as conn:
             rows = conn.execute(
@@ -108,6 +109,7 @@ class DuckDBDataFeed(DataFeed):
 
     def iter_bars(self) -> Iterator[BarData]:
         import duckdb
+
         where = self._where_clause()
         sql = (
             f"SELECT symbol, timestamp, frequency, open, high, low, close, volume, vwap "

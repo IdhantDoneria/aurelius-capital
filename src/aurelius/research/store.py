@@ -88,9 +88,7 @@ class ResearchStore:
 
     # ── hypotheses ──
 
-    def record_hypothesis(
-        self, statement: str, rationale: str, researcher: str
-    ) -> Hypothesis:
+    def record_hypothesis(self, statement: str, rationale: str, researcher: str) -> Hypothesis:
         h = Hypothesis(
             id=str(uuid.uuid4()),
             statement=statement,
@@ -107,9 +105,7 @@ class ResearchStore:
 
     def set_hypothesis_status(self, hypothesis_id: str, status: str) -> None:
         with self._conn() as conn:
-            conn.execute(
-                "UPDATE hypotheses SET status = ? WHERE id = ?", [status, hypothesis_id]
-            )
+            conn.execute("UPDATE hypotheses SET status = ? WHERE id = ?", [status, hypothesis_id])
 
     # ── experiments ──
 
@@ -146,17 +142,30 @@ class ResearchStore:
             conn.execute(
                 "INSERT INTO experiments VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 [
-                    rec.id, rec.hypothesis_id, rec.researcher, rec.created_at,
-                    rec.dataset_version, rec.strategy_name, rec.strategy_version,
+                    rec.id,
+                    rec.hypothesis_id,
+                    rec.researcher,
+                    rec.created_at,
+                    rec.dataset_version,
+                    rec.strategy_name,
+                    rec.strategy_version,
                     ",".join(rec.features_used),
                     json.dumps(rec.params, sort_keys=True, default=str),
-                    r.verdict.value, " | ".join(r.reasons),
-                    r.is_sharpe, r.oos_sharpe, r.oos_return, r.oos_max_drawdown,
-                    r.oos_trades, r.n_trials, r.adjusted_pvalue,
+                    r.verdict.value,
+                    " | ".join(r.reasons),
+                    r.is_sharpe,
+                    r.oos_sharpe,
+                    r.oos_return,
+                    r.oos_max_drawdown,
+                    r.oos_trades,
+                    r.n_trials,
+                    r.adjusted_pvalue,
                 ],
             )
         logger.info(
-            "experiment_recorded", id=rec.id, verdict=r.verdict.value,
+            "experiment_recorded",
+            id=rec.id,
+            verdict=r.verdict.value,
             oos_sharpe=round(r.oos_sharpe, 3),
         )
 

@@ -58,6 +58,7 @@ def _sim(
 
 # ── Commission model ──────────────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_commission_flat_rate():
     model = CommissionModel(Decimal("0.001"))
@@ -66,6 +67,7 @@ def test_commission_flat_rate():
 
 
 # ── Spread model ──────────────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 def test_spread_increases_buy_price():
@@ -82,6 +84,7 @@ def test_spread_decreases_sell_price():
 
 
 # ── Slippage model ────────────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 def test_slippage_zero_at_tiny_order():
@@ -100,6 +103,7 @@ def test_slippage_fallback_on_zero_volume():
 
 
 # ── ExecutionSimulator ────────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 def test_market_order_fills_at_open():

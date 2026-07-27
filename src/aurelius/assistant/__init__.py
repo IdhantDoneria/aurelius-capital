@@ -67,9 +67,16 @@ def demo() -> None:
     assert review.has_lookahead, "negative shift must be flagged"
 
     report = ValidationReport(
-        verdict=Verdict.REJECT, reasons=["OOS Sharpe below floor"],
-        is_sharpe=1.8, oos_sharpe=0.2, oos_return=0.03, oos_max_drawdown=-0.15,
-        oos_trades=12, n_trials=40, adjusted_pvalue=0.42, param_cv=1.1,
+        verdict=Verdict.REJECT,
+        reasons=["OOS Sharpe below floor"],
+        is_sharpe=1.8,
+        oos_sharpe=0.2,
+        oos_return=0.03,
+        oos_max_drawdown=-0.15,
+        oos_trades=12,
+        n_trials=40,
+        adjusted_pvalue=0.42,
+        param_cv=1.1,
         checks={"oos": False},
     )
     explanation = ai.explain_results(report)
@@ -82,10 +89,15 @@ def demo() -> None:
     assert biases.flags["look_ahead"]
 
     record = ExperimentRecord(
-        id="exp-abc123", hypothesis_id=hyps[0].id, researcher="jdoe",
-        created_at=datetime(2026, 7, 27, tzinfo=UTC), dataset_version="ds-deadbeef",
-        strategy_name="TSMomentum", strategy_version=3,
-        features_used=["ret_12m", "vol_20d"], params={"lookback": 252},
+        id="exp-abc123",
+        hypothesis_id=hyps[0].id,
+        researcher="jdoe",
+        created_at=datetime(2026, 7, 27, tzinfo=UTC),
+        dataset_version="ds-deadbeef",
+        strategy_name="TSMomentum",
+        strategy_version=3,
+        features_used=["ret_12m", "vol_20d"],
+        params={"lookback": 252},
         report=report,
     )
     md = ai.write_report(record, oos_observations=12, code_review=review)

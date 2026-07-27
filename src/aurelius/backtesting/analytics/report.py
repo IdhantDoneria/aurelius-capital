@@ -30,7 +30,7 @@ class BacktestReport:
 
     # Data
     symbols: list[str]
-    start_date: str         # ISO format
+    start_date: str  # ISO format
     end_date: str
     total_bars: int
     data_source: str = "unknown"

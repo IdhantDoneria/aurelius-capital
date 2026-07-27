@@ -18,10 +18,15 @@ from aurelius.paper.engine import TradingEngine
 
 def build_snapshot(engine: TradingEngine, broker: PaperBroker) -> dict:
     acc = broker.account()
-    metrics = PerformanceCalculator().compute(
-        engine.equity_curve, fills=None,
-        initial_capital=engine.equity_curve[0].equity if engine.equity_curve else 0.0,
-    ) if len(engine.equity_curve) >= 2 else None
+    metrics = (
+        PerformanceCalculator().compute(
+            engine.equity_curve,
+            fills=None,
+            initial_capital=engine.equity_curve[0].equity if engine.equity_curve else 0.0,
+        )
+        if len(engine.equity_curve) >= 2
+        else None
+    )
     return {
         "account": acc,
         "health": engine.health_snapshot(),

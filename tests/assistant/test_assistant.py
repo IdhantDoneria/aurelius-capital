@@ -19,15 +19,24 @@ PAPER = (
 
 def _report(**kw) -> ValidationReport:
     base = {
-        "verdict": Verdict.REJECT, "reasons": [], "is_sharpe": 1.5, "oos_sharpe": 0.3,
-        "oos_return": 0.04, "oos_max_drawdown": -0.1, "oos_trades": 50, "n_trials": 1,
-        "adjusted_pvalue": 0.01, "param_cv": 0.2, "checks": {},
+        "verdict": Verdict.REJECT,
+        "reasons": [],
+        "is_sharpe": 1.5,
+        "oos_sharpe": 0.3,
+        "oos_return": 0.04,
+        "oos_max_drawdown": -0.1,
+        "oos_trades": 50,
+        "n_trials": 1,
+        "adjusted_pvalue": 0.01,
+        "param_cv": 0.2,
+        "checks": {},
     }
     base.update(kw)
     return ValidationReport(**base)  # type: ignore[arg-type]
 
 
 # ── read_paper ──────────────────────────────────────────────────────────────
+
 
 def test_read_paper_extracts_title_and_claims():
     ai = ResearchAssistant()
@@ -45,6 +54,7 @@ def test_read_paper_empty_is_safe():
 
 # ── generate_hypotheses ───────────────────────────────────────────────────────
 
+
 def test_generate_hypotheses_are_testable():
     ai = ResearchAssistant()
     hyps = ai.generate_hypotheses(ai.read_paper(PAPER), "quant1")
@@ -54,6 +64,7 @@ def test_generate_hypotheses_are_testable():
 
 
 # ── review_code ───────────────────────────────────────────────────────────────
+
 
 def test_review_flags_negative_shift_lookahead():
     r = ResearchAssistant().review_code("y = df['close'].shift(-1)\n")
@@ -77,6 +88,7 @@ def test_clean_code_has_no_findings():
 
 
 # ── detect_biases ─────────────────────────────────────────────────────────────
+
 
 def test_detect_overfitting_and_data_mining():
     rep = _report(param_cv=1.2, n_trials=50, adjusted_pvalue=0.6)
@@ -107,6 +119,7 @@ def test_lookahead_flag_wired_from_code_review():
 
 # ── explain + report ──────────────────────────────────────────────────────────
 
+
 def test_explain_results_mentions_verdict():
     txt = ResearchAssistant().explain_results(_report(verdict=Verdict.ACCEPT))
     assert "ACCEPT" in txt
@@ -115,10 +128,16 @@ def test_explain_results_mentions_verdict():
 def test_write_report_is_markdown_and_advisory():
     ai = ResearchAssistant()
     rec = ExperimentRecord(
-        id="exp-1", hypothesis_id="h1", researcher="quant1",
-        created_at=datetime(2026, 7, 27, tzinfo=UTC), dataset_version="ds-1",
-        strategy_name="BAB", strategy_version=1, features_used=["beta"],
-        params={"lookback": 252}, report=_report(),
+        id="exp-1",
+        hypothesis_id="h1",
+        researcher="quant1",
+        created_at=datetime(2026, 7, 27, tzinfo=UTC),
+        dataset_version="ds-1",
+        strategy_name="BAB",
+        strategy_version=1,
+        features_used=["beta"],
+        params={"lookback": 252},
+        report=_report(),
     )
     md = ai.write_report(rec)
     assert md.startswith("# Research Report")
@@ -126,6 +145,7 @@ def test_write_report_is_markdown_and_advisory():
 
 
 # ── LLM injection seam ────────────────────────────────────────────────────────
+
 
 def test_llm_client_is_used_when_injected():
     calls = []
@@ -157,8 +177,9 @@ def test_assistant_cannot_trade_by_construction():
 
     forbidden = ("broker", "oms", "execution", "order")
     for mod_name in imported:
-        assert not any(f in mod_name.lower() for f in forbidden), \
+        assert not any(f in mod_name.lower() for f in forbidden), (
             f"assistant must not import an execution path: {mod_name}"
+        )
 
 
 def test_demo_self_check():

@@ -67,8 +67,7 @@ def test_upsert_overwrites_on_conflict(store: DuckDBStore):
 @pytest.mark.unit
 def test_rolling_mean_returns_data(store: DuckDBStore):
     bars = [
-        _bar_dict(ts=datetime(2024, 1, d, tzinfo=UTC), close=float(100 + d))
-        for d in range(1, 6)
+        _bar_dict(ts=datetime(2024, 1, d, tzinfo=UTC), close=float(100 + d)) for d in range(1, 6)
     ]
     store.write_bars(bars)
 
@@ -80,11 +79,13 @@ def test_rolling_mean_returns_data(store: DuckDBStore):
 
 @pytest.mark.unit
 def test_cross_sectional_returns_latest_per_symbol(store: DuckDBStore):
-    store.write_bars([
-        _bar_dict("AAPL", datetime(2024, 1, 2, tzinfo=UTC), close=185.0),
-        _bar_dict("AAPL", datetime(2024, 1, 3, tzinfo=UTC), close=186.0),
-        _bar_dict("MSFT", datetime(2024, 1, 3, tzinfo=UTC), close=376.0),
-    ])
+    store.write_bars(
+        [
+            _bar_dict("AAPL", datetime(2024, 1, 2, tzinfo=UTC), close=185.0),
+            _bar_dict("AAPL", datetime(2024, 1, 3, tzinfo=UTC), close=186.0),
+            _bar_dict("MSFT", datetime(2024, 1, 3, tzinfo=UTC), close=376.0),
+        ]
+    )
 
     rows = store.cross_sectional(as_of=date(2024, 1, 3))
     symbols = {r["symbol"] for r in rows}
@@ -96,10 +97,12 @@ def test_cross_sectional_returns_latest_per_symbol(store: DuckDBStore):
 
 @pytest.mark.unit
 def test_cross_sectional_excludes_future_bars(store: DuckDBStore):
-    store.write_bars([
-        _bar_dict("AAPL", datetime(2024, 1, 2, tzinfo=UTC), close=185.0),
-        _bar_dict("AAPL", datetime(2024, 1, 10, tzinfo=UTC), close=200.0),  # future
-    ])
+    store.write_bars(
+        [
+            _bar_dict("AAPL", datetime(2024, 1, 2, tzinfo=UTC), close=185.0),
+            _bar_dict("AAPL", datetime(2024, 1, 10, tzinfo=UTC), close=200.0),  # future
+        ]
+    )
 
     rows = store.cross_sectional(as_of=date(2024, 1, 5))
     assert len(rows) == 1
@@ -108,11 +111,13 @@ def test_cross_sectional_excludes_future_bars(store: DuckDBStore):
 
 @pytest.mark.unit
 def test_quality_summary(store: DuckDBStore):
-    store.write_bars([
-        _bar_dict("AAPL", datetime(2024, 1, 2, tzinfo=UTC), quality=90),
-        _bar_dict("AAPL", datetime(2024, 1, 3, tzinfo=UTC), quality=40),  # low quality
-        _bar_dict("MSFT", datetime(2024, 1, 2, tzinfo=UTC), quality=95),
-    ])
+    store.write_bars(
+        [
+            _bar_dict("AAPL", datetime(2024, 1, 2, tzinfo=UTC), quality=90),
+            _bar_dict("AAPL", datetime(2024, 1, 3, tzinfo=UTC), quality=40),  # low quality
+            _bar_dict("MSFT", datetime(2024, 1, 2, tzinfo=UTC), quality=95),
+        ]
+    )
 
     summary = store.quality_summary()
     aapl = next(r for r in summary if r["symbol"] == "AAPL")

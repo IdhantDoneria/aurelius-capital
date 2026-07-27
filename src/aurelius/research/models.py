@@ -13,8 +13,8 @@ from datetime import datetime
 
 
 class Verdict(enum.StrEnum):
-    ACCEPT = "accept"            # survives OOS + significance + fragility guards
-    REJECT = "reject"           # failed at least one guard; capital protected
+    ACCEPT = "accept"  # survives OOS + significance + fragility guards
+    REJECT = "reject"  # failed at least one guard; capital protected
     INCONCLUSIVE = "inconclusive"  # not enough evidence to decide
 
 
@@ -25,7 +25,7 @@ class Hypothesis:
     rationale: str
     researcher: str
     created_at: datetime
-    status: str = "open"        # open | confirmed | rejected
+    status: str = "open"  # open | confirmed | rejected
 
 
 @dataclass(frozen=True)
@@ -33,23 +33,23 @@ class ValidationCriteria:
     """Acceptance thresholds. Calibration knobs — tune per asset class / desk."""
 
     min_oos_sharpe: float = 0.5
-    max_is_oos_decay: float = 0.5     # OOS Sharpe must be >= (1 - decay) * IS Sharpe
+    max_is_oos_decay: float = 0.5  # OOS Sharpe must be >= (1 - decay) * IS Sharpe
     # min_trades defaults to 0 (informational): the Phase-4 round-trip reconstruction
     # only matches long cycles, so it undercounts short/hold strategies. The Sharpe
     # floor already rejects genuinely inactive strategies. Raise per desk if wanted.
     min_trades: int = 0
-    max_param_cv: float = 0.75        # OOS-metric coeff of variation across the grid
+    max_param_cv: float = 0.75  # OOS-metric coeff of variation across the grid
     significance_alpha: float = 0.05  # after multiple-testing correction
-    min_oos_observations: int = 30    # below this -> INCONCLUSIVE, not a verdict
+    min_oos_observations: int = 30  # below this -> INCONCLUSIVE, not a verdict
 
 
 @dataclass
 class SensitivityResult:
     metric: str
-    results: list[tuple[dict, float]]   # (params, oos metric)
+    results: list[tuple[dict, float]]  # (params, oos metric)
     mean: float
     std: float
-    cv: float                           # abs(std / mean); fragility proxy
+    cv: float  # abs(std / mean); fragility proxy
     best_params: dict
     worst_params: dict
 
@@ -84,6 +84,7 @@ class ExperimentRecord:
 
 
 # ── statistics ────────────────────────────────────────────────────────────────
+
 
 def _norm_sf(x: float) -> float:
     """Upper-tail standard normal, 1 - Phi(x). No scipy."""

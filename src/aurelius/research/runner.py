@@ -108,13 +108,14 @@ class ResearchRunner:
 
 # ── demonstration ─────────────────────────────────────────────────────────────
 
+
 def research_config(**overrides) -> BacktestConfig:
     """Backtest config for research runs: a looser drawdown halt so a mediocre
     strategy runs to completion (and is judged on OOS) instead of tripping the
     live-trading circuit breaker mid-sample."""
     cfg = BacktestConfig(
-        max_drawdown_halt=Decimal("0.60"),   # loose halt: judge on OOS, not a trip
-        max_position_pct=Decimal("0.05"),     # conservative sizing keeps runs alive
+        max_drawdown_halt=Decimal("0.60"),  # loose halt: judge on OOS, not a trip
+        max_position_pct=Decimal("0.05"),  # conservative sizing keeps runs alive
     )
     for k, v in overrides.items():
         setattr(cfg, k, v)

@@ -38,6 +38,7 @@ def _metrics(sharpe, n=100, trades=50, ret=0.1, dd=-0.05):
 
 # ── the guards: bad ideas must be rejected ────────────────────────────────────
 
+
 def test_low_oos_sharpe_rejected():
     r = evaluate(_metrics(1.5), _metrics(0.1), n_trials=1)
     assert r.verdict is Verdict.REJECT
@@ -88,6 +89,7 @@ def test_bonferroni_monotonic():
 
 # ── templates run on the engine ───────────────────────────────────────────────
 
+
 def test_all_templates_run():
     bars = synth_bars(["AAA", "BBB", "CCC", "DDD"], days=200)
     for factory in (
@@ -102,6 +104,7 @@ def test_all_templates_run():
 
 
 # ── validation mechanics ──────────────────────────────────────────────────────
+
 
 def test_train_test_splits_equity():
     # Single low-churn name runs to completion, so both windows are populated.
@@ -121,14 +124,13 @@ def test_walk_forward_returns_folds():
 
 def test_parameter_sensitivity_reports_cv():
     bars = synth_bars(["AAA", "BBB"], days=250)
-    sens = parameter_sensitivity(
-        lambda p: MomentumStrategy(**p), {"lookback": [20, 40, 60]}, bars
-    )
+    sens = parameter_sensitivity(lambda p: MomentumStrategy(**p), {"lookback": [20, 40, 60]}, bars)
     assert len(sens.results) == 3
     assert sens.cv >= 0
 
 
 # ── end-to-end: store + runner + rejection memory ─────────────────────────────
+
 
 def test_investigate_records_and_updates_status():
     store = ResearchStore(":memory:")

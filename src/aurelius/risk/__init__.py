@@ -51,8 +51,9 @@ def demo() -> None:
     assert engine.evaluate(ctx, state).decision is RiskDecision.APPROVE
 
     # MODIFY: order at 25% NAV clamped to the 10% position cap.
-    big = OrderContext("AAA", Decimal("100"), Decimal("2500"), is_buy=True,
-                       adv=Decimal("10_000_000"))
+    big = OrderContext(
+        "AAA", Decimal("100"), Decimal("2500"), is_buy=True, adv=Decimal("10_000_000")
+    )
     v = engine.evaluate(big, state)
     assert v.decision is RiskDecision.MODIFY
     assert v.modified_quantity == Decimal("1000")
@@ -63,8 +64,14 @@ def demo() -> None:
     assert engine.evaluate(illiq, state).modified_quantity == Decimal("600")
 
     # REJECT + kill switch: a -4% day trips the daily loss limit.
-    loss = OrderContext("AAA", Decimal("100"), Decimal("10"), is_buy=True,
-                        daily_pnl=Decimal("-40000"), sod_equity=Decimal("1_000_000"))
+    loss = OrderContext(
+        "AAA",
+        Decimal("100"),
+        Decimal("10"),
+        is_buy=True,
+        daily_pnl=Decimal("-40000"),
+        sod_equity=Decimal("1_000_000"),
+    )
     assert engine.evaluate(loss, state).decision is RiskDecision.REJECT
     assert engine.is_halted
     engine.reset()
@@ -76,7 +83,7 @@ def demo() -> None:
     assert rep.value_at_risk >= 0
 
     # Stress: a -20% crash loses money on a net-long book.
-    p.quantity = Decimal("1000")   # 1000 sh AAA @ 100 = 100k long
+    p.quantity = Decimal("1000")  # 1000 sh AAA @ 100 = 100k long
     st = StressTester()
     crash = st.market_crash(state, shock=-0.20)
     assert crash.pnl < 0

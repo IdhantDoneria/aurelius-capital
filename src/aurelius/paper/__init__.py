@@ -57,12 +57,12 @@ def demo() -> None:
             return [OrderRequest("AAA", Side.BUY, Decimal("10"), OrderType.MARKET)]
         return []
 
-    engine = TradingEngine(broker, journal, strategy=strat,
-                           checkpoint_path=f"{tmp}/checkpoint.json")
+    engine = TradingEngine(
+        broker, journal, strategy=strat, checkpoint_path=f"{tmp}/checkpoint.json"
+    )
 
     t0 = datetime(2026, 1, 1, tzinfo=UTC)
-    ticks = [Tick(t0 + timedelta(seconds=i), "AAA", Decimal("100") + Decimal(i))
-             for i in range(20)]
+    ticks = [Tick(t0 + timedelta(seconds=i), "AAA", Decimal("100") + Decimal(i)) for i in range(20)]
 
     # A source that raises once, to exercise automatic restart.
     calls = {"n": 0}
@@ -70,18 +70,20 @@ def demo() -> None:
     def source_factory():
         calls["n"] += 1
         if calls["n"] == 1:
+
             def boom():
                 yield ticks[0]
                 raise ConnectionError("feed dropped")
+
             return boom()
         return replay(ticks)
 
     engine.run_forever(source_factory, max_restarts=3, sleep=lambda _s: None)
 
-    assert broker.state.position("AAA").quantity == Decimal("10")   # bought
-    assert engine.health.restarts == 1                              # recovered once
+    assert broker.state.position("AAA").quantity == Decimal("10")  # bought
+    assert engine.health.restarts == 1  # recovered once
     assert engine.health.fills >= 1
-    assert journal.read("fill")                                     # journalled
+    assert journal.read("fill")  # journalled
     print("paper demo ok:", render_text(engine, broker).splitlines()[1].strip())
 
 

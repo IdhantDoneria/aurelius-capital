@@ -50,9 +50,7 @@ class Order:
 
     @property
     def is_complete(self) -> bool:
-        return self.status in (
-            OrderStatus.FILLED, OrderStatus.CANCELLED, OrderStatus.REJECTED
-        )
+        return self.status in (OrderStatus.FILLED, OrderStatus.CANCELLED, OrderStatus.REJECTED)
 
     def apply_partial_fill(self, qty: Decimal, price: Decimal) -> None:
         total_value = self.avg_fill_price * self.filled_quantity + price * qty

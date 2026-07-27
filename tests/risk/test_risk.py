@@ -32,6 +32,7 @@ def _priced(state, sym, price, qty=Decimal("0")):
 
 # ── approve / modify / reject ─────────────────────────────────────────────────
 
+
 def test_small_order_approved():
     s = _state()
     _priced(s, "AAA", 100)
@@ -63,8 +64,9 @@ def test_stop_loss_budget_modifies_down():
     s = _state()
     _priced(s, "AAA", 100)
     # loss-to-stop = 10/sh; budget 2% NAV = 20k -> max 2000 sh, but 10% pos cap = 1000 wins.
-    ctx = OrderContext("AAA", Decimal("100"), Decimal("5000"), is_buy=True,
-                       stop_price=Decimal("90"))
+    ctx = OrderContext(
+        "AAA", Decimal("100"), Decimal("5000"), is_buy=True, stop_price=Decimal("90")
+    )
     v = RiskEngine().evaluate(ctx, s)
     assert v.decision is RiskDecision.MODIFY
     assert v.modified_quantity == Decimal("1000")
@@ -88,24 +90,32 @@ def test_reducing_trade_bypasses_size_caps():
 
 # ── concentration = per-name size cap (clamps to 10% NAV) ─────────────────────
 
+
 def test_name_concentration_clamped_to_cap():
     s = _state()
-    _priced(s, "AAA", 100, qty=Decimal("900"))   # 90k existing = 9% NAV
+    _priced(s, "AAA", 100, qty=Decimal("900"))  # 90k existing = 9% NAV
     # add 200 more -> 110k = 11% NAV; cap 10% -> only 100 more shares allowed.
     ctx = OrderContext("AAA", Decimal("100"), Decimal("200"), is_buy=True)
     v = RiskEngine().evaluate(ctx, s)
     assert v.decision is RiskDecision.MODIFY
-    assert v.modified_quantity == Decimal("100")   # 10% NAV cap - existing 9% -> 100 sh
+    assert v.modified_quantity == Decimal("100")  # 10% NAV cap - existing 9% -> 100 sh
 
 
 # ── daily loss + emergency shutdown ───────────────────────────────────────────
+
 
 def test_daily_loss_trips_kill_switch():
     s = _state()
     _priced(s, "AAA", 100)
     eng = RiskEngine()
-    ctx = OrderContext("AAA", Decimal("100"), Decimal("10"), is_buy=True,
-                       daily_pnl=Decimal("-40000"), sod_equity=Decimal("1000000"))
+    ctx = OrderContext(
+        "AAA",
+        Decimal("100"),
+        Decimal("10"),
+        is_buy=True,
+        daily_pnl=Decimal("-40000"),
+        sod_equity=Decimal("1000000"),
+    )
     assert eng.evaluate(ctx, s).decision is RiskDecision.REJECT
     assert eng.is_halted
     # everything rejected while halted
@@ -129,6 +139,7 @@ def test_drawdown_halt():
 
 
 # ── monitoring ────────────────────────────────────────────────────────────────
+
 
 def test_monitor_volatility_and_var():
     s = _state()
@@ -154,19 +165,21 @@ def test_monitor_correlation_and_beta():
     _priced(s, "AAA", 100, qty=Decimal("500"))
     _priced(s, "BBB", 100, qty=Decimal("500"))
     rets = {"AAA": [0.01, 0.02, -0.01, 0.03], "BBB": [0.01, 0.02, -0.01, 0.03]}
-    rep = PortfolioRiskMonitor().assess(s, [0.01, -0.01, 0.01], symbol_returns=rets,
-                                        betas={"AAA": 1.2, "BBB": 0.8})
-    assert abs(rep.avg_pairwise_correlation - 1.0) < 1e-9   # identical series
-    assert abs(rep.portfolio_beta - 1.0) < 1e-9             # equal-weight (1.2+0.8)/2
+    rep = PortfolioRiskMonitor().assess(
+        s, [0.01, -0.01, 0.01], symbol_returns=rets, betas={"AAA": 1.2, "BBB": 0.8}
+    )
+    assert abs(rep.avg_pairwise_correlation - 1.0) < 1e-9  # identical series
+    assert abs(rep.portfolio_beta - 1.0) < 1e-9  # equal-weight (1.2+0.8)/2
 
 
 # ── stress testing ────────────────────────────────────────────────────────────
+
 
 def test_stress_market_crash():
     s = _state()
     _priced(s, "AAA", 100, qty=Decimal("5000"))  # 500k long
     r = StressTester().market_crash(s, shock=-0.20)
-    assert r.pnl == -100000.0     # 20% of 500k
+    assert r.pnl == -100000.0  # 20% of 500k
     assert r.scenario.startswith("market_crash")
 
 
@@ -188,4 +201,5 @@ def test_stress_liquidity_horizon():
 
 def test_demo_self_check():
     from aurelius.risk import demo
+
     demo()

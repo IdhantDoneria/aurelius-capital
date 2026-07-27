@@ -77,9 +77,7 @@ class ExecutionSimulator:
             order_id=order.order_id,
         )
 
-    def _base_price(
-        self, order: OrderEvent, bar: BarData, is_buy: bool
-    ) -> Decimal | None:
+    def _base_price(self, order: OrderEvent, bar: BarData, is_buy: bool) -> Decimal | None:
         if order.order_type == OrderType.MARKET:
             return bar.open
 

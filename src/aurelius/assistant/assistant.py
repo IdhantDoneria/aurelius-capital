@@ -39,8 +39,18 @@ LLMClient = Callable[[str], str]  # prompt -> completion; the only "AI" seam
 
 # words that mark a sentence as an empirical claim worth turning into a hypothesis
 _CLAIM_MARKERS = (
-    "we find", "we show", "we document", "outperform", "significant", "predict",
-    "premium", "anomaly", "abnormal return", "excess return", "alpha", "forecast",
+    "we find",
+    "we show",
+    "we document",
+    "outperform",
+    "significant",
+    "predict",
+    "premium",
+    "anomaly",
+    "abnormal return",
+    "excess return",
+    "alpha",
+    "forecast",
 )
 _STOPWORDS = frozenset(
     "the a an of to in and or for is are we our this that with on by as at from be "
@@ -61,7 +71,7 @@ class PaperSummary:
 @dataclass
 class CodeFinding:
     line: int
-    severity: str          # high | medium | low
+    severity: str  # high | medium | low
     issue: str
     fix: str
 
@@ -78,7 +88,7 @@ class CodeReview:
 
 @dataclass
 class BiasReport:
-    flags: dict[str, bool]              # bias name -> tripped?
+    flags: dict[str, bool]  # bias name -> tripped?
     notes: list[str] = field(default_factory=list)
 
     @property
@@ -90,27 +100,48 @@ class BiasReport:
 # (compiled regex, severity, issue, fix). Curated + conservative: better to miss
 # than to drown a reviewer in false positives.
 _CODE_RULES: list[tuple[re.Pattern[str], str, str, str]] = [
-    (re.compile(r"\.shift\(\s*-\d+"), "high",
-     "look-ahead: negative shift pulls FUTURE bars into a feature",
-     "shift by a positive amount so features only use past data"),
-    (re.compile(r"\[\s*i\s*\+\s*\d+\s*\]|\.iloc\[\s*i\s*\+"), "high",
-     "look-ahead: indexing i+k reads a bar that has not happened yet",
-     "use i or i-k; the signal at bar i may only use data up to i"),
-    (re.compile(r"(scaler|StandardScaler|MinMaxScaler)[^\n]*\.fit\("), "high",
-     "leakage: scaler fit on the full series leaks test-set statistics",
-     "fit the scaler on train only, then transform test"),
-    (re.compile(r"\.fillna\(\s*method\s*=\s*['\"]bfill|\.bfill\("), "medium",
-     "look-ahead: backfill copies future values backward",
-     "forward-fill (ffill) or drop; never backfill a time series feature"),
-    (re.compile(r"\b(df|data|prices)\b[^\n]*\.(max|min|mean|std|quantile)\(\)"), "medium",
-     "look-ahead: a whole-series statistic uses the future for a point-in-time feature",
-     "use an expanding/rolling window so each point sees only its past"),
-    (re.compile(r"resample\("), "low",
-     "check alignment: resample can label a bar with its right edge (future close)",
-     "set label='left'/closed='left' or lag one bar"),
-    (re.compile(r"random_state\s*=\s*None|shuffle\s*=\s*True"), "medium",
-     "reproducibility/leakage: shuffling time-series folds breaks temporal order",
-     "use a fixed seed and time-ordered (walk-forward) splits, never shuffle"),
+    (
+        re.compile(r"\.shift\(\s*-\d+"),
+        "high",
+        "look-ahead: negative shift pulls FUTURE bars into a feature",
+        "shift by a positive amount so features only use past data",
+    ),
+    (
+        re.compile(r"\[\s*i\s*\+\s*\d+\s*\]|\.iloc\[\s*i\s*\+"),
+        "high",
+        "look-ahead: indexing i+k reads a bar that has not happened yet",
+        "use i or i-k; the signal at bar i may only use data up to i",
+    ),
+    (
+        re.compile(r"(scaler|StandardScaler|MinMaxScaler)[^\n]*\.fit\("),
+        "high",
+        "leakage: scaler fit on the full series leaks test-set statistics",
+        "fit the scaler on train only, then transform test",
+    ),
+    (
+        re.compile(r"\.fillna\(\s*method\s*=\s*['\"]bfill|\.bfill\("),
+        "medium",
+        "look-ahead: backfill copies future values backward",
+        "forward-fill (ffill) or drop; never backfill a time series feature",
+    ),
+    (
+        re.compile(r"\b(df|data|prices)\b[^\n]*\.(max|min|mean|std|quantile)\(\)"),
+        "medium",
+        "look-ahead: a whole-series statistic uses the future for a point-in-time feature",
+        "use an expanding/rolling window so each point sees only its past",
+    ),
+    (
+        re.compile(r"resample\("),
+        "low",
+        "check alignment: resample can label a bar with its right edge (future close)",
+        "set label='left'/closed='left' or lag one bar",
+    ),
+    (
+        re.compile(r"random_state\s*=\s*None|shuffle\s*=\s*True"),
+        "medium",
+        "reproducibility/leakage: shuffling time-series folds breaks temporal order",
+        "use a fixed seed and time-ordered (walk-forward) splits, never shuffle",
+    ),
 ]
 
 
@@ -145,7 +176,10 @@ class ResearchAssistant:
     # ── 2. generate hypotheses ──────────────────────────────────────────────────
 
     def generate_hypotheses(
-        self, summary: PaperSummary, researcher: str, limit: int = 5,
+        self,
+        summary: PaperSummary,
+        researcher: str,
+        limit: int = 5,
     ) -> list[Hypothesis]:
         """Turn a paper's claims into testable Hypothesis records (reuses Phase-6)."""
         now = datetime.now(UTC)
@@ -153,11 +187,15 @@ class ResearchAssistant:
         for claim in summary.claims[:limit]:
             statement = self._as_testable(claim)
             hid = hashlib.sha256(f"{statement}|{researcher}".encode()).hexdigest()[:12]
-            out.append(Hypothesis(
-                id=hid, statement=statement,
-                rationale=f"Derived from paper '{summary.title}': {claim}",
-                researcher=researcher, created_at=now,
-            ))
+            out.append(
+                Hypothesis(
+                    id=hid,
+                    statement=statement,
+                    rationale=f"Derived from paper '{summary.title}': {claim}",
+                    researcher=researcher,
+                    created_at=now,
+                )
+            )
         if self._llm is not None and summary.claims:
             extra = self._llm(
                 "Propose one additional, falsifiable trading hypothesis implied by "
@@ -165,10 +203,15 @@ class ResearchAssistant:
             ).strip()
             if extra:
                 hid = hashlib.sha256(f"{extra}|{researcher}|llm".encode()).hexdigest()[:12]
-                out.append(Hypothesis(
-                    id=hid, statement=extra, rationale="LLM-proposed extension",
-                    researcher=researcher, created_at=now,
-                ))
+                out.append(
+                    Hypothesis(
+                        id=hid,
+                        statement=extra,
+                        rationale="LLM-proposed extension",
+                        researcher=researcher,
+                        created_at=now,
+                    )
+                )
         return out
 
     # ── 3. explain results ──────────────────────────────────────────────────────
@@ -230,8 +273,7 @@ class ResearchAssistant:
         n_obs = oos_observations if oos_observations is not None else report.oos_trades
         flags = {
             "overfitting": cv is not None and cv > c.max_param_cv,
-            "data_mining": report.n_trials > 1
-            and report.adjusted_pvalue >= c.significance_alpha,
+            "data_mining": report.n_trials > 1 and report.adjusted_pvalue >= c.significance_alpha,
             "small_sample": n_obs < c.min_oos_observations,
             "look_ahead": bool(code_review and code_review.has_lookahead),
         }
@@ -239,21 +281,25 @@ class ResearchAssistant:
         if flags["overfitting"]:
             notes.append(
                 f"Parameter CV {cv:.2f} > {c.max_param_cv}: performance swings wildly "
-                "across the grid — likely fit to noise.")
+                "across the grid — likely fit to noise."
+            )
         if flags["data_mining"]:
             notes.append(
                 f"{report.n_trials} trials, adjusted p={report.adjusted_pvalue:.3f}: "
-                "edge does not survive the multiple-testing haircut.")
+                "edge does not survive the multiple-testing haircut."
+            )
         if flags["small_sample"]:
             notes.append(
                 f"Only {n_obs} OOS observations (< {c.min_oos_observations}): the Sharpe "
-                "estimate has a huge standard error — treat as inconclusive.")
+                "estimate has a huge standard error — treat as inconclusive."
+            )
         if flags["look_ahead"]:
             notes.append("Code review found look-ahead — OOS results may be fiction.")
         # survivorship/selection can't be read off the numbers: always caution.
         notes.append(
             "Reminder (not auto-detectable): confirm the universe is survivorship-bias "
-            "free and the sample period wasn't cherry-picked.")
+            "free and the sample period wasn't cherry-picked."
+        )
         return BiasReport(flags, notes)
 
     # ── 6. create research report ───────────────────────────────────────────────
@@ -267,8 +313,9 @@ class ResearchAssistant:
         """Assemble a Markdown research report from an experiment record."""
         r = record.report
         biases = self.detect_biases(r, oos_observations, code_review)
-        verdict_icon = {Verdict.ACCEPT: "✅", Verdict.REJECT: "❌",
-                        Verdict.INCONCLUSIVE: "❓"}[r.verdict]
+        verdict_icon = {Verdict.ACCEPT: "✅", Verdict.REJECT: "❌", Verdict.INCONCLUSIVE: "❓"}[
+            r.verdict
+        ]
         md = [
             f"# Research Report — {record.strategy_name} v{record.strategy_version}",
             f"**Experiment:** `{record.id}`  |  **Researcher:** {record.researcher}  "
@@ -283,16 +330,23 @@ class ResearchAssistant:
             "".join(f"- `{k}` = {v}\n" for k, v in record.params.items()) or "- (none)\n",
             "## Bias & Robustness",
         ]
-        md += [f"- {'⚠️' if v else '✔️'} **{k}**: "
-               f"{'flagged' if v else 'clear'}" for k, v in biases.flags.items()]
+        md += [
+            f"- {'⚠️' if v else '✔️'} **{k}**: {'flagged' if v else 'clear'}"
+            for k, v in biases.flags.items()
+        ]
         md += [""] + [f"> {n}" for n in biases.notes]
         if code_review and code_review.findings:
             md += ["", "## Code Review"]
-            md += [f"- L{f.line} [{f.severity}] {f.issue} — *fix:* {f.fix}"
-                   for f in code_review.findings]
-        md += ["", "---",
-               "*Generated by the AI Research Assistant. Advisory only — a human "
-               "researcher owns the accept/deploy decision. The assistant cannot trade.*"]
+            md += [
+                f"- L{f.line} [{f.severity}] {f.issue} — *fix:* {f.fix}"
+                for f in code_review.findings
+            ]
+        md += [
+            "",
+            "---",
+            "*Generated by the AI Research Assistant. Advisory only — a human "
+            "researcher owns the accept/deploy decision. The assistant cannot trade.*",
+        ]
         return "\n".join(md)
 
     # ── internals ────────────────────────────────────────────────────────────────
@@ -303,7 +357,7 @@ class ResearchAssistant:
         m = re.search(rf"(?im)^\s*{name}\s*[:.\n]", text)
         if not m:
             return ""
-        rest = text[m.end():]
+        rest = text[m.end() :]
         # stop at the next ALL-CAPS/Title heading line or a blank line following prose
         stop = re.search(r"\n\s*\n|\n\s*(?:[A-Z][a-z]+\s*){0,3}\n", rest)
         return " ".join(rest[: stop.start() if stop else 400].split())
@@ -311,11 +365,10 @@ class ResearchAssistant:
     @staticmethod
     def _extract_claims(text: str) -> list[str]:
         sentences = re.split(r"(?<=[.!?])\s+", " ".join(text.split()))
-        claims = [s for s in sentences
-                  if any(m in s.lower() for m in _CLAIM_MARKERS) and len(s) < 300]
-        # dedupe, keep order
-        seen: set[str] = set()
-        return [s for s in claims if not (s in seen or seen.add(s))]
+        claims = [
+            s for s in sentences if any(m in s.lower() for m in _CLAIM_MARKERS) and len(s) < 300
+        ]
+        return list(dict.fromkeys(claims))  # dedupe, preserve order
 
     @staticmethod
     def _keywords(text: str, k: int = 8) -> list[str]:

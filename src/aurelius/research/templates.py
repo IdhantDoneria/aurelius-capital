@@ -25,9 +25,7 @@ class MomentumStrategy(Strategy):
 
     name = "momentum"
 
-    def __init__(
-        self, lookback: int = 60, entry: float = 0.0, allow_short: bool = False
-    ) -> None:
+    def __init__(self, lookback: int = 60, entry: float = 0.0, allow_short: bool = False) -> None:
         self.lookback = lookback
         self.entry = entry
         self.allow_short = allow_short

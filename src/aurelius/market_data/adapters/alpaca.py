@@ -54,6 +54,7 @@ class AlpacaAdapter(MarketDataAdapter):
     @classmethod
     def from_settings(cls) -> "AlpacaAdapter":
         from aurelius.infrastructure.config.settings import get_settings
+
         s = get_settings()
         return cls(api_key=s.alpaca_api_key, api_secret=s.alpaca_api_secret)
 
@@ -124,11 +125,13 @@ class AlpacaAdapter(MarketDataAdapter):
         except ImportError as exc:
             raise MarketDataError("websockets not installed: pip install websockets") from exc
 
-        auth_msg = json.dumps({
-            "action": "auth",
-            "key": self._headers["APCA-API-KEY-ID"],
-            "secret": self._headers["APCA-API-SECRET-KEY"],
-        })
+        auth_msg = json.dumps(
+            {
+                "action": "auth",
+                "key": self._headers["APCA-API-KEY-ID"],
+                "secret": self._headers["APCA-API-SECRET-KEY"],
+            }
+        )
         subscribe_msg = json.dumps({"action": "subscribe", "bars": symbols})
 
         async with websockets.connect(_STREAM_URL) as ws:  # type: ignore[attr-defined]

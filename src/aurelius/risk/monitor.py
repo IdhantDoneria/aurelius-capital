@@ -105,8 +105,11 @@ class PortfolioRiskMonitor:
     def _herfindahl(state: PortfolioState, gross: float) -> float:
         if gross <= 0:
             return 0.0
-        return sum((abs(float(p.market_value)) / gross) ** 2
-                   for p in state.positions.values() if not p.is_flat)
+        return sum(
+            (abs(float(p.market_value)) / gross) ** 2
+            for p in state.positions.values()
+            if not p.is_flat
+        )
 
     @staticmethod
     def _avg_correlation(symbol_returns: dict[str, list[float]] | None) -> float:
@@ -131,5 +134,8 @@ class PortfolioRiskMonitor:
     ) -> float | None:
         if not betas or gross <= 0:
             return None
-        return sum(betas.get(p.symbol, 0.0) * abs(float(p.market_value)) / gross
-                   for p in state.positions.values() if not p.is_flat)
+        return sum(
+            betas.get(p.symbol, 0.0) * abs(float(p.market_value)) / gross
+            for p in state.positions.values()
+            if not p.is_flat
+        )

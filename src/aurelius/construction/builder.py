@@ -38,12 +38,12 @@ class Method(enum.StrEnum):
     RISK_PARITY = "risk_parity"
     MIN_VARIANCE = "min_variance"
     MAX_SHARPE = "max_sharpe"
-    CONSTRAINED = "constrained"       # constrained (box) minimum variance
+    CONSTRAINED = "constrained"  # constrained (box) minimum variance
 
 
 @dataclass
 class TargetPortfolio:
-    weights: dict[str, float]                       # final target weights (of NAV)
+    weights: dict[str, float]  # final target weights (of NAV)
     orders: list[OrderEvent] = field(default_factory=list)
     rejected: list[tuple[str, str]] = field(default_factory=list)  # (symbol, reason)
 
@@ -74,7 +74,7 @@ class PortfolioBuilder:
     ) -> TargetPortfolio:
         alpha = self._agg.combine(signals)
         syms, sigma_d = optimize.sample_covariance(returns)
-        sigma = sigma_d * 252.0                       # annualize
+        sigma = sigma_d * 252.0  # annualize
         weights = self._weights(alpha, syms, sigma)
 
         avg_corr = _avg_abs_correlation(sigma)
@@ -109,9 +109,7 @@ class PortfolioBuilder:
             mu = np.array([alpha.get(s, 0.0) for s in sel])
             w = optimize.max_sharpe(mu, sub)
         elif m is Method.CONSTRAINED:
-            w = optimize.constrained_min_variance(
-                sub, lo=0.0, hi=self._limits.max_asset_weight
-            )
+            w = optimize.constrained_min_variance(sub, lo=0.0, hi=self._limits.max_asset_weight)
         else:  # MIN_VARIANCE
             w = optimize.min_variance(sub)
         return {s: float(w[i]) for i, s in enumerate(sel)}
@@ -140,7 +138,10 @@ class PortfolioBuilder:
 
             is_buy = delta > 0
             ctx = OrderContext(
-                symbol=sym, price=price, quantity=abs(delta), is_buy=is_buy,
+                symbol=sym,
+                price=price,
+                quantity=abs(delta),
+                is_buy=is_buy,
                 adv=adv.get(sym) if adv else None,
             )
             verdict = self._risk.evaluate(ctx, state)
@@ -150,14 +151,16 @@ class PortfolioBuilder:
             qty = verdict.modified_quantity if verdict.modified_quantity is not None else abs(delta)
             if qty <= 0:
                 continue
-            tp.orders.append(OrderEvent(
-                timestamp=datetime.now(UTC),
-                symbol=sym,
-                order_type=OrderType.MARKET,
-                side=Side.BUY if is_buy else Side.SELL,
-                quantity=qty,
-                strategy_id="portfolio_builder",
-            ))
+            tp.orders.append(
+                OrderEvent(
+                    timestamp=datetime.now(UTC),
+                    symbol=sym,
+                    order_type=OrderType.MARKET,
+                    side=Side.BUY if is_buy else Side.SELL,
+                    quantity=qty,
+                    strategy_id="portfolio_builder",
+                )
+            )
 
 
 def _submatrix(syms: list[str], sigma: np.ndarray, sel: list[str]) -> np.ndarray:

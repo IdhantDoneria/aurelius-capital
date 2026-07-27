@@ -52,11 +52,11 @@ def sample_covariance(
 def min_variance(cov: np.ndarray) -> np.ndarray:
     """Global minimum-variance weights. w = Σ⁻¹1 / (1ᵀΣ⁻¹1)."""
     n = cov.shape[0]
-    inv = np.linalg.pinv(cov)          # pinv: survive a singular Sigma
+    inv = np.linalg.pinv(cov)  # pinv: survive a singular Sigma
     ones = np.ones(n)
     denom = ones @ inv @ ones
     if abs(denom) < 1e-15:
-        return np.full(n, 1.0 / n)     # degenerate -> equal weight fallback
+        return np.full(n, 1.0 / n)  # degenerate -> equal weight fallback
     return (inv @ ones) / denom
 
 
@@ -66,7 +66,7 @@ def max_sharpe(mu: np.ndarray, cov: np.ndarray) -> np.ndarray:
     raw = inv @ mu
     s = raw.sum()
     if abs(s) < 1e-15:
-        return min_variance(cov)       # μ carries no usable signal -> min-var
+        return min_variance(cov)  # μ carries no usable signal -> min-var
     return raw / s
 
 
@@ -103,7 +103,7 @@ def _project_box_simplex(v: np.ndarray, lo: float, hi: float) -> np.ndarray:
     """
     n = len(v)
     if n * lo > 1 + 1e-9 or n * hi < 1 - 1e-9:
-        return np.full(n, 1.0 / n)     # infeasible box -> equal weight
+        return np.full(n, 1.0 / n)  # infeasible box -> equal weight
     a, b = float(v.min()) - hi, float(v.max()) - lo
     for _ in range(100):
         tau = (a + b) / 2

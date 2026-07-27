@@ -260,9 +260,7 @@ def evaluate(
 
     checks["oos_sharpe_floor"] = oos_metrics.sharpe_ratio >= c.min_oos_sharpe
     if not checks["oos_sharpe_floor"]:
-        reasons.append(
-            f"OOS Sharpe {oos_metrics.sharpe_ratio:.2f} < floor {c.min_oos_sharpe}"
-        )
+        reasons.append(f"OOS Sharpe {oos_metrics.sharpe_ratio:.2f} < floor {c.min_oos_sharpe}")
 
     checks["trade_count"] = oos_metrics.num_trades >= c.min_trades
     if not checks["trade_count"]:
@@ -279,9 +277,7 @@ def evaluate(
 
     checks["significance"] = adj_p <= c.significance_alpha
     if not checks["significance"]:
-        reasons.append(
-            f"not significant after {n_trials}-trial correction (adj p={adj_p:.3f})"
-        )
+        reasons.append(f"not significant after {n_trials}-trial correction (adj p={adj_p:.3f})")
 
     if param_cv is not None:
         checks["parameter_stability"] = param_cv <= c.max_param_cv

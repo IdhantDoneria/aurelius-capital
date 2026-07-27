@@ -120,8 +120,7 @@ class FinancialStatement(Base, TimestampMixin):
         Date,
         nullable=False,
         comment=(
-            "SEC filing date — when this data became publicly available. "
-            "USE THIS for PIT queries."
+            "SEC filing date — when this data became publicly available. USE THIS for PIT queries."
         ),
     )
 
@@ -158,9 +157,7 @@ class FinancialStatement(Base, TimestampMixin):
         comment="Complete line item detail from data vendor",
     )
 
-    is_restated: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default=text("false")
-    )
+    is_restated: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
     restated_at: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     def __repr__(self) -> str:
@@ -274,7 +271,9 @@ class EarningsEvent(Base, TimestampMixin):
     __tablename__ = "earnings_events"
     __table_args__ = (
         UniqueConstraint(
-            "symbol_id", "fiscal_year", "fiscal_quarter",
+            "symbol_id",
+            "fiscal_year",
+            "fiscal_quarter",
             name="uq_earnings_symbol_period",
         ),
         Index("ix_earnings_symbol_announced", "symbol_id", "announced_at"),
@@ -299,14 +298,16 @@ class EarningsEvent(Base, TimestampMixin):
     # EPS — actual vs consensus estimate at time of announcement
     eps_actual: Mapped[Decimal | None] = mapped_column(Numeric(20, 4), nullable=True)
     eps_estimate: Mapped[Decimal | None] = mapped_column(
-        Numeric(20, 4), nullable=True,
+        Numeric(20, 4),
+        nullable=True,
         comment="Consensus analyst estimate at time of announcement",
     )
     eps_surprise: Mapped[Decimal | None] = mapped_column(
         Numeric(20, 4), nullable=True, comment="eps_actual - eps_estimate"
     )
     eps_surprise_pct: Mapped[Decimal | None] = mapped_column(
-        Numeric(10, 4), nullable=True,
+        Numeric(10, 4),
+        nullable=True,
         comment="Percentage surprise. Key signal for PEAD strategy.",
     )
 
@@ -323,7 +324,9 @@ class EarningsEvent(Base, TimestampMixin):
 
     call_transcript_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_preliminary: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default=text("false"),
+        Boolean,
+        nullable=False,
+        server_default=text("false"),
         comment="True if these are preliminary results, not final",
     )
     extra_data: Mapped[dict[str, Any]] = mapped_column(

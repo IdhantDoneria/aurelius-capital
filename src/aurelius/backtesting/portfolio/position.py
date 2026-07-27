@@ -17,10 +17,10 @@ from decimal import Decimal
 @dataclass
 class Position:
     symbol: str
-    quantity: Decimal = Decimal("0")      # positive = long, negative = short
-    avg_cost: Decimal = Decimal("0")      # average entry price per share
+    quantity: Decimal = Decimal("0")  # positive = long, negative = short
+    avg_cost: Decimal = Decimal("0")  # average entry price per share
     realized_pnl: Decimal = Decimal("0")
-    last_price: Decimal = Decimal("0")    # updated on each MarketEvent
+    last_price: Decimal = Decimal("0")  # updated on each MarketEvent
 
     @property
     def market_value(self) -> Decimal:

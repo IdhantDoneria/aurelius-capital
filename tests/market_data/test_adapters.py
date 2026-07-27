@@ -17,6 +17,7 @@ from aurelius.market_data.pipeline.normalizer import (
 
 # ── timestamp parsing ────────────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_parse_timestamp_iso():
     dt = _parse_timestamp("2024-01-15")
@@ -48,6 +49,7 @@ def test_parse_timestamp_invalid_raises():
 
 
 # ── normalizer ───────────────────────────────────────────────────────────────
+
 
 def _bar(**kwargs) -> RawBar:
     defaults = {
@@ -98,6 +100,7 @@ def test_to_utc_adds_utc_to_naive():
 
 # ── gap detection ─────────────────────────────────────────────────────────────
 
+
 def _ts(year: int, month: int, day: int) -> datetime:
     return datetime(year, month, day, tzinfo=UTC)
 
@@ -144,6 +147,7 @@ def test_detect_gaps_custom_threshold():
 
 # ── spike detection ───────────────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_compute_spike_detects_large_move():
     bar = _bar(close=Decimal("240.00"))  # 30% above 185
@@ -163,6 +167,7 @@ def test_compute_spike_zero_prev_close_safe():
 
 
 # ── CSV loader ────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def sample_csv(tmp_path: Path) -> Path:
@@ -224,7 +229,7 @@ def test_csv_loader_skips_bad_rows(tmp_path: Path):
         "date,open,high,low,close,volume\n"
         "2024-01-02,185.00,186.50,184.00,185.80,50000000\n"
         "not-a-date,185.00,186.50,184.00,185.80,50000000\n"  # bad date
-        "2024-01-04,bad,186.50,184.00,185.80,50000000\n"    # bad price
+        "2024-01-04,bad,186.50,184.00,185.80,50000000\n"  # bad price
     )
     p = tmp_path / "bad.csv"
     p.write_text(content)

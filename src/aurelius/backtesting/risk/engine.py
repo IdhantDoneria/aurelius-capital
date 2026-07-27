@@ -80,9 +80,8 @@ class RiskEngine:
         # 3. Gross leverage check (approximate — uses current state before fill)
         if order.side == Side.BUY and price > 0:
             incremental_exposure = order.quantity * price
-            projected_leverage = (
-                (state.gross_exposure + incremental_exposure)
-                / max(state.total_value, Decimal("1"))
+            projected_leverage = (state.gross_exposure + incremental_exposure) / max(
+                state.total_value, Decimal("1")
             )
             if projected_leverage > self._config.max_gross_leverage:
                 return RiskCheckResult.fail(

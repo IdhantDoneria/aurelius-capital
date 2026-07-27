@@ -99,17 +99,25 @@ class FeatureStore:
             cfg = d["computation_config"]
             rows.append(
                 (
-                    d["name"], d["version"], d["category"], d["description"],
-                    cfg["formula"], ",".join(cfg["inputs"]), cfg["min_periods"],
-                    cfg["frequency"], d["owner"], d["status"],
-                    d["economic_intuition"], d["expected_behavior"],
-                    d["failure_modes"], d["validation_method"],
+                    d["name"],
+                    d["version"],
+                    d["category"],
+                    d["description"],
+                    cfg["formula"],
+                    ",".join(cfg["inputs"]),
+                    cfg["min_periods"],
+                    cfg["frequency"],
+                    d["owner"],
+                    d["status"],
+                    d["economic_intuition"],
+                    d["expected_behavior"],
+                    d["failure_modes"],
+                    d["validation_method"],
                 )
             )
         with self._conn() as conn:
             conn.executemany(
-                "INSERT OR REPLACE INTO feature_definitions VALUES "
-                "(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT OR REPLACE INTO feature_definitions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 rows,
             )
         logger.info("feature_defs_synced", count=len(rows))
@@ -125,9 +133,7 @@ class FeatureStore:
         if not payload:
             return 0
         with self._conn() as conn:
-            conn.executemany(
-                "INSERT OR REPLACE INTO feature_values VALUES (?,?,?,?,?)", payload
-            )
+            conn.executemany("INSERT OR REPLACE INTO feature_values VALUES (?,?,?,?,?)", payload)
         logger.info("feature_values_written", count=len(payload))
         return len(payload)
 

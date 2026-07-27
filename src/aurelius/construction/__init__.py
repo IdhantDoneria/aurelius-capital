@@ -80,9 +80,11 @@ def demo() -> TargetPortfolio:
     gross = sum(abs(w) for w in tp.weights.values())
     assert 0 < gross <= 1.0 + 1e-6
     assert tp.orders, "expected at least one screened order"
-    print("construction demo ok:",
-          {s: round(w, 3) for s, w in tp.weights.items()},
-          f"orders={len(tp.orders)}")
+    print(
+        "construction demo ok:",
+        {s: round(w, 3) for s, w in tp.weights.items()},
+        f"orders={len(tp.orders)}",
+    )
     return tp
 
 

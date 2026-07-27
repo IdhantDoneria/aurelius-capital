@@ -34,9 +34,9 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class ExposureLimits:
-    max_asset_weight: float = 0.10      # |w_i| per name
-    max_sector_weight: float = 0.30     # sum |w_i| per sector
-    max_gross_leverage: float = 1.0     # sum |w_i| whole book
+    max_asset_weight: float = 0.10  # |w_i| per name
+    max_sector_weight: float = 0.30  # sum |w_i| per sector
+    max_gross_leverage: float = 1.0  # sum |w_i| whole book
     correlation_threshold: float = 0.7  # above this avg rho, start deleveraging
 
 
@@ -48,8 +48,7 @@ def apply_limits(
 ) -> dict[str, float]:
     """Return weights projected into the exposure budget."""
     lim = limits
-    w = {s: max(-lim.max_asset_weight, min(lim.max_asset_weight, wi))
-         for s, wi in weights.items()}
+    w = {s: max(-lim.max_asset_weight, min(lim.max_asset_weight, wi)) for s, wi in weights.items()}
 
     # Sector caps: scale each breaching sector's names by cap/current.
     if sector_map:
@@ -66,7 +65,7 @@ def apply_limits(
     # Gross leverage + correlation haircut: one final scalar.
     budget = lim.max_gross_leverage
     if avg_correlation >= lim.correlation_threshold:
-        budget *= max(0.0, 1.0 - avg_correlation)   # correlated book -> smaller
+        budget *= max(0.0, 1.0 - avg_correlation)  # correlated book -> smaller
     gross = sum(abs(wi) for wi in w.values())
     if gross > budget and gross > 0:
         w = {s: wi * budget / gross for s, wi in w.items()}

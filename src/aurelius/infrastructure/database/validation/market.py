@@ -170,9 +170,17 @@ class CorporateActionIngest(BaseModel):
     @classmethod
     def valid_action_type(cls, v: str) -> str:
         valid = {
-            "split", "reverse_split", "dividend_cash", "dividend_stock",
-            "spinoff", "merger", "acquisition", "delisting",
-            "name_change", "ticker_change", "rights_offering",
+            "split",
+            "reverse_split",
+            "dividend_cash",
+            "dividend_stock",
+            "spinoff",
+            "merger",
+            "acquisition",
+            "delisting",
+            "name_change",
+            "ticker_change",
+            "rights_offering",
         }
         if v not in valid:
             raise ValueError(f"action_type must be one of {valid}")
@@ -199,9 +207,7 @@ class OHLCVBatchValidator:
     # Maximum staleness for market-hours data
     MAX_STALENESS_DAYS: int = 5
 
-    def validate_batch(
-        self, raw_bars: list[dict]
-    ) -> tuple[list[OHLCVIngest], list[dict]]:
+    def validate_batch(self, raw_bars: list[dict]) -> tuple[list[OHLCVIngest], list[dict]]:
         """Validate a list of raw bar dicts.
 
         Returns (valid_bars, rejected_bars).
@@ -219,9 +225,7 @@ class OHLCVBatchValidator:
 
         return valid, rejected
 
-    def validate_chronological_order(
-        self, bars: list[OHLCVIngest]
-    ) -> list[ValidationIssue]:
+    def validate_chronological_order(self, bars: list[OHLCVIngest]) -> list[ValidationIssue]:
         """Verify bars are in ascending timestamp order."""
         issues = []
         for i in range(1, len(bars)):
@@ -231,7 +235,7 @@ class OHLCVBatchValidator:
                         field="timestamp",
                         message=(
                             f"Bar at index {i} ({bars[i].timestamp}) is not after "
-                            f"bar at index {i-1} ({bars[i-1].timestamp})"
+                            f"bar at index {i - 1} ({bars[i - 1].timestamp})"
                         ),
                         severity="error",
                     )

@@ -95,9 +95,7 @@ class FeaturePipeline:
 
     # ── internals ──
 
-    def _one(
-        self, symbol: str, feat: Feature, ts: datetime, window: Window
-    ) -> FeatureValueRow:
+    def _one(self, symbol: str, feat: Feature, ts: datetime, window: Window) -> FeatureValueRow:
         key = (symbol, feat.spec.name, feat.spec.version, ts)
         if self._use_cache and key in self._cache:
             return FeatureValueRow(symbol, feat.spec.name, feat.spec.version, ts, self._cache[key])
@@ -110,7 +108,10 @@ class FeaturePipeline:
             except Exception as exc:  # isolate a bad feature from the batch
                 logger.warning(
                     "feature_error",
-                    feature=feat.spec.key, symbol=symbol, ts=str(ts), error=str(exc)
+                    feature=feat.spec.key,
+                    symbol=symbol,
+                    ts=str(ts),
+                    error=str(exc),
                 )
                 value = None
 
@@ -119,9 +120,7 @@ class FeaturePipeline:
         return FeatureValueRow(symbol, feat.spec.name, feat.spec.version, ts, value)
 
     @staticmethod
-    def _align_market(
-        bars: Sequence[Bar], market: Sequence[Bar] | None
-    ) -> list[Decimal] | None:
+    def _align_market(bars: Sequence[Bar], market: Sequence[Bar] | None) -> list[Decimal] | None:
         """Align benchmark closes index-for-index with `bars` by timestamp.
 
         Returns None if no benchmark, or if it doesn't cover every bar timestamp

@@ -348,6 +348,5 @@ class CorporateAction(Base):
 
     def __repr__(self) -> str:
         return (
-            f"CorporateAction(symbol={self.symbol_id}, "
-            f"type={self.action_type}, ex={self.ex_date})"
+            f"CorporateAction(symbol={self.symbol_id}, type={self.action_type}, ex={self.ex_date})"
         )

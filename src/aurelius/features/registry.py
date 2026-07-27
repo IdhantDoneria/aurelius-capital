@@ -36,8 +36,8 @@ class Category(enum.StrEnum):
 
 class ValidationStatus(enum.StrEnum):
     EXPERIMENTAL = "experimental"  # newly added, not yet vetted
-    VALIDATED = "validated"        # passed the documented validation methodology
-    DEPRECATED = "deprecated"      # superseded by a newer version
+    VALIDATED = "validated"  # passed the documented validation methodology
+    DEPRECATED = "deprecated"  # superseded by a newer version
 
 
 class Bar(NamedTuple):
@@ -84,11 +84,11 @@ class FeatureSpec:
     category: Category
     description: str
     formula: str
-    inputs: tuple[str, ...]           # which Window series it reads
-    min_periods: int                  # bars required before the value is valid
+    inputs: tuple[str, ...]  # which Window series it reads
+    min_periods: int  # bars required before the value is valid
     owner: str
     version: int = 1
-    frequency: str = "1d"             # calculation cadence
+    frequency: str = "1d"  # calculation cadence
     status: ValidationStatus = ValidationStatus.EXPERIMENTAL
     # ── quant requirements ──
     economic_intuition: str = ""
@@ -113,9 +113,7 @@ class Feature:
 REGISTRY: dict[str, Feature] = {}
 
 
-def feature(**spec_kwargs: object) -> Callable[
-    [Callable[[Window], Decimal | None]], Feature
-]:
+def feature(**spec_kwargs: object) -> Callable[[Callable[[Window], Decimal | None]], Feature]:
     """Decorator: build a FeatureSpec from kwargs, bind the fn, register it.
 
     Registers under `name@vN`, so two versions of the same feature coexist.

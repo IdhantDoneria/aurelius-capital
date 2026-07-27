@@ -9,10 +9,7 @@ from aurelius.backtesting.analytics.performance import EquityPoint, PerformanceC
 
 def _curve(values: list[float], start_day: int = 1) -> list[EquityPoint]:
     base = datetime(2024, 1, start_day, tzinfo=UTC)
-    return [
-        EquityPoint(base + timedelta(days=i), v)
-        for i, v in enumerate(values)
-    ]
+    return [EquityPoint(base + timedelta(days=i), v) for i, v in enumerate(values)]
 
 
 @pytest.fixture
@@ -59,7 +56,7 @@ def test_max_drawdown_is_zero_when_always_rising(calc):
 @pytest.mark.unit
 def test_sharpe_ratio_positive_for_positive_returns(calc):
     # All positive daily returns → positive Sharpe
-    values = [1_000_000 * (1.001 ** i) for i in range(200)]
+    values = [1_000_000 * (1.001**i) for i in range(200)]
     curve = _curve(values)
     metrics = calc.compute(curve)
     assert metrics.sharpe_ratio > 0
@@ -67,7 +64,7 @@ def test_sharpe_ratio_positive_for_positive_returns(calc):
 
 @pytest.mark.unit
 def test_sharpe_ratio_negative_for_negative_returns(calc):
-    values = [1_000_000 * (0.999 ** i) for i in range(200)]
+    values = [1_000_000 * (0.999**i) for i in range(200)]
     curve = _curve(values)
     metrics = calc.compute(curve)
     assert metrics.sharpe_ratio < 0
@@ -76,7 +73,7 @@ def test_sharpe_ratio_negative_for_negative_returns(calc):
 @pytest.mark.unit
 def test_calmar_ratio_infinite_when_no_drawdown(calc):
     # Rising equity, no drawdown → calmar should be very large or handle gracefully
-    values = [1_000_000 * (1.001 ** i) for i in range(200)]
+    values = [1_000_000 * (1.001**i) for i in range(200)]
     curve = _curve(values)
     metrics = calc.compute(curve)
     # max_drawdown is 0 → calmar not computed (stays 0.0) — handle edge case gracefully

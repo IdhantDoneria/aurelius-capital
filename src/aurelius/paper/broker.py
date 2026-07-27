@@ -55,8 +55,8 @@ class OrderRequest:
 class OrderResult:
     accepted: bool
     reason: str = ""
-    fill: FillEvent | None = None          # set when it filled immediately (market)
-    resting: bool = False                  # True when a limit order is working
+    fill: FillEvent | None = None  # set when it filled immediately (market)
+    resting: bool = False  # True when a limit order is working
     order_id: str = ""
 
 
@@ -99,8 +99,9 @@ class PaperBroker:
                 still.append(r)
                 continue
             if self._crosses(r.request, tick.price):
-                fills.append(self._fill(
-                    r.request, r.request.limit_price, tick.timestamp, r.order_id))
+                fills.append(
+                    self._fill(r.request, r.request.limit_price, tick.timestamp, r.order_id)
+                )
             else:
                 still.append(r)
         self._resting = still
@@ -130,8 +131,14 @@ class PaperBroker:
                 logger.warning("order_rejected", symbol=req.symbol, reason=verdict.reasons)
                 return OrderResult(False, "; ".join(verdict.reasons), order_id=oid)
             if verdict.modified_quantity is not None:
-                req = OrderRequest(req.symbol, req.side, verdict.modified_quantity,
-                                   req.order_type, req.limit_price, req.strategy_id)
+                req = OrderRequest(
+                    req.symbol,
+                    req.side,
+                    verdict.modified_quantity,
+                    req.order_type,
+                    req.limit_price,
+                    req.strategy_id,
+                )
 
         # Balance check for buys (cash account).
         if req.side == Side.BUY and req.quantity * mark > self.state.cash:
@@ -151,8 +158,14 @@ class PaperBroker:
         px = ref_price + slip if req.side == Side.BUY else ref_price - slip  # slippage hurts
         commission = px * req.quantity * self._commission
         fill = FillEvent(
-            timestamp=now, symbol=req.symbol, side=req.side, quantity=req.quantity,
-            fill_price=px, commission=commission, slippage_cost=slip * req.quantity, order_id=oid,
+            timestamp=now,
+            symbol=req.symbol,
+            side=req.side,
+            quantity=req.quantity,
+            fill_price=px,
+            commission=commission,
+            slippage_cost=slip * req.quantity,
+            order_id=oid,
         )
         pos = self.state.position(req.symbol)
         if req.side == Side.BUY:
@@ -160,9 +173,10 @@ class PaperBroker:
         else:
             pos.apply_sell(req.quantity, px)
         pos.last_price = px
-        self.state.debit(-fill.signed_cash_delta())   # signed_cash_delta negative for buys
-        logger.info("fill", symbol=req.symbol, side=req.side.value,
-                    qty=float(req.quantity), price=float(px))
+        self.state.debit(-fill.signed_cash_delta())  # signed_cash_delta negative for buys
+        logger.info(
+            "fill", symbol=req.symbol, side=req.side.value, qty=float(req.quantity), price=float(px)
+        )
         if self._on_fill:
             self._on_fill(fill)
         return fill
@@ -191,4 +205,5 @@ class PaperBroker:
     @staticmethod
     def _tz():
         from datetime import UTC
+
         return UTC

@@ -9,6 +9,7 @@ from aurelius.backtesting.portfolio.state import PortfolioState
 
 # ── Position ──────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.unit
 def test_position_buy_opens_long():
     pos = Position("AAPL")
@@ -23,7 +24,7 @@ def test_position_avg_cost_weighted_average():
     pos = Position("AAPL")
     pos.apply_buy(Decimal("100"), Decimal("180.00"))  # 100 shares at 180
     pos.apply_buy(Decimal("100"), Decimal("200.00"))  # 100 shares at 200
-    assert pos.avg_cost == Decimal("190.00")           # (18000 + 20000) / 200
+    assert pos.avg_cost == Decimal("190.00")  # (18000 + 20000) / 200
     assert pos.quantity == Decimal("200")
 
 
@@ -44,7 +45,7 @@ def test_position_partial_sell():
     pos.apply_sell(Decimal("100"), Decimal("190.00"))  # sell half
     assert pos.quantity == Decimal("100")
     assert pos.realized_pnl == Decimal("1000.00")  # (190-180) x 100
-    assert pos.avg_cost == Decimal("180.00")          # unchanged for remaining
+    assert pos.avg_cost == Decimal("180.00")  # unchanged for remaining
 
 
 @pytest.mark.unit
@@ -66,7 +67,7 @@ def test_position_zero_unrealized_when_flat():
 def test_position_cover_short():
     pos = Position("AAPL")
     pos.apply_sell(Decimal("100"), Decimal("200.00"))  # short 100 at 200
-    pos.apply_buy(Decimal("100"), Decimal("180.00"))   # cover at 180
+    pos.apply_buy(Decimal("100"), Decimal("180.00"))  # cover at 180
     assert pos.quantity == Decimal("0")
     assert pos.realized_pnl == Decimal("2000.00")  # (200-180) x 100
 
@@ -79,6 +80,7 @@ def test_position_buy_negative_quantity_raises():
 
 
 # ── PortfolioState ────────────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 def test_portfolio_initial_state():

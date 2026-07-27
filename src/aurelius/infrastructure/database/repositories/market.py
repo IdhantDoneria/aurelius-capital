@@ -42,10 +42,9 @@ class SymbolRepository(BaseRepository[Symbol]):
         if exchange_mic:
             # Join to exchanges to filter by MIC — see reference.py for FK
             from aurelius.infrastructure.database.models.reference import Exchange
-            query = (
-                query
-                .join(Exchange, Symbol.exchange_id == Exchange.id)
-                .where(Exchange.mic_code == exchange_mic)
+
+            query = query.join(Exchange, Symbol.exchange_id == Exchange.id).where(
+                Exchange.mic_code == exchange_mic
             )
         result = await self._session.execute(query)
         return result.scalar_one_or_none()
@@ -154,9 +153,7 @@ class OHLCVRepository(BaseRepository[MarketDataOHLCV]):
         )
         return list(result.scalars().all())
 
-    async def get_latest(
-        self, symbol_id: UUID, frequency: str = "1d"
-    ) -> MarketDataOHLCV | None:
+    async def get_latest(self, symbol_id: UUID, frequency: str = "1d") -> MarketDataOHLCV | None:
         """Return most recent bar for a symbol."""
         result = await self._session.execute(
             select(MarketDataOHLCV)
@@ -181,8 +178,7 @@ class OHLCVRepository(BaseRepository[MarketDataOHLCV]):
         Used for cross-sectional factor computation.
         """
         result = await self._session.execute(
-            select(MarketDataOHLCV)
-            .where(
+            select(MarketDataOHLCV).where(
                 and_(
                     MarketDataOHLCV.symbol_id.in_(symbol_ids),
                     MarketDataOHLCV.timestamp == timestamp,
@@ -207,6 +203,7 @@ class OHLCVRepository(BaseRepository[MarketDataOHLCV]):
         Run during off-hours or in a background job.
         """
         from sqlalchemy import update
+
         stmt = (
             update(MarketDataOHLCV)
             .where(
@@ -228,9 +225,7 @@ class OHLCVRepository(BaseRepository[MarketDataOHLCV]):
         )
         return count
 
-    async def get_data_coverage(
-        self, symbol_id: UUID, frequency: str = "1d"
-    ) -> dict:
+    async def get_data_coverage(self, symbol_id: UUID, frequency: str = "1d") -> dict:
         """Return data availability stats for a symbol."""
         result = await self._session.execute(
             select(

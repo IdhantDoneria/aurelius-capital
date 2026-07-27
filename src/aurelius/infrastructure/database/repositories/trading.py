@@ -32,10 +32,10 @@ _VALID_TRANSITIONS: dict[str, set[str]] = {
     "submitted": {"acknowledged", "partial", "filled", "cancelled", "rejected", "expired"},
     "acknowledged": {"partial", "filled", "cancelled", "rejected", "expired"},
     "partial": {"filled", "cancelled"},
-    "filled": set(),       # terminal
-    "cancelled": set(),    # terminal
-    "rejected": set(),     # terminal
-    "expired": set(),      # terminal
+    "filled": set(),  # terminal
+    "cancelled": set(),  # terminal
+    "rejected": set(),  # terminal
+    "expired": set(),  # terminal
 }
 
 
@@ -46,9 +46,7 @@ class OrderRepository(BaseRepository[Order]):
         """Override: orders are partitioned, scalar get needs timestamp.
         Use get_by_broker_id or get_active_for_account for efficient lookups.
         """
-        result = await self._session.execute(
-            select(Order).where(Order.id == id).limit(1)
-        )
+        result = await self._session.execute(select(Order).where(Order.id == id).limit(1))
         return result.scalar_one_or_none()
 
     async def get_active_for_account(self, account_id: UUID) -> list[Order]:
@@ -70,9 +68,7 @@ class OrderRepository(BaseRepository[Order]):
     async def get_by_broker_id(self, broker_order_id: str) -> Order | None:
         """Look up by broker's reference ID. Used when processing fill callbacks."""
         result = await self._session.execute(
-            select(Order)
-            .where(Order.broker_order_id == broker_order_id)
-            .limit(1)
+            select(Order).where(Order.broker_order_id == broker_order_id).limit(1)
         )
         return result.scalar_one_or_none()
 
@@ -89,9 +85,7 @@ class OrderRepository(BaseRepository[Order]):
         Without it, the query scans all partitions.
         """
         result = await self._session.execute(
-            select(Order).where(
-                and_(Order.id == order_id, Order.submitted_at == submitted_at)
-            )
+            select(Order).where(and_(Order.id == order_id, Order.submitted_at == submitted_at))
         )
         order = result.scalar_one_or_none()
         if order is None:
@@ -130,9 +124,7 @@ class OrderRepository(BaseRepository[Order]):
         Transitions order to 'partial' or 'filled' based on remaining qty.
         """
         result = await self._session.execute(
-            select(Order).where(
-                and_(Order.id == order_id, Order.submitted_at == submitted_at)
-            )
+            select(Order).where(and_(Order.id == order_id, Order.submitted_at == submitted_at))
         )
         order = result.scalar_one_or_none()
         if order is None:
@@ -167,9 +159,7 @@ class FillRepository(BaseRepository[Fill]):
 
     async def get_fills_for_order(self, order_id: UUID) -> list[Fill]:
         result = await self._session.execute(
-            select(Fill)
-            .where(Fill.order_id == order_id)
-            .order_by(Fill.timestamp.asc())
+            select(Fill).where(Fill.order_id == order_id).order_by(Fill.timestamp.asc())
         )
         return list(result.scalars().all())
 
@@ -204,8 +194,7 @@ class FillRepository(BaseRepository[Fill]):
         self, account_id: UUID, start: datetime, end: datetime
     ) -> Decimal:
         result = await self._session.execute(
-            select(func.sum(Fill.commission))
-            .where(
+            select(func.sum(Fill.commission)).where(
                 and_(
                     Fill.account_id == account_id,
                     Fill.timestamp >= start,
@@ -320,9 +309,7 @@ class PositionRepository(BaseRepository[Position]):
         )
         return position
 
-    async def mark_to_market(
-        self, account_id: UUID, prices: dict[UUID, Decimal]
-    ) -> list[Position]:
+    async def mark_to_market(self, account_id: UUID, prices: dict[UUID, Decimal]) -> list[Position]:
         """Update unrealized P&L for all open positions given current prices.
         Call at end of day or on price updates.
         """
@@ -342,12 +329,10 @@ class PositionRepository(BaseRepository[Position]):
         """Compute gross/net exposure. Used by risk system."""
         result = await self._session.execute(
             select(
-                func.sum(
-                    Position.last_price * Position.quantity
-                ).label("net_market_value"),
-                func.sum(
-                    func.abs(Position.last_price * Position.quantity)
-                ).label("gross_market_value"),
+                func.sum(Position.last_price * Position.quantity).label("net_market_value"),
+                func.sum(func.abs(Position.last_price * Position.quantity)).label(
+                    "gross_market_value"
+                ),
                 func.count().label("position_count"),
             ).where(
                 and_(

@@ -20,6 +20,7 @@ from aurelius.backtesting.strategy.base import Strategy, StrategyContext
 
 # ── Example strategy: SMA crossover ──────────────────────────────────────────
 
+
 class SMACrossover(Strategy):
     """Fast/slow moving average crossover. Long when fast > slow, flat otherwise."""
 
@@ -64,11 +65,12 @@ class BuyAndHold(Strategy):
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
+
 def _synthetic_bars(
     symbol: str = "AAPL",
     n_bars: int = 60,
     start_price: float = 100.0,
-    trend: float = 0.5,       # daily drift in $
+    trend: float = 0.5,  # daily drift in $
 ) -> list[BarData]:
     """Generate synthetic daily bars with linear trend + small noise."""
     bars = []
@@ -79,15 +81,17 @@ def _synthetic_bars(
         close = price + trend
         high = max(open_, close) + 0.5
         low = min(open_, close) - 0.5
-        bars.append(BarData(
-            symbol=symbol,
-            timestamp=ts + timedelta(days=i),
-            open=Decimal(str(round(open_, 4))),
-            high=Decimal(str(round(high, 4))),
-            low=Decimal(str(round(low, 4))),
-            close=Decimal(str(round(close, 4))),
-            volume=Decimal("500000"),
-        ))
+        bars.append(
+            BarData(
+                symbol=symbol,
+                timestamp=ts + timedelta(days=i),
+                open=Decimal(str(round(open_, 4))),
+                high=Decimal(str(round(high, 4))),
+                low=Decimal(str(round(low, 4))),
+                close=Decimal(str(round(close, 4))),
+                volume=Decimal("500000"),
+            )
+        )
         price = close
     return bars
 
@@ -114,6 +118,7 @@ def default_config() -> BacktestConfig:
 
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.unit
 def test_engine_runs_without_error(uptrend_feed, default_config):
@@ -202,6 +207,7 @@ def test_report_strategy_name(uptrend_feed, default_config):
 @pytest.mark.unit
 def test_report_to_dict_is_json_serializable(uptrend_feed, default_config):
     import json
+
     engine = BacktestEngine(
         strategy=BuyAndHold(),
         data_feed=uptrend_feed,
@@ -229,7 +235,7 @@ def test_drawdown_never_positive(uptrend_feed, default_config):
 def test_max_drawdown_halt_prevents_new_orders():
     """Risk engine halts strategy when drawdown exceeds limit."""
     # Create bars that crash after initial gains
-    bars = _synthetic_bars(n_bars=20, trend=1.0)     # up 20 bars
+    bars = _synthetic_bars(n_bars=20, trend=1.0)  # up 20 bars
     crash = _synthetic_bars(n_bars=30, trend=-10.0, start_price=120.0)  # massive crash
     crash = [
         BarData(

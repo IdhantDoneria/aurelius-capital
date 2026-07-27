@@ -167,9 +167,7 @@ def test_fill_event_cash_delta():
         "ord-1",
     )
     # Buy: cash goes out = -(notional + commission)
-    assert fill.signed_cash_delta() == -(
-        Decimal("100") * Decimal("185") + Decimal("18.50")
-    )
+    assert fill.signed_cash_delta() == -(Decimal("100") * Decimal("185") + Decimal("18.50"))
 
     sell_fill = FillEvent(
         _ts(1),

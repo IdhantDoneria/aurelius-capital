@@ -28,6 +28,7 @@ from aurelius.construction import (
 
 # ── aggregation ───────────────────────────────────────────────────────────────
 
+
 def test_aggregation_zscores_and_blends():
     sigs = [
         RawSignal("AAA", SignalSource.MOMENTUM, 2.0),
@@ -43,7 +44,7 @@ def test_aggregation_zscores_and_blends():
 
 def test_aggregation_no_cross_section_is_zero():
     alpha = SignalAggregator().combine([RawSignal("AAA", SignalSource.MOMENTUM, 5.0)])
-    assert alpha["AAA"] == 0.0            # one name -> no information
+    assert alpha["AAA"] == 0.0  # one name -> no information
 
 
 def test_aggregation_zero_dispersion_is_zero():
@@ -54,16 +55,17 @@ def test_aggregation_zero_dispersion_is_zero():
 
 # ── sizing ────────────────────────────────────────────────────────────────────
 
+
 def test_equal_weight_signs_and_sum():
     w = equal_weight({"AAA": 0.5, "BBB": -0.3, "CCC": 0.0})
-    assert w == {"AAA": 0.5, "BBB": -0.5}   # CCC dropped (alpha 0); 1/N each
+    assert w == {"AAA": 0.5, "BBB": -0.5}  # CCC dropped (alpha 0); 1/N each
     assert abs(sum(abs(v) for v in w.values()) - 1.0) < 1e-9
 
 
 def test_volatility_target_hits_target():
     # Independent assets, cov given -> scaled book should have ~target vol.
     syms = ["AAA", "BBB"]
-    cov = np.diag([0.04, 0.09])            # ann var -> vols 0.2, 0.3
+    cov = np.diag([0.04, 0.09])  # ann var -> vols 0.2, 0.3
     vols = {"AAA": 0.2, "BBB": 0.3}
     w = volatility_target({"AAA": 1.0, "BBB": 1.0}, vols, target_vol=0.10, cov=(syms, cov))
     vec = np.array([w["AAA"], w["BBB"]])
@@ -80,29 +82,30 @@ def test_risk_parity_equalizes_risk_contribution():
     vec = np.array([w["AAA"], w["BBB"]])
     sigma_w = cov @ vec
     rc = vec * sigma_w
-    assert abs(rc[0] - rc[1]) < 1e-4       # equal risk contribution
-    assert w["AAA"] > w["BBB"]             # lower-vol name gets more capital
+    assert abs(rc[0] - rc[1]) < 1e-4  # equal risk contribution
+    assert w["AAA"] > w["BBB"]  # lower-vol name gets more capital
 
 
 # ── optimization ──────────────────────────────────────────────────────────────
 
+
 def test_min_variance_prefers_low_vol():
-    cov = np.diag([0.01, 0.25])            # AAA far less volatile
+    cov = np.diag([0.01, 0.25])  # AAA far less volatile
     w = min_variance(cov)
     assert abs(w.sum() - 1.0) < 1e-9
-    assert w[0] > w[1]                     # more weight to low-vol asset
+    assert w[0] > w[1]  # more weight to low-vol asset
 
 
 def test_min_variance_survives_singular_cov():
     cov = np.array([[0.04, 0.04], [0.04, 0.04]])  # singular
     w = min_variance(cov)
-    assert abs(w.sum() - 1.0) < 1e-6       # pinv fallback, still sums to 1
+    assert abs(w.sum() - 1.0) < 1e-6  # pinv fallback, still sums to 1
 
 
 def test_max_sharpe_tilts_to_higher_mu():
     cov = np.eye(2) * 0.04
     w = max_sharpe(np.array([0.10, 0.02]), cov)
-    assert w[0] > w[1]                     # higher expected return -> higher weight
+    assert w[0] > w[1]  # higher expected return -> higher weight
 
 
 def test_constrained_respects_box():
@@ -126,6 +129,7 @@ def test_sample_covariance_shape():
 
 # ── exposure ──────────────────────────────────────────────────────────────────
 
+
 def test_asset_cap_clips():
     w = apply_limits({"AAA": 0.5}, ExposureLimits(max_asset_weight=0.1, max_gross_leverage=1.0))
     assert abs(w["AAA"]) <= 0.1 + 1e-9
@@ -134,7 +138,7 @@ def test_asset_cap_clips():
 def test_sector_cap_scales_down():
     lim = ExposureLimits(max_asset_weight=0.5, max_sector_weight=0.3, max_gross_leverage=2.0)
     w = apply_limits({"AAA": 0.3, "BBB": 0.3}, lim, sector_map={"AAA": "T", "BBB": "T"})
-    assert sum(abs(v) for v in w.values()) <= 0.3 + 1e-9   # sector gross <= cap
+    assert sum(abs(v) for v in w.values()) <= 0.3 + 1e-9  # sector gross <= cap
 
 
 def test_gross_leverage_scaled():
@@ -153,6 +157,7 @@ def test_correlation_haircut_delevers():
 
 # ── end-to-end seam (backtesting state + risk engine + orders) ─────────────────
 
+
 def _state(price=100, n=3):
     s = PortfolioState(Decimal("1000000"))
     for i in range(n):
@@ -162,6 +167,7 @@ def _state(price=100, n=3):
 
 def _returns(syms, seed=1):
     import random
+
     r = random.Random(seed)
     return {s: [r.gauss(0.0003, 0.01) for _ in range(120)] for s in syms}
 
@@ -175,29 +181,30 @@ def test_builder_produces_screened_orders():
         RawSignal("S2", SignalSource.MOMENTUM, 0.3),
     ]
     prices = {s: Decimal("100") for s in syms}
-    tp = PortfolioBuilder(method=Method.EQUAL_WEIGHT).build(
-        signals, _returns(syms), prices, state
-    )
-    assert tp.orders                       # orders emitted
+    tp = PortfolioBuilder(method=Method.EQUAL_WEIGHT).build(signals, _returns(syms), prices, state)
+    assert tp.orders  # orders emitted
     assert all(o.quantity > 0 for o in tp.orders)
 
 
 def test_builder_risk_engine_rejects_when_halted():
     from aurelius.risk import RiskEngine
+
     syms = ["S0", "S1", "S2"]
     state = _state()
     eng = RiskEngine()
-    eng.trip("manual shutdown")            # kill switch on
-    signals = [RawSignal(s, SignalSource.ML, v)
-               for s, v in [("S0", 1.0), ("S1", -0.5), ("S2", 0.2)]]
+    eng.trip("manual shutdown")  # kill switch on
+    signals = [
+        RawSignal(s, SignalSource.ML, v) for s, v in [("S0", 1.0), ("S1", -0.5), ("S2", 0.2)]
+    ]
     prices = {s: Decimal("100") for s in syms}
     tp = PortfolioBuilder(method=Method.EQUAL_WEIGHT, risk_engine=eng).build(
         signals, _returns(syms), prices, state
     )
-    assert tp.orders == []                 # everything rejected by the kill switch
-    assert tp.rejected                     # and recorded
+    assert tp.orders == []  # everything rejected by the kill switch
+    assert tp.rejected  # and recorded
 
 
 def test_demo_self_check():
     from aurelius.construction import demo
+
     demo()

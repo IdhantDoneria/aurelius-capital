@@ -17,6 +17,7 @@ from aurelius.infrastructure.database.connection import DatabaseManager
 
 # ── Singletons (created once per process) ────────────────────────────────────
 
+
 @lru_cache(maxsize=1)
 def get_database_manager(settings: Settings = Depends(get_settings)) -> DatabaseManager:
     return DatabaseManager(settings)
@@ -28,6 +29,7 @@ def get_cache_manager(settings: Settings = Depends(get_settings)) -> CacheManage
 
 
 # ── Per-request dependencies ──────────────────────────────────────────────────
+
 
 async def get_db_session(
     db: Annotated[DatabaseManager, Depends(get_database_manager)],

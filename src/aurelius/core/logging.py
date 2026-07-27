@@ -13,9 +13,7 @@ import structlog
 from structlog.types import EventDict, WrappedLogger
 
 
-def _add_service_name(
-    logger: WrappedLogger, method_name: str, event_dict: EventDict
-) -> EventDict:
+def _add_service_name(logger: WrappedLogger, method_name: str, event_dict: EventDict) -> EventDict:
     event_dict["service"] = "aurelius-capital"
     return event_dict
 

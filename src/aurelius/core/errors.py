@@ -31,6 +31,7 @@ class AureliusError(Exception):
 
 # ── Configuration errors ───────────────────────────────────────────────────────
 
+
 class ConfigurationError(AureliusError):
     """Raised when required configuration is missing or invalid."""
 
@@ -39,6 +40,7 @@ class ConfigurationError(AureliusError):
 
 
 # ── Infrastructure errors ──────────────────────────────────────────────────────
+
 
 class InfrastructureError(AureliusError):
     """Base for all infrastructure-layer errors (DB, cache, network)."""
@@ -66,6 +68,7 @@ class ConnectionError(InfrastructureError):
 
 
 # ── Domain errors ──────────────────────────────────────────────────────────────
+
 
 class DomainError(AureliusError):
     """Business rule violations."""
@@ -96,6 +99,7 @@ class ConflictError(DomainError):
 
 
 # ── Market data errors ─────────────────────────────────────────────────────────
+
 
 class MarketDataError(DomainError):
     """Market data quality or availability issues."""

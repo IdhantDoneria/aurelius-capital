@@ -16,12 +16,12 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 # ── Financial precision types ─────────────────────────────────────────────────
 # NUMERIC is exact. FLOAT is not. Never use FLOAT for prices, quantities, or PnL.
 
-Price = Numeric(20, 8)          # Asset prices — supports crypto 8 decimal places
-Quantity = Numeric(28, 4)       # Share/contract counts — large for ETF holdings
-Notional = Numeric(28, 4)       # USD value of positions — billions-scale
-Ratio = Numeric(20, 8)          # Ratios, multipliers, adjustment factors
+Price = Numeric(20, 8)  # Asset prices — supports crypto 8 decimal places
+Quantity = Numeric(28, 4)  # Share/contract counts — large for ETF holdings
+Notional = Numeric(28, 4)  # USD value of positions — billions-scale
+Ratio = Numeric(20, 8)  # Ratios, multipliers, adjustment factors
 FinancialRatio = Numeric(20, 4)  # P/E, P/B, margins — 4dp is sufficient
-Percentage = Numeric(10, 6)     # -1.0 to 1.0 range, 6dp for basis point precision
+Percentage = Numeric(10, 6)  # -1.0 to 1.0 range, 6dp for basis point precision
 
 
 class Base(DeclarativeBase):
@@ -33,6 +33,7 @@ class Base(DeclarativeBase):
 
 
 # ── Mixins ────────────────────────────────────────────────────────────────────
+
 
 class UUIDPrimaryKeyMixin:
     """UUID primary key. Use for business entities that need stable cross-system identity."""

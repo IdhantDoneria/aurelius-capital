@@ -124,9 +124,7 @@ class RiskEngine:
         cur = pos.quantity if pos else Decimal("0")
         return cur <= 0  # already short/flat and selling more -> growing short
 
-    def _quantity_caps(
-        self, ctx: OrderContext, state: PortfolioState
-    ) -> list[tuple[Decimal, str]]:
+    def _quantity_caps(self, ctx: OrderContext, state: PortfolioState) -> list[tuple[Decimal, str]]:
         """Every check that can be satisfied by shrinking quantity.
 
         Each yields the max quantity it permits; evaluate() takes the min.
@@ -140,8 +138,9 @@ class RiskEngine:
         pos = state.positions.get(ctx.symbol)
         cur_mv = abs(pos.market_value) if pos else Decimal("0")
         allowed_mv = lim.max_position_pct * nav - cur_mv
-        caps.append((self._floor(allowed_mv / p),
-                     f"position size cap {lim.max_position_pct:.0%} NAV"))
+        caps.append(
+            (self._floor(allowed_mv / p), f"position size cap {lim.max_position_pct:.0%} NAV")
+        )
 
         # Gross leverage: (gross + q*p)/NAV <= max_gross_leverage
         headroom = lim.max_gross_leverage * nav - state.gross_exposure
@@ -149,16 +148,24 @@ class RiskEngine:
 
         # Liquidity: q <= max_participation_pct * ADV
         if ctx.adv is not None and ctx.adv > 0:
-            caps.append((self._floor(lim.max_participation_pct * ctx.adv),
-                         f"liquidity cap {lim.max_participation_pct:.0%} ADV"))
+            caps.append(
+                (
+                    self._floor(lim.max_participation_pct * ctx.adv),
+                    f"liquidity cap {lim.max_participation_pct:.0%} ADV",
+                )
+            )
 
         # Single-trade max loss: |p - stop| * q <= single_trade_max_loss_pct * NAV
         if ctx.stop_price is not None:
             risk_per_share = abs(p - ctx.stop_price)
             if risk_per_share > 0:
                 budget = lim.single_trade_max_loss_pct * nav
-                caps.append((self._floor(budget / risk_per_share),
-                             f"stop-loss budget {lim.single_trade_max_loss_pct:.0%} NAV"))
+                caps.append(
+                    (
+                        self._floor(budget / risk_per_share),
+                        f"stop-loss budget {lim.single_trade_max_loss_pct:.0%} NAV",
+                    )
+                )
         return caps
 
     @staticmethod

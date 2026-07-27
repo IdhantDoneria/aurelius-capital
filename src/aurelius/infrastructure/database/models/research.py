@@ -126,7 +126,9 @@ class FeatureValue(Base):
     __tablename__ = "feature_values"
     __table_args__ = (
         UniqueConstraint(
-            "symbol_id", "feature_id", "timestamp",
+            "symbol_id",
+            "feature_id",
+            "timestamp",
             name="uq_feature_value_symbol_feature_ts",
         ),
         Index("ix_feature_val_feature_ts", "feature_id", "timestamp"),
@@ -139,10 +141,11 @@ class FeatureValue(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     timestamp: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), primary_key=True, nullable=False,
+        DateTime(timezone=True),
+        primary_key=True,
+        nullable=False,
         comment=(
-            "As-of date. Point-in-time correct — computed only from "
-            "data available at this date."
+            "As-of date. Point-in-time correct — computed only from data available at this date."
         ),
     )
 
@@ -151,11 +154,14 @@ class FeatureValue(Base):
     value: Mapped[Decimal] = mapped_column(Numeric(28, 8), nullable=False)
 
     is_valid: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default=text("true"),
+        Boolean,
+        nullable=False,
+        server_default=text("true"),
         comment="False if flagged as outlier. Row is kept for audit, not deleted.",
     )
     computation_run_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True,
+        UUID(as_uuid=True),
+        nullable=True,
         comment="Links to the batch run that produced this value",
     )
     created_at: Mapped[datetime] = mapped_column(
@@ -189,18 +195,18 @@ class ExperimentRun(Base, TimestampMixin):
     # Full configuration snapshot — immutable after run starts
     strategy_config: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     universe_config: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, nullable=False,
+        JSONB,
+        nullable=False,
         comment="Which symbols, filters, rebalance rules",
     )
     backtest_config: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, nullable=False,
+        JSONB,
+        nullable=False,
         comment="Date range, frequency, transaction cost model, slippage model",
     )
 
     model_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
-    feature_ids: Mapped[list[str] | None] = mapped_column(
-        ARRAY(UUID(as_uuid=True)), nullable=True
-    )
+    feature_ids: Mapped[list[str] | None] = mapped_column(ARRAY(UUID(as_uuid=True)), nullable=True)
 
     status: Mapped[str] = mapped_column(
         Enum(ExperimentStatusEnum, name="experiment_status_enum"),
@@ -230,7 +236,10 @@ class ExperimentMetric(Base):
     __table_args__ = (
         Index("ix_exp_metric_experiment", "experiment_id"),
         UniqueConstraint(
-            "experiment_id", "metric_name", "period_start", "period_end",
+            "experiment_id",
+            "metric_name",
+            "period_start",
+            "period_end",
             name="uq_exp_metric",
         ),
     )
@@ -241,12 +250,8 @@ class ExperimentMetric(Base):
     experiment_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     metric_name: Mapped[str] = mapped_column(String(100), nullable=False)
     metric_value: Mapped[Decimal] = mapped_column(Numeric(20, 8), nullable=False)
-    period_start: Mapped[date] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    period_end: Mapped[date] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    period_start: Mapped[date] = mapped_column(DateTime(timezone=True), nullable=False)
+    period_end: Mapped[date] = mapped_column(DateTime(timezone=True), nullable=False)
     breakdown: Mapped[dict[str, Any] | None] = mapped_column(
         JSONB, nullable=True, comment="Metric broken down by year/sector/regime"
     )
@@ -282,12 +287,14 @@ class SignalPrediction(Base):
 
     signal_value: Mapped[Decimal] = mapped_column(Numeric(20, 8), nullable=False)
     signal_rank: Mapped[Decimal | None] = mapped_column(
-        Numeric(10, 8), nullable=True,
+        Numeric(10, 8),
+        nullable=True,
         comment="Cross-sectional rank 0-1. 1.0 = top signal in universe.",
     )
     confidence: Mapped[Decimal | None] = mapped_column(Numeric(10, 8), nullable=True)
     horizon_days: Mapped[int] = mapped_column(
-        SmallInteger, nullable=False,
+        SmallInteger,
+        nullable=False,
         comment="Prediction horizon in trading days",
     )
     extra_data: Mapped[dict[str, Any]] = mapped_column(
@@ -321,15 +328,14 @@ class ModelRegistry(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     version: Mapped[int] = mapped_column(Integer, nullable=False)
     model_type: Mapped[str] = mapped_column(
-        String(50), nullable=False,
+        String(50),
+        nullable=False,
         comment="lgbm, xgboost, neural_net, linear, ensemble",
     )
     artifact_path: Mapped[str] = mapped_column(
         Text, nullable=False, comment="Path to serialized model artifact"
     )
-    feature_ids: Mapped[list[str]] = mapped_column(
-        ARRAY(UUID(as_uuid=True)), nullable=False
-    )
+    feature_ids: Mapped[list[str]] = mapped_column(ARRAY(UUID(as_uuid=True)), nullable=False)
     training_start_date: Mapped[date] = mapped_column(DateTime(timezone=True), nullable=False)
     training_end_date: Mapped[date] = mapped_column(DateTime(timezone=True), nullable=False)
     validation_metrics: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)

@@ -13,9 +13,9 @@ from decimal import Decimal
 
 
 class RiskDecision(enum.StrEnum):
-    APPROVE = "approve"   # order passes every check as-is
-    MODIFY = "modify"     # order too large on one axis; clamp quantity down and pass
-    REJECT = "reject"     # hard breach; no order should reach execution
+    APPROVE = "approve"  # order passes every check as-is
+    MODIFY = "modify"  # order too large on one axis; clamp quantity down and pass
+    REJECT = "reject"  # hard breach; no order should reach execution
 
 
 @dataclass(frozen=True)
@@ -26,16 +26,16 @@ class RiskLimits:
     starting points — a CRO raises/lowers per mandate.
     """
 
-    max_position_pct: Decimal = Decimal("0.10")        # single name <= 10% NAV
-    max_gross_leverage: Decimal = Decimal("1.5")       # sum|mv| / NAV <= 1.5x
-    max_participation_pct: Decimal = Decimal("0.20")   # order <= 20% of ADV (fillable)
-    daily_loss_limit: Decimal = Decimal("0.03")        # -3% day trips the kill switch
-    max_drawdown_halt: Decimal = Decimal("0.20")       # -20% peak-to-trough trips it
-    max_sector_pct: Decimal = Decimal("0.30")          # any sector <= 30% of gross
+    max_position_pct: Decimal = Decimal("0.10")  # single name <= 10% NAV
+    max_gross_leverage: Decimal = Decimal("1.5")  # sum|mv| / NAV <= 1.5x
+    max_participation_pct: Decimal = Decimal("0.20")  # order <= 20% of ADV (fillable)
+    daily_loss_limit: Decimal = Decimal("0.03")  # -3% day trips the kill switch
+    max_drawdown_halt: Decimal = Decimal("0.20")  # -20% peak-to-trough trips it
+    max_sector_pct: Decimal = Decimal("0.30")  # any sector <= 30% of gross
     max_name_concentration: Decimal = Decimal("0.10")  # post-trade name weight cap
-    max_hhi: Decimal = Decimal("0.20")                 # Herfindahl concentration ceiling
+    max_hhi: Decimal = Decimal("0.20")  # Herfindahl concentration ceiling
     single_trade_max_loss_pct: Decimal = Decimal("0.02")  # loss-to-stop <= 2% NAV
-    var_confidence: float = 0.95                       # parametric VaR confidence
+    var_confidence: float = 0.95  # parametric VaR confidence
 
 
 @dataclass
@@ -44,7 +44,7 @@ class RiskVerdict:
 
     decision: RiskDecision
     reasons: list[str] = field(default_factory=list)
-    modified_quantity: Decimal | None = None   # set only when decision is MODIFY
+    modified_quantity: Decimal | None = None  # set only when decision is MODIFY
 
     @property
     def approved(self) -> bool:
@@ -69,10 +69,10 @@ class RiskReport:
 
     annualized_volatility: float
     current_drawdown: float
-    value_at_risk: float                       # 1-day parametric VaR, currency units
+    value_at_risk: float  # 1-day parametric VaR, currency units
     gross_leverage: float
     net_leverage: float
-    herfindahl: float                          # sum(w_i^2) on gross weights
+    herfindahl: float  # sum(w_i^2) on gross weights
     avg_pairwise_correlation: float
     portfolio_beta: float | None
     sector_exposure: dict[str, float] = field(default_factory=dict)
@@ -84,8 +84,8 @@ class StressResult:
     scenario: str
     nav_before: float
     nav_after: float
-    pnl: float                                 # nav_after - nav_before
-    stressed_var: float | None = None          # for the vol-spike scenario
-    liquidation_days: float | None = None      # for the liquidity scenario
-    survives: bool = True                      # NAV stays positive + within DD halt
+    pnl: float  # nav_after - nav_before
+    stressed_var: float | None = None  # for the vol-spike scenario
+    liquidation_days: float | None = None  # for the liquidity scenario
+    survives: bool = True  # NAV stays positive + within DD halt
     detail: str = ""

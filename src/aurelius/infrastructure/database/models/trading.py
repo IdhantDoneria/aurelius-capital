@@ -57,7 +57,7 @@ class OrderTypeEnum(pyenum.Enum):
     STOP_LIMIT = "stop_limit"
     TWAP = "twap"
     VWAP = "vwap"
-    POV = "pov"              # Percentage of Volume
+    POV = "pov"  # Percentage of Volume
     IMPLEMENTATION_SHORTFALL = "is"
 
 
@@ -69,22 +69,22 @@ class OrderSideEnum(pyenum.Enum):
 
 
 class OrderStatusEnum(pyenum.Enum):
-    PENDING = "pending"        # created locally, not yet submitted to broker
-    SUBMITTED = "submitted"    # sent to broker, awaiting ack
+    PENDING = "pending"  # created locally, not yet submitted to broker
+    SUBMITTED = "submitted"  # sent to broker, awaiting ack
     ACKNOWLEDGED = "acknowledged"  # broker confirmed receipt
-    PARTIAL = "partial"        # partially filled
-    FILLED = "filled"          # fully filled
-    CANCELLED = "cancelled"    # cancelled before fill
-    REJECTED = "rejected"      # rejected by broker or risk
-    EXPIRED = "expired"        # day order expired at close
+    PARTIAL = "partial"  # partially filled
+    FILLED = "filled"  # fully filled
+    CANCELLED = "cancelled"  # cancelled before fill
+    REJECTED = "rejected"  # rejected by broker or risk
+    EXPIRED = "expired"  # day order expired at close
 
 
 class TimeInForceEnum(pyenum.Enum):
     DAY = "day"
-    GTC = "gtc"   # Good Till Cancelled
-    IOC = "ioc"   # Immediate or Cancel
-    FOK = "fok"   # Fill or Kill
-    GTD = "gtd"   # Good Till Date
+    GTC = "gtc"  # Good Till Cancelled
+    IOC = "ioc"  # Immediate or Cancel
+    FOK = "fok"  # Fill or Kill
+    GTD = "gtd"  # Good Till Date
 
 
 class AccountTypeEnum(pyenum.Enum):
@@ -148,7 +148,8 @@ class Strategy(Base, TimestampMixin):
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("1"))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     config: Mapped[dict[str, Any]] = mapped_column(
-        JSONB, nullable=False,
+        JSONB,
+        nullable=False,
         comment="Full strategy config snapshot. Immutable after activation.",
     )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
@@ -216,9 +217,7 @@ class Order(Base):
     order_type: Mapped[str] = mapped_column(
         Enum(OrderTypeEnum, name="order_type_enum"), nullable=False
     )
-    side: Mapped[str] = mapped_column(
-        Enum(OrderSideEnum, name="order_side_enum"), nullable=False
-    )
+    side: Mapped[str] = mapped_column(Enum(OrderSideEnum, name="order_side_enum"), nullable=False)
     quantity: Mapped[Decimal] = mapped_column(Quantity, nullable=False)
     limit_price: Mapped[Decimal | None] = mapped_column(Price, nullable=True)
     stop_price: Mapped[Decimal | None] = mapped_column(Price, nullable=True)
@@ -252,7 +251,8 @@ class Order(Base):
 
     # Algo order hierarchy
     parent_order_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), nullable=True,
+        UUID(as_uuid=True),
+        nullable=True,
         comment="For child slice orders spawned by TWAP/VWAP parent",
     )
 
@@ -321,13 +321,16 @@ class Fill(Base):
         UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
     )
     timestamp: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), primary_key=True, nullable=False,
+        DateTime(timezone=True),
+        primary_key=True,
+        nullable=False,
         comment="Exact fill time from exchange or broker",
     )
 
     # order_id deliberately NOT FK — see module docstring
     order_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), nullable=False,
+        UUID(as_uuid=True),
+        nullable=False,
         comment="References orders.id. Not FK due to partition constraint.",
     )
     account_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
@@ -338,12 +341,11 @@ class Fill(Base):
     price: Mapped[Decimal] = mapped_column(Price, nullable=False)
     quantity: Mapped[Decimal] = mapped_column(Quantity, nullable=False)
     notional_value: Mapped[Decimal] = mapped_column(
-        Notional, nullable=False,
+        Notional,
+        nullable=False,
         comment="price x quantity in account currency. Stored explicitly for TCA.",
     )
-    commission: Mapped[Decimal] = mapped_column(
-        Notional, nullable=False, server_default=text("0")
-    )
+    commission: Mapped[Decimal] = mapped_column(Notional, nullable=False, server_default=text("0"))
     commission_currency: Mapped[str] = mapped_column(
         String(3), nullable=False, server_default="USD"
     )
@@ -352,7 +354,8 @@ class Fill(Base):
     settlement_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     broker_fill_id: Mapped[str | None] = mapped_column(String(100), nullable=True, unique=True)
     execution_latency_ms: Mapped[int | None] = mapped_column(
-        Integer, nullable=True,
+        Integer,
+        nullable=True,
         comment="Order submission to fill receipt. Used in TCA.",
     )
     extra_data: Mapped[dict[str, Any]] = mapped_column(
@@ -409,23 +412,29 @@ class Position(Base, TimestampMixin):
     symbol_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
 
     quantity: Mapped[Decimal] = mapped_column(
-        Quantity, nullable=False,
+        Quantity,
+        nullable=False,
         comment="Shares held. Negative = short.",
     )
     avg_cost: Mapped[Decimal] = mapped_column(
-        Price, nullable=False,
+        Price,
+        nullable=False,
         comment="Weighted average cost per share",
     )
     cost_basis: Mapped[Decimal] = mapped_column(
-        Notional, nullable=False,
+        Notional,
+        nullable=False,
         comment="Total cost basis = |quantity| x avg_cost",
     )
     realized_pnl: Mapped[Decimal] = mapped_column(
-        Notional, nullable=False, server_default=text("0"),
+        Notional,
+        nullable=False,
+        server_default=text("0"),
         comment="Accumulated realized P&L from partial closes",
     )
     unrealized_pnl: Mapped[Decimal | None] = mapped_column(
-        Notional, nullable=True,
+        Notional,
+        nullable=True,
         comment="Mark-to-market P&L. Updated on price tick or EOD.",
     )
     last_price: Mapped[Decimal | None] = mapped_column(Price, nullable=True)
@@ -501,7 +510,8 @@ class PnLSnapshot(Base):
     sharpe_ratio_trailing: Mapped[Decimal | None] = mapped_column(Ratio, nullable=True)
     max_drawdown_trailing: Mapped[Decimal | None] = mapped_column(Ratio, nullable=True)
     var_95_daily: Mapped[Decimal | None] = mapped_column(
-        Notional, nullable=True,
+        Notional,
+        nullable=True,
         comment="Value at Risk 95% confidence, 1-day horizon",
     )
     position_count: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -555,6 +565,5 @@ class RiskEvent(Base):
 
     def __repr__(self) -> str:
         return (
-            f"RiskEvent(type={self.event_type}, severity={self.severity}, "
-            f"at={self.triggered_at})"
+            f"RiskEvent(type={self.event_type}, severity={self.severity}, at={self.triggered_at})"
         )

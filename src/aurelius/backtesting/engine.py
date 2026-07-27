@@ -131,17 +131,19 @@ class BacktestEngine:
                 if fill.quantity < order.quantity:
                     remainder = order.quantity - fill.quantity
                     # rebuild OrderEvent with reduced quantity
-                    still_pending.append(OrderEvent(
-                        timestamp=order.timestamp,
-                        symbol=order.symbol,
-                        order_type=order.order_type,
-                        side=order.side,
-                        quantity=remainder,
-                        limit_price=order.limit_price,
-                        stop_price=order.stop_price,
-                        order_id=order.order_id,
-                        strategy_id=order.strategy_id,
-                    ))
+                    still_pending.append(
+                        OrderEvent(
+                            timestamp=order.timestamp,
+                            symbol=order.symbol,
+                            order_type=order.order_type,
+                            side=order.side,
+                            quantity=remainder,
+                            limit_price=order.limit_price,
+                            stop_price=order.stop_price,
+                            order_id=order.order_id,
+                            strategy_id=order.strategy_id,
+                        )
+                    )
             else:
                 still_pending.append(order)
 

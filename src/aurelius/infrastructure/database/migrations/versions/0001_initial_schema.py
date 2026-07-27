@@ -22,7 +22,7 @@ depends_on = None
 
 def upgrade() -> None:
     # ── Enable required PostgreSQL extensions ─────────────────────────────────
-    op.execute("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"")
+    op.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
     op.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")  # trigram text search
 
     # ── Create ENUMs ──────────────────────────────────────────────────────────
@@ -102,8 +102,12 @@ def upgrade() -> None:
 
     op.create_table(
         "exchanges",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True,
-                  server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text("gen_random_uuid()"),
+        ),
         sa.Column("mic_code", sa.String(10), nullable=False, unique=True),
         sa.Column("name", sa.String(200), nullable=False),
         sa.Column("country_code", sa.String(2), nullable=False),
@@ -111,32 +115,74 @@ def upgrade() -> None:
         sa.Column("open_time", sa.String(5), nullable=True),
         sa.Column("close_time", sa.String(5), nullable=True),
         sa.Column("is_active", sa.Boolean, nullable=False, server_default="true"),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
     )
 
     op.create_table(
         "data_sources",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True,
-                  server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text("gen_random_uuid()"),
+        ),
         sa.Column("name", sa.String(100), nullable=False, unique=True),
         sa.Column("display_name", sa.String(200), nullable=False),
         sa.Column("priority", sa.SmallInteger, nullable=False),
         sa.Column("is_active", sa.Boolean, nullable=False, server_default="true"),
         sa.Column("api_base_url", sa.Text, nullable=True),
         sa.Column("notes", sa.Text, nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
     )
 
     op.create_table(
         "symbols",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True,
-                  server_default=sa.text("gen_random_uuid()")),
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            primary_key=True,
+            server_default=sa.text("gen_random_uuid()"),
+        ),
         sa.Column("ticker", sa.String(20), nullable=False),
         sa.Column("exchange_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("asset_class", sa.Enum("equity","etf","option","future","fx","crypto","bond","commodity",
-                                          name="asset_class_enum"), nullable=False, server_default="equity"),
+        sa.Column(
+            "asset_class",
+            sa.Enum(
+                "equity",
+                "etf",
+                "option",
+                "future",
+                "fx",
+                "crypto",
+                "bond",
+                "commodity",
+                name="asset_class_enum",
+            ),
+            nullable=False,
+            server_default="equity",
+        ),
         sa.Column("currency", sa.String(3), nullable=False, server_default="USD"),
         sa.Column("company_name", sa.String(500), nullable=True),
         sa.Column("sector", sa.String(100), nullable=True),
@@ -147,15 +193,27 @@ def upgrade() -> None:
         sa.Column("is_active", sa.Boolean, nullable=False, server_default="true"),
         sa.Column("listed_at", sa.Date, nullable=True),
         sa.Column("delisted_at", sa.Date, nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.UniqueConstraint("ticker", "exchange_id", name="uq_symbols_ticker_exchange"),
         sa.ForeignKeyConstraint(["exchange_id"], ["exchanges.id"], name="fk_symbols_exchange"),
     )
     op.create_index("ix_symbols_ticker_exchange", "symbols", ["ticker", "exchange_id"])
     op.create_index("ix_symbols_asset_class_active", "symbols", ["asset_class", "is_active"])
     # Trigram index for company name search
-    op.execute("CREATE INDEX ix_symbols_company_trgm ON symbols USING gin (company_name gin_trgm_ops)")
+    op.execute(
+        "CREATE INDEX ix_symbols_company_trgm ON symbols USING gin (company_name gin_trgm_ops)"
+    )
 
     # ── MARKET DATA TABLES (partitioned) ──────────────────────────────────────
 
@@ -190,10 +248,14 @@ def upgrade() -> None:
         ) PARTITION BY RANGE (timestamp)
     """)
     # B-tree composite index: primary query pattern (symbol + time + freq)
-    op.execute("CREATE INDEX ix_ohlcv_symbol_ts_freq ON market_data_ohlcv (symbol_id, timestamp, frequency)")
+    op.execute(
+        "CREATE INDEX ix_ohlcv_symbol_ts_freq ON market_data_ohlcv (symbol_id, timestamp, frequency)"
+    )
     # BRIN: very cheap for monotonically-increasing timestamp, enables fast range scans
     op.execute("CREATE INDEX ix_ohlcv_ts_brin ON market_data_ohlcv USING brin (timestamp)")
-    op.execute("CREATE INDEX ix_ohlcv_source_ingested ON market_data_ohlcv (source_id, ingested_at)")
+    op.execute(
+        "CREATE INDEX ix_ohlcv_source_ingested ON market_data_ohlcv (source_id, ingested_at)"
+    )
     # Unique: one clean bar per symbol/timestamp/frequency/source
     op.execute("""
         CREATE UNIQUE INDEX uq_ohlcv_symbol_ts_freq_source
@@ -233,9 +295,11 @@ def upgrade() -> None:
 
     # Create daily tick partitions for current year + next
     import datetime
+
     for year in [datetime.date.today().year, datetime.date.today().year + 1]:
         for month in range(1, 13):
             import calendar
+
             days_in_month = calendar.monthrange(year, month)[1]
             for day in range(1, days_in_month + 1):
                 dt = datetime.date(year, month, day)
@@ -306,7 +370,9 @@ def upgrade() -> None:
             created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
         )
     """)
-    op.execute("CREATE INDEX ix_corp_action_symbol_exdate ON corporate_actions (symbol_id, ex_date)")
+    op.execute(
+        "CREATE INDEX ix_corp_action_symbol_exdate ON corporate_actions (symbol_id, ex_date)"
+    )
     op.execute("CREATE INDEX ix_corp_action_exdate ON corporate_actions (ex_date)")
 
     # ── FUNDAMENTAL DATA TABLES ───────────────────────────────────────────────
@@ -351,8 +417,12 @@ def upgrade() -> None:
             )
         )
     """)
-    op.execute("CREATE INDEX ix_fin_stmt_symbol_filing ON financial_statements (symbol_id, filing_date)")
-    op.execute("CREATE INDEX ix_fin_stmt_symbol_period ON financial_statements (symbol_id, period_end_date)")
+    op.execute(
+        "CREATE INDEX ix_fin_stmt_symbol_filing ON financial_statements (symbol_id, filing_date)"
+    )
+    op.execute(
+        "CREATE INDEX ix_fin_stmt_symbol_period ON financial_statements (symbol_id, period_end_date)"
+    )
     op.execute("CREATE INDEX ix_fin_stmt_filing ON financial_statements (filing_date)")
 
     op.execute("""
@@ -402,7 +472,9 @@ def upgrade() -> None:
         )
     """)
     op.execute("CREATE INDEX ix_fin_ratios_symbol_asof ON financial_ratios (symbol_id, as_of_date)")
-    op.execute("CREATE INDEX ix_fin_ratios_symbol_filing ON financial_ratios (symbol_id, filing_date)")
+    op.execute(
+        "CREATE INDEX ix_fin_ratios_symbol_filing ON financial_ratios (symbol_id, filing_date)"
+    )
     op.execute("CREATE INDEX ix_fin_ratios_asof ON financial_ratios (as_of_date)")
 
     op.execute("""
@@ -433,7 +505,9 @@ def upgrade() -> None:
             CONSTRAINT uq_earnings_symbol_period UNIQUE (symbol_id, fiscal_year, fiscal_quarter)
         )
     """)
-    op.execute("CREATE INDEX ix_earnings_symbol_announced ON earnings_events (symbol_id, announced_at)")
+    op.execute(
+        "CREATE INDEX ix_earnings_symbol_announced ON earnings_events (symbol_id, announced_at)"
+    )
     op.execute("CREATE INDEX ix_earnings_announced ON earnings_events (announced_at)")
 
     # ── RESEARCH DATA TABLES ──────────────────────────────────────────────────
@@ -546,7 +620,9 @@ def upgrade() -> None:
             PRIMARY KEY (id, timestamp)
         ) PARTITION BY RANGE (timestamp)
     """)
-    op.execute("CREATE INDEX ix_signal_experiment_ts ON signal_predictions (experiment_id, timestamp)")
+    op.execute(
+        "CREATE INDEX ix_signal_experiment_ts ON signal_predictions (experiment_id, timestamp)"
+    )
     op.execute("CREATE INDEX ix_signal_symbol_ts ON signal_predictions (symbol_id, timestamp)")
 
     # Signal prediction partitions — monthly
@@ -646,8 +722,12 @@ def upgrade() -> None:
             PRIMARY KEY (id, submitted_at)
         ) PARTITION BY RANGE (submitted_at)
     """)
-    op.execute("CREATE INDEX ix_orders_account_status_ts ON orders (account_id, status, submitted_at)")
-    op.execute("CREATE INDEX ix_orders_strategy_status_ts ON orders (strategy_id, status, submitted_at)")
+    op.execute(
+        "CREATE INDEX ix_orders_account_status_ts ON orders (account_id, status, submitted_at)"
+    )
+    op.execute(
+        "CREATE INDEX ix_orders_strategy_status_ts ON orders (strategy_id, status, submitted_at)"
+    )
     op.execute("CREATE INDEX ix_orders_symbol_ts ON orders (symbol_id, submitted_at)")
     op.execute("""
         CREATE INDEX ix_orders_active ON orders (status, submitted_at)
@@ -737,9 +817,15 @@ def upgrade() -> None:
         ON positions (account_id, strategy_id, symbol_id)
         WHERE closed_at IS NULL
     """)
-    op.execute("CREATE INDEX ix_positions_account_open ON positions (account_id) WHERE closed_at IS NULL")
-    op.execute("CREATE INDEX ix_positions_strategy_open ON positions (strategy_id) WHERE closed_at IS NULL")
-    op.execute("CREATE INDEX ix_positions_symbol_open ON positions (symbol_id) WHERE closed_at IS NULL")
+    op.execute(
+        "CREATE INDEX ix_positions_account_open ON positions (account_id) WHERE closed_at IS NULL"
+    )
+    op.execute(
+        "CREATE INDEX ix_positions_strategy_open ON positions (strategy_id) WHERE closed_at IS NULL"
+    )
+    op.execute(
+        "CREATE INDEX ix_positions_symbol_open ON positions (symbol_id) WHERE closed_at IS NULL"
+    )
 
     # P&L snapshots — partitioned monthly
     op.execute("""
@@ -803,7 +889,9 @@ def upgrade() -> None:
         )
     """)
     op.execute("CREATE INDEX ix_risk_account_triggered ON risk_events (account_id, triggered_at)")
-    op.execute("CREATE INDEX ix_risk_unresolved ON risk_events (triggered_at) WHERE resolved_at IS NULL")
+    op.execute(
+        "CREATE INDEX ix_risk_unresolved ON risk_events (triggered_at) WHERE resolved_at IS NULL"
+    )
     op.execute("CREATE INDEX ix_risk_severity ON risk_events (severity)")
 
     # ── SEED REFERENCE DATA ────────────────────────────────────────────────────
@@ -835,27 +923,52 @@ def downgrade() -> None:
 
     # Drop partitioned tables (drops all partitions too)
     for table in [
-        "pnl_snapshots", "fills", "orders", "signal_predictions",
-        "feature_values", "market_data_quotes", "order_book_snapshots",
-        "market_data_ticks", "market_data_ohlcv",
+        "pnl_snapshots",
+        "fills",
+        "orders",
+        "signal_predictions",
+        "feature_values",
+        "market_data_quotes",
+        "order_book_snapshots",
+        "market_data_ticks",
+        "market_data_ohlcv",
     ]:
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE")
 
     # Drop regular tables in reverse FK order
     for table in [
-        "risk_events", "positions", "experiment_metrics", "experiment_runs",
-        "model_registry", "earnings_events", "financial_ratios",
-        "financial_statements", "corporate_actions", "feature_definitions",
-        "strategies", "accounts", "symbols", "data_sources", "exchanges",
+        "risk_events",
+        "positions",
+        "experiment_metrics",
+        "experiment_runs",
+        "model_registry",
+        "earnings_events",
+        "financial_ratios",
+        "financial_statements",
+        "corporate_actions",
+        "feature_definitions",
+        "strategies",
+        "accounts",
+        "symbols",
+        "data_sources",
+        "exchanges",
     ]:
         op.execute(f"DROP TABLE IF EXISTS {table} CASCADE")
 
     # Drop ENUMs
     for enum in [
-        "risk_severity_enum", "risk_event_type_enum", "account_type_enum",
-        "time_in_force_enum", "order_status_enum", "order_side_enum",
-        "order_type_enum", "experiment_status_enum", "experiment_type_enum",
-        "corporate_action_type_enum", "period_type_enum", "statement_type_enum",
+        "risk_severity_enum",
+        "risk_event_type_enum",
+        "account_type_enum",
+        "time_in_force_enum",
+        "order_status_enum",
+        "order_side_enum",
+        "order_type_enum",
+        "experiment_status_enum",
+        "experiment_type_enum",
+        "corporate_action_type_enum",
+        "period_type_enum",
+        "statement_type_enum",
         "asset_class_enum",
     ]:
         op.execute(f"DROP TYPE IF EXISTS {enum} CASCADE")

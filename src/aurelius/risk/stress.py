@@ -27,8 +27,9 @@ class StressTester:
     def _shocked_nav(self, state: PortfolioState, shock: float) -> float:
         """Cash + sum(qty_i * price_i*(1+shock)). Longs lose on a crash, shorts gain."""
         cash = float(state.cash)
-        mv = sum(float(p.quantity) * float(p.last_price) * (1 + shock)
-                 for p in state.positions.values())
+        mv = sum(
+            float(p.quantity) * float(p.last_price) * (1 + shock) for p in state.positions.values()
+        )
         return cash + mv
 
     def market_crash(self, state: PortfolioState, shock: float = -0.20) -> StressResult:
@@ -39,7 +40,9 @@ class StressTester:
         survives = nav1 > 0 and dd > -float(self._limits.max_drawdown_halt)
         return StressResult(
             scenario=f"market_crash({shock:.0%})",
-            nav_before=nav0, nav_after=nav1, pnl=nav1 - nav0,
+            nav_before=nav0,
+            nav_after=nav1,
+            pnl=nav1 - nav0,
             survives=survives,
             detail=f"post-shock drawdown {dd:.1%}",
         )
@@ -56,7 +59,9 @@ class StressTester:
         var = z * (k * daily_vol) * nav0
         return StressResult(
             scenario=f"vol_spike({k}x)",
-            nav_before=nav0, nav_after=nav0, pnl=0.0,
+            nav_before=nav0,
+            nav_after=nav0,
+            pnl=0.0,
             stressed_var=var,
             survives=var < nav0,
             detail=f"1-day VaR at {k}x vol = {var:,.0f} ({var / nav0:.1%} NAV)",
@@ -83,7 +88,9 @@ class StressTester:
         nav0 = float(state.total_value)
         return StressResult(
             scenario=f"liquidity_reduction({f:.0%} ADV)",
-            nav_before=nav0, nav_after=nav0, pnl=0.0,
+            nav_before=nav0,
+            nav_after=nav0,
+            pnl=0.0,
             liquidation_days=worst,
             survives=math.isfinite(worst),
             detail=f"worst unwind: {worst_sym} ~{worst:.1f} days" if worst_sym else "no positions",

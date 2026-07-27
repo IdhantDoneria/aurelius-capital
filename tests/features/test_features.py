@@ -41,6 +41,7 @@ def _win(closes, **kw):
 
 # ── value correctness ─────────────────────────────────────────────────────────
 
+
 def test_returns_1d():
     assert get("returns_1d")(_win([100, 110])) == Decimal("0.1")
 
@@ -67,7 +68,9 @@ def test_bollinger_pctb_midpoint():
 
 def test_relative_volume():
     w = Window(
-        open=[Decimal(1)] * 20, high=[Decimal(1)] * 20, low=[Decimal(1)] * 20,
+        open=[Decimal(1)] * 20,
+        high=[Decimal(1)] * 20,
+        low=[Decimal(1)] * 20,
         close=[Decimal(1)] * 20,
         volume=[Decimal(100)] * 19 + [Decimal(200)],
     )
@@ -83,6 +86,7 @@ def test_beta_self_is_one():
 
 
 # ── bias prevention: no look-ahead ────────────────────────────────────────────
+
 
 def test_no_lookahead_value_unchanged_when_future_appended():
     """A feature's value at bar t must not change when later bars are added."""
@@ -100,6 +104,7 @@ def test_no_lookahead_value_unchanged_when_future_appended():
 
 
 # ── pipeline: missing data, caching ───────────────────────────────────────────
+
 
 def test_insufficient_history_is_none_not_error():
     rows = FeaturePipeline().compute_symbol("X", _bars([100, 101, 102]))
@@ -127,6 +132,7 @@ def test_incremental_since_only_new_timestamps():
 
 
 # ── store round-trip + point-in-time read ─────────────────────────────────────
+
 
 def test_store_roundtrip_and_point_in_time():
     store = FeatureStore(":memory:")

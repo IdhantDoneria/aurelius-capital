@@ -31,14 +31,15 @@ class EquityPoint:
 @dataclass
 class RoundTrip:
     """A complete open+close cycle."""
+
     symbol: str
-    side: str           # "long" or "short"
+    side: str  # "long" or "short"
     entry_time: datetime
     exit_time: datetime
     quantity: float
     entry_price: float
     exit_price: float
-    pnl: float          # net of commission and slippage
+    pnl: float  # net of commission and slippage
 
     @property
     def holding_days(self) -> float:
@@ -55,7 +56,7 @@ class PerformanceMetrics:
     annualized_volatility: float = 0.0
     sharpe_ratio: float = 0.0
     sortino_ratio: float = 0.0
-    max_drawdown: float = 0.0       # e.g. -0.15 means 15% below peak
+    max_drawdown: float = 0.0  # e.g. -0.15 means 15% below peak
     calmar_ratio: float = 0.0
 
     # Trading
@@ -114,9 +115,7 @@ class PerformanceCalculator:
             excess = [r - rf_daily for r in daily_returns]
             excess_std = statistics.stdev(excess)
             if excess_std > 0:
-                metrics.sharpe_ratio = (
-                    statistics.mean(excess) / excess_std * math.sqrt(self._td)
-                )
+                metrics.sharpe_ratio = statistics.mean(excess) / excess_std * math.sqrt(self._td)
 
             # Sortino — downside deviation only
             downside_sq = statistics.mean(min(r, 0.0) ** 2 for r in daily_returns)
@@ -189,10 +188,14 @@ class PerformanceCalculator:
             total_notional += qty * price
 
             if fill.side == Side.BUY:
-                open_lots[fill.symbol].append({
-                    "qty": qty, "price": price,
-                    "time": fill.timestamp, "commission": commission / qty,
-                })
+                open_lots[fill.symbol].append(
+                    {
+                        "qty": qty,
+                        "price": price,
+                        "time": fill.timestamp,
+                        "commission": commission / qty,
+                    }
+                )
             else:  # SELL — close long lots FIFO
                 remaining = qty
                 while remaining > 0 and open_lots[fill.symbol]:
@@ -203,16 +206,18 @@ class PerformanceCalculator:
                         - lot["commission"] * close_qty
                         - (commission / qty) * close_qty
                     )
-                    round_trips.append(RoundTrip(
-                        symbol=fill.symbol,
-                        side="long",
-                        entry_time=lot["time"],
-                        exit_time=fill.timestamp,
-                        quantity=close_qty,
-                        entry_price=lot["price"],
-                        exit_price=price,
-                        pnl=pnl,
-                    ))
+                    round_trips.append(
+                        RoundTrip(
+                            symbol=fill.symbol,
+                            side="long",
+                            entry_time=lot["time"],
+                            exit_time=fill.timestamp,
+                            quantity=close_qty,
+                            entry_price=lot["price"],
+                            exit_price=price,
+                            pnl=pnl,
+                        )
+                    )
                     lot["qty"] -= close_qty
                     if lot["qty"] <= 0:
                         open_lots[fill.symbol].popleft()
