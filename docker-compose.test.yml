@@ -1,0 +1,33 @@
+name: aurelius-capital-test
+
+# Ephemeral stack for integration tests.
+# Uses separate DBs, no persistent volumes, faster settings.
+
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: aurelius-postgres-test
+    environment:
+      POSTGRES_DB: aurelius_test
+      POSTGRES_USER: aurelius
+      POSTGRES_PASSWORD: test_password
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data  # in-memory, wiped every run
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aurelius -d aurelius_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis-test:
+    image: redis:7-alpine
+    container_name: aurelius-redis-test
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
