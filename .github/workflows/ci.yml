@@ -118,8 +118,11 @@ jobs:
       - name: Install dependencies
         run: pip install ".[dev]"
 
+      # Run the whole integration dir. No `-m integration` filter: the tests
+      # aren't marked, so the filter selected nothing (pytest exit 5). The dir
+      # itself is the scope; this job provides the Postgres/Redis services.
       - name: Run integration tests
-        run: pytest tests/integration/ -m integration -v
+        run: pytest tests/integration/ -v
 
   docker-build:
     name: Docker Build
