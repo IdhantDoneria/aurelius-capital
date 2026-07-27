@@ -81,6 +81,7 @@ class ExperimentRecord:
     features_used: list[str]
     params: dict
     report: ValidationReport
+    config_snapshot: dict = field(default_factory=dict)
 
 
 # ── statistics ────────────────────────────────────────────────────────────────

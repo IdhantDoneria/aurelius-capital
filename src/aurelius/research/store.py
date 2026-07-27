@@ -52,7 +52,8 @@ CREATE TABLE IF NOT EXISTS experiments (
     oos_max_drawdown DOUBLE,
     oos_trades       INTEGER,
     n_trials         INTEGER,
-    adjusted_pvalue  DOUBLE
+    adjusted_pvalue  DOUBLE,
+    config_snapshot  VARCHAR
 )
 """
 
@@ -118,7 +119,12 @@ class ResearchStore:
         return int(row[0]) if row else 0
 
     def find_duplicate(
-        self, dataset_version: str, strategy_name: str, strategy_version: int, params: dict
+        self,
+        dataset_version: str,
+        strategy_name: str,
+        strategy_version: int,
+        params: dict,
+        config_snapshot: dict | None = None,
     ) -> str | None:
         """Return an existing experiment id for the same run identity, else None.
 
@@ -126,13 +132,14 @@ class ResearchStore:
         """
         with self._conn() as conn:
             rows = conn.execute(
-                "SELECT id, params FROM experiments WHERE dataset_version = ? "
+                "SELECT id, params, config_snapshot FROM experiments WHERE dataset_version = ? "
                 "AND strategy_name = ? AND strategy_version = ?",
                 [dataset_version, strategy_name, strategy_version],
             ).fetchall()
-        target = json.dumps(params, sort_keys=True, default=str)
-        for exp_id, stored in rows:
-            if stored == target:
+        target_params = json.dumps(params, sort_keys=True, default=str)
+        target_config = json.dumps(config_snapshot or {}, sort_keys=True, default=str)
+        for exp_id, stored_params, stored_config in rows:
+            if stored_params == target_params and (stored_config or "{}") == target_config:
                 return exp_id
         return None
 
@@ -140,7 +147,7 @@ class ResearchStore:
         r = rec.report
         with self._conn() as conn:
             conn.execute(
-                "INSERT INTO experiments VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO experiments VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 [
                     rec.id,
                     rec.hypothesis_id,
@@ -160,6 +167,7 @@ class ResearchStore:
                     r.oos_trades,
                     r.n_trials,
                     r.adjusted_pvalue,
+                    json.dumps(rec.config_snapshot, sort_keys=True, default=str),
                 ],
             )
         logger.info(

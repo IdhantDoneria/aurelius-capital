@@ -160,3 +160,53 @@ def test_demo_runs_end_to_end():
 
     report = demo()
     assert report.verdict in (Verdict.ACCEPT, Verdict.REJECT, Verdict.INCONCLUSIVE)
+
+
+def test_config_snapshot_stored_and_retrieved():
+    """ExperimentRecord stores config_snapshot; find_duplicate includes config in identity."""
+    from datetime import UTC, datetime
+    from aurelius.research.models import ExperimentRecord, ValidationReport, Verdict
+
+    store = ResearchStore(":memory:")
+    h = store.record_hypothesis("test", "rationale", "researcher")
+
+    def _make_rec(config_snap):
+        return ExperimentRecord(
+            id=__import__("uuid").uuid4().hex,
+            hypothesis_id=h.id,
+            researcher="researcher",
+            created_at=datetime.now(UTC),
+            dataset_version="abc123",
+            strategy_name="momentum",
+            strategy_version=1,
+            features_used=["ret_1m"],
+            params={"lookback": 12},
+            report=ValidationReport(
+                verdict=Verdict.ACCEPT,
+                reasons=[],
+                is_sharpe=1.5,
+                oos_sharpe=1.2,
+                oos_return=0.15,
+                oos_max_drawdown=-0.08,
+                oos_trades=40,
+                n_trials=1,
+                adjusted_pvalue=0.01,
+            ),
+            config_snapshot=config_snap,
+        )
+
+    cfg_a = {"commission_rate": "0.001", "spread_bps": "5"}
+    cfg_b = {"commission_rate": "0.002", "spread_bps": "5"}  # different costs
+
+    rec_a = _make_rec(cfg_a)
+    store.record_experiment(rec_a)
+
+    # Same config → duplicate detected
+    dup = store.find_duplicate("abc123", "momentum", 1, {"lookback": 12}, cfg_a)
+    assert dup == rec_a.id, "Identical run must be detected as duplicate"
+
+    # Different config → not a duplicate
+    not_dup = store.find_duplicate("abc123", "momentum", 1, {"lookback": 12}, cfg_b)
+    assert not_dup is None, "Different config must NOT be detected as duplicate"
+
+    store.close()
