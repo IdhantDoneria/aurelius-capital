@@ -297,6 +297,27 @@ def test_next_bar_execution_no_look_ahead(default_config):
 
 
 @pytest.mark.unit
+def test_multi_symbol_fills_against_own_bar(default_config):
+    """Regression: a pending order must fill against ITS symbol's bar, not the
+    next chronological bar of a different instrument. Two symbols with disjoint
+    price ranges — every fill must price inside its own symbol's range."""
+    low_sym = _synthetic_bars(symbol="LOW", n_bars=30, start_price=100.0, trend=0.0)
+    high_sym = _synthetic_bars(symbol="HIGH", n_bars=30, start_price=500.0, trend=0.0)
+    feed = InMemoryDataFeed(low_sym + high_sym)
+    engine = BacktestEngine(strategy=BuyAndHold(), data_feed=feed, config=default_config)
+    engine.run()
+
+    fills = engine._all_fills
+    assert fills, "buy-and-hold on two symbols must produce fills"
+    for f in fills:
+        ceiling = Decimal("150") if f.symbol == "LOW" else Decimal("550")
+        floor = Decimal("50") if f.symbol == "LOW" else Decimal("450")
+        assert floor < f.fill_price < ceiling, (
+            f"{f.symbol} filled at {f.fill_price} — cross-symbol fill (wrong bar)"
+        )
+
+
+@pytest.mark.unit
 def test_in_memory_feed_sorts_chronologically():
     ts2 = datetime(2024, 1, 2, tzinfo=UTC)
     ts1 = datetime(2024, 1, 1, tzinfo=UTC)

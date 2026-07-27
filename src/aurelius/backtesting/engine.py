@@ -124,6 +124,13 @@ class BacktestEngine:
         # Step 1: Create FillEvents for pending orders (at this bar's open)
         still_pending: list[OrderEvent] = []
         for order in self._pending_orders:
+            # Only fill an order against its OWN symbol's bar. Without this guard a
+            # pending order fills against whatever bar comes next chronologically —
+            # in a multi-symbol universe that is a different instrument, at the wrong
+            # price, mislabeled, and on the same calendar day (breaking T+1).
+            if order.symbol != bar.symbol:
+                still_pending.append(order)
+                continue
             fill = self._simulator.try_fill(order, bar)
             if fill:
                 self._queue.push(fill)
