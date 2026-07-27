@@ -52,8 +52,11 @@ jobs:
       - name: Install dependencies
         run: pip install ".[dev]"
 
+      # Run the whole suite except integration (which needs live DB/Redis and
+      # runs in its own job). `tests/unit/ -m unit` selected nothing — no test
+      # carries the `unit` marker — so coverage was 0. This runs the real suite.
       - name: Run unit tests
-        run: pytest tests/unit/ -m unit --cov=src/aurelius --cov-report=xml -v
+        run: pytest tests/ -m "not integration" --cov=src/aurelius --cov-report=xml -v
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
