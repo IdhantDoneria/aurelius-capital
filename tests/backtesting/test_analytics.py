@@ -116,3 +116,22 @@ def test_cagr_roughly_correct(calc):
     metrics = calc.compute(curve)
     # CAGR ≈ 100% per year
     assert metrics.cagr == pytest.approx(1.0, rel=0.05)
+
+
+@pytest.mark.unit
+def test_multi_symbol_daily_returns_deduplicated():
+    """Equity curve with 2 points per date (simulating 2-symbol backtest)
+    must produce daily_returns based on unique dates, not raw point count."""
+    base = datetime(2024, 1, 1, tzinfo=UTC)
+    # 10 calendar dates × 2 symbols = 20 points total
+    curve = []
+    for i in range(10):
+        ts = base + timedelta(days=i)
+        curve.append(EquityPoint(ts, 1_000_000.0 + i * 100))
+        curve.append(EquityPoint(ts, 1_000_000.0 + i * 100 + 50))  # same date, higher equity
+    calc = PerformanceCalculator(risk_free_rate=0.0, trading_days=252)
+    metrics = calc.compute(curve)
+    # Raw curve stored intact
+    assert len(metrics.equity_curve) == 20
+    # daily_returns computed on deduplicated (10 dates) basis → 9 returns
+    assert len(metrics.daily_returns) == 9

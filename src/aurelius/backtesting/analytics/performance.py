@@ -73,6 +73,14 @@ class PerformanceMetrics:
     round_trips: list[RoundTrip] = field(default_factory=list)
 
 
+def _dedup_to_daily(curve: list[EquityPoint]) -> list[EquityPoint]:
+    """Return one equity point per calendar date (last point wins)."""
+    seen: dict = {}
+    for pt in curve:
+        seen[pt.timestamp.date()] = pt
+    return [seen[d] for d in sorted(seen)]
+
+
 class PerformanceCalculator:
     def __init__(self, risk_free_rate: float = 0.05, trading_days: int = 252) -> None:
         self._rf = risk_free_rate
@@ -87,8 +95,12 @@ class PerformanceCalculator:
         if len(equity_curve) < 2:
             return PerformanceMetrics(equity_curve=equity_curve)
 
-        equities = [p.equity for p in equity_curve]
-        timestamps = [p.timestamp for p in equity_curve]
+        # For return/vol/Sharpe calculations, use one snapshot per calendar date.
+        # Multi-symbol feeds emit N points per day; treating each as a period
+        # inflates volatility by sqrt(N). Raw curve stays in metrics for display.
+        daily_curve = _dedup_to_daily(equity_curve)
+        equities = [p.equity for p in daily_curve]
+        timestamps = [p.timestamp for p in daily_curve]
 
         daily_returns = [equities[i] / equities[i - 1] - 1 for i in range(1, len(equities))]
         avg_nav = statistics.mean(equities)
