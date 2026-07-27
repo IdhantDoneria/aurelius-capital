@@ -337,3 +337,62 @@ def test_in_memory_feed_sorts_chronologically():
     feed = InMemoryDataFeed([_b(ts2), _b(ts3), _b(ts1)])
     timestamps = [b.timestamp for b in feed.iter_bars()]
     assert timestamps == sorted(timestamps)
+
+
+@pytest.mark.unit
+def test_split_adjusted_data_golden_case(default_config):
+    """Golden case: split-adjusted data looks like a continuous price series.
+
+    A 2-for-1 split backward-adjusted means pre-split prices are halved in
+    the historical record. The engine sees a smooth uptrend — no discontinuity.
+    Expected return: price doubles from 50→100, so ~100% gross return minus costs.
+    """
+    # Pre-split adjusted price: $50 (actual was $100 before the split)
+    # Post-split price: moves from $50 to $100 over 40 bars
+    bars = _synthetic_bars(n_bars=40, start_price=50.0, trend=1.25)  # 50→99.75
+    feed = InMemoryDataFeed(bars)
+    engine = BacktestEngine(strategy=BuyAndHold(), data_feed=feed, config=default_config)
+    report = engine.run()
+
+    # With 100_000 capital, buying ~200 shares at ~$50, selling at ~$100 → ~100% gross
+    # After costs the return should still be substantial and positive
+    assert report.metrics.total_return > 0.5, (
+        "Split-adjusted data must show ~100% gross return as price doubles. "
+        f"Got {report.metrics.total_return:.1%}"
+    )
+
+
+@pytest.mark.unit
+def test_unadjusted_split_shows_false_loss(default_config):
+    """Documents known limitation: the engine cannot handle un-adjusted splits.
+
+    An un-adjusted 2-for-1 split shows as a sudden 50% price drop in the bar data.
+    The engine sees this as a loss — it has no mechanism to know shares doubled.
+    Researchers MUST provide backward split-adjusted data; un-adjusted data is invalid.
+    """
+    # Phase 1: price rises from 100 to 120 over 20 bars
+    pre_split = _synthetic_bars(n_bars=20, start_price=100.0, trend=1.0)
+    # Phase 2: split occurs — price is halved to ~60, then continues up
+    # Un-adjusted: price jumps from ~120 to ~60 (visible discontinuity)
+    post_split = _synthetic_bars(n_bars=20, start_price=60.0, trend=1.0)
+    post_split = [
+        BarData(
+            b.symbol,
+            b.timestamp + timedelta(days=20),
+            b.open, b.high, b.low, b.close, b.volume,
+        )
+        for b in post_split
+    ]
+
+    feed = InMemoryDataFeed(pre_split + post_split)
+    engine = BacktestEngine(strategy=BuyAndHold(), data_feed=feed, config=default_config)
+    report = engine.run()
+
+    # Engine reports a loss because it sees a price drop from ~120 to ~60.
+    # This is incorrect economically (shares doubled), but it is the expected
+    # engine behavior with un-adjusted data. Correct fix: adjust data, not engine.
+    assert report.metrics.total_return < 0, (
+        "Un-adjusted split data SHOULD produce an (incorrect) reported loss — "
+        "this test documents the known limitation. If this starts passing positively, "
+        "something unexpected changed. Researchers must provide split-adjusted data."
+    )
