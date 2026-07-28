@@ -29,7 +29,7 @@ __all__ = [
     "TradeJournal",
     "TradingEngine",
     "build_snapshot",
-    "demo",
+
     "render_text",
     "replay",
 ]

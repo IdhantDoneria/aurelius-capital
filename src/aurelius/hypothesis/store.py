@@ -172,6 +172,8 @@ class HypothesisStore:
             clauses.append("created_at >= ?")
             params.append(since)
 
+        # SAFETY: clauses contains only hardcoded predicate strings, never user input.
+        # Values are always bound via ? parameters. Do NOT interpolate user input here.
         where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
         sql = f"SELECT * FROM hypotheses {where} ORDER BY created_at DESC LIMIT ?"
         params.append(limit)

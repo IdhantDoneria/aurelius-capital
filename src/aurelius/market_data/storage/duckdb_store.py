@@ -30,18 +30,19 @@ logger = get_logger(__name__)
 
 _CREATE_OHLCV = """
 CREATE TABLE IF NOT EXISTS ohlcv (
-    symbol        VARCHAR        NOT NULL,
-    timestamp     TIMESTAMPTZ    NOT NULL,
-    frequency     VARCHAR(10)    NOT NULL,
-    open          DECIMAL(20,8)  NOT NULL,
-    high          DECIMAL(20,8)  NOT NULL,
-    low           DECIMAL(20,8)  NOT NULL,
-    close         DECIMAL(20,8)  NOT NULL,
-    volume        DECIMAL(28,4)  NOT NULL,
-    vwap          DECIMAL(20,8),
-    trade_count   INTEGER,
-    quality_score SMALLINT,
-    source        VARCHAR(50),
+    symbol             VARCHAR        NOT NULL,
+    timestamp          TIMESTAMPTZ    NOT NULL,
+    frequency          VARCHAR(10)    NOT NULL,
+    open               DECIMAL(20,8)  NOT NULL,
+    high               DECIMAL(20,8)  NOT NULL,
+    low                DECIMAL(20,8)  NOT NULL,
+    close              DECIMAL(20,8)  NOT NULL,
+    volume             DECIMAL(28,4)  NOT NULL,
+    vwap               DECIMAL(20,8),
+    trade_count        INTEGER,
+    quality_score      SMALLINT,
+    source             VARCHAR(50),
+    adjustment_factor  DECIMAL(16,8)  NOT NULL DEFAULT 1.0,
     PRIMARY KEY (symbol, timestamp, frequency)
 )
 """
@@ -98,6 +99,7 @@ class DuckDBStore:
                 b.get("trade_count"),
                 b.get("quality_score"),
                 b.get("source"),
+                b.get("adjustment_factor", 1.0),
             )
             for b in bars
         ]
@@ -106,8 +108,8 @@ class DuckDBStore:
                 """
                 INSERT OR REPLACE INTO ohlcv
                     (symbol, timestamp, frequency, open, high, low, close, volume,
-                     vwap, trade_count, quality_score, source)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     vwap, trade_count, quality_score, source, adjustment_factor)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 rows,
             )

@@ -111,8 +111,15 @@ class DuckDBDataFeed(DataFeed):
         import duckdb
 
         where = self._where_clause()
+        # Multiply OHLC by adjustment_factor so backtests see split/dividend-adjusted
+        # prices. Volume is divided by adjustment_factor (split-adjusted share count).
+        # adjustment_factor defaults to 1.0 for unadjusted data, so this is a no-op
+        # when no corporate actions exist.
         sql = (
-            f"SELECT symbol, timestamp, frequency, open, high, low, close, volume, vwap "
+            f"SELECT symbol, timestamp, frequency, "
+            f"open * adjustment_factor, high * adjustment_factor, "
+            f"low * adjustment_factor, close * adjustment_factor, "
+            f"volume / adjustment_factor, vwap "
             f"FROM ohlcv {where} ORDER BY timestamp, symbol"
         )
         with duckdb.connect(self._db_path) as conn:

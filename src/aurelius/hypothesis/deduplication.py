@@ -6,23 +6,17 @@ No ML dependencies. Fast enough for 10k hypotheses.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
+from aurelius.hypothesis._utils import STOPWORDS as _STOPWORDS
 from aurelius.hypothesis.models import HypothesisRecord
 
 _EXACT_THRESHOLD = 1.0
 _NEAR_DUP_THRESHOLD = 0.70
 _VARIATION_THRESHOLD = 0.40
 
-_STOPWORDS = frozenset(
-    "the a an of to in and or for is are we our this that with on by as at from be "
-    "these those it its their they can using use based over under into than then "
-    "which has have had not but also more most any all each per "
-    "if when among across within returns positive negative high low top bottom".split()
-)
 
-
-class DuplicateStatus(str, Enum):
+class DuplicateStatus(StrEnum):
     UNIQUE = "unique"
     VARIATION = "variation"          # 0.40–0.69: note it, allow insert
     NEAR_DUPLICATE = "near_duplicate"  # 0.70–0.99: flag for human review

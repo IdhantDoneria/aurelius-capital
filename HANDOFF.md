@@ -1,7 +1,19 @@
 # Aurelius Capital — Session Handoff
 
-**Date:** 2026-07-25  
-**Status:** 126/126 tests pass. No lint errors.
+> **SUPERSEDED:** This document reflects Phase 4 (2026-07-25). For current status see `docs/ACCEPTANCE_TEST.md` and the certification report below.
+
+**Last updated:** 2026-07-28 (Phase 12 + IV&V certification)  
+**Status:** 421/421 tests pass. Phases 1–12 complete. IV&V certified.
+
+## Current State (Phase 12)
+
+Platform is complete through the research pipeline:
+- 421 tests, 0 failures
+- IV&V audit conducted 2026-07-28: all CRITICAL/HIGH issues resolved
+- See `docs/ACCEPTANCE_TEST.md` for Phase 12 acceptance criteria
+- See `PHASE_4_PRODUCTION_REVIEW.md` through `PHASE_5_DEVELOPER_GUIDE.md` for engineering details
+
+---
 
 ---
 

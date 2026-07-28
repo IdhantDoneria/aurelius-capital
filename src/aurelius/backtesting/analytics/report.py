@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from aurelius.backtesting.analytics.performance import PerformanceMetrics
@@ -45,7 +45,7 @@ class BacktestReport:
     metrics: PerformanceMetrics = field(default_factory=PerformanceMetrics)
 
     # Status
-    completed_at: datetime = field(default_factory=datetime.utcnow)
+    completed_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     error: str | None = None
 
     # ── summary display ───────────────────────────────────────────────────────

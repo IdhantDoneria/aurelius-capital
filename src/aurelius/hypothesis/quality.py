@@ -7,14 +7,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from aurelius.hypothesis._utils import STOPWORDS as _STOPWORDS
 from aurelius.hypothesis.models import HypothesisRecord
-
-_STOPWORDS = frozenset(
-    "the a an of to in and or for is are we our this that with on by as at from be "
-    "these those it its their they can using use based over under into than then "
-    "which has have had not but also more most any all each per across among between "
-    "if when then among over across within".split()
-)
 
 _MIN_STATEMENT_LEN = 20
 _MIN_INTUITION_LEN = 10
@@ -59,9 +53,10 @@ def check_quality(h: HypothesisRecord) -> QualityResult:
     if len(content_tokens) < _MIN_UNIQUE_CONTENT_TOKENS:
         reasons.append("too_vague")
 
+    _MIN_CIRCULAR_REASONING_LEN = 10  # shorter than _MIN_STATEMENT_LEN to catch near-verbatim copies
     # Circular reasoning: statement is contained within intuition (near-verbatim)
     if (
-        len(h.testable_statement) > 10
+        len(h.testable_statement) > _MIN_CIRCULAR_REASONING_LEN
         and h.testable_statement.lower().strip() in h.economic_intuition.lower()
     ):
         reasons.append("circular_reasoning")

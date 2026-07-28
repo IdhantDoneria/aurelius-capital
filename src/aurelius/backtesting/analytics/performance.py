@@ -129,8 +129,9 @@ class PerformanceCalculator:
             if excess_std > 0:
                 metrics.sharpe_ratio = statistics.mean(excess) / excess_std * math.sqrt(self._td)
 
-            # Sortino — downside deviation only
-            downside_sq = statistics.mean(min(r, 0.0) ** 2 for r in daily_returns)
+            # Sortino — downside deviation on excess returns (r - rf), not raw returns.
+            # Using raw returns understates the denominator when rf > 0, inflating Sortino.
+            downside_sq = statistics.mean(min(r - rf_daily, 0.0) ** 2 for r in daily_returns)
             if downside_sq > 0:
                 metrics.sortino_ratio = (
                     (statistics.mean(daily_returns) - rf_daily)

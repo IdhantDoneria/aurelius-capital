@@ -8,7 +8,7 @@ Position accounting uses FIFO lot matching for realized P&L computation.
 This is the most common method for US equity taxation; override for LIFO if needed.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -140,7 +140,7 @@ class OrderRepository(BaseRepository[Order]):
         order.avg_fill_price = (prev_notional + new_notional) / new_filled_qty
         order.filled_quantity = new_filled_qty
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         if order.first_fill_at is None:
             order.first_fill_at = now
 
@@ -272,7 +272,7 @@ class PositionRepository(BaseRepository[Position]):
                 avg_cost=fill_price,
                 cost_basis=abs(signed_qty) * fill_price,
                 realized_pnl=Decimal(0),
-                opened_at=datetime.utcnow(),
+                opened_at=datetime.now(UTC),
             )
             self._session.add(position)
         else:
@@ -296,9 +296,9 @@ class PositionRepository(BaseRepository[Position]):
             position.cost_basis = abs(new_qty) * position.avg_cost
 
             if new_qty == 0:
-                position.closed_at = datetime.utcnow()
+                position.closed_at = datetime.now(UTC)
 
-        position.last_updated_at = datetime.utcnow()
+        position.last_updated_at = datetime.now(UTC)
         await self._session.flush()
         logger.info(
             "position_updated",
@@ -320,7 +320,7 @@ class PositionRepository(BaseRepository[Position]):
             if price is not None:
                 pos.last_price = price
                 pos.unrealized_pnl = (price - pos.avg_cost) * pos.quantity
-                pos.last_updated_at = datetime.utcnow()
+                pos.last_updated_at = datetime.now(UTC)
                 updated.append(pos)
         await self._session.flush()
         return updated

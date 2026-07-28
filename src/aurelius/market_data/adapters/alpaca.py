@@ -79,7 +79,7 @@ class AlpacaAdapter(MarketDataAdapter):
                     "end": end.strftime("%Y-%m-%dT%H:%M:%SZ"),
                     "timeframe": timeframe,
                     "limit": 10_000,
-                    "adjustment": "raw",  # we apply adjustments via corporate actions
+                    "adjustment": "all",  # apply split + dividend adjustments at source
                 }
                 if page_token:
                     params["page_token"] = page_token

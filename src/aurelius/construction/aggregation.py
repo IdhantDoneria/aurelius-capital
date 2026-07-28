@@ -75,7 +75,9 @@ class SignalAggregator:
         if len(scores) < 2:
             return {g.symbol: 0.0 for g in group}  # no cross-section -> no info
         mean = statistics.mean(scores)
-        sd = statistics.pstdev(scores)
+        # stdev (ddof=1) is consistent with cross-sectional z-scores elsewhere.
+        # pstdev would underestimate dispersion for small cross-sections (N < 30).
+        sd = statistics.stdev(scores)
         if sd == 0:
             return {g.symbol: 0.0 for g in group}  # no dispersion -> no info
         return {g.symbol: (g.score - mean) / sd for g in group}

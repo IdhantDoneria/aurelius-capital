@@ -6,13 +6,13 @@ from aurelius.hypothesis.quality import QualityResult, check_quality
 from aurelius.hypothesis.store import HypothesisStore
 
 __all__ = [
+    "DuplicateResult",
+    "DuplicateStatus",
     "HypothesisRecord",
     "HypothesisStore",
     "LLMClient",
     "QualityResult",
-    "DuplicateResult",
-    "DuplicateStatus",
-    "generate",
-    "check_quality",
     "check_duplicates",
+    "check_quality",
+    "generate",
 ]

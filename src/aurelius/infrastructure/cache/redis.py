@@ -83,5 +83,5 @@ class CacheManager:
         try:
             return bool(await self._require_client().ping())
         except Exception as exc:
-            logger.warning("cache_health_check_failed", error=str(exc))
+            logger.warning("cache_health_check_failed", error=type(exc).__name__)
             return False

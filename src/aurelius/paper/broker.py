@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from aurelius.backtesting.events.types import FillEvent, OrderType, Side
@@ -99,6 +99,7 @@ class PaperBroker:
                 still.append(r)
                 continue
             if self._crosses(r.request, tick.price):
+                assert r.request.limit_price is not None  # _crosses() returns False when None
                 fills.append(
                     self._fill(r.request, r.request.limit_price, tick.timestamp, r.order_id)
                 )
@@ -117,7 +118,7 @@ class PaperBroker:
     # ── order entry ───────────────────────────────────────────────────────────
 
     def submit(self, req: OrderRequest, now: datetime | None = None) -> OrderResult:
-        now = now or datetime.now(tz=self._tz())
+        now = now or datetime.now(UTC)
         oid = self._next_id()
         mark = self._last.get(req.symbol)
         if mark is None or mark <= 0:
@@ -202,8 +203,4 @@ class PaperBroker:
         self._seq += 1
         return f"paper-{self._seq}"
 
-    @staticmethod
-    def _tz():
-        from datetime import UTC
 
-        return UTC

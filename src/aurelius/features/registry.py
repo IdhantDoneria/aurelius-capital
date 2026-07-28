@@ -198,11 +198,18 @@ def simple_returns(series: Sequence[Decimal]) -> list[float]:
 
 
 def ema(series: Sequence[Decimal], span: int) -> float | None:
-    """Exponential moving average (float). None if fewer than `span` points."""
+    """Exponential moving average (float). None if fewer than `span` points.
+
+    Seeded with SMA of the first `span` bars so the cold-start bias decays
+    before the EMA value is used. Seeding on series[0] alone introduces a
+    systematic warm-up error whose magnitude depends on how far series[0] is
+    from the true mean.
+    """
     if len(series) < span:
         return None
     k = 2.0 / (span + 1)
-    e = float(series[0])
-    for x in series[1:]:
+    # SMA seed over first `span` bars — removes cold-start bias.
+    e = sum(float(x) for x in series[:span]) / span
+    for x in series[span:]:
         e = float(x) * k + e * (1 - k)
     return e

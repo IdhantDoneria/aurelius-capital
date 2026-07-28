@@ -22,6 +22,8 @@ import statistics
 from aurelius.backtesting.portfolio.state import PortfolioState
 from aurelius.risk.models import RiskLimits, RiskReport
 
+_TRADING_DAYS = 252
+
 # Inverse standard-normal CDF at common confidences (one-sided VaR z-scores).
 _Z = {0.90: 1.2816, 0.95: 1.6449, 0.975: 1.9600, 0.99: 2.3263}
 
@@ -48,7 +50,7 @@ class PortfolioRiskMonitor:
         gross = float(state.gross_exposure)
 
         vol = self._annualized_vol(daily_returns)
-        var = _z_score(lim.var_confidence) * (vol / math.sqrt(252)) * nav
+        var = _z_score(lim.var_confidence) * (vol / math.sqrt(_TRADING_DAYS)) * nav
 
         sectors = self._sector_exposure(state, gross, sector_map)
         hhi = self._herfindahl(state, gross)
@@ -85,7 +87,7 @@ class PortfolioRiskMonitor:
     def _annualized_vol(returns: list[float]) -> float:
         if len(returns) < 2:
             return 0.0
-        return statistics.stdev(returns) * math.sqrt(252)
+        return statistics.stdev(returns) * math.sqrt(_TRADING_DAYS)
 
     @staticmethod
     def _sector_exposure(

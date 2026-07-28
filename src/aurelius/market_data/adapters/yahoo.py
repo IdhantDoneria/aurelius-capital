@@ -4,7 +4,9 @@ Free, no auth required. Good for daily historical data back to 1970s.
 Limitations: no intraday beyond 60 days, no tick data, no streaming.
 
 yfinance.download() is synchronous — wrapped in asyncio.to_thread.
-auto_adjust=False: we manage split/dividend adjustment factors ourselves.
+auto_adjust=True: yfinance applies split and dividend adjustments so that
+returns computed from sequential closes are economically correct. Without
+this, a 2:1 split inflates the prior-day return by ~100%.
 """
 
 import asyncio
@@ -56,7 +58,7 @@ class YahooFinanceAdapter(MarketDataAdapter):
                 start=start.date(),
                 end=end.date(),
                 interval=interval,
-                auto_adjust=False,
+                auto_adjust=True,
                 progress=False,
                 threads=False,
             )

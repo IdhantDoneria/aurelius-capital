@@ -97,6 +97,8 @@ class Settings(BaseSettings):
             raise ValueError("SECRET_KEY must be set to a secure value in production")
         if self.is_production and self.app_debug:
             raise ValueError("APP_DEBUG must be false in production")
+        if self.is_production and self.database_password in ("change_me", ""):
+            raise ValueError("DATABASE_PASSWORD must be set to a secure value in production")
         return self
 
 

@@ -23,6 +23,7 @@ Why pending_orders lives outside the EventQueue:
 
 from __future__ import annotations
 
+import random
 import uuid
 from collections import deque
 from datetime import UTC, datetime
@@ -63,6 +64,8 @@ class BacktestEngine:
         self._feed = data_feed
         self._config = config or BacktestConfig()
         self._run_id = run_id or str(uuid.uuid4())
+
+        random.seed(self._config.random_seed)
 
         # Core components
         self._portfolio_manager = PortfolioManager(self._config)

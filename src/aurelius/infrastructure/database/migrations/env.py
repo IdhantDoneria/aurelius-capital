@@ -36,7 +36,12 @@ def get_url() -> str:
     port = os.environ.get("DATABASE_PORT", "5432")
     name = os.environ.get("DATABASE_NAME", "aurelius_dev")
     user = os.environ.get("DATABASE_USER", "aurelius")
-    password = os.environ.get("DATABASE_PASSWORD", "dev_password")
+    password = os.environ.get("DATABASE_PASSWORD")
+    if not password:
+        raise RuntimeError(
+            "DATABASE_PASSWORD env var is not set. "
+            "Set it before running Alembic migrations."
+        )
     return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
 
 
