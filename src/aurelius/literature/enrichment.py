@@ -6,7 +6,6 @@ LLMClient is injected — same pattern as aurelius.assistant. Works offline
 from __future__ import annotations
 
 import json
-import re
 from collections.abc import Callable
 
 from aurelius.literature.models import Paper
@@ -61,8 +60,15 @@ def enrich(paper: Paper, llm: LLMClient) -> Paper:
 
 
 def _extract_json(text: str) -> str:
-    m = re.search(r"\{.*\}", text, re.DOTALL)
-    return m.group(0) if m else text
+    _decoder = json.JSONDecoder()
+    for _i, _ch in enumerate(text):
+        if _ch == "{":
+            try:
+                _, _end = _decoder.raw_decode(text, _i)
+                return text[_i:_end]
+            except json.JSONDecodeError:
+                continue
+    return text
 
 
 def _str_list(value: object) -> list[str]:

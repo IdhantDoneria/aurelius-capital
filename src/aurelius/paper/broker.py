@@ -99,7 +99,9 @@ class PaperBroker:
                 still.append(r)
                 continue
             if self._crosses(r.request, tick.price):
-                assert r.request.limit_price is not None  # _crosses() returns False when None
+                if r.request.limit_price is None:  # _crosses() returns False when None; guard for -O
+                    still.append(r)
+                    continue
                 fills.append(
                     self._fill(r.request, r.request.limit_price, tick.timestamp, r.order_id)
                 )

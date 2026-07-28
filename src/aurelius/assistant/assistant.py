@@ -385,4 +385,4 @@ class ResearchAssistant:
 def _decay(is_sharpe: float, oos_sharpe: float) -> float:
     if is_sharpe <= 0:
         return 0.0
-    return max(0.0, 1.0 - oos_sharpe / is_sharpe)
+    return min(1.0, max(0.0, 1.0 - oos_sharpe / is_sharpe))

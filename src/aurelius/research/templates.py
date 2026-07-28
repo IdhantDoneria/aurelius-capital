@@ -204,8 +204,10 @@ class FactorStrategy(Strategy):
         if bar.symbol not in scores or len(scores) < 3:
             return []
         ranked = sorted(scores.values())
-        lo = ranked[min(len(ranked) - 1, int(self.quantile * len(ranked)))]
-        hi = ranked[min(len(ranked) - 1, int((1 - self.quantile) * len(ranked)))]
+        _n = len(ranked)
+        _count = max(1, int(self.quantile * _n))
+        lo = ranked[_count - 1]
+        hi = ranked[_n - _count]
         val = scores[bar.symbol]
         if val >= hi:
             d = Direction.LONG

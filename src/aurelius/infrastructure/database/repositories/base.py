@@ -105,7 +105,7 @@ class BaseRepository(AbstractRepository[ModelT]):
         entity = await self.get_by_id(id)
         if entity is None:
             return False
-        await self._session.delete(entity)
+        self._session.delete(entity)
         await self._session.flush()
         return True
 

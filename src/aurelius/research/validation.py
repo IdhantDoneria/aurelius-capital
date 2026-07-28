@@ -108,6 +108,13 @@ def walk_forward(
     n = len(ts)
     init = int(n * train_frac)
     fold = max(1, (n - init) // n_folds)
+    if n - init < n_folds:
+        import warnings
+        warnings.warn(
+            f"walk_forward: {n - init} post-training bars < n_folds={n_folds}; "
+            "returning partial results.",
+            stacklevel=2,
+        )
     full = run_backtest(factory, bars, config)
     out: list[float] = []
     for k in range(n_folds):

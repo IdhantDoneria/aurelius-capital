@@ -291,7 +291,7 @@ class CorporateActionRepository(BaseRepository[CorporateAction]):
             .where(
                 and_(
                     CorporateAction.symbol_id == symbol_id,
-                    CorporateAction.ex_date > as_of_date,
+                    CorporateAction.ex_date <= as_of_date,
                     CorporateAction.action_type.in_(["split", "reverse_split"]),
                 )
             )

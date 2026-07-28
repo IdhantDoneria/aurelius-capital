@@ -149,11 +149,15 @@ class DuckDBStore:
         """Latest bar per symbol on or before as_of. Used for factor construction."""
         return self.query(
             """
-            SELECT DISTINCT ON (symbol)
-                symbol, timestamp, open, high, low, close, volume, vwap, quality_score
-            FROM ohlcv
-            WHERE frequency = ? AND CAST(timestamp AS DATE) <= ?
-            ORDER BY symbol, timestamp DESC
+            SELECT symbol, timestamp, open, high, low, close, volume, vwap, quality_score
+            FROM (
+                SELECT *,
+                       ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY timestamp DESC) AS _rn
+                FROM ohlcv
+                WHERE frequency = ? AND CAST(timestamp AS DATE) <= ?
+            ) t
+            WHERE _rn = 1
+            ORDER BY symbol
             """,
             [frequency, as_of.isoformat()],
         )

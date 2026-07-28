@@ -6,7 +6,6 @@ Offline fallback: template-based generation from factors × asset_classes.
 from __future__ import annotations
 
 import json
-import re
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -182,11 +181,17 @@ def _dict_to_record(
 
 def _extract_json_array(text: str) -> str:
     """Extract first [...] or {...} block from LLM output."""
-    m = re.search(r"\[.*\]", text, re.DOTALL)
-    if m:
-        return m.group(0)
-    m = re.search(r"\{.*\}", text, re.DOTALL)
-    return f"[{m.group(0)}]" if m else "[]"
+    _decoder = json.JSONDecoder()
+    for _i, _ch in enumerate(text):
+        if _ch in ("[", "{"):
+            try:
+                _obj, _ = _decoder.raw_decode(text, _i)
+                if isinstance(_obj, list):
+                    return json.dumps(_obj)
+                return json.dumps([_obj])
+            except json.JSONDecodeError:
+                continue
+    return "[]"
 
 
 def _str_list(value: object) -> list[str]:
