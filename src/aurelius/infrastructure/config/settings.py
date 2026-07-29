@@ -56,6 +56,10 @@ class Settings(BaseSettings):
 
     # ── DuckDB analytical store ───────────────────────────────────────────────
     duckdb_path: str = "./data/analytics.duckdb"
+    knowledge_graph_path: str = "./data/knowledge_graph.duckdb"
+    paper_outcomes_path: str = "./data/paper_outcomes.duckdb"
+    corpus_path: str = "./data/corpus.duckdb"
+    catalog_path: str = "./data/catalog.duckdb"
 
     # ── Computed ──────────────────────────────────────────────────────────────
     @computed_field  # type: ignore[prop-decorator]
