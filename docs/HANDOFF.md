@@ -1,67 +1,62 @@
 # Session Handoff — Aurelius Capital
 
-**Read this, then delete it.** Ephemeral. It exists only to warm-start a fresh Claude session. All durable content lives in the docs/scripts it points to.
+**Read this, then delete it.** Ephemeral. Warm-starts one fresh session, then self-destructs. All durable content lives in the code it points to. **Delete this file (`docs/HANDOFF.md`) once read.**
 
-Repo: `/Users/idhantdoneria/aurelius-capital` (git). Branch `main`. Python venv at `.venv` — **use `.venv/bin/python`, not `python`**.
-
----
-
-## What this project is
-
-`aurelius-capital` = a systematic quant research platform (event-driven backtester, portfolio/risk engines, paper-trading loop, AI research assistant, DuckDB research store). Engineering is **feature-frozen**. Work has shifted from *building the platform* to *running research on it*.
-
-## Active operating modes (both ON, persist across session)
-
-- **Ponytail (full)** — lazy/reuse-first. Climb the ladder: does it need to exist → already in repo → stdlib → one line → minimal code. Bug fix = root cause, not symptom. One runnable check per non-trivial logic. `# ponytail:` comments mark deliberate ceilings.
-- **Caveman (full)** — terse chat prose. Drop articles/filler/hedging. **Code, commits, docs = normal English.** Security/irreversible = normal English.
-
-**Hard rule:** NEVER commit from the HOME repo `/Users/idhantdoneria/.git` (would stage the entire home dir + dotfiles). Only ever commit inside `/Users/idhantdoneria/aurelius-capital/.git`.
-
-## AI assistant constraint (structural)
-
-`aurelius.assistant` reads papers, generates hypotheses, reviews code, detects bias, writes reports — it **cannot trade**. Enforced structurally. Do not add a trading path to it.
+Repo: `/Users/idhantdoneria/aurelius-capital` (git, branch `main`). Venv at `.venv` — **use `.venv/bin/python`, not `python`**.
 
 ---
 
-## What was delivered this session (all done, verified)
+## Operating modes (both ON, persist across session)
 
-Three role-play deliverables, then the ROS + dashboard:
+- **Ponytail (ultra)** — YAGNI extremist. Deletion before addition. No fix until a profiler or real dataset demands it. Climb the ladder before writing anything.
+- **Caveman (full)** — terse chat prose. **Code, commits, docs, security = normal English.**
 
-1. **CTO acceptance test** → `docs/ACCEPTANCE_TEST.md`. Audited 13 subsystems; ran 5 benchmark strategies through the REAL engine on seeded multi-symbol data. **Found + fixed a critical bug** (see below). Verdict: single-asset research trustworthy now; cross-sectional not yet (data-side blockers). Scores: overall 72, prod 73, research 70. Conditional freeze.
+**Hard rule:** NEVER commit from HOME repo `/Users/idhantdoneria/.git` (stages entire home dir + dotfiles). Commit only inside `/Users/idhantdoneria/aurelius-capital/.git`.
 
-2. **Director research program** → `docs/RESEARCH_PROGRAM.md` (constitution: 8 alpha lanes, validation pipeline, rejection rules, promotion, roadmap+KPIs), `docs/ALPHA_TAXONOMY.md` (15-category taxonomy + 11-stage Hypothesis Factory + 10-axis scorecard), `docs/HYPOTHESIS_BACKLOG.md` (500 ranked hypotheses H001–H500, tiered S/A/B/C).
+---
 
-3. **Research Operating System** → `docs/RESEARCH_OS.md`. The operating manual. 5 parts: (1) repo structure — binds git artifacts to `research.duckdb` by ID, no third store; (2) 9 templates mapped to real `research.models` fields; (3) 9-stage lifecycle with gates + exit criteria; (4) dashboard as SQL panels; (5) KPIs with formulas. Lifecycle stage rides `hypotheses.status` at zero migration.
+## What this session did
 
-4. **Dashboard CLI** → `scripts/research_dashboard.py`. Read-only Part-4 panels over `research.duckdb`, reuses `ResearchStore._query`/`rejected_ideas()`. `--selftest` seeds in-memory + asserts (passes). Live DB currently empty → clean `n/a`.
+**Scalability readiness audit — measure only. NO code changed. NO files written except this handoff.** Research logic was explicitly off-limits.
 
-## The critical bug (fixed, keep in mind)
+Micro-benchmarked on this box (single core):
+- CSV parse: **~100K bar/s**
+- Feature compute: **~2,400 bar/s** (18 features, ~43K feature-rows/s)
+- Backtest engine: **~30K bar/s** at 20 symbols (per-bar cost grows with active symbols)
 
-**Cross-symbol fill bug.** `ExecutionSimulator.try_fill` never matched `order.symbol == bar.symbol`, and `engine._process_bar` tried every pending order against the current bar. In a single-symbol universe (every pre-existing test) invisible. Multi-symbol: an `AAA` order filled against the next chronological bar of a *different* instrument — wrong price, wrong symbol, same day (broke T+1). **Fix:** one-line symbol guard in `src/aurelius/backtesting/engine.py` `_process_bar` (skip non-matching bars, keep order pending). Regression test: `test_multi_symbol_fills_against_own_bar` in `tests/backtesting/test_engine.py`.
+Daily bars ≈ 252/yr/symbol.
 
-## Uncommitted state (nothing committed yet this session)
+## Findings (verdict: ready ~100 symbols × ≤7yr only)
 
-```
- M src/aurelius/backtesting/engine.py        # the cross-symbol fill fix
- M tests/backtesting/test_engine.py          # regression test
-?? docs/ACCEPTANCE_TEST.md ALPHA_TAXONOMY.md HYPOTHESIS_BACKLOG.md RESEARCH_OS.md RESEARCH_PROGRAM.md
-?? scripts/acceptance_validation.py scripts/research_dashboard.py
-?? data/                                      # local research.duckdb — likely gitignore, do NOT commit
-```
+Three independent walls, each fires before runtime matters:
 
-Tests: full non-integration suite **217 passed** after the fix. Verify with `.venv/bin/python -m pytest -m "not integration" -q`.
+1. **Depth cap = 7 years, fixed window 2020–2026.** Postgres OHLCV is `PARTITION BY RANGE (timestamp)`, monthly partitions only for `range(2020, 2027)`, **no DEFAULT partition** — `src/aurelius/infrastructure/database/migrations/versions/0001_initial_schema.py:264-274`. Any bar outside → insert error. `feature_values` covers 2015–2026 but useless without OHLCV.
 
-## Known open items (reported, NOT fixed — do not start unprompted)
+2. **O(symbols × total_bars) gap detection** — `src/aurelius/market_data/pipeline/ingestion.py:128-132` re-scans the whole `known_bars` list per ticker. 3000 sym × 22.7M bars ≈ 68B ops → hours. Bites at ~500+ symbols.
 
-From `ACCEPTANCE_TEST.md` Phase 3/4, gating cross-sectional research:
-1. **Equity sampled per bar-event, not per calendar day** → Sharpe/vol mis-annualized on multi-symbol. (Critical, Small.)
-2. Point-in-time / bitemporal fundamentals. (Critical, Large.)
-3. Survivorship-free universe. (Critical, Medium.)
-4. Corporate-action golden-case test. (High, Small.)
-5. Immutable dataset+config snapshot lock per run. (High, Small.)
+3. **In-memory OOM.** Every ingestion + research path holds full dataset in RAM: ingestion ~6 list copies (`ingestion.py:114-167`); `FeaturePipeline.compute_batch` returns one list + unbounded cache (`features/pipeline.py:46,91`); research re-materializes + re-sorts full set per backtest slice (`research/validation.py:44`). ~22.7M bars × ~6 copies ≈ 95 GB. Dies before ~3M bars.
 
-## Likely next moves (only if user asks)
+Target scales: **100×10yr = PARTIAL** (pre-2020 rejected; 7yr slice fine). **500×20yr = BLOCKED** (depth + ingest degrade). **3000×30yr = BLOCKED on all axes.**
 
-- Commit: engine fix + tests as one `fix:` commit, docs + scripts as `docs:`/`feat:` — inside the project repo only.
-- Knock out acceptance fixes #1 + #4 (both Small) to unlock the single-asset freeze.
-- Start populating `research.duckdb` from the 500-hypothesis backlog per the ROS lifecycle.
+Other notes: single-thread everything (no parallel across symbols/grid/partitions); Decimal in hot loops caps feature rate; DuckDB analytics = single local file, single-writer, static partition set, no cold tier.
+
+## Deferred fixes (reported, NOT applied — do not start unprompted)
+
+Laziest-first, only if user asks:
+1. Depth wall — add DEFAULT partition (`CREATE TABLE ..._default PARTITION OF market_data_ohlcv DEFAULT`). One line.
+2. O(S×N) gap-detect — group `known_bars` by symbol once (dict/`itertools.groupby`), not S scans. ~3 lines.
+3. OOM — stream ingest per-symbol instead of 6 full copies. Bigger; only at those scales.
+
+## Then implemented (audit fixes 1 & 2 only — streaming redesign #3 left alone)
+
+Both APIs preserved; research/experiment/feature logic untouched.
+
+1. **Depth cap removed** — new migration `src/aurelius/infrastructure/database/migrations/versions/0002_ohlcv_default_partition.py` adds a DEFAULT partition to `market_data_ohlcv`. Arbitrary dates now insert; propagated indexes keep queries fast; hot-window (2020–2026) pruning intact. Ceiling: cold rows share one default partition (see `# ponytail:` note in the migration).
+2. **O(S×N) gap detect fixed** — `src/aurelius/market_data/pipeline/ingestion.py` buckets `known_bars` by symbol in one pass (`defaultdict`) instead of re-scanning per ticker. Measured **10× / 55× / 104×** faster at 100 / 500 / 1000 symbols; identical output.
+
+Tests: `tests/market_data/test_pipeline.py` +2 unit (multi-symbol gap attribution); `tests/market_data/test_ohlcv_partitions.py` new integration (default-partition attached + out-of-window insert routes to default). Full non-integration suite: **575 passed**.
+
+## Uncommitted state
+
+Nothing committed. Changed on disk: migration 0002, `ingestion.py`, `test_pipeline.py`, `test_ohlcv_partitions.py`, this handoff.
+**Integration test for fix 1 NOT run here** — no Postgres/Docker in this env (port 5433 closed). Unblock: bring up the test stack (`docker compose -f docker-compose.test.yml up`), `alembic upgrade head`, then `.venv/bin/python -m pytest tests/market_data/test_ohlcv_partitions.py -q`.

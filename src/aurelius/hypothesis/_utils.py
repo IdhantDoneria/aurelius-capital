@@ -1,4 +1,5 @@
 """Shared utilities for the hypothesis package."""
+
 from __future__ import annotations
 
 # Stopwords for Jaccard similarity and vagueness checks.

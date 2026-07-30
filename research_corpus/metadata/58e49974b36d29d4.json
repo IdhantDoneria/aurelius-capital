@@ -1,0 +1,177 @@
+{
+  "id": "917e5363-2a2b-48ba-a41a-bfb861ca2a66",
+  "original_filename": "Carhart_1997_On_Persistence_in_Mutual_Fund_Performance.pdf",
+  "file_path": "research_corpus/processed/Carhart_1997_On_Persistence_in_Mutual_Fund_Performance.pdf",
+  "content_hash": "58e49974b36d29d4356ff428c1a021fd355a25ef3f0a70b06459dd97a192ae2d",
+  "status": "completed",
+  "stages": [
+    {
+      "stage": "validate",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:13.081974"
+    },
+    {
+      "stage": "assign_id",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:13.344813"
+    },
+    {
+      "stage": "move_to_processing",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:13.345173"
+    },
+    {
+      "stage": "extract_metadata",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:13.876595"
+    },
+    {
+      "stage": "classify",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:13.876736"
+    },
+    {
+      "stage": "store_corpus",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:13.889973"
+    },
+    {
+      "stage": "update_kg",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.112935"
+    },
+    {
+      "stage": "score",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.113154"
+    },
+    {
+      "stage": "plan_experiment",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.114257"
+    },
+    {
+      "stage": "archive",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.114474"
+    }
+  ],
+  "paper_metadata": {
+    "title": "THE JOURNAL OF FINANCE • VOL. LII, NO.1. MARCH 1997",
+    "authors": [
+      "Using a sample free of survivor bias",
+      "I demonstrate that common factors in stock"
+    ],
+    "year": 1997,
+    "doi": "",
+    "arxiv_id": "",
+    "abstract": "do not support the existence of skilled or informed mutual fund\nportfolio managers.\nPERSISTENCEIN MUTUAL FUND performance does not reflect superior stock-picking\nskill. Rather, common factors in stock returns and persistent differences in\nmutual fund expenses and transaction costs explain almost all",
+    "methodology": "in Carhart et al. are cross-section estimators of the stochastic\ndiscount factor. Carhart et al. also permit time-variation in model parameters. The estimates from\nthese methods do not change any inferences. As a final robustness check, I perform tests on the\ninvestment objective categories separately (aggressive growth, long-term growth, and growth-and­\nincome) and find that the persistence evidence is virtually as strong in each objective category as\nthe diversified equity universe as a whole.",
+    "results": "do not support the existence of skilled or informed mutual fund\nportfolio managers.\nPERSISTENCEIN MUTUAL FUND performance does not reflect superior stock-picking\nskill. Rather, common factors in stock returns and persistent differences in\nmutual fund expenses and transaction costs explain almost all of the predict­\nability in mutual fund returns. Only the strong, persistent underperformance\nby the worst-return mutual funds remains anomalous.\nMutual fund persistence is well documented in the finance literature, but\nnot well explained. Hendricks, Patel, and Zeckhauser (1993), Goetzmann and\nIbbotson (1994), Brown and Goetzmann (1995), and Wermers (1996) find\nevidence of persistence in mutual fund performance over short-term horizons\nof one to three years, and attribute the persistence to \"hot hands\" or common\ninvestment strategies. Grinblatt and Titman (1992), Elton, Gruber, Das, and\nHlavka (1993), and Elton, Gruber, Das, and Blake (1996) document mutual\nfund return predictability over longer horizons of five to ten years, and at­\ntribute this to manager differential information or stock-picking talent. Con­\ntrary evidence comes from Jensen (1969), who does not find that good subse­\nquent performance follows good past performance. Carhart (1992) shows that\npersistence in expense ratios drives much of the long-term persistence in\nmutual fund performance.\nMy analysis indicates that Jegadeesh and Titman's (1993) one-year momen­\ntum in stock returns accounts for Hendricks, Patel, an",
+    "conclusion": "statistics on the mutual fund data. My sample\nincludes a total of 1,892 diversified equity funds and 16,109 fund years. The\nsample omits sector funds, international funds, and balanced funds. The\nremaining funds are almost equally divided among aggressive growth, long­\nterm growth, and growth-and-income categories. In an average year, the\nsample includes 509 funds with average total net assets (TNA) of $218 million\nand average expenses of 1.14 percent per year. In addition, funds trade 77.3\npercent of the value of their assets (Mturn) in an average year. Since reported\nturnover is the minimum of purchases and sales over average TNA, I obtain\nMturn by adding to reported turnover one-half of the percentage change in\nTNA adjusted for investment returns and mergers. Also, over the full sample,\n64.5 percent of funds charge load fees, which average 7.33 percent.",
+    "datasets_mentioned": [
+      "CRSP",
+      "Ken French"
+    ],
+    "features_mentioned": [
+      "momentum",
+      "value",
+      "size",
+      "quality",
+      "beta",
+      "book-to-market",
+      "factor",
+      "alpha",
+      "Sharpe",
+      "turnover",
+      "liquidity"
+    ],
+    "statistical_tests": [
+      "t-statistic",
+      "p-value",
+      "alpha",
+      "beta",
+      "R-squared",
+      "regression",
+      "Fama-MacBeth"
+    ],
+    "reference_count": 0,
+    "word_count": 11134,
+    "source_file": "Carhart_1997_On_Persistence_in_Mutual_Fund_Performance.pdf",
+    "_score": {
+      "paper_id": "doc_68df4b692ca0",
+      "novelty": 0.0,
+      "influence": 0.4,
+      "reproducibility": 0.9999999999999999,
+      "dataset_availability": 1.0,
+      "expected_value": 1.0,
+      "engineering_effort": 5.866666666666667,
+      "total": 6.51,
+      "rationale": "novelty=0.00 influence=0.40 reproducibility=1.00 dataset_avail=1.00 expected_value=1.00 effort=5.87"
+    }
+  },
+  "corpus_doc_id": "doc_68df4b692ca0",
+  "priority_score": 6.51,
+  "experiment_spec": {
+    "paper_id": "doc_68df4b692ca0",
+    "title": "THE JOURNAL OF FINANCE • VOL. LII, NO.1. MARCH 1997",
+    "strategy_name": "journal_finance_vol_lii_no1",
+    "hypothesis_statement": "Hypothesis derived from paper abstract: do not support the existence of skilled or informed mutual fund\nportfolio managers. PERSISTENCEIN MUTUAL FUND performance does not reflect superior stock-picking\nskill.",
+    "required_datasets": [
+      "crsp",
+      "ken_french"
+    ],
+    "required_features": [
+      "momentum",
+      "value",
+      "size",
+      "quality",
+      "beta",
+      "book-to-market",
+      "factor",
+      "alpha",
+      "Sharpe",
+      "turnover"
+    ],
+    "methodology": "in Carhart et al. are cross-section estimators of the stochastic\ndiscount factor. Carhart et al. also permit time-variation in model parameters. The estimates from\nthese methods do not change any inferences. As a final robustness check, I perform tests on the\ninvestment objective categories separately (aggressive growth, long-term growth, and growth-and­\nincome) and find that the persistence evidence is virtually as strong in each objective category as\nthe diversified equity universe as a whole.",
+    "params": {
+      "lookback": 20,
+      "rebalance_freq": "monthly",
+      "universe": "sp500"
+    },
+    "expected_metrics": [
+      "sharpe_ratio",
+      "max_drawdown",
+      "oos_return",
+      "t_stat"
+    ],
+    "reproducibility_checklist": [
+      "Paper methodology section reviewed",
+      "Required datasets confirmed: ['crsp', 'ken_french']",
+      "Feature engineering pipeline validated",
+      "Backtest date range selected (avoid look-ahead bias)",
+      "IS/OOS split defined",
+      "Statistical significance threshold set (p < 0.05)",
+      "Transaction costs and slippage parameterized",
+      "Benchmark selected for comparison"
+    ],
+    "missing_prerequisites": [],
+    "ready_to_run": true,
+    "priority_score": 6.51
+  },
+  "error": "",
+  "created_at": "2026-07-30T10:24:13.081070",
+  "updated_at": "2026-07-30T10:24:14.114538Z",
+  "retry_count": 0,
+  "processing_seconds": 1.033345291041769
+}

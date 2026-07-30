@@ -1,7 +1,9 @@
 """Unit tests for hypothesis generator (mock LLM, no API calls)."""
+
 import json
-import pytest
 from datetime import UTC, date, datetime
+
+import pytest
 
 from aurelius.hypothesis.generator import _extract_json_array, _str_list, generate
 from aurelius.literature.models import Paper, paper_id
@@ -31,25 +33,27 @@ def _paper(enriched: bool = True) -> Paper:
     return p
 
 
-_MOCK_LLM_RESPONSE = json.dumps([
-    {
-        "economic_intuition": "Investors underreact to news, causing momentum to persist.",
-        "testable_statement": (
-            "IF 12-1 month momentum signal is in top quintile "
-            "THEN next-month return is positive AMONG international equities OVER 1_month"
-        ),
-        "expected_behavior": "Top quintile outperforms bottom quintile by 1% monthly.",
-        "asset_classes": ["equities"],
-        "required_datasets": ["CRSP", "Compustat"],
-        "required_features": ["momentum_12_1"],
-        "holding_period": "1_month",
-        "expected_risks": ["momentum_crash", "factor_crowding"],
-        "confidence_score": 0.75,
-        "assumptions": ["Prices not fully efficient"],
-        "dependencies": [],
-        "validation_requirements": ["OOS Sharpe > 0.5", "Positive after costs"],
-    }
-])
+_MOCK_LLM_RESPONSE = json.dumps(
+    [
+        {
+            "economic_intuition": "Investors underreact to news, causing momentum to persist.",
+            "testable_statement": (
+                "IF 12-1 month momentum signal is in top quintile "
+                "THEN next-month return is positive AMONG international equities OVER 1_month"
+            ),
+            "expected_behavior": "Top quintile outperforms bottom quintile by 1% monthly.",
+            "asset_classes": ["equities"],
+            "required_datasets": ["CRSP", "Compustat"],
+            "required_features": ["momentum_12_1"],
+            "holding_period": "1_month",
+            "expected_risks": ["momentum_crash", "factor_crowding"],
+            "confidence_score": 0.75,
+            "assumptions": ["Prices not fully efficient"],
+            "dependencies": [],
+            "validation_requirements": ["OOS Sharpe > 0.5", "Positive after costs"],
+        }
+    ]
+)
 
 
 @pytest.mark.unit
@@ -69,18 +73,25 @@ def test_generate_with_llm():
 
 @pytest.mark.unit
 def test_generate_llm_caps_at_3():
-    four_hyps = json.dumps([
-        {
-            "economic_intuition": f"Reason {i}.",
-            "testable_statement": f"IF signal_{i} high THEN returns positive OVER 1_month",
-            "expected_behavior": "Outperforms.", "asset_classes": ["equities"],
-            "required_datasets": ["CRSP"], "required_features": ["sig"],
-            "holding_period": "1_month", "expected_risks": [],
-            "confidence_score": 0.5, "assumptions": [], "dependencies": [],
-            "validation_requirements": [],
-        }
-        for i in range(4)
-    ])
+    four_hyps = json.dumps(
+        [
+            {
+                "economic_intuition": f"Reason {i}.",
+                "testable_statement": f"IF signal_{i} high THEN returns positive OVER 1_month",
+                "expected_behavior": "Outperforms.",
+                "asset_classes": ["equities"],
+                "required_datasets": ["CRSP"],
+                "required_features": ["sig"],
+                "holding_period": "1_month",
+                "expected_risks": [],
+                "confidence_score": 0.5,
+                "assumptions": [],
+                "dependencies": [],
+                "validation_requirements": [],
+            }
+            for i in range(4)
+        ]
+    )
     records = generate(_paper(), llm=lambda _: four_hyps)
     assert len(records) <= 3
 
@@ -131,7 +142,6 @@ def test_extract_json_array_with_prose():
 
 @pytest.mark.unit
 def test_str_list_helpers():
-    from aurelius.hypothesis.generator import _str_list
     assert _str_list(["a", "b"]) == ["a", "b"]
     assert _str_list("single") == ["single"]
     assert _str_list(None) == []

@@ -1,6 +1,8 @@
 """Offline tests for extractor parsers (no HTTP calls)."""
-import pytest
+
 from datetime import UTC, datetime
+
+import pytest
 
 from aurelius.literature.extractors.arxiv import ArxivExtractor
 from aurelius.literature.extractors.crossref import CrossRefExtractor

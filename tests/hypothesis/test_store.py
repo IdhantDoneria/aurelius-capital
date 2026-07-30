@@ -1,12 +1,16 @@
 """Unit tests for HypothesisStore (in-memory DuckDB)."""
-import pytest
+
 from datetime import UTC, datetime
+
+import pytest
 
 from aurelius.hypothesis.models import HypothesisRecord
 from aurelius.hypothesis.store import HypothesisStore
 
 
-def _record(id_: str = "h001", statement: str = "IF momentum high THEN equity returns positive OVER 1_month") -> HypothesisRecord:
+def _record(
+    id_: str = "h001", statement: str = "IF momentum high THEN equity returns positive OVER 1_month"
+) -> HypothesisRecord:
     now = datetime.now(UTC)
     return HypothesisRecord(
         id=id_,

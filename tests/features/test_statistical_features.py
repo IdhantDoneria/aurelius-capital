@@ -10,8 +10,8 @@ from decimal import Decimal
 
 import pytest
 
-from aurelius.features.registry import Window
 from aurelius.features import get
+from aurelius.features.registry import Window
 
 
 def _win(closes: list[float], market: list[float] | None = None) -> Window:
@@ -63,12 +63,12 @@ def test_mean_deviation_20_insufficient_history_is_none():
 @pytest.mark.unit
 def test_mean_deviation_20_zero_mean_safe():
     # Mean of 0 → should return None, not raise ZeroDivisionError
-    closes = [0.0] * 20
     # Window with zero-valued closes; mean=0, divisor would be 0
     # We construct manually to allow zero (normally gt=0 only applies to OHLCVIngest)
-    from aurelius.features.registry import Window as W
+    from aurelius.features.registry import Window
+
     d = [Decimal("0")] * 20
-    w = W(open=d, high=d, low=d, close=d, volume=d)
+    w = Window(open=d, high=d, low=d, close=d, volume=d)
     v = get("mean_deviation_20")(w)
     assert v is None  # guarded against zero-mean
 

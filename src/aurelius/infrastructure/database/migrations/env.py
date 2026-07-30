@@ -39,8 +39,7 @@ def get_url() -> str:
     password = os.environ.get("DATABASE_PASSWORD")
     if not password:
         raise RuntimeError(
-            "DATABASE_PASSWORD env var is not set. "
-            "Set it before running Alembic migrations."
+            "DATABASE_PASSWORD env var is not set. Set it before running Alembic migrations."
         )
     return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
 

@@ -5,6 +5,7 @@ there; SSRN papers use DOI prefix 10.2139.
 
 Rate limit: CrossRef allows ~50 req/s for polite pool (with User-Agent email).
 """
+
 from __future__ import annotations
 
 import re
@@ -19,10 +20,10 @@ from aurelius.literature.models import Paper, paper_id
 logger = get_logger(__name__)
 
 _ISSNS: dict[str, str] = {
-    "jf": "0022-1082",   # Journal of Finance
+    "jf": "0022-1082",  # Journal of Finance
     "jfe": "0304-405X",  # Journal of Financial Economics
     "rfs": "0893-9454",  # Review of Financial Studies
-    "qf": "1469-7688",   # Quantitative Finance
+    "qf": "1469-7688",  # Quantitative Finance
 }
 _SSRN_PREFIX = "10.2139"
 _TAGS_RE = re.compile(r"<[^>]+>")
@@ -43,8 +44,8 @@ class CrossRefExtractor(SourceExtractor):
         else:
             url = f"https://api.crossref.org/prefixes/{_SSRN_PREFIX}/works"
 
-        params: dict[str, object] = {
-            "rows": limit,
+        params: dict[str, str] = {
+            "rows": limit,  # type: ignore
             "sort": "published",
             "order": "desc",
             "select": "DOI,title,author,published-print,published-online,abstract,URL",
@@ -73,13 +74,10 @@ class CrossRefExtractor(SourceExtractor):
         title = titles[0] if titles else ""
 
         authors = [
-            f"{a.get('given', '')} {a.get('family', '')}".strip()
-            for a in item.get("author", [])
+            f"{a.get('given', '')} {a.get('family', '')}".strip() for a in item.get("author", [])
         ]
 
-        published_at = self._parse_date(
-            item.get("published-print") or item.get("published-online")
-        )
+        published_at = self._parse_date(item.get("published-print") or item.get("published-online"))
 
         abstract = _TAGS_RE.sub("", item.get("abstract", "")).strip()
         url = item.get("URL") or f"https://doi.org/{doi}"

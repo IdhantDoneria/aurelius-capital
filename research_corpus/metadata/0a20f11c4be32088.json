@@ -1,0 +1,109 @@
+{
+  "id": "e73425be-499c-4a0f-ac46-6b972de473ec",
+  "original_filename": "Black_Litterman_1992_Global_Portfolio_Optimization.pdf",
+  "file_path": "research_corpus/processed/Black_Litterman_1992_Global_Portfolio_Optimization.pdf",
+  "content_hash": "0a20f11c4be320884b3a2960e3ace97febd00986862030cee1e833025481e10f",
+  "status": "completed",
+  "stages": [
+    {
+      "stage": "validate",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.640438"
+    },
+    {
+      "stage": "assign_id",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.661731"
+    },
+    {
+      "stage": "move_to_processing",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.662100"
+    },
+    {
+      "stage": "extract_metadata",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.667477"
+    },
+    {
+      "stage": "classify",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.667561"
+    },
+    {
+      "stage": "store_corpus",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.676978"
+    },
+    {
+      "stage": "update_kg",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.719560"
+    },
+    {
+      "stage": "score",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.719766"
+    },
+    {
+      "stage": "plan_experiment",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.719855"
+    },
+    {
+      "stage": "archive",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.720061"
+    }
+  ],
+  "paper_metadata": {
+    "title": "Reproduced with permission of the copyright owner.  Further reproduction prohibited without permission.",
+    "authors": [
+      "Black",
+      "Fischer; Litterman",
+      "Robert"
+    ],
+    "year": 1992,
+    "doi": "",
+    "arxiv_id": "",
+    "abstract": "No abstract available.",
+    "methodology": "",
+    "results": "",
+    "conclusion": "",
+    "datasets_mentioned": [],
+    "features_mentioned": [],
+    "statistical_tests": [],
+    "reference_count": 0,
+    "word_count": 210,
+    "source_file": "Black_Litterman_1992_Global_Portfolio_Optimization.pdf",
+    "_score": {
+      "paper_id": "doc_1f1cbbf1f288",
+      "novelty": 0.0,
+      "influence": 0.0,
+      "reproducibility": 0.0,
+      "dataset_availability": 0.3,
+      "expected_value": 0.0,
+      "engineering_effort": 3.0,
+      "total": 1.3,
+      "rationale": "novelty=0.00 influence=0.00 reproducibility=0.00 dataset_avail=0.30 expected_value=0.00 effort=3.00"
+    }
+  },
+  "corpus_doc_id": "doc_1f1cbbf1f288",
+  "priority_score": 1.3,
+  "experiment_spec": null,
+  "error": "",
+  "created_at": "2026-07-30T10:21:50.640377",
+  "updated_at": "2026-07-30T10:21:50.720117Z",
+  "retry_count": 0,
+  "processing_seconds": 0.07973733299877495
+}

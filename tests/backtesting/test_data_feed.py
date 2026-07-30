@@ -7,13 +7,12 @@ to avoid real disk I/O.
 
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
 
 from aurelius.backtesting.data.feed import BarData, DuckDBDataFeed, InMemoryDataFeed
-
 
 # ── InMemoryDataFeed edge cases ───────────────────────────────────────────────
 
@@ -91,7 +90,11 @@ def test_in_memory_symbols_deduped():
         return BarData(
             sym,
             datetime(2024, 1, day, tzinfo=UTC),
-            Decimal("100"), Decimal("101"), Decimal("99"), Decimal("100"), Decimal("1e6"),
+            Decimal("100"),
+            Decimal("101"),
+            Decimal("99"),
+            Decimal("100"),
+            Decimal("1e6"),
         )
 
     bars = [_b("AAPL", 1), _b("AAPL", 2), _b("MSFT", 1), _b("MSFT", 2)]
@@ -105,7 +108,11 @@ def test_in_memory_date_filter_excludes_all():
         return BarData(
             "AAPL",
             datetime(2024, 1, day, tzinfo=UTC),
-            Decimal("100"), Decimal("101"), Decimal("99"), Decimal("100"), Decimal("1e6"),
+            Decimal("100"),
+            Decimal("101"),
+            Decimal("99"),
+            Decimal("100"),
+            Decimal("1e6"),
         )
 
     bars = [_b(1), _b(2), _b(3)]

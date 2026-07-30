@@ -1,4 +1,5 @@
 """Paper dataclass — atomic unit of the Literature Intelligence Framework."""
+
 from __future__ import annotations
 
 import hashlib
@@ -14,8 +15,8 @@ def paper_id(source: str, source_id: str) -> str:
 @dataclass
 class Paper:
     id: str
-    source: str       # arxiv | nber | ssrn | jf | jfe | rfs | qf
-    source_id: str    # arxiv abs ID, DOI, NBER handle
+    source: str  # arxiv | nber | ssrn | jf | jfe | rfs | qf
+    source_id: str  # arxiv abs ID, DOI, NBER handle
     title: str
     authors: list[str]
     published_at: date | None

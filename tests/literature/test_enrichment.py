@@ -1,7 +1,9 @@
 """Unit tests for LLM enrichment (mock LLM, no API calls)."""
+
 import json
-import pytest
 from datetime import UTC, date, datetime
+
+import pytest
 
 from aurelius.literature.enrichment import _extract_json, _str_list, enrich
 from aurelius.literature.models import Paper, paper_id
@@ -21,17 +23,19 @@ def _paper() -> Paper:
     )
 
 
-_VALID_RESPONSE = json.dumps({
-    "keywords": ["momentum", "equities", "factor"],
-    "asset_classes": ["equities"],
-    "research_category": "factor_anomaly",
-    "methodology": "empirical",
-    "datasets": ["CRSP", "Compustat"],
-    "factors_studied": ["momentum"],
-    "statistical_techniques": ["Fama-MacBeth regression", "portfolio sorts"],
-    "main_conclusions": "Momentum generates significant excess returns net of transaction costs.",
-    "limitations": "US equities only; does not account for implementation costs.",
-})
+_VALID_RESPONSE = json.dumps(
+    {
+        "keywords": ["momentum", "equities", "factor"],
+        "asset_classes": ["equities"],
+        "research_category": "factor_anomaly",
+        "methodology": "empirical",
+        "datasets": ["CRSP", "Compustat"],
+        "factors_studied": ["momentum"],
+        "statistical_techniques": ["Fama-MacBeth regression", "portfolio sorts"],
+        "main_conclusions": "Momentum generates significant excess returns net of transaction costs.",
+        "limitations": "US equities only; does not account for implementation costs.",
+    }
+)
 
 
 @pytest.mark.unit
@@ -80,7 +84,9 @@ def test_enrich_graceful_on_partial_json():
 @pytest.mark.unit
 def test_enrich_handles_prose_wrapped_json():
     p = _paper()
-    wrapped = f"Here is the extracted metadata:\n\n{_VALID_RESPONSE}\n\nLet me know if you need more."
+    wrapped = (
+        f"Here is the extracted metadata:\n\n{_VALID_RESPONSE}\n\nLet me know if you need more."
+    )
     result = enrich(p, llm=lambda _: wrapped)
     assert result.enriched is True
     assert result.keywords == ["momentum", "equities", "factor"]

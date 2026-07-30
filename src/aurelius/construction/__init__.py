@@ -33,7 +33,6 @@ __all__ = [
     "apply_limits",
     "condition_number",
     "constrained_min_variance",
-
     "equal_weight",
     "max_sharpe",
     "min_variance",

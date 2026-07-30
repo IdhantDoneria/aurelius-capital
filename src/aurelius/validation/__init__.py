@@ -28,29 +28,29 @@ from aurelius.validation.stats import (
 )
 
 __all__ = [
-    # service
-    "ValidationService",
-    "DataIntegrityError",
+    # audit
+    "AuditRecord",
+    "BootstrapResult",
     # report
     "ComprehensiveReport",
+    "DataIntegrityError",
     # metrics
     "ExtendedMetrics",
     "MetricsCalculator",
-    # stats
-    "StatEngine",
-    "BootstrapResult",
     "PermutationResult",
+    "PromotionCriteria",
+    "PromotionDecision",
+    # promotion
+    "PromotionEngine",
+    "PromotionState",
+    "RegimeStats",
     # robustness
     "RobustnessAnalyzer",
     "RobustnessAssessment",
-    "RegimeStats",
     "SensitivitySweep",
-    # promotion
-    "PromotionEngine",
-    "PromotionDecision",
-    "PromotionState",
-    "PromotionCriteria",
-    # audit
-    "AuditRecord",
+    # stats
+    "StatEngine",
+    # service
+    "ValidationService",
     "capture_environment",
 ]

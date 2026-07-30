@@ -13,7 +13,7 @@ Decisions are evidence-based: every state includes the specific checks that drov
 from __future__ import annotations
 
 import enum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 class PromotionState(enum.StrEnum):
@@ -27,15 +27,16 @@ class PromotionState(enum.StrEnum):
 @dataclass
 class PromotionDecision:
     state: PromotionState
-    evidence: list[str]             # reasons for the decision (pro and con)
-    blocking_issues: list[str]      # issues that prevented a higher state
-    confidence_score: float         # 0.0 – 1.0 composite score
-    next_steps: list[str]           # actionable recommendations
+    evidence: list[str]  # reasons for the decision (pro and con)
+    blocking_issues: list[str]  # issues that prevented a higher state
+    confidence_score: float  # 0.0 - 1.0 composite score
+    next_steps: list[str]  # actionable recommendations
 
 
 @dataclass(frozen=True)
 class PromotionCriteria:
     """Calibration knobs. Defaults are conservative institutional thresholds."""
+
     # Hard gates for APPROVED_FOR_PAPER_TRADING
     min_sharpe_paper: float = 0.5
     max_adj_pvalue_paper: float = 0.05
@@ -124,7 +125,9 @@ class PromotionEngine:
 
         # Insufficient data — inconclusive, not a verdict
         if n_oos_observations < c.min_oos_observations:
-            blocking.append(f"insufficient OOS data ({n_oos_observations} < {c.min_oos_observations} obs)")
+            blocking.append(
+                f"insufficient OOS data ({n_oos_observations} < {c.min_oos_observations} obs)"
+            )
             return PromotionDecision(
                 state=PromotionState.REQUIRES_MORE_RESEARCH,
                 evidence=evidence,
@@ -138,7 +141,9 @@ class PromotionEngine:
 
         # Hard reject
         if oos_sharpe <= c.absolute_reject_sharpe:
-            blocking.append(f"OOS Sharpe {oos_sharpe:.3f} below absolute floor {c.absolute_reject_sharpe}")
+            blocking.append(
+                f"OOS Sharpe {oos_sharpe:.3f} below absolute floor {c.absolute_reject_sharpe}"
+            )
             return PromotionDecision(
                 state=PromotionState.REJECTED,
                 evidence=evidence,

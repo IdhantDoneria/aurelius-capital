@@ -1,4 +1,5 @@
 """Abstract base for all literature source extractors."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

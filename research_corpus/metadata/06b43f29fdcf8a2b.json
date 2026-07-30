@@ -1,0 +1,127 @@
+{
+  "id": "fed32983-4792-4bb0-af64-bf6c38237421",
+  "original_filename": "Novy_Marx_2013_The_Other_Side_of_Value_Gross_Profitability_Premium.pdf",
+  "file_path": "research_corpus/processed/Novy_Marx_2013_The_Other_Side_of_Value_Gross_Profitability_Premium.pdf",
+  "content_hash": "06b43f29fdcf8a2bc83ad5a87964e9aeb3a3272ee0597ad1e7164156e3f7c2a7",
+  "status": "completed",
+  "stages": [
+    {
+      "stage": "validate",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.866530"
+    },
+    {
+      "stage": "assign_id",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.870332"
+    },
+    {
+      "stage": "move_to_processing",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.870588"
+    },
+    {
+      "stage": "extract_metadata",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:15.284321"
+    },
+    {
+      "stage": "classify",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:15.284462"
+    },
+    {
+      "stage": "store_corpus",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:15.295811"
+    },
+    {
+      "stage": "update_kg",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:15.498715"
+    },
+    {
+      "stage": "score",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:15.498936"
+    },
+    {
+      "stage": "plan_experiment",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:15.499034"
+    },
+    {
+      "stage": "archive",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:15.499264"
+    }
+  ],
+  "paper_metadata": {
+    "title": "The other side of value: The gross proﬁtability premium $",
+    "authors": [],
+    "year": 2013,
+    "doi": "",
+    "arxiv_id": "",
+    "abstract": "Proﬁtability, measured by gross proﬁts-to-assets, has roughly the same power as book-\nto-market predicting the cross section of average returns. Proﬁtable ﬁrms generate\nsigniﬁcantly higher returns than unproﬁtable ﬁrms, despite having signiﬁcantly higher\nvaluation ratios. Controlling for proﬁtability also dramatically increases the performance\nof value strategies, especially among the largest, most liquid stocks. These results are\ndifﬁcult to reconcile with popular explanations of the value premium, as proﬁtable ﬁrms\nare less prone to distress, have longer cash ﬂow durations, and have lower levels of\noperating leverage. Controlling for gross proﬁtability explains most earnings related\nanomalies and a wide range of seemingly unrelated proﬁtable trading strategies.\n& 2013 Elsevier B.V. All rights reserved.",
+    "methodology": ", has a\nlarger information ratio relative to the three Fama and\nFrench factors than does UMD (up minus down), the\nmomentum factor available from Ken French’s Data\nTable 6\nDouble sorts on gross proﬁts-to-assets and book-to-market.\nThis table shows the value-weighted average excess returns to portfolios double sorted, using NYSE breakpoints, on gross proﬁts-to-assets and book -\nto-market, as well results of time series regressions of both sorts’ high minus low portfolios’ returns on the Fama and French factors [the market, siz e and\nvalue factors MKT, SMB (small-minus-large), and HML (high-minus-low)]. Test statistics are given in square brackets. The table also shows the avera ge\nnumber of ﬁrms, and the average size of ﬁrms, in each portfolio (the portfolios exhibit little gross-proﬁts to asset variation within book-to-market\nquintiles and little book-to-market variation within proﬁtability quintiles). The sample excludes ﬁnancial ﬁrms (those with one-digit standard i ndustrial\nclassiﬁcation codes of six) and covers July 1963 to December 2010.\nPanel A: Portfolio average returns and time series regression results\nGross proﬁts-to-asset quintiles Proﬁtability strategies\nLow 2 3 4 High r\ne a bmkt bsmb bhml\nBook-to-market quintiles\nLow /C0 0.08 0.19 0.27 0.26 0.56 0.64 0.83 /C0 0.24 /C0 0.27 /C0 0.01\n[3.52] [4.76] [ /C0 6.03] [ /C0 4.81] [ /C0 0.18]\n2 0.19 0.30 0.40 0.70 0.90 0.70 0.69 /C0 0.12 0.26 0.01\n[4.13] [4.00] [ /C0 3.05] [4.61] [0.09]\n3 0.38 0.39 0.74 0.69 0.87 0.49 0.27 0",
+    "results": "are\ndifﬁcult to reconcile with popular explanations of the value premium, as proﬁtable ﬁrms\nare less prone to distress, have longer cash ﬂow durations, and have lower levels of\noperating leverage. Controlling for gross proﬁtability explains most earnings related\nanomalies and a wide range of seemingly unrelated proﬁtable trading strategies.\n& 2013 Elsevier B.V. All rights reserved.\n1. Introduction\nProﬁtability, as measured by the ratio of a ﬁrm’s gross\nproﬁts (revenues minus cost of goods sold) to its assets,\nhas roughly the same power as book-to-market (B/M)\npredicting the cross section of average returns. Gross\nproﬁts-to-assets is also complimentary to book-to-mar-\nket, contributing economically signiﬁcant information\nabove that contained in valuations, even among the\nlargest, most liquid stocks. These conclusions differ from\nthose of earlier studies. For example, while Fama and\nFrench (2006) ﬁnds that earnings has explanatory power\nin Fama and MacBeth (1973) cross section regressions,\nFama and French (2008, p. 1663) ﬁnds that ‘‘proﬁtability\nsorts produce the weakest average hedge portfolio\nreturns’’ among the strategies they consider and ‘‘do not\nprovide much basis for the conclusion that, with controls\nfor market cap and B/M, there is a positive relation\nbetween average returns and proﬁtability.’’ Gross proﬁt-\nability has far more power than earnings, however, pre-\ndicting the cross section of returns.\nStrategies based on gross proﬁtability generate value-\nlike average ex",
+    "conclusion": "that, with controls\nfor market cap and B/M, there is a positive relation\nbetween average returns and proﬁtability.’’ Gross proﬁt-\nability has far more power than earnings, however, pre-\ndicting the cross section of returns.\nStrategies based on gross proﬁtability generate value-\nlike average excess returns, even though they are growth\nstrategies that provide an excellent hedge for value.\nThe two strategies share much in common philosophi-\ncally, despite being highly dissimilar in both character-\nistics and covariances. While traditional value strategies\nﬁnance the acquisition of inexpensive assets by selling\nexpensive assets, proﬁtability strategies exploit a different\ndimension of value, ﬁnancing the acquisition of produc-\ntive assets by selling unproductive assets. Because the\ntwo effects are closely related, it is useful to analyze\nproﬁtability in the context of value.\nValue strategies hold ﬁrms with inexpensive assets\nand short ﬁrms with expensive assets. When a ﬁrm’s\nmarket value is low relative to its book value, then a stock\npurchaser acquires a relatively large quantity of book\nassets for each dollar spent on the ﬁrm. When a ﬁrm’s\nmarket price is high relative to its book value the opposite\nContents lists available at SciVerse ScienceDirect\njournal homepage: www.elsevier.com/locate/jfec\nJournal of Financial Economics\n0304-405X/$ - see front matter & 2013 Elsevier B.V. All rights reserved.\nhttp://dx.doi.org/10.1016/j.jﬁneco.2013.01.003\n$ I thank Gene Fama, Andrea Frazzi",
+    "datasets_mentioned": [
+      "Compustat",
+      "Ken French",
+      "Fama-French"
+    ],
+    "features_mentioned": [
+      "momentum",
+      "value",
+      "size",
+      "quality",
+      "profitability",
+      "volatility",
+      "book-to-market",
+      "price-to-earnings",
+      "factor",
+      "alpha",
+      "Sharpe",
+      "turnover"
+    ],
+    "statistical_tests": [
+      "Sharpe ratio",
+      "alpha",
+      "regression",
+      "panel"
+    ],
+    "reference_count": 0,
+    "word_count": 22103,
+    "source_file": "Novy_Marx_2013_The_Other_Side_of_Value_Gross_Profitability_Premium.pdf",
+    "_score": {
+      "paper_id": "doc_95eb325e8e1e",
+      "novelty": 0.0,
+      "influence": 0.32000000000000006,
+      "reproducibility": 0.9999999999999999,
+      "dataset_availability": 0.6666666666666666,
+      "expected_value": 1.0,
+      "engineering_effort": 6.4,
+      "total": 5.67,
+      "rationale": "novelty=0.00 influence=0.32 reproducibility=1.00 dataset_avail=0.67 expected_value=1.00 effort=6.40"
+    }
+  },
+  "corpus_doc_id": "doc_95eb325e8e1e",
+  "priority_score": 5.67,
+  "experiment_spec": null,
+  "error": "",
+  "created_at": "2026-07-30T10:24:14.866472",
+  "updated_at": "2026-07-30T10:24:15.499322Z",
+  "retry_count": 0,
+  "processing_seconds": 0.6328469580039382
+}

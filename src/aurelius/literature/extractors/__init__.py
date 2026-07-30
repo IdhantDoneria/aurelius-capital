@@ -1,4 +1,5 @@
 """Literature source extractor registry."""
+
 from __future__ import annotations
 
 from aurelius.literature.extractors.arxiv import ArxivExtractor
@@ -22,5 +23,11 @@ def get_extractor(source: str) -> SourceExtractor:
             raise ValueError(f"Unknown source '{source}'. Valid: {SOURCES}")
 
 
-__all__ = ["SourceExtractor", "ArxivExtractor", "NBERExtractor", "CrossRefExtractor",
-           "SOURCES", "get_extractor"]
+__all__ = [
+    "SOURCES",
+    "ArxivExtractor",
+    "CrossRefExtractor",
+    "NBERExtractor",
+    "SourceExtractor",
+    "get_extractor",
+]

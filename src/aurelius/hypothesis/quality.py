@@ -3,6 +3,7 @@
 Eight checks applied in sequence. All checks run; reasons accumulate.
 Returns QualityResult(passed, reasons). Caller decides whether to reject.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -47,16 +48,17 @@ def check_quality(h: HypothesisRecord) -> QualityResult:
 
     # Vagueness: require at least 3 unique non-stopword tokens in statement
     content_tokens = {
-        w for w in h.testable_statement.lower().split()
-        if w.isalpha() and w not in _STOPWORDS
+        w for w in h.testable_statement.lower().split() if w.isalpha() and w not in _STOPWORDS
     }
     if len(content_tokens) < _MIN_UNIQUE_CONTENT_TOKENS:
         reasons.append("too_vague")
 
-    _MIN_CIRCULAR_REASONING_LEN = 10  # shorter than _MIN_STATEMENT_LEN to catch near-verbatim copies
+    min_circular_reasoning_len = (
+        10  # shorter than _MIN_STATEMENT_LEN to catch near-verbatim copies
+    )
     # Circular reasoning: statement is contained within intuition (near-verbatim)
     if (
-        len(h.testable_statement) > _MIN_CIRCULAR_REASONING_LEN
+        len(h.testable_statement) > min_circular_reasoning_len
         and h.testable_statement.lower().strip() in h.economic_intuition.lower()
     ):
         reasons.append("circular_reasoning")

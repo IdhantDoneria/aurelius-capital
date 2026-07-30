@@ -1,0 +1,57 @@
+{
+  "paper_id": "doc_42944c3deca0",
+  "title": "Value and Momentum Everywhere",
+  "strategy_name": "value_momentum_everywhere",
+  "hypothesis_statement": "Hypothesis derived from paper abstract: indicate the \npresence of common global risks that we characterize with a three factor model . G lobal funding \nliquidity risk is a partial source of these patterns, which are identifiable only when examining value \nand momentum  simultaneously across markets .",
+  "required_datasets": [
+    "crsp",
+    "compustat",
+    "bloomberg",
+    "ken_french",
+    "russell",
+    "msci",
+    "fama_french",
+    "datastream"
+  ],
+  "required_features": [
+    "momentum",
+    "value",
+    "size",
+    "profitability",
+    "volatility",
+    "beta",
+    "idiosyncratic",
+    "factor",
+    "signal",
+    "alpha"
+  ],
+  "methodology": "",
+  "params": {
+    "lookback": 20,
+    "rebalance_freq": "monthly",
+    "universe": "sp500"
+  },
+  "expected_metrics": [
+    "sharpe_ratio",
+    "max_drawdown",
+    "oos_return",
+    "t_stat"
+  ],
+  "reproducibility_checklist": [
+    "Paper methodology section reviewed",
+    "Required datasets confirmed: ['crsp', 'compustat', 'bloomberg', 'ken_french', 'russell', 'msci', 'fama_french', 'datastream']",
+    "Feature engineering pipeline validated",
+    "Backtest date range selected (avoid look-ahead bias)",
+    "IS/OOS split defined",
+    "Statistical significance threshold set (p < 0.05)",
+    "Transaction costs and slippage parameterized",
+    "Benchmark selected for comparison"
+  ],
+  "missing_prerequisites": [
+    "compustat",
+    "bloomberg",
+    "datastream"
+  ],
+  "ready_to_run": false,
+  "priority_score": 6.91
+}

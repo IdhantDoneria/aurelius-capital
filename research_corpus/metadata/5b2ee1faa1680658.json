@@ -1,0 +1,170 @@
+{
+  "id": "b4a9ebaa-da05-4b98-8c7e-f55bd70f8501",
+  "original_filename": "Gatev_Goetzmann_Rouwenhorst_Pairs_Trading_Performance_of_a_Relative_Value_Arbitrage_Rule.pdf",
+  "file_path": "research_corpus/processed/Gatev_Goetzmann_Rouwenhorst_Pairs_Trading_Performance_of_a_Relative_Value_Arbitrage_Rule.pdf",
+  "content_hash": "5b2ee1faa168065837e12bd17c774895be4d14953eb359ce751776ee88b635a0",
+  "status": "completed",
+  "stages": [
+    {
+      "stage": "validate",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.114883"
+    },
+    {
+      "stage": "assign_id",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.118767"
+    },
+    {
+      "stage": "move_to_processing",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.119019"
+    },
+    {
+      "stage": "extract_metadata",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.300498"
+    },
+    {
+      "stage": "classify",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.300636"
+    },
+    {
+      "stage": "store_corpus",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.311080"
+    },
+    {
+      "stage": "update_kg",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.461363"
+    },
+    {
+      "stage": "score",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.461590"
+    },
+    {
+      "stage": "plan_experiment",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.461815"
+    },
+    {
+      "stage": "archive",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.462040"
+    }
+  ],
+  "paper_metadata": {
+    "title": "Pairs Trading: Performance",
+    "authors": [],
+    "year": 2002,
+    "doi": "10.1093/rfs/hhj020",
+    "arxiv_id": "",
+    "abstract": "suggest that the ‘‘pairs’’ effect\ndiffers from previously documented reversal profits. Robustness of the excess returns\nindicates that pairs trading profits from temporary mispricing of close substitutes. We\nlink the profitability to the presence of a common factor in the returns, different from\ncon",
+    "methodology": "of specula-\ntion. One popular short-term speculation strategy is known as ‘‘pairs\ntrading.’’ The strategy has at least a 20-year history on Wall Street and\nis among the proprietary ‘‘statistical arbitrage’’ tools currently used by\nhedge funds as well as investment banks. The concept of pairs trading is\ndisarmingly simple. Find two stocks whose prices have moved together\nhistorically. When the spread between them widens, short the winner and\nbuy the loser. If history repeats itself, prices will converge and the arbi-\ntrageur will profit. It is hard to believe that such a simple strategy, based\nsolely on past price dynamics and simple contrarian principles, could\npossibly make money. If the U.S. equity market were efficient at all\ntimes, risk-adjusted returns from pairs trading should not be positive.\nIn this article, we examine the risk and return characteristics of pairs\ntrading with daily data over the period 1962 through December 2002.\nWe are grateful to Peter Bossaerts, Michael Cooper, Jon Ingersoll, Ravi Jagannathan, Maureen O’Hara,\nCarl Schecter, and two anonymous referees for many helpful discussions and suggestions on this topic.\nWe thank the International Center for Finance at the Yale School of Management for research support,\nand the participants in the EFA’99 Meetings, the AFA’2000 Meetings, the Berkeley Program in Finance,\nand the Finance and Economics workshops at Vanderbilt and Wesleyan for their comments. Address\ncorrespondence to Evan Gatev, Boston College, Ca",
+    "results": "suggest that the ‘‘pairs’’ effect\ndiffers from previously documented reversal profits. Robustness of the excess returns\nindicates that pairs trading profits from temporary mispricing of close substitutes. We\nlink the profitability to the presence of a common factor in the returns, different from\nconventional risk measures.\nWall Street has long been interested in quantitative methods of specula-\ntion. One popular short-term speculation strategy is known as ‘‘pairs\ntrading.’’ The strategy has at least a 20-year history on Wall Street and\nis among the proprietary ‘‘statistical arbitrage’’ tools currently used by\nhedge funds as well as investment banks. The concept of pairs trading is\ndisarmingly simple. Find two stocks whose prices have moved together\nhistorically. When the spread between them widens, short the winner and\nbuy the loser. If history repeats itself, prices will converge and the arbi-\ntrageur will profit. It is hard to believe that such a simple strategy, based\nsolely on past price dynamics and simple contrarian principles, could\npossibly make money. If the U.S. equity market were efficient at all\ntimes, risk-adjusted returns from pairs trading should not be positive.\nIn this article, we examine the risk and return characteristics of pairs\ntrading with daily data over the period 1962 through December 2002.\nWe are grateful to Peter Bossaerts, Michael Cooper, Jon Ingersoll, Ravi Jagannathan, Maureen O’Hara,\nCarl Schecter, and two anonymous referees for many helpful di",
+    "conclusion": "statistics for the excess monthly return distributions for pairs trading portfolios by sector. We\ntrade according to the ‘‘wait one day’’ rule described in the text. The average number of stocks in the\nindustry groups are as follows: 156 Utilities, 61 Transportation, 371 Financials, and 1729 Industrials.\nThere is no ‘‘20 after 100’’ portfolio for the Transportation industry group. The t-statistic of the mean is\ncomputed using Newey-West standard errors with six lags.\nThe Review of Financial Studies / v 19 n 3 2006\n812",
+    "datasets_mentioned": [
+      "CRSP",
+      "S&P 500"
+    ],
+    "features_mentioned": [
+      "momentum",
+      "value",
+      "size",
+      "profitability",
+      "volatility",
+      "idiosyncratic",
+      "factor",
+      "Sharpe",
+      "liquidity"
+    ],
+    "statistical_tests": [
+      "t-statistic",
+      "Sharpe ratio",
+      "R-squared",
+      "regression",
+      "panel",
+      "bootstrap"
+    ],
+    "reference_count": 0,
+    "word_count": 13449,
+    "source_file": "Gatev_Goetzmann_Rouwenhorst_Pairs_Trading_Performance_of_a_Relative_Value_Arbitrage_Rule.pdf",
+    "_score": {
+      "paper_id": "doc_20fd3a6a284d",
+      "novelty": 0.0,
+      "influence": 0.4,
+      "reproducibility": 0.9999999999999999,
+      "dataset_availability": 1.0,
+      "expected_value": 1.0,
+      "engineering_effort": 5.466666666666667,
+      "total": 6.55,
+      "rationale": "novelty=0.00 influence=0.40 reproducibility=1.00 dataset_avail=1.00 expected_value=1.00 effort=5.47"
+    }
+  },
+  "corpus_doc_id": "doc_20fd3a6a284d",
+  "priority_score": 6.55,
+  "experiment_spec": {
+    "paper_id": "doc_20fd3a6a284d",
+    "title": "Pairs Trading: Performance",
+    "strategy_name": "pairs_trading_performance",
+    "hypothesis_statement": "Hypothesis derived from paper abstract: suggest that the ‘‘pairs’’ effect\ndiffers from previously documented reversal profits. Robustness of the excess returns\nindicates that pairs trading profits from temporary mispricing of close substitutes.",
+    "required_datasets": [
+      "crsp",
+      "sp500"
+    ],
+    "required_features": [
+      "momentum",
+      "value",
+      "size",
+      "profitability",
+      "volatility",
+      "idiosyncratic",
+      "factor",
+      "Sharpe",
+      "liquidity"
+    ],
+    "methodology": "of specula-\ntion. One popular short-term speculation strategy is known as ‘‘pairs\ntrading.’’ The strategy has at least a 20-year history on Wall Street and\nis among the proprietary ‘‘statistical arbitrage’’ tools currently used by\nhedge funds as well as investment banks. The concept of pairs trading is\ndisarmingly simple. Find two stocks whose prices have moved together\nhistorically. When the spread between them widens, short the winner and\nbuy the loser. If history repeats itself, prices will c",
+    "params": {
+      "lookback": 20,
+      "rebalance_freq": "monthly",
+      "universe": "sp500"
+    },
+    "expected_metrics": [
+      "sharpe_ratio",
+      "max_drawdown",
+      "oos_return",
+      "t_stat"
+    ],
+    "reproducibility_checklist": [
+      "Paper methodology section reviewed",
+      "Required datasets confirmed: ['crsp', 'sp500']",
+      "Feature engineering pipeline validated",
+      "Backtest date range selected (avoid look-ahead bias)",
+      "IS/OOS split defined",
+      "Statistical significance threshold set (p < 0.05)",
+      "Transaction costs and slippage parameterized",
+      "Benchmark selected for comparison"
+    ],
+    "missing_prerequisites": [],
+    "ready_to_run": true,
+    "priority_score": 6.55
+  },
+  "error": "",
+  "created_at": "2026-07-30T10:24:14.114818",
+  "updated_at": "2026-07-30T10:24:14.462105Z",
+  "retry_count": 0,
+  "processing_seconds": 0.34728375007398427
+}

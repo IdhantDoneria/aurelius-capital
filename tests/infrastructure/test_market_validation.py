@@ -6,7 +6,7 @@ chronological order, corporate action validators all untested.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from decimal import Decimal
 from uuid import uuid4
 
@@ -51,25 +51,25 @@ def test_ohlcv_valid_bar():
 
 @pytest.mark.unit
 def test_ohlcv_high_lt_low_rejected():
-    with pytest.raises(Exception, match="high.*low"):
+    with pytest.raises(Exception, match=r"high.*low"):
         OHLCVIngest(**_bar(high=Decimal("183"), low=Decimal("187")))
 
 
 @pytest.mark.unit
 def test_ohlcv_high_lt_open_rejected():
-    with pytest.raises(Exception, match="high.*open"):
+    with pytest.raises(Exception, match=r"high.*open"):
         OHLCVIngest(**_bar(open=Decimal("190"), high=Decimal("186")))
 
 
 @pytest.mark.unit
 def test_ohlcv_high_lt_close_rejected():
-    with pytest.raises(Exception, match="high.*close"):
+    with pytest.raises(Exception, match=r"high.*close"):
         OHLCVIngest(**_bar(close=Decimal("190"), high=Decimal("186")))
 
 
 @pytest.mark.unit
 def test_ohlcv_low_gt_open_rejected():
-    with pytest.raises(Exception, match="low.*open"):
+    with pytest.raises(Exception, match=r"low.*open"):
         OHLCVIngest(**_bar(open=Decimal("183"), low=Decimal("184")))
 
 
@@ -105,13 +105,13 @@ def test_ohlcv_naive_timestamp_rejected():
 
 @pytest.mark.unit
 def test_ohlcv_zero_price_rejected():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match=".*"):
         OHLCVIngest(**_bar(open=Decimal("0")))
 
 
 @pytest.mark.unit
 def test_ohlcv_negative_volume_rejected():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match=".*"):
         OHLCVIngest(**_bar(volume=Decimal("-1")))
 
 
@@ -157,12 +157,14 @@ def test_quality_zero_volume_deducts_30():
 @pytest.mark.unit
 def test_quality_large_move_deducts_20():
     # Bar where close is ~24% above prev_close; high must accommodate close
-    bar = OHLCVIngest(**_bar(
-        open=Decimal("184.00"),
-        high=Decimal("231.00"),
-        low=Decimal("183.00"),
-        close=Decimal("230.00"),
-    ))
+    bar = OHLCVIngest(
+        **_bar(
+            open=Decimal("184.00"),
+            high=Decimal("231.00"),
+            low=Decimal("183.00"),
+            close=Decimal("230.00"),
+        )
+    )
     score = bar.compute_quality_score(prev_close=Decimal("185.00"))
     # vwap=None (-10), trade_count=None (-5), >20% move (-20) = 65
     assert score <= 75

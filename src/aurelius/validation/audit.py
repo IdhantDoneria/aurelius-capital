@@ -25,9 +25,9 @@ class AuditRecord:
     validated_at: datetime
     python_version: str
     platform: str
-    aurelius_commit: str        # git short hash; "unknown" if not in a git repo
-    config_hash: str            # SHA-256[:16] of serialized BacktestConfig
-    dataset_fingerprint: str    # from research.models.dataset_fingerprint
+    aurelius_commit: str  # git short hash; "unknown" if not in a git repo
+    config_hash: str  # SHA-256[:16] of serialized BacktestConfig
+    dataset_fingerprint: str  # from research.models.dataset_fingerprint
     random_seed: int
     key_package_versions: dict[str, str] = field(default_factory=dict)
 
@@ -65,9 +65,7 @@ def capture_environment(config: BacktestConfig, dataset_fingerprint: str) -> Aud
 
     # config hash
     config_dict = {k: str(v) for k, v in vars(config).items()}
-    config_hash = hashlib.sha256(
-        json.dumps(config_dict, sort_keys=True).encode()
-    ).hexdigest()[:16]
+    config_hash = hashlib.sha256(json.dumps(config_dict, sort_keys=True).encode()).hexdigest()[:16]
 
     # package versions
     versions: dict[str, str] = {}

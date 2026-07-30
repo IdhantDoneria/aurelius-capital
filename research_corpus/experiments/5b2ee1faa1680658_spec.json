@@ -1,0 +1,46 @@
+{
+  "paper_id": "doc_20fd3a6a284d",
+  "title": "Pairs Trading: Performance",
+  "strategy_name": "pairs_trading_performance",
+  "hypothesis_statement": "Hypothesis derived from paper abstract: suggest that the ‘‘pairs’’ effect\ndiffers from previously documented reversal profits. Robustness of the excess returns\nindicates that pairs trading profits from temporary mispricing of close substitutes.",
+  "required_datasets": [
+    "crsp",
+    "sp500"
+  ],
+  "required_features": [
+    "momentum",
+    "value",
+    "size",
+    "profitability",
+    "volatility",
+    "idiosyncratic",
+    "factor",
+    "Sharpe",
+    "liquidity"
+  ],
+  "methodology": "of specula-\ntion. One popular short-term speculation strategy is known as ‘‘pairs\ntrading.’’ The strategy has at least a 20-year history on Wall Street and\nis among the proprietary ‘‘statistical arbitrage’’ tools currently used by\nhedge funds as well as investment banks. The concept of pairs trading is\ndisarmingly simple. Find two stocks whose prices have moved together\nhistorically. When the spread between them widens, short the winner and\nbuy the loser. If history repeats itself, prices will c",
+  "params": {
+    "lookback": 20,
+    "rebalance_freq": "monthly",
+    "universe": "sp500"
+  },
+  "expected_metrics": [
+    "sharpe_ratio",
+    "max_drawdown",
+    "oos_return",
+    "t_stat"
+  ],
+  "reproducibility_checklist": [
+    "Paper methodology section reviewed",
+    "Required datasets confirmed: ['crsp', 'sp500']",
+    "Feature engineering pipeline validated",
+    "Backtest date range selected (avoid look-ahead bias)",
+    "IS/OOS split defined",
+    "Statistical significance threshold set (p < 0.05)",
+    "Transaction costs and slippage parameterized",
+    "Benchmark selected for comparison"
+  ],
+  "missing_prerequisites": [],
+  "ready_to_run": true,
+  "priority_score": 6.55
+}

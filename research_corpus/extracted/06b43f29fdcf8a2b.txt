@@ -1,0 +1,915 @@
+The other side of value: The gross proﬁtability premium $
+Robert Novy-Marx
+Simon Graduate School of Business, University of Rochester, 500 Joseph C. Wilson Blvd., Box 270100, Rochester, NY 14627, United States
+article info
+Article history:
+Received 15 December 2011
+Received in revised form
+29 May 2012
+Accepted 6 June 2012
+Available online 26 January 2013
+JEL classiﬁcation:
+G12
+Keywords:
+Proﬁtability
+Value premium
+Factor models
+Asset pricing
+Quality investing
+abstract
+Proﬁtability, measured by gross proﬁts-to-assets, has roughly the same power as book-
+to-market predicting the cross section of average returns. Proﬁtable ﬁrms generate
+signiﬁcantly higher returns than unproﬁtable ﬁrms, despite having signiﬁcantly higher
+valuation ratios. Controlling for proﬁtability also dramatically increases the performance
+of value strategies, especially among the largest, most liquid stocks. These results are
+difﬁcult to reconcile with popular explanations of the value premium, as proﬁtable ﬁrms
+are less prone to distress, have longer cash ﬂow durations, and have lower levels of
+operating leverage. Controlling for gross proﬁtability explains most earnings related
+anomalies and a wide range of seemingly unrelated proﬁtable trading strategies.
+& 2013 Elsevier B.V. All rights reserved.
+1. Introduction
+Proﬁtability, as measured by the ratio of a ﬁrm’s gross
+proﬁts (revenues minus cost of goods sold) to its assets,
+has roughly the same power as book-to-market (B/M)
+predicting the cross section of average returns. Gross
+proﬁts-to-assets is also complimentary to book-to-mar-
+ket, contributing economically signiﬁcant information
+above that contained in valuations, even among the
+largest, most liquid stocks. These conclusions differ from
+those of earlier studies. For example, while Fama and
+French (2006) ﬁnds that earnings has explanatory power
+in Fama and MacBeth (1973) cross section regressions,
+Fama and French (2008, p. 1663) ﬁnds that ‘‘proﬁtability
+sorts produce the weakest average hedge portfolio
+returns’’ among the strategies they consider and ‘‘do not
+provide much basis for the conclusion that, with controls
+for market cap and B/M, there is a positive relation
+between average returns and proﬁtability.’’ Gross proﬁt-
+ability has far more power than earnings, however, pre-
+dicting the cross section of returns.
+Strategies based on gross proﬁtability generate value-
+like average excess returns, even though they are growth
+strategies that provide an excellent hedge for value.
+The two strategies share much in common philosophi-
+cally, despite being highly dissimilar in both character-
+istics and covariances. While traditional value strategies
+ﬁnance the acquisition of inexpensive assets by selling
+expensive assets, proﬁtability strategies exploit a different
+dimension of value, ﬁnancing the acquisition of produc-
+tive assets by selling unproductive assets. Because the
+two effects are closely related, it is useful to analyze
+proﬁtability in the context of value.
+Value strategies hold ﬁrms with inexpensive assets
+and short ﬁrms with expensive assets. When a ﬁrm’s
+market value is low relative to its book value, then a stock
+purchaser acquires a relatively large quantity of book
+assets for each dollar spent on the ﬁrm. When a ﬁrm’s
+market price is high relative to its book value the opposite
+Contents lists available at SciVerse ScienceDirect
+journal homepage: www.elsevier.com/locate/jfec
+Journal of Financial Economics
+0304-405X/$ - see front matter & 2013 Elsevier B.V. All rights reserved.
+http://dx.doi.org/10.1016/j.jﬁneco.2013.01.003
+$ I thank Gene Fama, Andrea Frazzini, Toby Moskowitz, the
+anonymous referee, and participants of the National Bureau of Economic
+Research Asset Pricing and Q Group meetings.
+E-mail address: robert.novy-marx@simon.rochester.edu
+Journal of Financial Economics 108 (2013) 1–28
+
+is true. Value strategies were ﬁrst advocated by Graham
+and Dodd (1934) , and their proﬁtability has been shown
+countless times since.
+Previous work argues that the proﬁtability of value
+strategies is mechanical. Firms for which investors require
+high rates of return (i.e., risky ﬁrms) are priced lower and,
+consequently, have higher book-to-markets than ﬁrms for
+which investors require lower returns. Because valuation
+ratios help identify variation in expected returns, with
+higher book-to-markets indicating higher required rates,
+value ﬁrms generate higher average returns than growth
+ﬁrms ( Ball, 1978 ; Berk, 1995 ). While this argument is
+consistent with risk-based pricing, it works just as well if
+variation in expected returns is driven by behavioral
+forces. Lakonishok, Shleifer, and Vishny (1994) argue that
+low book-to-market stocks are on average overpriced,
+while the opposite is true for high book-to-market stocks,
+and that buying value stocks and selling growth stocks
+represents a crude but effective method for exploiting
+misvaluations in the cross section.
+Similar arguments suggest that ﬁrms with productive
+assets should yield higher average returns than ﬁrms with
+unproductive assets. Productive ﬁrms that investors
+demand high average returns to hold should be priced
+similarly to less productive ﬁrms for which investors
+demand lower returns. Variation in productivity in this
+way helps identify variation in investors’ required rates of
+return. Because productivity helps identify this variation,
+with higher proﬁtability indicating higher required rates,
+proﬁtable ﬁrms generate higher average returns than
+unproﬁtable ﬁrms. Again, the argument is consistent with,
+but not predicated on, rational pricing.
+Consistent with these predictions, portfolios sorted on
+gross proﬁts-to-assets exhibit large variation in average
+returns, especially in sorts that control for book-to-
+market. More proﬁtable ﬁrms earn signiﬁcantly higher
+average returns than unproﬁtable ﬁrms. They do so
+despite having, on average, lower book-to-markets and
+higher market capitalizations. Because strategies based on
+proﬁtability are growth strategies, they provide an excel-
+lent hedge for value strategies and, thus, dramatically
+improve a value investor’s investment opportunity set. In
+fact, the proﬁtability strategy, despite generating signiﬁ-
+cant returns on its own, provides insurance for value.
+Adding proﬁtability on top of a value strategy reduces the
+strategy’s overall volatility, despite doubling its exposure
+to risky assets. A value investor can, thus, capture the
+gross proﬁtability premium without exposing herself to
+any additional risk.
+Proﬁtability also underlies most earnings related
+anomalies, as well as a large number of seemingly
+unrelated anomalies. Many well known proﬁtable trading
+strategies are just different expressions of three basic
+underlying anomalies, mixed in various proportions and
+dressed up in different guises. A four-factor model,
+employing the market and industry-adjusted value,
+momentum, and gross proﬁtability factors, performs
+remarkably well pricing a wide range of anomalies,
+including (but not limited to) strategies based on return
+on equity, market power, default risk, net stock issuance,
+and organizational capital.
+The remainder of the paper is organized as follows.
+Section 2 provides a simple theoretical framework for the
+prediction that gross proﬁtability predicts the cross sec-
+tion of expected returns and shows that the predicted
+relation is strong in the data. Section 3 investigates the
+relation between proﬁtability and value more closely. It
+shows that controlling for book-to-market signiﬁcantly
+improves the performance of proﬁtability strategies and
+that controlling for gross proﬁts-to-assets signiﬁcantly
+improves the performance of value strategies. Section 4
+considers the performance of a four-factor model that
+employs the market and industry-adjusted value,
+momentum, and gross proﬁtability factors, and it shows
+that this model performs better than standard models
+pricing a wide array of anomalies. Section 5 concludes.
+2. Proﬁtability and the cross section of expected returns
+Fama and French (2006) illustrate the intuition that
+book-to-market and proﬁtability are both positively
+related to expected returns using the dividend discount
+model in conjunction with clean surplus accounting. In
+the dividend discount model, a stock’s price equals the
+present value of its expected dividends. Under clean
+surplus accounting the change in book equity equals
+retained earnings. Together these imply the market value
+of equity (cum dividend) is
+M
+t ¼
+X1
+t ¼ 0
+Et ½Yt þ t/C0 dBt þ t/C138
+ð1þ rÞt , ð1Þ
+where Yt is the time- t earnings, dBt /C17Bt /C0 Bt/C0 1 is the
+change in book equity, and r is the required rate of return
+on expected dividends. Holding all else equal, higher
+valuations imply lower expected returns, and higher
+expected earnings imply higher expected returns. That
+is, value ﬁrms should outperform growth ﬁrms, and
+proﬁtable ﬁrms should outperform unproﬁtable ﬁrms.
+Fama and French (2006) test the expected relation
+between proﬁtability and expected return with mixed
+results. Their cross sectional regressions suggest that
+earnings are related to average returns in the manner
+predicted, but their portfolio tests suggest that proﬁt-
+ability adds little or nothing to the prediction of returns
+provided by size and book-to-market.
+Fama and French (2006) employ current earnings as a
+simple proxy for future proﬁtability, however, and gross
+proﬁtability is a better proxy. Earnings in Eq. (1) represent
+a ﬁrm’s true economic proﬁtability. Earnings off the
+income statement represent a ﬁrm’s true economic proﬁt-
+ability reduced by any investments that are treated as
+expenses, such as research and development (R&D),
+advertising, or human capital development. Expensed
+investments directly reduce earnings without increasing
+book equity but are nevertheless associated with higher
+future economic proﬁts and, therefore, higher future
+dividends. When considering changes to earnings in
+Eq. (1), it thus makes no sense to hold all else equal.
+Gross proﬁts is the cleanest accounting measure of
+true economic proﬁtability. The farther down the income
+statement one goes, the more polluted proﬁtability
+R. Novy-Marx / Journal of Financial Economics 108 (2013) 1–282
+
+measures become, and the less related they are to true
+economic proﬁtability. For example, a ﬁrm that has both
+lower production costs and higher sales than its compe-
+titors is unambiguously more proﬁtable. Even so, it can
+easily have lower earnings than its competitors. If the ﬁrm
+is quickly increasing its sales though aggressive advertis-
+ing or commissions to its sales force, these actions can,
+even if optimal, reduce its bottom line income below that
+of its less proﬁtable competitors. Similarly, if the ﬁrm
+spends on research and development to further increase
+its production advantage or invests in organizational
+capital that helps it maintain its competitive advantage,
+these actions result in lower current earnings. Moreover,
+capital expenditures that directly increase the scale of the
+ﬁrm’s operations further reduce its free cash ﬂows rela-
+tive to its competitors. These facts suggest constructing
+the empirical proxy for productivity using gross proﬁts. 1
+Scaling by a book-based measure, instead of a market-
+based measure, avoids hopelessly conﬂating the produc-
+tivity proxy with book-to-market. I scale gross proﬁts by
+book assets, not book equity, because gross proﬁts are an
+asset level measure of earnings. They are not reduced by
+interest payments and are, thus, independent of leverage.
+Determining the best measure of economic productiv-
+ity is, however, ultimately an empirical question. Popular
+media are preoccupied with earnings, the variable on
+which Wall Street analysts’ forecasts focus. Financial
+economists are generally more concerned with free cash
+ﬂows, the present discounted value of which should
+determine a ﬁrm’s value. I, therefore, also consider proﬁt-
+ability measures constructed using earnings and free
+cash ﬂows.
+2.1. Fama and MacBeth regressions
+Table 1 shows results of Fama and MacBeth regres-
+sions of ﬁrms’ returns on gross proﬁts-to-assets, earnings-
+to-book equity, and free cash ﬂow-to-book equity.
+Regressions include controls for book-to-market (log(B/M)),
+size (log(ME)), and past performance measured at horizons
+of one month ðr
+1,0Þ and 12 to two months ðr12,2Þ.2 Time
+series averages of the cross sectional Spearman rank correla-
+tions between these independent variables are provided in
+Appendix A.1 and show that gross proﬁtability is negatively
+correlated with book-to-market, with a magnitude similar to
+the negative correlation observed between book-to-market
+and size. I use Compustat data starting in 1962, the year
+of the American Stock Exchan ge (Amex) inclusion, and
+employ accounting data for a given ﬁscal year starting
+at the end of June of the following calendar year. Asset
+pricing tests consequently cover July 1963 through Decem-
+ber 2010. The sample exclude s ﬁnancial ﬁrms [i.e., those
+with a one-digit standard industrial classiﬁcation (SIC) code
+of six], though retaining ﬁnancials has little impact on the
+results. Independent variables are trimmed at the 1% and
+99% levels. The table also shows results employing gross
+proﬁts-to-assets, earnings-to-book equity, and free cash
+ﬂ o w - t o - b o o ke q u i t yd e m e a n e db yi n d u s t r y ,w h e r et h e
+industries are the Fama and French (1997) 49 industry
+portfolios.
+The ﬁrst speciﬁcation of Panel A shows that gross
+proﬁtability has roughly the same power as book-to-
+market predicting the cross section of returns. Proﬁtable
+ﬁrms generate higher average returns than unproﬁtable
+ﬁrms. The second and third speciﬁcations replace gross
+proﬁtability with earnings-to-book equity and free cash
+ﬂow-to-book equity, respectively. These variables have
+much less power than gross proﬁtability. The fourth and
+ﬁfth speciﬁcations show that gross proﬁtability subsumes
+these other proﬁtability variables. The sixth speciﬁcation
+shows that free cash ﬂow subsumes earnings. The seventh
+speciﬁcation shows that free cash ﬂow has incremental
+power above that in gross proﬁtability after controlling
+for earnings, but that gross proﬁtability is still the stron-
+ger predictive variable.
+Appendix A.2 performs similar regressions employing
+alternative earnings variables. In particular, it considers
+earnings before interest, taxes, depreciation, and amorti-
+zation (EBITDA) and selling, general, and administrative
+expenses (XSGA), which together represent a decomposi-
+tion of gross proﬁts. These regressions show that EBITDA-
+to-assets and XSGA-to-assets each have signiﬁcant power
+predicting the cross section of returns, both individually
+and jointly, but that gross proﬁts-to-assets subsumes
+their predictive powers. It also considers regressions
+employing the DuPont model decomposition of gross
+proﬁts-to-assets into asset turnover (sales-to-assets, an
+accounting measure of efﬁciency) and gross margins
+(gross proﬁts-to-sales, a measure of market power).
+These variables also have power predicating the cross
+section of returns, both individually and jointly, but
+1 Several studies have found a role for individual components of the
+difference between gross proﬁts and earnings. For example, Sloan (1996)
+and Chan, Lakonishok, and Sougiannis (2006) ﬁnd that accruals predict
+returns, and Chan, Lakonishok, and Sougiannis (2001) argue that R&D
+and advertising expenditures have power in the cross section.
+Lakonishok, Shleifer, and Vishny (1994) also ﬁnd that strategies formed
+on the basis of cash ﬂow, deﬁned as earnings plus depreciation, are more
+proﬁtable than those formed on the basis of earnings alone.
+2 Gross proﬁts and earnings before extraordinary items are Compu-
+stat data items GP and IB, respectively. For free cash ﬂow, I employ net
+income plus depreciation and amortization minus changes in working
+capital minus capital expenditures (NI þ DP /C0 WCAPCH /C0 CAPX). Gross
+proﬁts is also deﬁned as total revenue (REVT) minus cost of goods sold
+(COGS), where COGS represents all expenses directly related to produc-
+tion, including the cost of materials and direct labor, amortization of
+software and capital with a useful life of less than two years, license fees,
+lease payments, maintenance and repairs, taxes other than income taxes,
+and expenses related to distribution and warehousing, heat, lights, and
+power. Book-to-market is book equity scaled by market equity, where
+market equity is lagged six months to avoid taking unintentional
+positions in momentum. Book equity is shareholder equity, plus deferred
+taxes, minus preferred stock, when available. For the components of
+(footnote continued)
+shareholder equity, I employ tiered deﬁnitions largely consistent with
+those used by Fama and French (1993) to construct their high minus low
+factor (HML). Stockholders equity is as given in Compustat (SEQ) if
+available, or else common equity plus the carrying value of preferred
+stock (CEQ þPSTX) if available, or else total assets minus total liabilities
+(AT /C0 LT). Deferred taxes is deferred taxes and investment tax credits
+(TXDITC) if available, or else deferred taxes and/or investment tax credit
+(TXDB and/or ITCB). Preferred stock is redemption value (PSTKR) if
+available, or else liquidating value (PSTKRL) if available, or else carrying
+value (PSTK).
+R. Novy-Marx / Journal of Financial Economics 108 (2013) 1–28 3
+
+gain lose their power when used in conjunction with
+gross proﬁtability. The analysis does suggest, however,
+that high asset turnover primarily drives the high average
+returns of proﬁtable ﬁrms, while high gross margins are
+the distinguishing characteristic of good growth stocks.
+Gross proﬁtability’s power predicting returns is not
+driven by accruals or R&D expenditures. While these both
+represent components of the wedge between earnings
+and gross proﬁts, and Sloan (1996) and Chan, Lakonishok,
+and Sougiannis (2001) show, respectively, that these each
+have power in the cross section, the results of Sloan and
+Chan, Lakonishok, and Sougiannis cannot explain those
+presented here. Appendix A.3 shows that gross proﬁts-to-
+assets retains power predicting returns after controlling
+for accruals and R&D expenditures. This is not to say that
+the results of Sloan and Chan, Lakonishok, and Sougiannis
+do not exist independently, but simply that gross proﬁt-
+ability’s power to predict returns persists after controlling
+for these earlier, well documented results.
+Panel B repeats the tests of Panel A, employing gross
+proﬁts-to-assets, earnings-to-book equity and free cash
+ﬂow-to-book equity demeaned by industry. These tests
+tell the same basic story, though the results here are even
+stronger. Gross proﬁts-to-assets is a powerful predictor of
+the cross section of returns. The test-statistic on the slope
+coefﬁcient on gross proﬁts-to-assets demeaned by indus-
+try is more than one and a half times as large as that on
+the variable associated with value (log(B/M)) and almost
+two and a half times as large on the variable associated
+with momentum ðr12,2Þ. Free cash ﬂows also has some
+power, though less than gross proﬁts. Earnings convey
+little information regarding future performance. The use
+of industry-adjustment to better predict the cross section
+of returns is investigated in greater detail in Section 4 .
+Because gross proﬁtability appears to be the measure
+of basic proﬁtability with the most power predicting the
+cross section of expected returns, it is the measure I focus
+on for the remainder of the paper.
+Table 1
+Fama and MacBeth regressions of returns on measures of proﬁtability.
+Panel A reports results from Fama and MacBeth regressions of returns on gross proﬁts (revenues minus cost of goods sold, REVT /C0 COGS) scaled by
+assets (AT), as well as income before extraordinary items (IB) and free cash ﬂow (net income plus amortization and depreciation minus changes in
+working capital and capital expenditures, NI þDP /C0 WCAPCH/C0 CAPX) each scaled by book equity. Panel B repeats the tests employing proﬁtability
+measures demeaned by industry (Fama and French 49). Regressions include controls for book-to-market [log(B/M)], size [log(ME)], and past performa nce
+measured at horizons of one month ðr1,0 Þ and 12 to two months ðr12,2 Þ. Independent variables are trimmed at the 1% and 99% levels. The sample excludes
+ﬁnancial ﬁrms (those with one-digit standard industrial classiﬁcation codes of six) and covers July 1963 to December 2010.
+Slope coefﬁcients ( /C2 102 ) and [test-statistics] from
+regressions of the form rtj ¼ b0 xtj þEtj
+Independent
+variable
+(1) (2) (3) (4) (5) (6) (7)
+Panel A: Straight proﬁtability variables
+Gross proﬁtability 0.75 0.69 0.62 0.61
+[5.49] [5.22] [4.63] [4.59]
+Earnings 0.22 0.08 /C0 0.02 /C0 0.07
+[0.84] [0.31] [ /C0 0.06] [ /C0 0.27]
+Free cash ﬂow 0.27 0.20 0.39 0.33
+[2.28] [1.64] [3.17] [2.67]
+log(B/M) 0.35 0.30 0.26 0.34 0.30 0.27 0.31
+[5.98] [4.97] [4.59] [5.54] [5.17] [4.48] [5.05]
+log(ME) /C0 0.09 /C0 0.12 /C0 0.13 /C0 0.11 /C0 0.11 /C0 0.13 /C0 0.11
+[/C0 2.29] [ /C0 3.24] [ /C0 3.20] [ /C0 2.78] [ /C0 2.80] [ /C0 3.34] [ /C0 2.92]
+r1,0 /C0 5.57 /C0 5.49 /C0 5.52 /C0 5.64 /C0 5.66 /C0 5.56 /C0 5.70
+[/C0 13.8] [ /C0 13.7] [ /C0 13.7] [ /C0 14.1] [ /C0 14.1] [ /C0 13.9] [ /C0 14.3]
+r12,2 0.76 0.78 0.78 0.74 0.74 0.76 0.73
+[3.87] [4.02] [4.02] [3.80] [3.80] [3.93] [3.74]
+Panel B: Proﬁtability variables demeaned by industry
+Gross proﬁtability 1.00 0.94 0.94 0.92
+[8.99] [9.75] [8.38] [8.39]
+Earnings 0.28 0.04 0.09 0.02
+[1.86] [0.15] [0.51] [0.13]
+Free cash ﬂow 0.16 0.09 0.25 0.21
+[2.54] [1.23] [3.30] [2.54]
+log(B/M) 0.35 0.32 0.30 0.33 0.34 0.31 0.34
+[5.57] [5.40] [5.13] [5.15] [5.33] [5.12] [5.30]
+log(ME) /C0 0.09 /C0 0.11 /C0 0.11 /C0 0.10 /C0 0.10 /C0 0.11 /C0 0.10
+[/C0 2.19] [ /C0 2.65] [ /C0 2.64] [ /C0 2.62] [ /C0 2.31] [ /C0 2.69] [ /C0 2.35]
+r1,0 /C0 5.63 /C0 5.50 /C0 5.52 /C0 5.67 /C0 5.66 /C0 5.53 /C0 5.67
+[/C0 13.2] [ /C0 13.5] [ /C0 13.5] [ /C0 13.4] [ /C0 13.2] [ /C0 13.6] [ /C0 13.3]
+r12,2 0.76 0.78 0.78 0.75 0.75 0.77 0.74
+[3.66] [3.98] [3.95] [3.63] [3.63] [3.92] [3.61]
+R. Novy-Marx / Journal of Financial Economics 108 (2013) 1–284
+
+2.2. Sorts on proﬁtability
+The Fama and MacBeth regressions of Table 1 suggest
+that proﬁtability predicts average returns. These regres-
+sions, because they weight each observation equally, put
+tremendous weight on the nano- and micro-cap stocks,
+which make up roughly two-thirds of the market by name
+but less than 6% of the market by capitalization. The Fama
+and MacBeth regressions are also sensitive to outliers and
+impose a potentially misspeciﬁed parametric relation
+between the variables, making the economic signiﬁcance
+of the results difﬁcult to judge. This subsection attempts
+to address these issues by considering the performance of
+value-weighted portfolios sorted on proﬁtability, non-
+parametrically testing the hypothesis that proﬁtability
+predicts average returns.
+Table 2 shows results of univariate sorts on gross
+proﬁts-to-assets [(REVT /C0 COGS)/AT] and, for compari-
+son, valuation ratios (book-to-market). The Spearman
+rank correlation between gross proﬁts-to-assets and
+book-to-market ratios is /C0 18%, and highly signiﬁcant, so
+strategies formed on the basis of gross proﬁtability should
+be growth strategies, while value strategies should hold
+unproﬁtable ﬁrms. Portfolios are constructed using a
+quintile sort, based on New York Stock Exchange (NYSE)
+break points, and are rebalanced each year at the end of
+June. The table shows the portfolios’ value-weighted
+average excess returns, results of the regressions of the
+portfolios’ returns on the three Fama and French factors,
+and the time series average of the portfolios’ gross proﬁts-
+to-assets (GP/A), book-to-markets (B/M), and market
+capitalizations (ME), as well as the average number of
+ﬁrms in each portfolio ( n). The sample excludes ﬁnancial
+ﬁrms (those with one-digit SIC codes of six) and covers
+July 1963 to December 2010. 3
+Table 2
+Excess returns to portfolios sorted on proﬁtability.
+This table shows monthly value-weighted average excess returns to portfolios sorted on gross proﬁts-to-assets [(REVT /C0 COGS)/AT], employing NYSE
+breakpoints, and results of time series regressions of these portfolios’ returns on the Fama and French factors [the market factor (MKT), the size fac tor
+small-minus-large (SMB), and the value factor high-minus-low (HML)], with test-statistics (in square brackets). It also shows time series average
+portfolio characteristics [portfolio gross proﬁts-to-assets (GP/A), book-to-market (B/M), average ﬁrm size (ME, in millions of dollars), and num ber of ﬁrms
+(n)]. Panel B provides similar results for portfolios sorted on book-to-market. The sample excludes ﬁnancial ﬁrms (those with one-digit standard
+industrial classiﬁcation codes of six) and covers July 1963 to December 2010.
+Alphas and three-factor loadings Portfolio characteristics
+Portfolio re a MKT SMB HML GP/A B/M ME n
+Panel A: Portfolios sorted on gross proﬁts-to-assets
+Low 0.31 /C0 0.18 0.94 0.04 0.15 0.10 1.10 748 771
+[1.65] [ /C0 2.54] [57.7] [1.57] [5.87]
+2 0.41 /C0 0.11 1.03 /C0 0.07 0.20 0.20 0.98 1,100 598
+[2.08] [ /C0 1.65] [67.5] [ /C0 3.13] [8.51]
+3 0.52 0.02 1.02 /C0 0.00 0.12 0.30 1.00 1,114 670
+[2.60] [0.27] [69.9] [ /C0 0.21] [5.42]
+4 0.41 0.05 1.01 0.04 /C0 0.24 0.42 0.53 1,114 779
+[1.94] [0.83] [70.6] [1.90] [ /C0 11.2]
+High 0.62 0.34 0.92 /C0 0.04 /C0 0.29 0.68 0.33 1,096 938
+[3.12] [5.01] [58.3] [ /C0 2.03] [ /C0 12.3]
+High–low 0.31 0.52 /C0 0.03 /C0 0.08 /C0 0.44
+[2.49] [4.49] [ /C0 0.99] [ /C0 2.15] [ /C0 10.8]
+Panel B: Portfolios sorted on book-to-market
+Low 0.39 0.13 0.98 /C0 0.09 /C0 0.39 0.43 0.25 1,914 965
+[1.88] [2.90] [90.1] [ /C0 5.62] [ /C0 23.9]
+2 0.45 /C0 0.02 0.99 0.05 0.04 0.31 0.54 1,145 696
+[2.33] [ /C0 0.29] [78.1] [2.61] [2.23]
+3 0.56 0.03 0.96 0.04 0.22 0.26 0.79 849 640
+[2.99] [0.53] [63.5] [2.09] [9.71]
+4 0.67 /C0 0.00 0.96 0.10 0.53 0.21 1.12 641 655
+[3.58] [ /C0 0.03] [74.8] [5.66] [27.1]
+High 0.80 0.07 1.01 0.25 0.51 0.21 5.47 367 703
+[3.88] [1.04] [60.7] [10.7] [20.5]
+High–low 0.41 /C0 0.06 0.03 0.34 0.91
+[2.95] [ /C0 0.71] [1.44] [12.0] [30.0]
+3 Firms’ revenues, costs of goods sold, and assets are available on a
+quarterly basis beginning in 1972 (Compustat data items REVTQ, COGSQ
+and ATQ, respectively), allowing for the construction of gross proﬁt-
+ability strategies using more current public information than those
+presented here. These high frequency gross proﬁtability strategies are
+even more proﬁtable (see Appendix A.4 ). Despite these facts, I focus on
+gross proﬁtability measured using annual data. I am particularly inter-
+ested in the persistent power gross proﬁtability has predicting returns
+and its relation to the similarly persistent value effect. While the high
+frequency gross proﬁtability strategy is most proﬁtable in the months
+immediately following portfolio formation, its proﬁtability persists for
+more than three years. Focusing on the strategy formed using annual
+proﬁtability data ensures that results are truly driven by the level of
+proﬁtability, and not surprises about proﬁtability like those that drive
+post earnings announcement drift. The low frequency proﬁtability
+strategy also incurs lower transaction costs, turning over only once
+every four years, less frequently than the corresponding value strategy,
+and only a quarter as often as the high frequency proﬁtability strategy.
+R. Novy-Marx / Journal of Financial Economics 108 (2013) 1–28 5
+
+The table shows that the gross proﬁts-to-assets port-
+folios’ average excess returns are generally increasing
+with proﬁtability, with the most proﬁtable ﬁrms earning
+0.31% per month higher average returns than the least
+proﬁtable ﬁrms, with a test-statistic of 2.49. This signiﬁ-
+cant proﬁtable minus unproﬁtable return spread is
+observed despite the fact that the strategy is a growth
+strategy, with a large, signiﬁcant negative loading on HML
+(high minus low). As a result, the abnormal returns of the
+proﬁtable minus unproﬁtable return spread relative to the
+Fama and French three-factor model is 0.52% per month,
+with a test-statistic of 4.49. 4
+Consistent with the observed variation in HML load-
+ings, the portfolios sorted on gross proﬁtability exhibit
+large variation in the value characteristic. Proﬁtable ﬁrms
+tend to be growth ﬁrms, in the sense of having low book-
+to-markets, and unproﬁtable ﬁrms tend to be value ﬁrms,
+with high book-to-market. In fact, the portfolios sorted on
+gross proﬁtability exhibit roughly half the variation in
+book-to-markets as portfolios sorted directly on book-to-
+market ( Table 2 , Panel B). Proﬁtable ﬁrms also tend to be
+growth ﬁrms, in the sense that they grow faster. Gross
+proﬁtability is a powerful predictor of future growth in
+gross proﬁtability, earnings, free cash ﬂow, and payouts
+(dividends plus repurchases) at both three- and 10-year
+horizons (see Appendix A.5 ).
+While the high gross proﬁts-to-assets stocks resemble
+typical growth ﬁrms in both characteristics and covar-
+iances (low book-to-markets and negative HML loadings),
+they are distinctly dissimilar in terms of expected returns.
+That is, while they appear to be typical growth ﬁrms
+under standard deﬁnitions, they are good growth ﬁrms,
+exceptional in their tendency to outperform the market
+despite their low book-to-markets.
+Because the proﬁtability strategy is a growth strategy,
+it provides a great hedge for value strategies. The monthly
+average returns to the proﬁtability and value strategies
+presented in Table 2 are 0.31% and 0.41% per month,
+respectively, with standard deviations of 2.94% and 3.27%.
+An investor running the two strategies together would
+capture both strategies’ returns, 0.71% per month, but
+would face no additional risk. The monthly standard
+deviation of the joint strategy, despite having positions
+twice as large as those of the individual strategies, is only
+2.89%, because the two strategies’ returns have a correla-
+tion of /C0 0.57 over the sample. That is, while the 31 basis
+point per month gross proﬁtability spread is somewhat
+modest, it is a payment an investor receives (instead of
+pays) for insuring a value strategy. As a result, the test-
+statistic on the average monthly returns to the mixed
+proﬁtability and value strategy is 5.87, and its realized
+annual Sharpe ratio is 0.85, two and a half times the 0.34
+observed on the market over the same period. The
+strategy is orthogonal to momentum.
+Fig. 1 shows the performance over time of the proﬁt-
+ability strategy presented in Table 2. The ﬁgure shows the
+strategy’s realized annual Sharpe ratio over the preceding
+ﬁve years at the end of each month between June 1968
+and December 2010 (dashed line). It also shows the
+performance of a similarly constructed value strategy
+(dotted line) and a 50/50 mix of the two (solid line).
+The ﬁgure shows that while both the proﬁtability and
+value strategies generally performed well over the sam-
+ple, both had signiﬁcant periods in which they lost
+money. Proﬁtability performed poorly from the mid-
+1970s to the early-1980s and over the middle of the
+2000s, while value performed poorly over the 1990s.
+Proﬁtability generally performed well in the periods when
+value performed poorly, while value generally performed
+well in the periods when proﬁtability performed poorly.
+As a result, the mixed proﬁtability-value strategy never
+had a losing ﬁve-year period over the sample (July 1963
+to December 2010).
+2.3. Proﬁtability and size
+The value-weighted portfolio results presented in
+Table 2 suggest that the power that gross proﬁts-to-
+assets has predicting the cross section of average returns
+is economically as well as statistically signiﬁcant.
+By analyzing portfolios double sorted on size and proﬁt-
+ability, this subsection shows that its power is economic-
+ally signiﬁcant even among the largest, most liquid stocks.
+Portfolios are formed by independently quintile sorting on
+the two variables (market capitalization and gross proﬁts-
+to-assets), using NYSE breaks. The sample excludes ﬁnan-
+cial ﬁrms and covers July 1963 to December 2010.
+Table 3 reports time series average characteristics of
+the size portfolios. More than half of ﬁrms are in the
+nano-cap portfolio, but these stocks make up less than 3%
+of the market by capitalization, while the large cap
+1970 1975 1980 1985 1990 1995 2000 2005 2010
+−1
+−0.5
+0
+0.5
+1
+1.5
+2
+Sharpe ratio (annualized)
+Profitability
+Value
+50/50 mix
+Fig. 1. Performance over time of proﬁtability and value strategies.
+The ﬁgure shows the trailing ﬁve-year Sharpe ratios of proﬁtability
+and value strategies (dashed and dotted lines, respectively) and a 50/50
+mix of the two (solid line). The strategies are long–short extreme value-
+weighted quintiles from sorts on gross proﬁts-to-assets and book-to-
+market, respectively, and correspond to the strategies considered in
+Table 2 . The sample excludes ﬁnancial ﬁrms and covers June 1963 to
+December 2010.
+(footnote continued )
+Using the annual data has the additional advantage of extending the
+sample 10 years.
+4 Including ﬁnancial ﬁrms reduces the proﬁtable minus unproﬁtable
+return spread to 0.25% per month, with a test-statistic of 1.82, but
+increases the Fama and French alpha of the spread to 0.61% per month,
+with a test-statistic of 5.62. Most ﬁnancial ﬁrms end up in the ﬁrst
+portfolio, because their large asset bases result in low proﬁts-to-assets
+ratios. This slightly increases the low proﬁtability portfolio’s average
+returns but also signiﬁcantly increases its HML loading.
+R. Novy-Marx / Journal of Financial Economics 108 (2013) 1–286
+
+portfolio typically contains fewer than 350 stocks but
+makes up roughly three-quarters of the market by capi-
+talization. The portfolios exhibit little variation in proﬁt-
+ability, but a great deal of variation in book-to-market,
+with the smaller stocks tending toward value and the
+larger stocks toward growth.
+Table 4 reports the average returns to the portfolios
+sorted on size and gross proﬁts-to-assets. It also shows the
+average returns of both sorts’ high minus low portfolios and
+results of time series regressions of these high minus low
+portfolios’ returns on the Fama and French factors. It also
+shows the average number of ﬁrms in each portfolio, and the
+average portfolio book-to-markets. Because the portfolios
+exhibit little variation in gross proﬁts-to-assets within proﬁt-
+ability quintiles, and little variation in size within size
+quintiles, these characteristics are not reported.
+The table shows that the proﬁtability spread is large
+and signiﬁcant across size quintiles. While the spreads are
+decreasing across size quintiles, the Fama and French
+three-factor alpha is almost as large for the large-cap
+proﬁtability strategy as it is for small-cap strategies,
+because the magnitudes of the negative HML loadings
+on the proﬁtability strategies are increasing across size
+quintiles. That is, the predictive power of proﬁtability is
+economically signiﬁcant even among the largest stocks,
+and its incremental power above and beyond book-to-
+market is largely undiminished with size.
+Among the largest stocks, the proﬁtability spread of 26
+basis points per month (test-statistic of 1.88) is consider-
+ably larger than the value spread of 14 basis points per
+month (test-statistic of 0.95, untabulated). The large cap
+proﬁtability and value strategies have a negative correla-
+tion of /C0 0.58 and, consequently, perform well together.
+While the two strategies’ realized annual Sharpe ratios
+over the period are only 0.27 and 0.14, respectively, a
+50/50 mix of the two strategies had a Sharpe ratio of 0.44.
+While not nearly as large as the 0.85 Sharpe ratio on
+the 50/50 mix of the value-weighted proﬁtability and value
+strategies that trade stocks of all size observed in Section 2,
+this Sharpe ratio still greatly exceeds the 0.34 Sharpe ratio
+observed on the market over the same period. It does so
+despite trading exclusively in the Fortune 500 universe.
+2.4. International evidence
+The international evidence also supports the hypoth-
+esis that gross proﬁts-to-assets has roughly the same
+power as book-to-market predicting the cross section of
+expected returns. Table 5 shows results of univariate sorts
+on gross proﬁts-to-assets and book-to-market, like those
+presented in Table 2, performed on stocks from developed
+markets outside the US, including those from Australia,
+Austria, Belgium, Canada, Denmark, Finland, France,
+Germany, Great Britain, Hong Kong, Italy, Japan, the
+Netherlands, New Zealand, Norway, Singapore, Spain,
+Sweden, and Switzerland. The data come from Compustat
+Global. The sample excludes ﬁnancial ﬁrms and covers
+July 1990 to October 2009. The table shows that the
+proﬁtability spread in international markets is signiﬁcant
+and even larger than the international value spread.
+3. Proﬁtability and value
+The negative correlation between proﬁtability and
+book-to-market observed in Table 2 suggests that the
+performance of value strategies can be improved by
+controlling for proﬁtability and that the performance of
+proﬁtability strategies can be improved by controlling for
+book-to-market. A univariate sort on book-to-market
+yields a value portfolio polluted with unproﬁtable stocks
+and a growth portfolio polluted with proﬁtable stocks.
+A value strategy that avoids holding stocks that are more
+unproﬁtable than cheap, and avoids selling stocks that are
+more proﬁtable than expensive, should outperform con-
+ventional value strategies. Similarly, a proﬁtability strat-
+egy that avoids holding stocks that are proﬁtable but fully
+priced, and avoids selling stocks that are unproﬁtable but
+nevertheless cheap, should outperform conventional prof-
+itability strategies.
+3.1. Double sorts on proﬁtability and book-to-market
+This subsection tests these predictions by analyzing
+the performance of portfolios double sorted on gross
+proﬁts-to-assets and book-to-market. Portfolios are
+formed by independently quintile sorting on the two
+variables, using NYSE breaks. The sample excludes ﬁnan-
+cial ﬁrms and covers July 1963 to December 2010. Table 6
+shows the double sorted portfolios’ average returns, the
+average returns of both sorts’ high minus low portfolios
+and results of time series regressions of these high minus
+low portfolios’ returns on the Fama and French factors.
+It also shows the average number of ﬁrms in each
+portfolio, and the average size of ﬁrms in each portfolio.
+Table 3
+Size portfolio time series average characteristics.
+This table reports the time series averages of the characteristics of quintile portfolios sorted on market equity. Portfolio break points are based o n NYSE
+stocks only. The sample excludes ﬁnancial ﬁrms (those with one-digit standard industrial classiﬁcation codes of six) and covers July 1963 to
+December 2010.
+Characteristic (Small) (2) (3) (4) (Large)
+Number of ﬁrms 2,427 749 484 384 335
+Percent of ﬁrms 54.2 16.9 11.3 9.26 8.25
+Average capitalization (millions of dollars) 39.6 206 509 1,272 9,494
+Total capitalization (billions of dollars) 101 173 273 544 3,652
+Total capitalization (percent) 2.43 3.73 6.13 12.6 75.1
+Portfolio book-to-market 2.64 1.36 1.06 0.88 0.61
+Portfolio gross proﬁts-to-assets 0.27 0.28 0.26 0.25 0.27
+R. Novy-Marx / Journal of Financial Economics 108 (2013) 1–28 7
+
+Because the portfolios exhibit little variation in gross
+proﬁts-to-assets within proﬁtability quintiles and little
+variation in gross book-to-market within book-to-market
+quintiles, these characteristics are not reported.
+The table conﬁrms the prediction that controlling for
+proﬁtability improves the performance of value strategies
+and controlling for book-to-market improves the perfor-
+mance of proﬁtability strategies. The average value spread
+across gross proﬁts-to-assets quintiles is 0.68% per month
+and in every book-to-market quintile exceeds the 0.41%
+per month spread on the unconditional value strategy
+presented in Table 2 . The average proﬁtability spread
+across book-to-market quintiles is 0.54% per month and
+in every book-to-market quintile exceeds the 0.31% per
+month spread on the unconditional proﬁtability strategy
+presented in Table 2 .
+An interesting pattern also emerges in Panel B of the
+table, which shows the number of ﬁrms in each portfolio
+and the average size of ﬁrms in the portfolios. The table
+shows that while more proﬁtable growth ﬁrms tend to be
+larger than less proﬁtable growth ﬁrms, more proﬁtable
+value ﬁrms tend to be smaller than less proﬁtable value
+ﬁrms. So while little difference exists in size between
+unproﬁtable value and growth ﬁrms, proﬁtable growth
+ﬁrms are large but highly proﬁtable value ﬁrms are small.
+Appendix A.6 presents results of similar tests per-
+formed within the large and small cap universes, deﬁned
+here as stocks with market capitalization above and
+below the NYSE median, respectively. These results are
+largely consistent with the all-stock results presented in
+Table 6 .
+3.2. Fortune 500 proﬁtability and value strategies
+Table 6 suggests that large return spreads can be
+achieved by trading the corners of a double sort on value
+Table 4
+Double sorts on gross proﬁts-to-assets and market equity.
+This table shows the value-weighted average excess returns to portfolios double sorted, using NYSE breakpoints, on gross proﬁts-to-assets and mark et
+equity, and results of time series regressions of both sorts’ high minus low portfolios’ returns on the Fama and French factors [the market, size and va lue
+factors MKT, SMB (small-minus-large), and HML (high-minus-low)]. Test statistics are given in square brackets. The table also shows the average num ber
+of ﬁrms in each portfolio and each portfolios’ average book-to-market (the portfolios exhibit little gross-proﬁts to asset variation within size qu intiles and
+little size variation within proﬁtability quintiles). The sample excludes ﬁnancial ﬁrms (those with one-digit standard industrial classiﬁcation codes of six)
+and covers July 1963 to December 2010.
+Panel A: Portfolio average excess returns and time series regression results
+Gross proﬁts-to-asset quintiles Proﬁtability strategies
+Low 2 3 4 High re a bmkt bsmb bhml
+Size quintiles
+Small 0.40 0.64 0.78 0.89 1.07 0.67 0.63 0.05 /C0 0.13 0.13
+[4.59] [4.27] [1.48] [ /C0 2.68] [2.47]
+2 0.37 0.71 0.71 0.73 0.90 0.53 0.54 0.01 0.06 /C0 0.08
+[3.97] [3.96] [0.35] [1.34] [ /C0 1.58]
+3 0.40 0.73 0.74 0.68 0.81 0.41 0.38 0.10 0.18 /C0 0.15
+[2.88] [2.71] [3.02] [4.01] [ /C0 3.05]
+4 0.45 0.62 0.59 0.65 0.84 0.38 0.45 0.03 0.21 /C0 0.35
+[2.82] [3.62] [1.00] [5.14] [ /C0 7.95]
+Big 0.30 0.37 0.49 0.36 0.55 0.26 0.50 /C0 0.05 /C0 0.05 /C0 0.51
+[1.88] [3.90] [ /C0 1.56] [ /C0 1.09] [ /C0 11.3]
+Small-minus-big strategies
+re 0.10 0.28 0.29 0.53 0.51
+[0.39] [1.40] [1.45] [2.64] [2.37]
+a /C0 0.21 /C0 0.16 /C0 0.13 /C0 0.03 /C0 0.08
+[ /C0 1.30] [ /C0 1.63] [ /C0 1.26] [ /C0 0.31] [ /C0 0.72]
+bmkt /C0 0.03 /C0 0.00 /C0 0.01 0.01 0.07
+[ /C0 0.69] [ /C0 0.01] [ /C0 0.45] [0.53] [2.88]
+bsmb 1.54 1.34 1.34 1.32 1.45
+[28.9] [41.1] [38.9] [39.7] [41.9]
+bhml /C0 0.22 0.20 0.17 0.48 0.42
+[ /C0 3.90] [5.56] [4.56] [13.5] [11.1]
+Panel B: Portfolio average number of ﬁrms and portfolio book-to-markets
+Gross proﬁts-to-asset quintiles Gross proﬁts-to-asset quintiles
+Low 2 3 4 High Low 2 3 4 High
+Number of ﬁrms Portfolio book-to-market
+Size quintiles
+Small 421 282 339 416 518 4.17 4.65 2.61 1.85 1.07
+2 124 106 123 143 162 1.49 1.94 1.87 1.14 0.69
+3 84 76 80 89 104 1.26 1.44 1.24 0.94 0.54
+4 77 68 66 68 78 1.15 1.07 0.98 0.73 0.43
+Big 63 64 60 62 72 0.97 0.82 0.92 0.42 0.27
+R. Novy-Marx / Journal of Financial Economics 108 (2013) 1–288
+
+and proﬁtability: Proﬁtable value ﬁrms dramatically out-
+perform unproﬁtable growth ﬁrms. While Section 2.3
+already shows that the Sharpe ratio on the large cap
+mixed value and growth strategy considered is 0.44, a
+third higher than that on the market, this performance is
+driven by the fact that the proﬁtability strategy is an
+excellent hedge for value. As a result, the large cap mixed
+value and growth strategy has extremely low volatility
+(standard deviations of monthly returns of 1.59%) and,
+consequently, has a high Sharpe ratio despite generating
+relatively modest average returns (0.20% per month). This
+subsection shows that a simple trading strategy based on
+gross proﬁts-to-assets and book-to-market generates
+average excess returns of almost 8% per year. It does so
+despite trading only infrequently, in only the largest, most
+liquid stocks.
+The strategy I consider is constructed within the 500
+largest nonﬁnancial stocks for which gross proﬁts-to-
+assets and book-to-market are both available. Each year
+I rank these stocks on both their gross proﬁts-to-assets
+and book-to-market ratios, from 1 (lowest) to 500 (high-
+est). At the end of each June the strategy buys one dollar
+of each of the 150 stocks with the highest combined
+proﬁtability and value ranks, and it shorts one dollar of
+each of the 150 stocks with the lowest combined ranks. 5
+The performance of this strategy is provided in Table 7 .
+The table also shows, for comparison, the performance of
+similarly constructed strategies based on proﬁtability and
+value individually.
+This simple strategy, which trades only liquid large cap
+stocks, generates average excess returns of 0.62% per
+month and has a realized annual Sharpe ratio of 0.74,
+more than twice that observed on the market over the
+same period. The strategy requires little rebalancing,
+because both gross proﬁts-to-assets and book-to-market
+are highly persistent. Only one-third of each side of the
+strategy turns over each year.
+Table 5
+Excess returns to portfolios sorted on proﬁtability, international evidence.
+This table shows monthly value-weighted average excess returns to portfolios of stocks from developed markets outside North America (Australia,
+Austria, Belgium, Denmark, Finland, France, Germany, Great Britain, Hong Kong, Italy, Japan, the Netherlands, New Zealand, Norway, Singapore, Spa in,
+Sweden, and Switzerland) sorted on gross proﬁts-to-assets [(REVT /C0 COGS)/AT], employing NYSE breakpoints, and results of time series regressions of
+these portfolios’ returns on the Fama and French factors [the market factor (MKT), the size factor small-minus-large (SMB), and the value factor high -
+minus-low (HML)], with test-statistics (in square brackets). It also shows time series average portfolio characteristics [portfolio gross proﬁts -to-assets
+(GP/A), book-to-market (B/M), average ﬁrm size (ME, in millions of dollars), and number of ﬁrms ( n)]. The sample excludes ﬁnancial ﬁrms (those with
+one-digit standard industrial classiﬁcation codes of six) and covers July 1990 to October 2009.
+Panel A: Portfolios sorted on gross proﬁts-to-assets
+Global three-factor loadings Portfolio characteristics
+re a MKT SMB HML GP/A B/M ME n
+Low /C0 0.16 /C0 0.72 1.23 0.35 0.21 0.09 0.91 936 1,211
+[/C0 0.37] [ /C0 2.81] [20.8] [3.06] [1.98]
+2 0.19 /C0 0.29 1.10 0.26 0.19 0.20 0.79 1,530 1,211
+[0.50] [ /C0 1.65] [27.2] [3.26] [2.65]
+3 0.29 /C0 0.07 1.12 0.20 /C0 0.12 0.32 0.72 1,843 1,211
+[0.76] [ /C0 0.40] [29.7] [2.76] [ /C0 1.76]
+4 0.44 0.17 0.94 0.06 /C0 0.03 0.54 0.95 1,946 1,211
+[1.44] [1.30] [31.7] [1.05] [ /C0 0.65]
+High 0.60 0.27 0.88 0.32 0.11 1.02 1.46 940 1,211
+[1.95] [1.60] [22.7] [4.21] [1.58]
+High–low 0.76 0.99 /C0 0.35 /C0 0.04 /C0 0.10
+[2.25] [2.97] [ /C0 4.61] [ /C0 0.24] [ /C0 0.73]
+Panel B: Portfolios sorted on book-to-market
+Low 0.09 /C0 0.16 1.05 0.07 /C0 0.25 0.32 0.19 2,180 1,211
+[0.25] [ /C0 1.09] [30.6] [1.04] [ /C0 4.11]
+2 0.29 /C0 0.18 1.07 0.23 0.18 0.29 0.46 2,041 1,211
+[0.81] [ /C0 1.16] [29.3] [3.24] [2.78]
+3 0.29 /C0 0.21 1.06 0.17 0.29 0.27 0.71 1,465 1,211
+[0.85] [ /C0 1.39] [30.9] [2.47] [4.73]
+4 0.44 /C0 0.07 1.05 0.28 0.33 0.31 1.08 941 1,211
+[1.25] [ /C0 0.37] [25.0] [3.49] [4.52]
+High 0.61 0.15 1.01 0.38 0.28 0.40 8.13 564 1,211
+[1.79] [0.84] [24.8] [4.83] [3.88]
+High–low 0.51 0.31 /C0 0.03 0.31 0.53
+[2.12] [1.46] [ /C0 0.69] [3.30] [6.11]
+5 Well-known ﬁrms among those with the highest combined gross
+proﬁts-to-assets and book-to-market ranks at the end of the sample
+(July through December of 2010) are Astrazeneca, GlaxoSmithKline, JC
+Penney, Sears, and Nokia, and the lowest ranking ﬁrms include Ivanhoe
+Mines, Ultra Petroleum, Vertex Pharmaceuticals, Marriott International,
+Delta Airlines, Lockheed Martin, and Unilever. The largest ﬁrms held on
+the long side of the strategy are WalMart, Johnson & Johnson, AT&T,
+Intel, Verizon, Kraft, Home Depot, CVS, Eli Lilly, and Target, and the
+largest ﬁrms from the short side are Apple, IBM, Philip Morris, McDo-
+nald’s, Schlumberger, Disney, United Technologies, Qualcomm, Amazon,
+and Boeing.
+R. Novy-Marx / Journal of Financial Economics 108 (2013) 1–28 9
+
+While the joint proﬁtability and value strategy gen-
+erates almost half its proﬁts on the long side (0.28% per
+month more than the sample average for the high
+portfolio, as opposed to 0.34% per month less for the
+low portfolio), its real advantages over the straight value
+strategy accrues only to investors that can short. The
+unproﬁtable growth stocks, in addition to under-
+performing the growth stocks as a whole by 19 basis
+points per month, provide a better hedge for proﬁtable
+value stocks than growth stocks do for value. Value minus
+growth strategies necessarily entail large HML loadings.
+The long–short strategy based jointly on proﬁtability and
+value has less exposure to systematic risks and is, conse-
+quently, less volatile.
+Most of these beneﬁts do not require shorting indivi-
+dual unproﬁtable growth stocks, but can be captured by
+shorting the market as a whole or selling market futures.
+That is, the strategy of buying proﬁtable large cap value
+stocks has a highly signiﬁcant information ratio relative to
+the long side of the value strategy and the market
+(abnormal returns of 18 basis points per month, with a
+test-statistic of 3.46). The proﬁtable value stocks, when
+hedged using the market, have a Sharpe ratio of 0.75 and
+earn excess returns of nearly 1% per month when run at
+mark

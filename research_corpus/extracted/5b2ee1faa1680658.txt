@@ -1,0 +1,810 @@
+Pairs Trading: Performance
+of a Relative-Value Arbitrage Rule
+Evan Gatev
+Boston College
+William N. Goetzmann
+Yale University
+K. Geert Rouwenhorst
+Yale University
+We test a Wall Street investment strategy, ‘‘pairs trading,’’ with daily data over
+1962–2002. Stocks are matched into pairs with minimum distance between normal-
+ized historical prices. A simple trading rule yields average annualized excess returns of
+up to 11% for self-financing portfolios of pairs. The profits typically exceed conser-
+vative transaction-cost estimates. Bootstrap results suggest that the ‘‘pairs’’ effect
+differs from previously documented reversal profits. Robustness of the excess returns
+indicates that pairs trading profits from temporary mispricing of close substitutes. We
+link the profitability to the presence of a common factor in the returns, different from
+conventional risk measures.
+Wall Street has long been interested in quantitative methods of specula-
+tion. One popular short-term speculation strategy is known as ‘‘pairs
+trading.’’ The strategy has at least a 20-year history on Wall Street and
+is among the proprietary ‘‘statistical arbitrage’’ tools currently used by
+hedge funds as well as investment banks. The concept of pairs trading is
+disarmingly simple. Find two stocks whose prices have moved together
+historically. When the spread between them widens, short the winner and
+buy the loser. If history repeats itself, prices will converge and the arbi-
+trageur will profit. It is hard to believe that such a simple strategy, based
+solely on past price dynamics and simple contrarian principles, could
+possibly make money. If the U.S. equity market were efficient at all
+times, risk-adjusted returns from pairs trading should not be positive.
+In this article, we examine the risk and return characteristics of pairs
+trading with daily data over the period 1962 through December 2002.
+We are grateful to Peter Bossaerts, Michael Cooper, Jon Ingersoll, Ravi Jagannathan, Maureen O’Hara,
+Carl Schecter, and two anonymous referees for many helpful discussions and suggestions on this topic.
+We thank the International Center for Finance at the Yale School of Management for research support,
+and the participants in the EFA’99 Meetings, the AFA’2000 Meetings, the Berkeley Program in Finance,
+and the Finance and Economics workshops at Vanderbilt and Wesleyan for their comments. Address
+correspondence to Evan Gatev, Boston College, Carroll School of Management, Fulton Hall, 140
+Commonwealth Ave, Chestnut Hill, MA 02467, or email: gatev@bc.edu.
+/C211The Author 2006. Published by Oxford University Press on behalf of The Society for Financial Studies. All rights
+reserved. For permissions, please email: journals.permissions@oxfordjournals.org.
+doi:10.1093/rfs/hhj020 Advance Access publication February 13, 2006
+
+Using a simple algorithm for choosing pairs, we test the profitability of
+several straightforward, self-financing trading rules. We find average
+annualized excess returns of about 11% for top pairs portfolios. Although
+pairs strategies exploit temporary components of stock prices, we show
+that our profits are not caused by simple mean reversion as documented
+in the previous literature. We examine the robustness of our results to a
+wide variety of risk factors—including not only the widely used factors in
+the empirical literature but also potential low-frequency institutional
+factors such as bankruptcy risk. In addition, we explore the robustness
+of our results to microstructure factors such as the bid-ask bounce, short-
+selling costs, and transaction costs. Although some factors such as short-
+selling and transaction costs affect the magnitude of the excess returns,
+pairs trading remains profitable for reasonable assumptions over the
+sample period of study, as well as over a true out-of-sample test of four
+years. We interpret the results of our analysis as evidence in favor of
+profitable arbitrage in expectations that may accrue to market partici-
+pants who possess relatively low transaction costs and the ability to short
+securities. We also find evidence that points to a systematic factor that
+influences the profitability of pairs trading over time. This unidentified
+latent risk factor has been relatively dormant recently. The importance of
+this risk factor is correlated with the returns to pairs trading, which is
+consistent with the view that the profits are a compensation to arbitra-
+geurs for enforcing the ‘‘Law of One Price.’’
+We argue that our results reveal something about the mechanism and
+performance of relative-price arbitrage activities in practice. This is
+potentially useful to researchers because, despite considerable theory
+about market efficiency, economists have little empirical information
+about how efficiency is maintained in practice. In addition, despite the
+fact that hedge funds have attracted an increasing amount of investment
+capital over the past decade, the study of hedge fund strategies is in its
+infancy in the financial economics literature. This article examines the risk
+and return characteristics of one widely practiced active trading strategy.
+One natural question to ask is whether our results imply a violation of
+equilibrium asset pricing. Although the documented profitability of the
+pairs trading rule is a robust result, it is not inconsistent with all pricing
+models. Indeed the reversion in relative values we find is consistent with a
+pricing model in prices developed and tested by Bossaerts (1988). Thus,
+our article at the very least suggests that this class of models merits further
+empirical investigation.
+The remainder of the article is organized as follows. Section 1 provides
+some background on pairs trading strategy. The next section describes
+our methodology of constructing pairs and calculating returns. The
+empirical results are described in Section 3, and Section 4 provides con-
+clusions and directions for future research.
+The Review of Financial Studies / v 19 n 3 2006
+798
+
+1. Background of Pairs Trading
+1.1 History
+In the mid-1980s, the Wall Street quant Nunzio Tartaglia assembled a
+team of physicists, mathematicians, and computer scientists to uncover
+arbitrage opportunities in the equities markets. Tartaglia’s group of for-
+mer academics used sophisticated statistical methods to develop high-tech
+trading programs, executable through automated trading systems, which
+took the intuition and trader’s ‘‘skill’’ out of arbitrage and replaced it with
+disciplined, consistent filter rules. Among other things, Tartaglia’s pro-
+grams identified pairs of securities whose prices tended to move together.
+They traded these pairs with great success in 1987—a year when the group
+reportedly made a $50 million profit for the firm. Although the Morgan
+Stanley group disbanded in 1989 after a couple of bad years of perfor-
+mance, pairs trading has since become an increasingly popular ‘‘market-
+neutral’’ investment strategy used by individual and institutional traders
+as well as hedge funds. The increased popularity of quantitative-based
+statistical arbitrage strategies has also apparently affected profits. In a
+New York Times interview, David Shaw, head of one of the most success-
+ful modern quant shops and himself an early Tartaglia’s prote ´ge´, sug-
+gests that recent pickings for quant-shops have become slim—he
+attributes the success of his firm, D. E. Shaw, to early entry into the
+business. Tartaglia’s own explanation for pairs trading is psychological.
+He claims, ‘‘... Human beings don’t like to trade against human nature,
+which wants to buy stocks after they go up not down’’ [Hansell (1989)].
+Could pairs traders be the disciplined investors taking advantage of the
+undisciplined over-reaction displayed by individual investors? This is at
+least one possible—albeit psychological—explanation for our results,
+which is consistent with Jegadeesh and Titman’s (1995) finding that contra-
+rian profits are in part due to over-reaction to company-specific informa-
+tion shocks rather than price reactions to common factors.
+1.2 Data snooping and market response
+In our study we have not searched over the full strategy space to identify
+successful trading rules, but rather we have interpreted practitioner
+description of pairs trading as straightforwardly as possible. Our rules
+follow the general outline of first ‘‘find stocks that move together,’’ and
+second ‘‘take a long–short position when they diverge and unwind on
+convergence.’’ A test requires that both of these steps must be parameter-
+ized in some way. How do you identify ‘‘stocks that move together?’’
+Need they be in the same industry? Should they only be liquid stocks?
+How far do they have to diverge before a position is put on? When is a
+position unwound? We have made some straightforward choices about
+each of these questions. We put positions on at a two-standard deviation
+Pairs Trading
+799
+
+spread, which might not always cover transaction costs even when stock
+prices converge. Although it is tempting to try potentially more profitable
+schemes, the danger in data-snooping refinements outweigh the potential
+insights gained about the higher profits that could result from learning
+through testing.
+1
+As with all filter rules using historical asset pricing data, data snooping
+is a potential concern. One approach to the data snooping issue is to test
+the results out of sample. We completed and circulated the first draft of
+the working paper in 1999, using data through the end of 1998. The time
+lag between the first analysis and the present study gives us an ideal
+holdout sample. Using the original model, but the post-1988 data, we
+found that over the 1999–2002 period, the excess return of the fully
+invested portfolio of the top 20 pairs averaged 10.4% per annum, with
+an annual standard deviation of 3.8% and a large and significant Newey-
+West-adjusted t-statistic of 4.82—consistent with the long-term, in-sample
+results of our original analysis. We were careful not to adjust our strategy
+from the first draft to the current draft of the article, to avoid data-
+snooping criticisms. Not only does this additional four-year sample suggest
+that the results were not simply an artifact of the earlier sample period, over
+which pairs trading was known to be popular, but it also suggests that the
+public dissemination of the results has apparently not affected the general
+risk and return characteristics of the strategy, despite curiosity from the
+professional sector.
+1.3 Relative pricing
+Asset pricing can be viewed in absolute and relative terms. Absolute
+pricing values securities from fundamentals such as discounted future
+cash flow. This is a notoriously difficult process with a wide margin for
+error. Articles by Bakshi and Chen (1997) and Lee et al. (1997), for
+example, are heroic attempts to build quantitative value-investing models.
+Relative pricing is only slightly easier. Relative pricing means that two
+securities that are close substitutes for each other should sell for the same
+price—it does not say what that price will be. Thus, relative pricing allows
+for bubbles in the economy, but not necessarily arbitrage or profitable
+speculation. The Law of One Price [LOP] and a ‘‘near-LOP’’ are applic-
+able to relative pricing—even if that price is wrong.
+Ingersoll (1987) defines the LOP as the ‘‘proposition ... that two invest-
+ments with the same payoff in every state of nature must have the same
+current value.’’ In other words, two securities with the same prices in all
+states of the world should sell for the same amount. Chen and Knez
+(1995) extend this to argue that ‘‘closely integrated markets should assign
+1 Froot and Dabora (1999) consider ‘‘twin’’ stocks that trade in different international markets to examine
+the issues of market integration.
+The Review of Financial Studies / v 19 n 3 2006
+800
+
+to similar payoffs prices that are close.’’ They argue that two securities
+with similar, but not necessarily, matching payoffs across states should
+have similar prices. This is of course a weaker condition and subject to
+bounds on prices for unusual states; however, it allows the examination of
+‘‘near-efficient’’ economies, or in Chen and Knez’ case, near integrated
+markets. Notice that this theory corresponds to the desire to find two
+stocks whose prices move together as long as we can define states of
+nature as the time series of observed historical trading days.
+We use an algorithm to choose pairs based on the criterion that they have
+had the same or nearly the same state prices historically. We then trade
+pairs whose prices closely match in historical state-space, because the LOP
+suggests that in an efficient market their prices should be nearly identical. In
+this framework, the current study can be viewed as a test of the LOP and
+near-LOP in the U.S. equity markets, under certain stationarity conditions.
+We are effectively testing the integration of very local markets—the markets
+for specific individual securities. This is similar in spirit to Bossaerts’ (1988)
+test of co-integration of security prices at the portfolio level. We further
+conjecture that the marginal profits to be had from risk arbitrage of these
+temporary deviations is crucial to the maintenance of first-order efficiency.
+We could not have the first effect without the second.
+1.4 Co-integrated prices
+The pairs trading strategy may be justified within an equilibrium asset-pricing
+framework with nonstationary common factors like Bossaerts and Green
+(1989) and Jagannathan and Viswanathan (1988). If the long and short
+components fluctuate with common nonstationary factors, then the prices
+of the component portfolios would be co-integrated and the pairs trading
+strategy would be expected to work. Evidence of exposures to common
+nonstationary factors would support a nonstationary factor pricing frame-
+work.
+The space of normalized, cum-dividend prices, that is, cumulative total
+returns with dividends reinvested, is the basic space for the pairs trading
+strategies in this article. The main observation about our motivating
+models of the CAPM-APT variety is that they are known to imply perfect
+collinearity of prices, which is readily rejected by the data. On the other
+hand, Bossaerts (1988) finds evidence of price co-integration for the U.S.
+stock market. We would like to keep the notion of the empirically
+observed co-movement of prices, without unnecessarily restrictive
+assumptions, hence we proceed in the spirit of the co-integrated prices
+literature. More specifically, our matching in price space can be inter-
+preted as follows. Suppose that prices obey a statistical model of the form,
+p
+it¼
+X
+/C12il plt þ eit; k<n ð1Þ
+Pairs Trading
+801
+
+where eit denotes a weakly dependent error in the sense of Bossaerts (1988).
+Assume also that pit is weakly dependent after differencing once. Under
+these assumptions, the price vector pt is co-integrated of order 1 with co-
+integrating rank r = n – k, in the sense of Engle and Granger (1987) and
+Bossaerts (1988). Thus, there exist r linearly independent vectors { aq}q=
+1,...,r such that zq = aq0pt are weakly dependent. In other words, r linear
+combinations of prices will not be driven by the k common nonstationary
+components pl. Note that this interpretation does not imply that the market
+is inefficient, rather it says that certain assets are weakly redundant, so that
+any deviation of their price from a linear combination of the prices of other
+assets is expected to be temporary and reverting.
+To interpret the pairs as co-integrated prices, we need to assume that
+for n » k, there are co-integrating vectors that have only two nonzero
+coordinates. In that case, the sum or difference of scaled prices will be
+reverting to zero and a trading rule could be constructed to exploit the
+expected temporary deviations. Our strategy relies on exactly this conclu-
+sion. In principle one could construct trading strategies with trios, quad-
+ruples, and so on of stocks, which would presumably capture more
+co-integrated prices and would yield better profits.
+The assumption that a linear combination of two stocks can be weakly
+dependent may be interpreted as saying that a co-integrating vector can
+be partitioned in two parts, such that the two corresponding portfolios
+are priced within a weakly dependent error of another stock. Given the
+large universe of stocks, this statement is always empirically valid and
+provides the basis of our formation procedure.
+2 However, it is important
+to recognize the possibility of spuriously correlated prices, which are not
+de facto co-integrated.
+1.5 Bankruptcy risk
+The risk of bankruptcy is one reason why the returns on individual
+securities cannot be taken as stationary. Sensitivity of the pairs trading
+to the default premium suggests that the strategy may work because we
+are pairing two firms, the first of which may have a constant or decreasing
+probability of bankruptcy (short end), whereas the second may have a
+temporarily increasing probability of bankruptcy (long end). The ‘‘sur-
+prise improvements’’ in the short end are then followed by improvement
+in the long end if that stock survives. In other words, the source of the
+profit is the improving ex post (non)realization of idiosyncratic bank-
+ruptcy risk in the long (loser) stock. In such case, we would expect to have
+asymmetry in the profits from the long and the short components, with
+2 Note that the case n » k corresponds to the standard finance paradigm where in the large universe of n
+stocks, expected returns are driven by a few, namely k, common factors. This paradigm is supported by
+existing empirical work, for example, see Connor and Korajczyk (1993) for references, which generally
+finds less than 10 common nonstationary components.
+The Review of Financial Studies / v 19 n 3 2006
+802
+
+most of the profits coming from the long end. 3 We test long and short
+positions separately to see if this is driving our results.
+2. Methodology
+Our implementation of pairs trading has two stages. We form pairs over a
+12-month period (formation period) and trade them in the next 6-month
+period (trading period). Both 12 months and 6 months are chosen arbi-
+trarily and have remained our horizons since the beginning of the study.
+2.1 Pairs formation
+In each pairs formation period, we screen out all stocks from the CRSP
+daily files that have one or more days with no trade. This serves to identify
+relatively liquid stocks as well as to facilitate pairs formation. Next, we
+construct a cumulative total returns index for each stock over the forma-
+tion period. We then choose a matching partner for each stock by finding
+the security that minimizes the sum of squared deviations between the two
+normalized price series. Pairs are thus formed by exhaustive matching in
+normalized daily ‘‘price’’ space, where price includes reinvested dividends.
+We use this approach because it best approximates the description of
+how traders themselves choose pairs. Interviews with pairs traders suggest
+that they try to find two stocks whose prices ‘‘move together.’’ In addition
+to ‘‘unrestricted’’ pairs, we will also present results by sector, where we
+restrict both stocks to belong to the same broad industry categories
+defined by Standard and Poors: Utilities, Transportation, Financial,
+and Industrials. Each stock is assigned to one of these four groups,
+based on the stock’s SIC code. The minimum-distance criterion is then
+used to match stocks within each of the groups.
+2.2 Trading period
+Once we have paired up all liquid stocks in the formation period, we study
+the top 5 and 20 pairs with the smallest historical distance measure, in
+addition to the 20 pairs after the top 100 (pairs 101–120). This last set is
+valuable because most of the top pairs share certain characteristics, which
+will be described in detail below. On the day following the last day of the
+pairs formation period, we begin to trade according to a prespecified rule.
+Figure 1 illustrates the pairs trading strategy using two stocks, Kennecott
+and Uniroyal, in the six-month period starting in August of 1962. The
+top two lines represent the normalized price paths with dividends
+reinvested and the bottom line indicates the opening and closing of the
+strategy on a daily basis. It is clear why these two firms paired with each
+other. They generally tended to move together over the trading interval.
+3 We thank an anonymous referee for this example.
+Pairs Trading
+803
+
+Notice that the position first opens in the seventh trading day of the period
+and then remains open until day 36. Over that interval, the spread actually
+first increased significantly before convergence. The prices remain close
+during the period and cross frequently. The pair opens five times during the
+period, however not always in the same direction. Neither stock is the
+‘‘leader.’’ In our example, convergence occurs in the final day of the period,
+although this is not always the case.
+We select trading rules based on the proposition that we open a long–
+short position when the pair prices have diverged by a certain amount and
+close the position when the prices have reverted. Following practice, we
+base our rules for opening and closing positions on a standard deviation
+metric. We open a position in a pair when prices diverge by more than
+two historical standard deviations, as estimated during the pairs forma-
+tion period. We unwind the position at the next crossing of the prices. If
+prices do not cross before the end of the trading interval, gains or losses
+are calculated at the end of the last trading day of the trading interval. If a
+stock in a pair is delisted from CRSP, we close the position in that pair,
+using the delisting return, or the last available price.
+4 We report the
+Figure 1
+Daily normalized prices: Kennecott and Uniroyal (pair 5)
+Trading period August 1963–January 1964.
+4 The profits are robust with respect to this delisting assumption. A potential problem arises if inaccurate
+and stale prices exaggerate the excess returns and bias the estimated return of a long position in a
+plummeting stock. To address this potential concern, we have reestimated our results under the extreme
+assumption that only a long stock experiences a –100% return when it is delisted. This zero-price extreme
+includes, among other things, the possibility of nontrading due to the lack of liquidity. Because selective
+loss on the long position always harms the pair profit, this extreme assumption biases the results against
+profitability. However, pairs trading remains profitable under this alternative: for example, the average
+monthly return on the top 20 pairs portfolio is 1.32% with a standard deviation of 1.9%.
+The Review of Financial Studies / v 19 n 3 2006
+804
+
+payoffs by going one dollar short in the higher-priced stock and one
+dollar long in the lower-priced stock.
+2.3 Excess return computation
+Because pairs may open and close at various points during the six-month
+trading period, the calculation of the excess return on a portfolio of pairs
+is a nontrivial issue. Pairs that open and converge during the trading
+interval will have positive cash flows. Because pairs can reopen after
+initial convergence, they can have multiple positive cash flows during
+the trading interval. Pairs that open but do not converge will only have
+cash flows on the last day of the trading interval when all positions are
+closed out. Therefore, the payoffs to pairs trading strategies are a set of
+positive cash flows that are randomly distributed throughout the trading
+period, and a set of cash flows at the end of the trading interval that can
+be either positive or negative. For each pair we can have multiple cash
+flows during the trading interval, or we may have none in the case when
+prices never diverge by more than two standard deviations during the
+trading interval. Because the trading gains and losses are computed over
+long–short positions of one dollar, the payoffs have the interpretation of
+excess returns. The excess return on a pair during a trading interval is
+computed as the reinvested payoffs during the trading interval.
+5 In parti-
+cular, the long and short portfolio positions are marked-to-market daily.
+The daily returns on the long and short positions are calculated as value-
+weighted returns in the following way,
+r
+P;t ¼
+P
+iEP wi;tri;tP
+iEPwi;t
+ð2Þ
+wi;t ¼ wi;t/C0 1ð1 þ ri;t/C0 1Þ¼ð 1 þ ri;1Þ/C1/C1/C1ð 1 þ ri;t/C0 1Þð 3Þ
+where r defines returns and w defines weights, and the daily returns are
+compounded to obtain monthly returns. This has the simple interpreta-
+tion of a buy-and-hold strategy.
+We consider two measures of excess return on a portfolio of pairs: the
+return on committed capital and the fully invested return, that is, the
+return on actual employed capital. The former scales the portfolio payoffs
+by the number of pairs that are selected for trading, the latter divides the
+payoffs by the number of pairs that open during the trading period. The
+former measure of excess return is clearly more conservative: if a pair
+does not trade for the whole of the trading period, we still include a dollar
+5 This is a conservative approach to computing the excess return, because it implicitly assumes that all cash
+earns zero interest rate when not invested in an open pair. Because any cash flow during the trading
+interval is positive by construction, it ignores the fact that these cash flows are received early and
+understates the computed excess returns.
+Pairs Trading
+805
+
+of committed capital as the cumulative return in our calculation of excess
+return. It takes into account the opportunity cost of hedge funds of
+having to commit capital to a strategy even if the strategy does not
+trade. To the extent that hedge funds are flexible in their sources and
+uses of funds, computing excess return relative to the actual capital
+employed may give a more realistic measure of the trading profits.
+We initiate the pairs strategy by trading the pairs at the beginning of
+every month in the sample period, with the exception of the first 12
+months, which are needed to estimate pairs for the strategy starting in
+the first month. The result is a time series of overlapping six-month
+trading period excess returns. We correct for the correlation induced
+by overlap by averaging monthly returns across trading strategies that
+start one month apart as in Jegadeesh and Titman (1993). The resulting
+time series has the interpretation of the payoffs to a proprietary trading
+desk, which delegates the management of the six portfolios to six different
+traders whose formation and trading periods are staggered by one
+month.
+3. Empirical Results
+3.1 Strategy profits
+Table 1 summarizes the excess returns for the pairs portfolios that are
+unrestricted in the sense that the matching stocks do not necessarily
+belong to the same broad industry categories. In Section 3.5 we will
+consider sector-neutral pairs strategies. Panel A summarizes the excess
+returns of pairs strategies when positions are opened at the end of the day
+that prices diverge and closed at the end of the day of price convergence.
+The first row shows that a fully invested portfolio of the five best pairs
+earned an average excess monthly return of 1.31% ( t-statistic = 8.84), and
+a portfolio of the 20 best pairs 1.44% per month ( t = 11.56). Using the
+more conservative approach to computing excess returns, using com-
+mitted capital, gives excess returns of 0.78 and 0.81% per month, respec-
+tively. Either way, these excess returns are large in an economical and
+statistical sense and suggest that pairs trading is profitable.
+The remainder of Panel A provides information about the excess return
+distributions of pairs portfolios. There are diversification benefits from
+combining multiple pairs in a portfolio. As the number of pairs in a
+portfolio increases, the portfolio standard deviation falls. The diversifica-
+tion benefits are also apparent from the range of realized returns. Inter-
+estingly, as the number of pairs in the strategy increases, the minimum
+realized return increases, whereas the maximum realized excess return
+remains relatively stable. During the full sample period of 474 months, a
+portfolio of 20 pairs experienced 71 monthly periods with negative pay-
+offs, compared to 124 months for a portfolio of 5 pairs. The decrease in
+The Review of Financial Studies / v 19 n 3 2006
+806
+
+the standard deviation and the increase of the lower end of the return
+distribution are also reflected in an increased skewness coefficient.
+Because pairs trading is in essence a contrarian investment strategy, the
+returns may be biased upward because of the bid-ask bounce [Jegadeesh
+(1990), Jegadeesh and Titman (1995), Conrad and Kaul (1989)]. In parti-
+cular, our strategy sells stocks that have done well relative to their match
+and buys those that have done poorly. Part of any observed price diver-
+gence is potentially due to price movements between bid and ask quotes:
+conditional on divergence, the winner’s price is more likely to be an ask
+quote and the loser’s price a bid quote. In Panel A we have used these
+same prices for the start of trading and our returns may be biased upward
+because of the fact that we are implicitly buying at bid quotes (losers) and
+selling at ask quotes (winners). The opposite is true at the second crossing
+Table 1
+Excess returns of unrestricted pairs trading strategies
+Pairs portfolio Top 5 Top 20 101–120 All
+A. Excess return distribution (no waiting)
+Average excess return (fully invested) 0.01308 0.01436 0.01081 0.01104
+Standard error (Newey-West) 0.00148 0.00124 0.00094 0.00099
+t-Statistic 8.84 11.56 11.54 11.16
+Excess return distribution
+Median 0.01194 0.01235 0.00955 0.00728
+Standard deviation 0.02280 0.01688 0.01540 0.01670
+Skewness 0.62 1.39 1.34 3.42
+Kurtosis 7.81 10.54 10.30 25.25
+Minimum –0.10573 –0.06629 –0.03857 –0.02721
+Maximum 0.14716 0.13295 0.12684 0.17178
+Observations with excess return < 0 26% 15% 21% 17%
+Average excess return on committed capital 0.00784 0.00805 0.00679 0.00614
+B. Excess return distribution (one day waiting)
+Average monthly return (fully invested) 0.00745 0.00895 0.00795 0.00715
+Standard error (Newey-West) 0.00119 0.00096 0.00085 0.00090
+t-Statistic 6.26 9.29 9.40 7.92
+Excess return distribution
+Median 0.00699 0.00690 0.00694 0.00411
+Standard deviation 0.02101 0.01527 0.01438 0.01577
+Skewness 0.34 1.45 0.98 3.32
+Kurtosis 10.64 16.13 7.78 25.66
+Minimum –0.12628 –0.08218 –0.04266 –0.02951
+Maximum 0.14350 0.13490 0.10464 0.16325
+Observations with excess return < 0 35% 23% 28% 32%
+Average excess return on committed capital 0.00463 0.00520 0.00503 0.00396
+Summary statistics of the monthly excess returns on portfolios of pairs between July 1963 and December
+2002 (474 observations). We trade according to the rule that opens a position in a pair at the end of the
+day that prices of the stocks in the pair diverge by two historical standard deviations (Panel A). The
+results in Panel B correspond to a strategy that delays the opening of the pairs position by one day. All
+pairs are ranked according to least distance in historical price space. The ‘‘top n’’ portfolios include the
+n pairs with least distance measures, and the portfolio ‘‘101–120’’ studies the 20 pairs after the top 100.
+The average number of pairs in the all-pair portfolio is 2057. The t-statistics are computed using Newey-
+West standard errors with six-lag correction. Absolute kurtosis is reported.
+Pairs Trading
+807
+
+(convergence): part of the drop in the winner’s price can reflect a bid
+quote, and part of the rise of the loser’s price—an ask quote.
+To address this issue, Panel B of Table 1 provides the excess returns
+when we initiate positions in each pair on the day following the diver-
+gence and liquidate on the day following the crossing. The average excess
+returns on the fully invested portfolios and on committed capital drop by
+about 30–55 and 20–35 basis points (bp), respectively. Although the
+excess returns remain significantly positive, the drop in excess returns
+suggests that a nontrivial portion of the profits in Panel A may be due to
+bid–ask bounce. It is difficult to quantify which portion of the profit
+reduction is due to bid–ask bounce and which portion stems from true
+mean reversion in prices because of rapid market adjustment. Nonethe-
+less, this difference raises questions about the economic significance of
+our results when we include transaction costs. We will return to a detailed
+discussion of this issue in Section 3.3. Unless stated otherwise, the remain-
+der of the article will report results for pairs strategies that open (close) on
+the day following divergence (convergence).
+3.2 Trading statistics and portfolio composition
+Table 2 summarizes the trading statistics and composition of the pairs
+portfolios. What are the characteristics of the stocks that are matched
+into pairs? How often does a typical pair trade? Because pairs trading is
+an active investment strategy, it is important to evaluate the profitability
+relative to the trading intensity of the portfolios. As mentioned before, we
+use a two standard deviation trigger to open a pairs position. The second
+line of panel A in Table 2 reports the average price deviation of the two
+standard deviation trigger. For the top five pairs, the position typically
+opens when prices have diverged by 4.76% or more. This is a relatively
+narrow gap in prices.
+6 The trigger spread increases with the number of
+pairs in the portfolio, because the standard deviation of the prices
+increases as the proximity of the securities in price space decreases. The
+next lines of Panel A also shows that on average almost all pairs open
+during the six-month trading period, and on average more than once. Of
+the top 5 pairs, on average 4.81 open during the trading period, and the
+average number of round trips per pair is 2.02. The average duration of
+an open position is 3.75 months. This indicates that pairs trading—
+implemented according to the particular rules we chose—is a medium-
+term investment strategy.
+Panel B of Table 2 describes the composition of the pairs in terms of
+market capitalization and industry membership. In terms of size, the
+average stock in the top 5 and top 20 pairs belongs to the second and
+6 The optimal trigger point in terms of profitability may actually be much higher than two standard
+deviations, although we have not experimented to find out.
+The Review of Financial Studies / v 19 n 3 2006
+808
+
+third deciles from the top; 74% of the stocks in the top 20 pairs belong to
+the top three size deciles using CRSP breakpoints, and 91% come from
+the top five size deciles. About two-thirds of the pairs combine stocks
+from different size deciles (i.e., ‘‘size mixed pairs’’), and the stocks in
+mixed pairs differ on average by a single decile.
+The remainder of Panel B gives a breakdown of the pairs by industry
+composition. On average, 71% of the stocks in the top 20 pairs are utility
+stocks, despite the fact that Utilities represent a fairly small proportion of
+the stocks in the whole sample. This is not surprising perhaps because
+utility stocks tend to have lower volatility and tend to be correlated with
+interest rate innovations. The strategy does not always match stocks
+within sectors. The percentage of mixed sector pairs ranges from 20%
+for the top five pairs to 44% for pairs 101–120. Given the predominance
+of utilities among the top pairs, it is fair to ask whether the profitability of
+pairs trading profitability is limited to the utility sector, or whether pairs
+strategies are also profitable in other sectors of the market. We address
+this question in Section 3.5.
+Table 2
+Trading statistics and composition of pairs portfolios
+Pairs portfolio Top 5 Top 20 101–120 All
+A. Trading statistics
+Average price deviation trigger for opening pairs 0.04758 0.05284 0.07560 0.16888
+Average number of pairs traded per six-month period 4.81 19.30 19.41 1944.22
+Average number of round-trip trades per pair 2.02 1.96 1.78 1.62
+Standard deviation of number of round trips per pair 0.62 0.40 0.27 0.16
+Average time pairs are open in months 3.75 3.76 3.98 3.97
+Standard deviation of time open, per pair, in months 0.80 0.45 0.38 0.17
+B. Pairs portfolio composition
+Average size decile of stocks 2.54 2.71 3.41 4.57
+Average weight of stocks in top three size deciles 0.78 0.74 0.58 0.40
+Average weight of stocks in top five size deciles 0.91 0.91 0.79 0.62
+Average weight of pairs from different deciles 0.66 0.69 0.75 0.82
+Average decile difference for mixed pairs 0.97 0.97 0.97 0.98
+Average sector weights
+Utilities 0.72 0.71 0.32 0.08
+Transportation 0.02 0.02 0.02 0.03
+Financials 0.11 0.13 0.26 0.16
+Industrials 0.15 0.14 0.40 0.73
+Mixed sector pairs 0.20 0.22 0.44 0.33
+Trading statistics and composition of portfolios of pairs portfolios between July 1963 and December 2002
+(474 months). Pairs are formed over a 12-month period according to a minimum-distance criterion and
+then traded over the subsequent 6-month period. We trade according to the rule that opens a position in a
+pair on the day following the day on which the prices of the stocks in the pair diverge by two historical
+standard deviations. The ‘‘top n’’ portfolios include the n pairs with least distance measures, and the
+portfolio ‘‘101–120’’ includes the 20 pairs after the top 100. Panel A summarizes the trading characteristics
+of a pairs strategy. Pairs are opened when prices diverge by two standard deviations. Average deviation to
+trigger opening of pair is the cross-sectional average of two standard deviations of the pair prices difference.
+Panel B contains information about the size and industry membership of the stocks in the various pairs
+portfolios.
+Pairs Trading
+809
+
+3.3 Transaction costs
+Table 1 summarizes that the average monthly excess return of unrest-
+ricted pairs strategies falls from 1.44%, for the top 20 portfolio, to 0.90%
+per month if we postpone the trades to the day following the crossing.
+This drop in the excess returns implies an estimate of the average bid-ask
+spread and hence the transaction costs of trading in the sample. Although
+actual transaction costs may be different, it is informative to know
+whether the trading profits are large enough to survive this estimate of
+transaction costs.
+Suppose the extreme case where the prices of the winner at the first
+crossing (divergence) are ask prices and the loser are bid prices. If the
+next day prices are equally likely to b e at bid or ask, then delaying trades
+by one day will reduce the excess returns on average by half the sum of
+the spreads of the winner and the loser. If at the second crossing (con-
+vergence) of the pairs the winner is t rading at the bid and the loser at the
+ask, waiting one day will reduce the excess returns on average again by
+one-half of the sum of the bid–ask spreads of both stocks. In this
+extreme case, waiting a day before trading reduces the return on each
+pair by the round-trip transaction costs in that pair. Because we trade
+each pair on average two times during t he six-month trading interval,
+the drop in the excess returns of 324 bp per six months by waiting one
+day reflects the cost of two round trip s, which implies a transaction cost
+of 162 bp per pair per round trip. This may be interpreted as an
+estimated effective spread of 81 bp. The effective spread for the all-
+pair portfolio is 70 bp. This indirect estimate is higher than the transac-
+tion costs reported by Peterson and Fialkowski (1994), who find that the
+average effective spread for stocks in the CRSP database in 1991 was
+37 bp, and is consistent with the trading costs estimated by Keim and
+Madhavan (1997). Because 91% of the stocks in the top 20 pairs belong
+to the top five deciles of CRSP stocks, it is possible that the effective
+spread is even lower that 37 bp.
+Do our trading strategies survive these transaction costs? The profits
+on our trading strategies in Table 1 range from 437 to 549 bp over a six-
+month period. If the prices used to compute these excess returns are
+equally likely to be at bid or ask, which seems a reasonable assumption,
+we have to correct these excess returns to reflect that in practice we buy at
+the ask and sell at the bid prices. In other words, we have to subtract the
+round-trip trading costs to get an estimate of the profits after transaction
+costs. Our conservative estimate of transaction costs of 162 bp times two
+round trips per pair results in an estimate of 324 bp transaction cost per
+pair per six-month period. This gives average net profits ranging from 113
+to 225 bp over each six-month period. Comparing these profits to the
+reported standard errors, we conclude that they are both economically
+and statistically significant.
+The Review of Financial Studies / v 19 n 3 2006
+810
+
+Further analysis is required to get more precise estimates of influence of
+transaction costs of pairs trading strategies. An important question in this
+context is whether the trading rule that we have used to open and close
+pairs can be expected to generate economically significant profits even if
+pairs trading works perfectly . Because we use a measure of historical
+standard deviation to trigger the opening of pairs, and because this
+estimated standard deviation is the smallest among all pairs, it is likely
+to underestimate the true standard deviation of a pair. As a consequence,
+we may simply be opening pairs ‘‘too soon’’ and at a point that we cannot
+expect it to compensate for transaction costs even if the pair subsequently
+converges. Results that are not reported here suggest that this is indeed
+the case for some of our pairs.
+There is a second reason why our trading strategies require ‘‘too much’’
+trading. We open pairs at any point during the trading period when the
+normalized prices diverge by two standard deviations. This is not a
+sensible rule toward the end of a trading interval. For example, suppose
+that a divergence occurs at the next to last day of the trading interval. The
+convergence has to be substantial to overcome the transaction cost that
+will be incurred when we close out the position on the next day (the last
+day of the trading interval). Unreported results suggest that this is also an
+important source of excess trading.
+3.4 Pairs trading by industry group
+The pairs formation process thus far has been entirely mechanical. A
+computer stock has the opportunity to match with a steel firm and a
+utility with a bank stock. This does not mean that these matches are
+likely. As summarized in Table 2, the fraction of mixed pairs is typically
+well below 50%. Common factor exposures of stocks in the same industry
+will make it more likely to find a match within the same sector. Also,
+firms that are in industries where cross-sectional differences in factor
+exposures are small or return variances are low are more likely to end
+up among the top ranking of pairs. For this reason it is perhaps not
+surprising that many of the top pairs match two utilities. Are the profits
+to pairs trading consistent across sectors? We examine the returns on
+pairs trading where stocks are matched only within the four large sector
+groupings used by Standard and Poor’s: Utilities, Transportation, Finan-
+cials, and Industrials. The results are summarized in Table 3. As in Table 1,
+the pairs are traded with a one-day delay before opening and closing a
+position to minimize the effect of the bid–ask bounce on trading. The
+monthly excess returns for the top 20 pairs are the largest in the Utilities
+sector, with 1.08% (Newey-West t = 10.26). The profits for the
+other industry groups are somewhat lower, but all statistically significant,
+with the average Transportation, Financials, and Industrials top
+20 pairs earning 0.58% (Newey-West t = 4.26), 0.78% (Newey-West
+Pairs Trading
+811
+
+t = 7.60), and 0.61% (Newey-West t = 6.93), respectively, over a one-month
+period.
+Table 3 also gives a more detailed picture of the return distributions and
+trading characteristics of the pairs trading strategies by sector. It shows that
+Table 3
+Industry sector pairs trading
+Portfolio Top 5 Top 20 20 after 100 All
+A. Utilities
+Mean excess return 0.00905 0.01084 0.009256 0.01036
+t-Statistic (Newey-West) 7.37 10.26 6.11 10.51
+Median 0.00829 0.00938 0.00665 0.00969
+Standard deviation 0.02154 0.01645 0.02640 0.01472
+Skewness 0.44 0.76 0.66 1.39
+Kurtosis 13.67 12.38 5.52 12.74
+Minimum 70.12347 70.08750 70.07868 70.03519
+Maximum 0.16563 0.12730 0.12133 0.12878
+Observations with excess return < 0 28% 19% 35% 18%
+B. Transportation
+Mean excess return 0.00497 0.00577 0.00440
+t-Statistic (Newey-West) 2.98 4.26 3.07
+Median 0.00594 0.00547 0.00339
+Standard deviation 0.03892 0.02942 0.02871
+Skewness 70.50 70.11 0.53
+Kurtosis 4.98 5.00 5.89
+Minimum 70.19570 70.12467 70.12526
+Maximum 0.10961 0.11099 0.13560
+Observations with excess return < 0 44% 42% 44%
+C. Financials
+Mean excess return 0.00678 0.00775 0.00854 0.00726
+t-Statistic (Newey-West) 4.79 7.60 7.12 7.62
+Median 0.00557 0.00615 0.00660 0.00511
+Standard deviation 0.02598 0.01792 0.02358 0.01808
+Skewness 0.81 0.61 1.98 2.64
+Kurtosis 6.37 6.48 18.27 21.21
+Minimum 70.081988 70.07810 70.100477 70.04452
+Maximum 0.149291 0.10638 0.195797 0.17211
+Observations with excess return < 0 40% 33% 32% 34%
+D. Industrial
+Mean excess return 0.00490 0.00607 0.00664 0.00715
+t-Statistic (Newey-West) 4.11 6.93 6.80 7.52
+Median 0.00292 0.00547 0.00550 0.00397
+Standard deviation 0.02361 0.01601 0.01825 0.01672
+Skewness 0.40 0.43 0.94 2.97
+Kurtosis 4.94 4.75 7.65 20.95
+Minimum 70.10016 70.04786 70.05412 70.03431
+Maximum 0.10546 0.08022 0.11619 0.16072
+Observations with excess return < 0 42% 36% 35% 34%
+Summary statistics for the excess monthly return distributions for pairs trading portfolios by sector. We
+trade according to the ‘‘wait one day’’ rule described in the text. The average number of stocks in the
+industry groups are as follows: 156 Utilities, 61 Transportation, 371 Financials, and 1729 Industrials.
+There is no ‘‘20 after 100’’ portfolio for the Transportation industry group. The t-statistic of the mean is
+computed using Newey-West standard errors with six lags.
+The Review of Financial Studies / v 19 n 3 2006
+812
+
+the excess return distributions of the sector pairs portfolios are generally
+skewed right and exhibit positive excess kurtosis relative to a normal
+distribution. The conclusion from these tables is that pairs trading is profit-
+able in every broad sector category, and not limited to a particular sector.
+3.5 The risk characteristics of pairs trading strategies
+To provide further perspective on the risk of pairs trading, Table 4
+compares the risk-premium of pairs trading to the market premium
+(S&P 500) and reports the risk-adjusted returns to pairs trading using
+two different models for measuring risk. Table 5 summarizes value-at-risk
+(VAR) measures for pairs portfolios.
+The top part of Table 4 compares the excess return to pairs trading to
+the excess return on the S&P 500. Between 1963 and 2002, the average
+excess return to pairs trading has been about twice as large as the excess
+return of the S&P 500, with only one-half to one-third of the risk as
+measured by standard deviation. As a result, the Sharpe Ratios of pairs
+trading are between four and six times larger than the Sharpe Ratio of the
+market. Goetzmann et al. (2002) show that Sharpe Ratios can be mis-
+leading when return distributions have negative skewness. This is unlikely
+to be a concern for our study, because our Table 1 showed that the
+returns to pairs portfolios are positively skewed, which—if anything—
+would bias our Sharpe Ratios downward.
+To explore the systematic risk exposure of the pairs portfolios, we
+regress their monthly excess returns on the three factors of Fama and
+French (1996), augmented by two additional factors. The motivation for
+the additional factors is that pairs strategies invest based on the relative
+strength of individual stocks. It is therefore possible that pairs trading
+simply exploits patterns in returns that are known to earn significant
+profits. For example, Jegadeesh (1990) and Lehmann (1990) show that
+reversal strategies that select stocks based on prior one-month return earn
+positive abnormal returns. We control for this possibility by constructing
+a short-term reversal factor measured as the excess return of stocks in the
+top three deciles of prior-month return minus the return on stocks in the
+bottom three deciles.
+7 If pairs strategies sell short-term winners and buy
+short-term losers, we expect the exposures of pairs portfolios to be
+positive to the reversal factor. The second additional factor controls for
+exposure to medium-term return continuation [Jegadeesh and Titman
+(1993)]. To the extent that pairs trading sells medium-term winners and
+buys medium-term losers, the pairs excess returns will be negatively
+correlated with momentum. To examine this possibility, we include a
+7 The construction is similar to Carhart’s (1997) momentum factor, but the performance-sorting horizon
+here is one month.
+Pairs Trading
+813
+
+Table 4
+Systematic risk of pairs trading strategies
+Top 5 Top 20
+20 after
+top 100 All
+Equity
+premium
+‘‘Wait one day’’ portfolio performance
+Mean excess return 0.00745 0.00895 0.00795 0.00715 0.00410
+Standard deviation 0.02101 0.01527 0.01438 0.01577 0.04509
+Sharpe Ratio 0.35 0.59 0.55 0.45 0.09
+Monthly serial correlation 0.14 0.24 0.19 0.12 0.05
+Factor model: Fama–French, Momentum,
+Reversal
+Intercept 0.00545 (3.81) 0.00764 (7.08) 0.00714 (8.66) 0.00512 (5.30)
+Market 70.06661 (–1.03) 70.03155 (–0.64) 70.07697 (–1.77) 70.14520 (–3.10)
+SMB 70.04233 (–0.71) 0.00111 (0.02) 70.02333 (–0.50) 70.07079 (–1.66)
+HML 0.05740 (1.37) 0.04514 (1.45) 70.01724 (–0.59) 70.05403 (–1.82)
+Momentum 70.02804 (–0.94) 70.04817 (–2.45) 70.10312 (–5.83) 70.18077 (–8.50)
+Reversal 0.10192 (1.50) 0.07237 (1.27) 0.09459 (2.24) 0.20077 (4.34)
+R
+2 0.05 0.09 0.18 0.54
+Factor model: Ibbotson factors
+Intercept 0.00716 (6.32) 0

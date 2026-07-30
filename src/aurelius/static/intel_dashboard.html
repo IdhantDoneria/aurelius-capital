@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aurelius — Research Intelligence</title>
+<style>
+  :root{
+    --bg:#0d1117; --surface:#161b22; --surface2:#1c2330; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#388bfd;
+    --good:#3fb950; --warn:#d29922; --bad:#f85149; --exp:#a371f7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  header{padding:16px 24px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:16px;background:var(--surface)}
+  header h1{font-size:18px;margin:0;font-weight:600}
+  header .sub{color:var(--muted);font-size:12px}
+  header .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+  select,button{background:var(--surface2);color:var(--text);border:1px solid var(--border);
+    padding:7px 12px;border-radius:6px;cursor:pointer;font-size:13px}
+  button.primary{background:var(--accent);color:#fff;border:0}
+  button:hover{opacity:.9}
+  main{padding:24px;max-width:1400px;margin:0 auto}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+  .card h2{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 12px}
+  .kpi{font-size:28px;font-weight:700}
+  .kpi small{font-size:12px;color:var(--muted);font-weight:400}
+  .section{margin-top:24px}
+  .section h2{font-size:15px;margin:0 0 12px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+  tr:hover td{background:var(--surface2)}
+  .badge{padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap}
+  .pill{padding:2px 8px;border-radius:999px;font-size:11px;background:var(--surface2);color:var(--muted)}
+  .cols{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+  .rec{border-left:3px solid var(--accent);padding:8px 12px;margin-bottom:8px;background:var(--surface2);border-radius:0 6px 6px 0}
+  .rec .act{font-weight:600;font-size:13px}
+  .rec .tgt{color:var(--accent);font-family:ui-monospace,monospace;font-size:12px}
+  .rec .why{color:var(--muted);font-size:12px;margin-top:2px}
+  .rec .ev{color:var(--muted);font-size:11px;margin-top:4px;font-family:ui-monospace,monospace}
+  .spark{display:flex;gap:2px;align-items:flex-end;height:44px;margin-top:8px}
+  .spark i{flex:1;background:var(--accent);border-radius:2px 2px 0 0;min-height:2px;opacity:.8}
+  .muted{color:var(--muted)}
+  pre{background:var(--surface2);padding:12px;border-radius:6px;overflow:auto;font-size:12px;white-space:pre-wrap}
+  #err{color:var(--bad);padding:12px 0}
+  .loading{color:var(--muted);padding:40px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <h1>Research Intelligence</h1>
+  <span class="sub" id="ts">—</span>
+  <div class="right">
+    <select id="period" onchange="loadReport()">
+      <option value="daily">Daily</option>
+      <option value="weekly" selected>Weekly</option>
+      <option value="monthly">Monthly</option>
+      <option value="quarterly">Quarterly</option>
+      <option value="annual">Annual</option>
+    </select>
+    <button class="primary" onclick="load()">Refresh</button>
+  </div>
+</header>
+<main>
+  <div id="err"></div>
+  <div id="content"><div class="loading">Loading research intelligence…</div></div>
+</main>
+<script>
+const esc = s => String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const RECOLOR = {retire:"var(--bad)",abandon:"var(--bad)",expand:"var(--good)",
+  build_feature:"var(--exp)",acquire_dataset:"var(--accent)",repeat_experiment:"var(--warn)",
+  review_paper:"var(--muted)"};
+const j = async p => (await fetch(p)).json();
+
+function spark(vals){
+  const max = Math.max(1,...vals);
+  return `<div class="spark">${vals.map(v=>`<i style="height:${Math.round(v/max*100)}%"></i>`).join("")}</div>`;
+}
+
+function kpis(se, ptr){
+  const fp = ptr.false_positive_rate;
+  const cards = [
+    ["Research efficiency", se.research_efficiency==null?"—":Math.round(se.research_efficiency*100)+"%", "accept / experiment"],
+    ["Throughput", se.experiment_throughput_per_week ?? 0, "exp / week"],
+    ["Knowledge reuse", se.knowledge_reuse_rate ?? 0, "feature reuse"],
+    ["Duplicate rate", se.duplicate_research_rate ?? 0, "flagged dupes"],
+    ["Decision lift", se.decision_signal_lift ?? 0, "confidence signal"],
+    ["Paper FP rate", fp==null?"—":Math.round(fp*100)+"%", "validation false positives"],
+  ];
+  return `<div class="grid">${cards.map(([t,v,s])=>`
+    <div class="card"><h2>${t}</h2><div class="kpi">${esc(v)} <small>${esc(s)}</small></div></div>`).join("")}</div>`;
+}
+
+function perfTable(rows){
+  const vColor = {consistently_fails:"var(--bad)",productive:"var(--good)",mixed:"var(--warn)"};
+  return `<div class="card"><table>
+    <thead><tr><th>Category</th><th>Exps</th><th>Accept</th><th>Avg OOS Sharpe</th><th>Verdict</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td>${esc(r.category)}</td><td>${r.experiments}</td>
+      <td>${Math.round(r.accept_rate*100)}%</td><td>${r.avg_oos_sharpe??"—"}</td>
+      <td><span class="badge" style="background:${vColor[r.verdict]||'#888'}">${esc(r.verdict)}</span></td>
+    </tr>`).join("")}</tbody></table></div>`;
+}
+
+function simpleTable(rows, cols){
+  if(!rows||!rows.length) return `<div class="card muted">No data</div>`;
+  return `<div class="card"><table><thead><tr>${cols.map(c=>`<th>${esc(c[0])}</th>`).join("")}</tr></thead>
+    <tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${esc(c[1](r))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+
+function recCard(r){
+  const c = RECOLOR[r.type]||"var(--accent)";
+  return `<div class="rec" style="border-color:${c}">
+    <div class="act">${esc(r.action)} <span class="tgt">${esc(r.target)}</span>
+      <span class="pill">${esc(r.type)}</span></div>
+    <div class="why">${esc(r.rationale)}</div>
+    <div class="ev">evidence: ${esc(JSON.stringify(r.evidence))}</div></div>`;
+}
+
+async function loadReport(){
+  const p = document.getElementById("period").value;
+  try{
+    const md = await (await fetch(`/intel/report/${p}/markdown`)).text();
+    document.getElementById("reportBox").textContent = md;
+  }catch(e){ document.getElementById("reportBox").textContent = "error: "+e.message; }
+}
+
+async function load(){
+  const err = document.getElementById("err"); err.textContent="";
+  try{
+    const [meta, recs, trends, se] = await Promise.all([
+      j("/intel/meta"), j("/intel/recommendations"), j("/intel/trends"), j("/intel/self-evaluation")]);
+    document.getElementById("ts").textContent = "generated "+new Date().toLocaleString();
+    const ptr = meta.paper_trading_reliability||{};
+    const prod = (trends.research_productivity||[]).map(x=>x.experiments);
+    const succ = (trends.experiment_success_rate||[]).map(x=>x.accept_rate);
+
+    document.getElementById("content").innerHTML = `
+      ${kpis(se, ptr)}
+      <div class="section"><h2>Trends</h2><div class="cols">
+        <div class="card"><h2>Productivity (exp/week)</h2>${spark(prod.length?prod:[0])}
+          <div class="muted">${prod.length} weeks</div></div>
+        <div class="card"><h2>Success rate/week</h2>${spark(succ.map(v=>v*100).length?succ.map(v=>v*100):[0])}</div>
+        <div class="card"><h2>Technical debt</h2>
+          <div>orphans: ${trends.technical_debt?.orphan_nodes??"—"} ·
+          broken edges: ${trends.technical_debt?.broken_edges??"—"} ·
+          dup labels: ${trends.technical_debt?.duplicate_labels??"—"}</div></div>
+      </div></div>
+      <div class="section"><h2>Category performance</h2>${perfTable(meta.category_performance||[])}</div>
+      <div class="section"><h2>Meta-analysis</h2><div class="cols">
+        <div><h3 class="muted">Feature families</h3>${simpleTable((meta.feature_families||[]).slice(0,8),
+          [["Family",r=>r.feature_family],["Exps",r=>r.used_in_experiments],
+           ["Accept",r=>Math.round(r.accept_rate*100)+"%"],["Avg Sharpe",r=>r.avg_oos_sharpe??"—"]])}</div>
+        <div><h3 class="muted">Validation guards (false-positive killers)</h3>${simpleTable(meta.statistical_test_effectiveness||[],
+          [["Guard",r=>r.guard],["Fired",r=>r.rejections_triggered],["Share",r=>Math.round(r.share_of_rejects*100)+"%"]])}</div>
+        <div><h3 class="muted">Dataset value</h3>${simpleTable((meta.dataset_value||[]).slice(0,8),
+          [["Dataset",r=>r.dataset],["Exps",r=>r.experiments],["Accept",r=>Math.round(r.accept_rate*100)+"%"]])}</div>
+        <div><h3 class="muted">Paper regime failure</h3>${simpleTable(meta.regime_sensitivity?.by_paper_regime||[],
+          [["Regime",r=>r.regime],["Runs",r=>r.paper_runs],["Fail rate",r=>Math.round(r.failure_rate*100)+"%"]])}</div>
+      </div></div>
+      <div class="section"><h2>Recommendations <span class="pill">${(recs||[]).length}</span></h2>
+        <div class="cols"><div>${(recs||[]).filter((_,i)=>i%2===0).map(recCard).join("")||'<div class="muted">none</div>'}</div>
+        <div>${(recs||[]).filter((_,i)=>i%2===1).map(recCard).join("")}</div></div></div>
+      <div class="section"><h2>Periodic report</h2><pre id="reportBox">loading…</pre></div>`;
+    loadReport();
+  }catch(e){ err.textContent = "Failed to load: "+e.message; }
+}
+load();
+</script>
+</body>
+</html>

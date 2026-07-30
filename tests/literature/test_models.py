@@ -1,6 +1,8 @@
 """Unit tests for Paper model and paper_id helper."""
-import pytest
+
 from datetime import UTC, date, datetime
+
+import pytest
 
 from aurelius.literature.models import Paper, paper_id
 

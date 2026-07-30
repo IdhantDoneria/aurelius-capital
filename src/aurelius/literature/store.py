@@ -1,4 +1,5 @@
 """DuckDB-backed persistence for the Literature Intelligence Framework."""
+
 from __future__ import annotations
 
 import json
@@ -10,6 +11,7 @@ from pathlib import Path
 import duckdb
 
 from aurelius.core.logging import get_logger
+from aurelius.knowledge import hooks as kg_hooks
 from aurelius.literature.models import Paper
 
 logger = get_logger(__name__)
@@ -78,8 +80,15 @@ class LiteratureStore:
                     conn.execute(
                         "UPDATE papers SET title=?, authors=?, published_at=?, abstract=?, url=? "
                         "WHERE source=? AND source_id=?",
-                        [paper.title, json.dumps(paper.authors), paper.published_at,
-                         paper.abstract, paper.url, paper.source, paper.source_id],
+                        [
+                            paper.title,
+                            json.dumps(paper.authors),
+                            paper.published_at,
+                            paper.abstract,
+                            paper.url,
+                            paper.source,
+                            paper.source_id,
+                        ],
                     )
                 else:
                     conn.execute(
@@ -91,32 +100,53 @@ class LiteratureStore:
                             limitations=?, enriched=?
                         WHERE source=? AND source_id=?""",
                         [
-                            paper.title, json.dumps(paper.authors), paper.published_at,
-                            paper.abstract, paper.url,
-                            json.dumps(paper.keywords), json.dumps(paper.asset_classes),
-                            paper.research_category, paper.methodology,
-                            json.dumps(paper.datasets), json.dumps(paper.factors_studied),
+                            paper.title,
+                            json.dumps(paper.authors),
+                            paper.published_at,
+                            paper.abstract,
+                            paper.url,
+                            json.dumps(paper.keywords),
+                            json.dumps(paper.asset_classes),
+                            paper.research_category,
+                            paper.methodology,
+                            json.dumps(paper.datasets),
+                            json.dumps(paper.factors_studied),
                             json.dumps(paper.statistical_techniques),
-                            paper.main_conclusions, paper.limitations, paper.enriched,
-                            paper.source, paper.source_id,
+                            paper.main_conclusions,
+                            paper.limitations,
+                            paper.enriched,
+                            paper.source,
+                            paper.source_id,
                         ],
                     )
+                kg_hooks.on_paper(paper)
                 return False
 
             conn.execute(
                 "INSERT INTO papers VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 [
-                    paper.id, paper.source, paper.source_id, paper.title,
-                    json.dumps(paper.authors), paper.published_at, paper.abstract,
-                    paper.url, json.dumps(paper.keywords),
-                    json.dumps(paper.asset_classes), paper.research_category,
-                    paper.methodology, json.dumps(paper.datasets),
+                    paper.id,
+                    paper.source,
+                    paper.source_id,
+                    paper.title,
+                    json.dumps(paper.authors),
+                    paper.published_at,
+                    paper.abstract,
+                    paper.url,
+                    json.dumps(paper.keywords),
+                    json.dumps(paper.asset_classes),
+                    paper.research_category,
+                    paper.methodology,
+                    json.dumps(paper.datasets),
                     json.dumps(paper.factors_studied),
                     json.dumps(paper.statistical_techniques),
-                    paper.main_conclusions, paper.limitations,
-                    paper.ingested_at, paper.enriched,
+                    paper.main_conclusions,
+                    paper.limitations,
+                    paper.ingested_at,
+                    paper.enriched,
                 ],
             )
+            kg_hooks.on_paper(paper)
             return True
 
     def exists(self, source: str, source_id: str) -> bool:
@@ -185,10 +215,8 @@ class LiteratureStore:
 
     def stats(self) -> dict:
         with self._conn() as conn:
-            total = conn.execute("SELECT COUNT(*) FROM papers").fetchone()[0]
-            enriched = conn.execute(
-                "SELECT COUNT(*) FROM papers WHERE enriched=TRUE"
-            ).fetchone()[0]
+            total = conn.execute("SELECT COUNT(*) FROM papers").fetchone()[0]  # type: ignore[index]
+            enriched = conn.execute("SELECT COUNT(*) FROM papers WHERE enriched=TRUE").fetchone()[0]  # type: ignore[index]
             by_source = conn.execute(
                 "SELECT source, COUNT(*) FROM papers GROUP BY source ORDER BY source"
             ).fetchall()
@@ -200,12 +228,31 @@ class LiteratureStore:
 
     def _row_to_paper(self, row: tuple) -> Paper:
         (
-            id_, source, source_id, title, authors_j, published_at, abstract, url,
-            keywords_j, asset_classes_j, research_category, methodology, datasets_j,
-            factors_j, techniques_j, main_conclusions, limitations, ingested_at, enriched,
+            id_,
+            source,
+            source_id,
+            title,
+            authors_j,
+            published_at,
+            abstract,
+            url,
+            keywords_j,
+            asset_classes_j,
+            research_category,
+            methodology,
+            datasets_j,
+            factors_j,
+            techniques_j,
+            main_conclusions,
+            limitations,
+            ingested_at,
+            enriched,
         ) = row
         return Paper(
-            id=id_, source=source, source_id=source_id, title=title,
+            id=id_,
+            source=source,
+            source_id=source_id,
+            title=title,
             authors=json.loads(authors_j or "[]"),
             published_at=published_at,
             abstract=abstract or "",

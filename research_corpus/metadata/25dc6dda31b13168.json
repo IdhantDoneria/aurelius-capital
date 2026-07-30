@@ -1,0 +1,42 @@
+{
+  "id": "80c7c055-c361-4547-ae27-debec683a42a",
+  "original_filename": "truncated.pdf",
+  "file_path": "research_corpus/rejected/truncated.pdf",
+  "content_hash": "25dc6dda31b13168675b3fdab9e70faeb10fdaede7dc5404bb45c4a3529522c1",
+  "status": "rejected",
+  "stages": [
+    {
+      "stage": "validate",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T14:52:02.863685"
+    },
+    {
+      "stage": "assign_id",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T14:52:02.868141"
+    },
+    {
+      "stage": "move_to_processing",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T14:52:02.868374"
+    },
+    {
+      "stage": "extract_metadata",
+      "status": "failed",
+      "message": "Corrupt or unreadable PDF: Stream has ended unexpectedly",
+      "timestamp": "2026-07-30T14:52:02.868518"
+    }
+  ],
+  "paper_metadata": {},
+  "corpus_doc_id": "",
+  "priority_score": 0.0,
+  "experiment_spec": null,
+  "error": "Permanent failure at 'extract_metadata': Corrupt or unreadable PDF: Stream has ended unexpectedly",
+  "created_at": "2026-07-30T14:52:02.863629",
+  "updated_at": "2026-07-30T14:52:02.868688Z",
+  "retry_count": 0,
+  "processing_seconds": 0.0050562500255182385
+}

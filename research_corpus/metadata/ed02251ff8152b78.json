@@ -1,0 +1,128 @@
+{
+  "id": "bdd49701-22d2-4758-a9ec-7b37f32ffaa0",
+  "original_filename": "Jegadeesh_Titman_1993_Returns_to_Buying_Winners_and_Selling_Losers.pdf",
+  "file_path": "research_corpus/processed/Jegadeesh_Titman_1993_Returns_to_Buying_Winners_and_Selling_Losers.pdf",
+  "content_hash": "ed02251ff8152b78cf52d4285cd344eb42b1b19a4d64fd9bf01d24eba1a34155",
+  "status": "completed",
+  "stages": [
+    {
+      "stage": "validate",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.462542"
+    },
+    {
+      "stage": "assign_id",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.466549"
+    },
+    {
+      "stage": "move_to_processing",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.466803"
+    },
+    {
+      "stage": "extract_metadata",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.663076"
+    },
+    {
+      "stage": "classify",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.663211"
+    },
+    {
+      "stage": "store_corpus",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.673692"
+    },
+    {
+      "stage": "update_kg",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.865678"
+    },
+    {
+      "stage": "score",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.865876"
+    },
+    {
+      "stage": "plan_experiment",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.865973"
+    },
+    {
+      "stage": "archive",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:24:14.866189"
+    }
+  ],
+  "paper_metadata": {
+    "title": "http://www.jstor.org",
+    "authors": [
+      "Returns to Buying Winners",
+      "Selling Losers: Implications for Stock Market Efficiency"
+    ],
+    "year": 2008,
+    "doi": "",
+    "arxiv_id": "",
+    "abstract": "This paper documents that strategies which buy stocks that have performed well in \nthe past and sell stocks that have performed poorly in the past generate significant \npositive returns over 3- to 12-month holding periods. We find that the profitability \nof these strategies are not due to their systematic risk or to delayed stock price \nreactions to common factors. However, part of the abnormal returns generated in \nthe first year after portfolio formation dissipates in the following two years. A \nsimilar pattern of returns around the earnings announcements of past winners and \nlosers is also documented. \nA POPULAR VIEW HELD by many journalists, psychologists, and economists is \nthat individuals tend to overreact to information.",
+    "methodology": "to evaluate tho evidence of \nlong horizon overreaction documented by De Bondt and Thaler (1985). See also Bernard and \nThomas (1990).",
+    "results": "are still being debated. Some have argued \nthat the De Bondt and Thaler results can be explained by the systematic risk \nof their contrarian portfolios and the size effect.2 In addition, since the \nlong-term losers outperform the long-term winners only in Januaries, it is \nunclear whether their results can be attributed to overreaction. \n*Jegadeesh is from the Anderson Graduate School of Management, UCLA. Titman is from \nHong Kong University of Science and Technology and the Anderson Graduate School of Manage- \nment, UCLA. We would like to thank Kent Daniel, Ravi Jagannathan, Richard Roll, Hans Stoll, \nRen6 Stulz, and two referees. We also thank participants of the Johnson Symposium held at the \nUniversity of Wisconsin at Madison and seminar participants at Harvard, SMU, UBC, UCLA, \nPenn State, University of Michigan, University of Minnesota, and York University for helpful \ncomments, and Juan Siu and Kwan Ho Kim for excellent research assistance. \n1See for example, the academic papers by Kahneman and Tversky (1982), De Bondt and \nThaler (1985) and Shiller (1981). \n2See for example, Chan (1988), Ball and Kothari (1989), and Zarowin (1990). For an alternate \nview, see the recent paper by Chopra, Lakonishok, and Ritter (1992). \n65",
+    "conclusion": ". Jensen and Bennington analyze the \nprofitability of Levy's trading rule over a long time period that was, for the \nmost part, outside Levy's original sample period. They find that in their \nsample period Levy's trading rule does not outperform a buy and hold \nstrategy and hence attribute Levy's result to a selection bias. \nAlthough the current academic debate has focused on contrarian rather \nthan relative strength trading rules, a number of practitioners still use \nrelative strength as one of their stock selection criteria. For example, a \nmajority of the mutual funds examined by Grinblatt and Titman (1989, 1991) \nshow a tendency to buy stocks that have increased in price over the previous \nquarter. In addition, the Value Line rankings are known to be based in large \npart on past relative strength. The success of many of the mutual funds in \nthe Grinblatt and Titman sample and the predictive power of Value Line \nrankings (see Copeland and Mayers (1982) and Stickel (1985)) provide sug- \ngestive evidence that the relative strength strategies may generate abnormal \nreturns. \nHow can we reconcile the success of Value Line rankings and the mutual \nfunds that use relative strength rules with the current academic literature \nthat suggests that the opposite strategy generates abnormal returns? One \npossibility is that the abnormal returns realized by these practitioners are \neither spurious or are unrelated to their tendencies to buy past winners. A \nsecond possibility is that the",
+    "datasets_mentioned": [
+      "CRSP",
+      "Compustat"
+    ],
+    "features_mentioned": [
+      "momentum",
+      "value",
+      "size",
+      "profitability",
+      "volatility",
+      "beta",
+      "idiosyncratic",
+      "factor",
+      "turnover",
+      "liquidity"
+    ],
+    "statistical_tests": [
+      "t-statistic",
+      "p-value",
+      "beta",
+      "regression",
+      "panel"
+    ],
+    "reference_count": 0,
+    "word_count": 12271,
+    "source_file": "Jegadeesh_Titman_1993_Returns_to_Buying_Winners_and_Selling_Losers.pdf",
+    "_score": {
+      "paper_id": "doc_cb4ca13ed6b8",
+      "novelty": 0.0,
+      "influence": 0.4,
+      "reproducibility": 0.9999999999999999,
+      "dataset_availability": 0.5,
+      "expected_value": 1.0,
+      "engineering_effort": 5.666666666666667,
+      "total": 5.53,
+      "rationale": "novelty=0.00 influence=0.40 reproducibility=1.00 dataset_avail=0.50 expected_value=1.00 effort=5.67"
+    }
+  },
+  "corpus_doc_id": "doc_cb4ca13ed6b8",
+  "priority_score": 5.53,
+  "experiment_spec": null,
+  "error": "",
+  "created_at": "2026-07-30T10:24:14.462481",
+  "updated_at": "2026-07-30T10:24:14.866246Z",
+  "retry_count": 0,
+  "processing_seconds": 0.4037615000270307
+}

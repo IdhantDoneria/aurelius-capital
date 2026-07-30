@@ -165,6 +165,7 @@ def test_demo_runs_end_to_end():
 def test_config_snapshot_stored_and_retrieved():
     """ExperimentRecord stores config_snapshot; find_duplicate includes config in identity."""
     from datetime import UTC, datetime
+
     from aurelius.research.models import ExperimentRecord, ValidationReport, Verdict
 
     store = ResearchStore(":memory:")

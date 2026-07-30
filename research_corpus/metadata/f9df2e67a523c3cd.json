@@ -1,0 +1,125 @@
+{
+  "id": "ee6b8b10-3416-432e-a9b0-b17846d6b019",
+  "original_filename": "Fama_French_1993_Common_Risk_Factors_in_the_Returns_on_Stocks_and_Bonds.pdf",
+  "file_path": "research_corpus/processed/Fama_French_1993_Common_Risk_Factors_in_the_Returns_on_Stocks_and_Bonds.pdf",
+  "content_hash": "f9df2e67a523c3cd695c920bc95e5331517e0a8631c52fa2c4079c6baa5ffb1b",
+  "status": "completed",
+  "stages": [
+    {
+      "stage": "validate",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.747363"
+    },
+    {
+      "stage": "assign_id",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.772963"
+    },
+    {
+      "stage": "move_to_processing",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.773201"
+    },
+    {
+      "stage": "extract_metadata",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:51.524204"
+    },
+    {
+      "stage": "classify",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:51.524348"
+    },
+    {
+      "stage": "store_corpus",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:51.534630"
+    },
+    {
+      "stage": "update_kg",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:51.706559"
+    },
+    {
+      "stage": "score",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:51.706787"
+    },
+    {
+      "stage": "plan_experiment",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:51.706886"
+    },
+    {
+      "stage": "archive",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:51.707119"
+    }
+  ],
+  "paper_metadata": {
+    "title": "Journal of Financial Economics 33 (1993) 3-56. North-Holland",
+    "authors": [
+      "stocks",
+      "bonds*"
+    ],
+    "year": 1993,
+    "doi": "",
+    "arxiv_id": "",
+    "abstract": "from common variation in returns. Our results \nsuggest that the residuals from three-factor regressions that also use S&If3 and \nHML will do a better job isolating the firm-specific components of returns. \nUsing a three-factor alternative is especially important if the tests impose \na cross-section constraint on average stock returns. For example. Agrawal, Jaffe, \nand Mandelker (1991) use the residuals from the Sharpe-Lintner model to judge \nthe post-merger stock returns of acquiring firms. Aware that post-merger \nreturns may seem too low because acquiring firms tend to be large. they control \nfor size as well as the excess market return when measuring abnormal returns. \nStill, they find that the average abnormal returns of acquiring firms are negative \nand similar in size in each of the five years after mergers. \nWe conjecture that the persistent negative abnormal returns of acquiring \nfirms are a book-to-market effect. We guess that acquiring firms tend to be \nsuccessful firms that have high stock prices relative to book value and low",
+    "methodology": "to testing asset-pricing models is \ndifferent. Fama and French (1992a) use the cross-section regressions of \nFama and MacBeth (1973): the cross-section of stock returns is regressed on \nvariables hypothesized to explain average returns. It would be difficult to \nadd bonds to the cross-section regressions since explanatory variables like \nsize and book-to-market equity have no obvious meaning for government \nand corporate bonds. \nThis paper uses the time-series regression approach of Black, Jensen, and \nScholes (1972). Monthly returns on stocks and bonds are regressed on the \nreturns to a market portfolio of stocks and mimicking portfolios for size, \nbook-to-market equity (BE/‘ME), and term-structure risk factors in returns. The \ntime-series regression slopes are factor loadings that, unlike size or BE/ME, \nhave a clear interpretation as risk-factor sensitivities for bonds as well as for \nstocks. \nThe time-series regressions are also convenient for studying two important \nasset-pricing issues. \n(a) One of our central themes is that if assets are priced rationally, variables \nthat are related to average returns, such as size and book-to-market equity, must \nproxy for sensitivity to common (shared and thus undiversiliable) risk factors in",
+    "results": "are easy to summarize. For stocks, portfolios constructed to \nmimic risk factors related to size and BE/ME capture strong common variation \nin returns, no matter what else is in the time-series regressions. This is evidence \nthat size and book-to-market equity indeed proxy for sensitivity to common risk \nfactors in stock returns. Moreover, for the stock portfolios we examine, the \nintercepts from three-factor regressions that include the excess market return \nand the mimicking returns for size and BE/ME factors are close to 0. Thus \na market factor and our proxies for the risk factors related to size and book- \nto-market equity seem to do a good job explaining the cross-section of average \nstock returns. \nThe interpretation of the time-series regressions for stocks is interesting. Like \nthe cross-section regressions of Fama and French (1992a), the time-series regres- \nsions say that the size and book-to-market factors can explain the differences in \naverage returns across stocks. But these factors alone cannot explain the large \ndifference between the average returns on stocks and one-month bills. This job is \nleft to the market factor. In regressions that also include the size and book- \nto-market factors, all our stock portfolios produce slopes on the market factor \nthat are close to 1. The risk premium for the market factor then links the average \nreturns on stocks and bills. \nFor bonds, the mimicking portfolios for the two term-structure factors (a term \npremium and a def",
+    "conclusion": "from the cross-section regressions \nin Fama and French (1992a) that size and book-to-market factors explain the \nstrong differences in average returns across stocks. But the large intercepts also \nsay that S.LfB and HML. do not explain the average premium of stock returns \nover one-month bill returns. \nRM-RF, S.CfB, and H,LIL -Adding the excess market return to the time- \nseries regressions pushes the strong positive intercepts for stocks observed in the \n‘This implication is only an approximation in the Ross (19761 model. Ser. for example. Shanken \n(1982).",
+    "datasets_mentioned": [
+      "CRSP",
+      "Compustat",
+      "Fama-French"
+    ],
+    "features_mentioned": [
+      "value",
+      "size",
+      "profitability",
+      "volatility",
+      "book-to-market",
+      "earnings yield",
+      "factor",
+      "Sharpe"
+    ],
+    "statistical_tests": [
+      "regression",
+      "bootstrap",
+      "Fama-MacBeth"
+    ],
+    "reference_count": 0,
+    "word_count": 23237,
+    "source_file": "Fama_French_1993_Common_Risk_Factors_in_the_Returns_on_Stocks_and_Bonds.pdf",
+    "_score": {
+      "paper_id": "doc_8c291292e121",
+      "novelty": 0.0,
+      "influence": 0.24,
+      "reproducibility": 0.9999999999999999,
+      "dataset_availability": 0.6666666666666666,
+      "expected_value": 1.0,
+      "engineering_effort": 5.6,
+      "total": 5.63,
+      "rationale": "novelty=0.00 influence=0.24 reproducibility=1.00 dataset_avail=0.67 expected_value=1.00 effort=5.60"
+    }
+  },
+  "corpus_doc_id": "doc_8c291292e121",
+  "priority_score": 5.63,
+  "experiment_spec": null,
+  "error": "",
+  "created_at": "2026-07-30T10:21:50.747303",
+  "updated_at": "2026-07-30T10:21:51.707205Z",
+  "retry_count": 0,
+  "processing_seconds": 0.9598992079263553
+}

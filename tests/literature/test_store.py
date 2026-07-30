@@ -1,6 +1,8 @@
 """Unit tests for LiteratureStore (in-memory DuckDB)."""
-import pytest
+
 from datetime import UTC, date, datetime
+
+import pytest
 
 from aurelius.literature.models import Paper, paper_id
 from aurelius.literature.store import LiteratureStore

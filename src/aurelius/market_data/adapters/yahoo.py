@@ -74,8 +74,8 @@ class YahooFinanceAdapter(MarketDataAdapter):
         bars: list[RawBar] = []
         for ts, row in df.iterrows():
             # yfinance may return MultiIndex columns when columns=["Open","High",...] x [symbol]
-            def _get(col_name: str, _row: object = row, _sym: str = symbol) -> float:
-                val = _row.get((col_name, _sym), _row.get(col_name, 0.0))
+            def _get(col_name: str, _row: object = row, _sym: str = symbol) -> float:  # type: ignore
+                val = _row.get((col_name, _sym), _row.get(col_name, 0.0))  # type: ignore
                 return float(val) if val is not None else 0.0
 
             ts_dt = ts.to_pydatetime()

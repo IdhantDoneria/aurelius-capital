@@ -69,7 +69,9 @@ def _verify_bars(bars: Sequence[BarData]) -> None:
         raise DataIntegrityError("no symbols in bars")
     timestamps = sorted({b.timestamp for b in bars})
     if len(timestamps) < 10:
-        raise DataIntegrityError(f"too few timestamps ({len(timestamps)} < 10) — not enough data to validate")
+        raise DataIntegrityError(
+            f"too few timestamps ({len(timestamps)} < 10) — not enough data to validate"
+        )
     for b in bars:
         if b.close <= 0:
             raise DataIntegrityError(f"non-positive close price for {b.symbol} at {b.timestamp}")
@@ -84,7 +86,9 @@ def _verify_bars(bars: Sequence[BarData]) -> None:
         if timestamps[i + 1] < timestamps[i]
     ]
     if unsorted_pairs:
-        raise DataIntegrityError(f"timestamps not monotonically increasing — forward-look risk: {unsorted_pairs[:3]}")
+        raise DataIntegrityError(
+            f"timestamps not monotonically increasing — forward-look risk: {unsorted_pairs[:3]}"
+        )
 
 
 class ValidationService:
@@ -133,7 +137,8 @@ class ValidationService:
             experiment_id: caller-assigned experiment ID (auto-generated if None)
             hypothesis_id: the hypothesis being tested
             researcher: who initiated this validation
-            n_prior_trials: number of previous experiments on this hypothesis (for data-mining correction)
+            n_prior_trials: number of previous experiments on this hypothesis
+                (for data-mining correction)
             commission_rate: per-side commission fraction (for cost drag calculation)
             slippage_bps: per-side slippage in bps (for cost drag calculation)
             avg_daily_volume_mm: average daily volume in $M (for capacity estimate; -1 = unknown)
@@ -154,7 +159,7 @@ class ValidationService:
 
         # ── Stage 3: Full backtest + base performance metrics ─────────────────
         full_metrics = run_backtest(factory, bars, config)
-        calc = PerformanceCalculator(config.risk_free_rate, config.trading_days_per_year)
+        PerformanceCalculator(config.risk_free_rate, config.trading_days_per_year)
         mc = MetricsCalculator(
             commission_rate=commission_rate,
             slippage_bps=slippage_bps,
@@ -168,16 +173,13 @@ class ValidationService:
         is_m, oos_m = train_test(factory, bars, config, train_frac=0.7)
         n_oos = len(oos_m.daily_returns)
 
-        bootstrap_result = self._stat.bootstrap_sharpe_ci(
-            oos_m.daily_returns, n=self._n_bootstrap
-        )
-        perm_result = self._stat.permutation_pvalue(
-            oos_m.daily_returns, n=self._n_permutation
-        )
-        from aurelius.research.models import bonferroni, sharpe_pvalue
+        bootstrap_result = self._stat.bootstrap_sharpe_ci(oos_m.daily_returns, n=self._n_bootstrap)
+        perm_result = self._stat.permutation_pvalue(oos_m.daily_returns, n=self._n_permutation)
+        from aurelius.research.models import sharpe_pvalue
+
         base_pval = sharpe_pvalue(oos_m.sharpe_ratio, n_oos, config.trading_days_per_year)
 
-        # ── Stage 5–7: Walk-forward + parameter sensitivity ───────────────────
+        # -- Stage 5-7: Walk-forward + parameter sensitivity -------------------
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
             wf_sharpes = walk_forward(factory, bars, config, n_folds=self._n_folds)
@@ -187,6 +189,7 @@ class ValidationService:
         grid_size = 1
         if param_grid and param_factory:
             import itertools
+
             grid_size = len(list(itertools.product(*param_grid.values())))
             sens = parameter_sensitivity(param_factory, param_grid, bars, config)
             param_cv = sens.cv
@@ -195,7 +198,7 @@ class ValidationService:
         adj_pval = StatEngine.bonferroni(base_pval, n_trials)
         logger.info("validation.stages_5_7_ok", wf_folds=len(wf_sharpes), grid_size=grid_size)
 
-        # ── Stages 8–13: Robustness (regime, TC, slippage, rolling) ──────────
+        # -- Stages 8-13: Robustness (regime, TC, slippage, rolling) ----------
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
             rolling = rolling_validation(factory, bars, config, window=self._rolling_window)
@@ -242,11 +245,19 @@ class ValidationService:
         # ── Assemble report ───────────────────────────────────────────────────
         all_weaknesses = list(robustness.weaknesses)
         if param_cv is not None and param_cv > 0.75:
-            all_weaknesses.append(f"high parameter sensitivity (CV={param_cv:.2f}): results may be overfit")
+            all_weaknesses.append(
+                f"high parameter sensitivity (CV={param_cv:.2f}): results may be overfit"
+            )
         if extended.excess_kurtosis > 3:
-            all_weaknesses.append(f"fat tails (excess kurtosis={extended.excess_kurtosis:.1f}): VaR understates true tail risk")
+            all_weaknesses.append(
+                f"fat tails (excess kurtosis={extended.excess_kurtosis:.1f}): "
+                "VaR understates true tail risk"
+            )
         if extended.skewness < -0.5:
-            all_weaknesses.append(f"negative skew ({extended.skewness:.2f}): occasional large losses dominate the mean")
+            all_weaknesses.append(
+                f"negative skew ({extended.skewness:.2f}): "
+                "occasional large losses dominate the mean"
+            )
 
         return ComprehensiveReport(
             experiment_id=exp_id,

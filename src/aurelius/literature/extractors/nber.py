@@ -1,4 +1,5 @@
 """NBER working papers extractor via RSS feed (no auth required)."""
+
 from __future__ import annotations
 
 import re
@@ -61,11 +62,7 @@ class NBERExtractor(SourceExtractor):
             except Exception:
                 pass
 
-        creators = [
-            el.text.strip()
-            for el in item.findall(f"{{{_DC}}}creator")
-            if el.text
-        ]
+        creators = [el.text.strip() for el in item.findall(f"{{{_DC}}}creator") if el.text]
 
         abstract = _TAGS_RE.sub("", _t("description")).strip()
 

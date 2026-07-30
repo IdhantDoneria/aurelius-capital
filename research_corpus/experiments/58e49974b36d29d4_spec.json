@@ -1,0 +1,47 @@
+{
+  "paper_id": "doc_68df4b692ca0",
+  "title": "THE JOURNAL OF FINANCE • VOL. LII, NO.1. MARCH 1997",
+  "strategy_name": "journal_finance_vol_lii_no1",
+  "hypothesis_statement": "Hypothesis derived from paper abstract: do not support the existence of skilled or informed mutual fund\nportfolio managers. PERSISTENCEIN MUTUAL FUND performance does not reflect superior stock-picking\nskill.",
+  "required_datasets": [
+    "crsp",
+    "ken_french"
+  ],
+  "required_features": [
+    "momentum",
+    "value",
+    "size",
+    "quality",
+    "beta",
+    "book-to-market",
+    "factor",
+    "alpha",
+    "Sharpe",
+    "turnover"
+  ],
+  "methodology": "in Carhart et al. are cross-section estimators of the stochastic\ndiscount factor. Carhart et al. also permit time-variation in model parameters. The estimates from\nthese methods do not change any inferences. As a final robustness check, I perform tests on the\ninvestment objective categories separately (aggressive growth, long-term growth, and growth-and­\nincome) and find that the persistence evidence is virtually as strong in each objective category as\nthe diversified equity universe as a whole.",
+  "params": {
+    "lookback": 20,
+    "rebalance_freq": "monthly",
+    "universe": "sp500"
+  },
+  "expected_metrics": [
+    "sharpe_ratio",
+    "max_drawdown",
+    "oos_return",
+    "t_stat"
+  ],
+  "reproducibility_checklist": [
+    "Paper methodology section reviewed",
+    "Required datasets confirmed: ['crsp', 'ken_french']",
+    "Feature engineering pipeline validated",
+    "Backtest date range selected (avoid look-ahead bias)",
+    "IS/OOS split defined",
+    "Statistical significance threshold set (p < 0.05)",
+    "Transaction costs and slippage parameterized",
+    "Benchmark selected for comparison"
+  ],
+  "missing_prerequisites": [],
+  "ready_to_run": true,
+  "priority_score": 6.51
+}

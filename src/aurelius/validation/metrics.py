@@ -10,7 +10,6 @@ All math is stdlib-only (no numpy/scipy).
 
 from __future__ import annotations
 
-import math
 import statistics
 from dataclasses import dataclass
 
@@ -34,23 +33,23 @@ class ExtendedMetrics:
     avg_holding_period_days: float
 
     # ── tail risk ─────────────────────────────────────────────────────────────
-    var_95: float           # 1-day 95% historical VaR (negative → loss)
-    var_99: float           # 1-day 99% historical VaR
-    cvar_95: float          # Expected shortfall at 95% confidence
-    skewness: float         # Negative = left-tail heavy (bad for strategies)
+    var_95: float  # 1-day 95% historical VaR (negative → loss)
+    var_99: float  # 1-day 99% historical VaR
+    cvar_95: float  # Expected shortfall at 95% confidence
+    skewness: float  # Negative = left-tail heavy (bad for strategies)
     excess_kurtosis: float  # >0 = fat tails vs normal
 
     # ── drawdown analysis ─────────────────────────────────────────────────────
-    avg_drawdown: float             # Mean drawdown depth across full history
-    recovery_time_days: float       # Mean calendar days to recover from troughs
+    avg_drawdown: float  # Mean drawdown depth across full history
+    recovery_time_days: float  # Mean calendar days to recover from troughs
 
     # ── trade quality ─────────────────────────────────────────────────────────
-    expectancy: float       # avg_win * win_rate - avg_loss * loss_rate (per trade)
-    tail_ratio: float       # |95th pct return| / |5th pct return|; >1 means right tail
+    expectancy: float  # avg_win * win_rate - avg_loss * loss_rate (per trade)
+    tail_ratio: float  # |95th pct return| / |5th pct return|; >1 means right tail
 
     # ── cost analysis ─────────────────────────────────────────────────────────
-    tc_drag_bps: float          # annual TC drag in bps (from turnover * commission)
-    slippage_drag_bps: float    # annual slippage drag in bps (from turnover * slippage)
+    tc_drag_bps: float  # annual TC drag in bps (from turnover * commission)
+    slippage_drag_bps: float  # annual slippage drag in bps (from turnover * slippage)
 
     # ── capacity ─────────────────────────────────────────────────────────────
     capacity_estimate_mm: float  # rough AUM capacity in $M; -1 if cannot estimate
@@ -77,7 +76,7 @@ def _skewness(data: list[float]) -> float:
     s = statistics.stdev(data)
     if s == 0:
         return 0.0
-    return sum((x - m) ** 3 for x in data) / (n * s ** 3)
+    return sum((x - m) ** 3 for x in data) / (n * s**3)
 
 
 def _excess_kurtosis(data: list[float]) -> float:
@@ -88,7 +87,7 @@ def _excess_kurtosis(data: list[float]) -> float:
     s = statistics.stdev(data)
     if s == 0:
         return 0.0
-    return sum((x - m) ** 4 for x in data) / (n * s ** 4) - 3.0
+    return sum((x - m) ** 4 for x in data) / (n * s**4) - 3.0
 
 
 def _recovery_time_days(dd_series: list[tuple]) -> float:

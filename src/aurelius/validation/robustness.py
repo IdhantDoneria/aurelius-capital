@@ -15,14 +15,14 @@ from __future__ import annotations
 
 import math
 import statistics
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from aurelius.backtesting.analytics.performance import EquityPoint
 
 
 @dataclass
 class RegimeStats:
-    label: str          # "bull", "bear", "neutral"
+    label: str  # "bull", "bear", "neutral"
     n_days: int
     sharpe: float
     total_return: float
@@ -32,10 +32,11 @@ class RegimeStats:
 @dataclass
 class SensitivitySweep:
     """Sharpe as one cost parameter varies."""
-    param_name: str             # "tc_bps" or "slippage_bps"
-    values: list[float]         # cost levels tested
-    sharpes: list[float]        # Sharpe at each level
-    breakeven: float            # cost level where Sharpe crosses 0 (or -1 if never)
+
+    param_name: str  # "tc_bps" or "slippage_bps"
+    values: list[float]  # cost levels tested
+    sharpes: list[float]  # Sharpe at each level
+    breakeven: float  # cost level where Sharpe crosses 0 (or -1 if never)
     degradation_per_bps: float  # average dSharpe/dbps across the sweep
 
 
@@ -44,18 +45,18 @@ class RobustnessAssessment:
     is_robust: bool
 
     regime_stats: list[RegimeStats]
-    regime_consistent: bool     # positive Sharpe in >=2 of 3 regimes
+    regime_consistent: bool  # positive Sharpe in >=2 of 3 regimes
 
     tc_sweep: SensitivitySweep
     slippage_sweep: SensitivitySweep
 
     walk_forward_sharpes: list[float]
-    walk_forward_cv: float          # abs(stdev / mean); low = consistent
+    walk_forward_cv: float  # abs(stdev / mean); low = consistent
     worst_fold_sharpe: float
     best_fold_sharpe: float
-    walk_forward_consistent: bool   # all folds positive (or majority positive)
+    walk_forward_consistent: bool  # all folds positive (or majority positive)
 
-    rolling_stable: bool            # rolling metric not monotonically declining
+    rolling_stable: bool  # rolling metric not monotonically declining
     rolling_sharpes: list[float]
 
     weaknesses: list[str]
@@ -169,23 +170,33 @@ class RobustnessAnalyzer:
         # ── regime analysis ──────────────────────────────────────────────────
         regime_stats = self._regime_analysis(daily_returns, equity_curve)
         positive_regimes = sum(1 for r in regime_stats if r.sharpe > 0)
-        regime_consistent = positive_regimes >= max(1, len(regime_stats) // 2 + 1) if regime_stats else False
+        regime_consistent = (
+            positive_regimes >= max(1, len(regime_stats) // 2 + 1) if regime_stats else False
+        )
         if not regime_consistent:
-            weaknesses.append(f"only {positive_regimes}/{len(regime_stats)} regimes show positive Sharpe")
+            weaknesses.append(
+                f"only {positive_regimes}/{len(regime_stats)} regimes show positive Sharpe"
+            )
         else:
             strengths.append(f"positive Sharpe in {positive_regimes}/{len(regime_stats)} regimes")
 
         # ── TC sweep ─────────────────────────────────────────────────────────
         tc_sweep = self._cost_sweep("tc_bps", daily_returns, annual_turnover, tc_sweep_range)
         if tc_sweep.breakeven < 30:
-            weaknesses.append(f"TC breakeven only {tc_sweep.breakeven:.0f} bps — fragile to execution costs")
+            weaknesses.append(
+                f"TC breakeven only {tc_sweep.breakeven:.0f} bps — fragile to execution costs"
+            )
         elif tc_sweep.breakeven > 100:
             strengths.append(f"TC robust: breakeven at {tc_sweep.breakeven:.0f} bps")
 
         # ── slippage sweep ───────────────────────────────────────────────────
-        slip_sweep = self._cost_sweep("slippage_bps", daily_returns, annual_turnover, slip_sweep_range)
+        slip_sweep = self._cost_sweep(
+            "slippage_bps", daily_returns, annual_turnover, slip_sweep_range
+        )
         if slip_sweep.breakeven < 20:
-            weaknesses.append(f"slippage breakeven only {slip_sweep.breakeven:.0f} bps — fragile to market impact")
+            weaknesses.append(
+                f"slippage breakeven only {slip_sweep.breakeven:.0f} bps — fragile to market impact"
+            )
 
         # ── walk-forward consistency ──────────────────────────────────────────
         wf_consistent = False
@@ -201,11 +212,19 @@ class RobustnessAnalyzer:
             if mean_wf != 0 and len(walk_forward_sharpes) > 1:
                 wf_cv = abs(statistics.stdev(walk_forward_sharpes) / mean_wf)
             if not wf_consistent:
-                weaknesses.append(f"walk-forward: only {positive_folds}/{len(walk_forward_sharpes)} folds positive")
+                weaknesses.append(
+                    f"walk-forward: only {positive_folds}/{len(walk_forward_sharpes)} "
+                    f"folds positive"
+                )
             elif wf_cv > 1.5:
-                weaknesses.append(f"walk-forward inconsistent: CV={wf_cv:.2f} (high variance across folds)")
+                weaknesses.append(
+                    f"walk-forward inconsistent: CV={wf_cv:.2f} (high variance across folds)"
+                )
             else:
-                strengths.append(f"walk-forward consistent: {positive_folds}/{len(walk_forward_sharpes)} positive folds")
+                strengths.append(
+                    f"walk-forward consistent: {positive_folds}/{len(walk_forward_sharpes)} "
+                    f"positive folds"
+                )
 
         # ── rolling stability ─────────────────────────────────────────────────
         rolling = rolling_metric or []
@@ -217,13 +236,12 @@ class RobustnessAnalyzer:
             late_mean = statistics.mean(rolling[-third:])
             rolling_stable = late_mean >= early_mean * 0.7  # allow 30% decay
             if not rolling_stable:
-                weaknesses.append(f"rolling metric decaying: early={early_mean:.2f} → late={late_mean:.2f}")
+                weaknesses.append(
+                    f"rolling metric decaying: early={early_mean:.2f} → late={late_mean:.2f}"
+                )
 
         is_robust = (
-            regime_consistent
-            and tc_sweep.breakeven >= 20
-            and wf_consistent
-            and rolling_stable
+            regime_consistent and tc_sweep.breakeven >= 20 and wf_consistent and rolling_stable
         )
 
         return RobustnessAssessment(
@@ -249,7 +267,7 @@ class RobustnessAnalyzer:
         equity_curve: list[EquityPoint],
     ) -> list[RegimeStats]:
         equities = [p.equity for p in equity_curve]
-        timestamps = [p.timestamp for p in equity_curve]
+        [p.timestamp for p in equity_curve]
         n = len(equities)
         if n < self._regime_win * 2:
             return []

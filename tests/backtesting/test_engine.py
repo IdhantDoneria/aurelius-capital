@@ -379,7 +379,11 @@ def test_unadjusted_split_shows_false_loss(default_config):
         BarData(
             b.symbol,
             b.timestamp + timedelta(days=20),
-            b.open, b.high, b.low, b.close, b.volume,
+            b.open,
+            b.high,
+            b.low,
+            b.close,
+            b.volume,
         )
         for b in post_split
     ]

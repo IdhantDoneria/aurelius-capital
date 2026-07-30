@@ -1,0 +1,42 @@
+{
+  "id": "86c816d7-ac7b-4c11-86c0-aeac8cdc868c",
+  "original_filename": "corrupt.pdf",
+  "file_path": "research_corpus/rejected/corrupt.pdf",
+  "content_hash": "c685ae7102fd24851f6bb197eae70d17ff715f0171e55ca0934471f0c021ef96",
+  "status": "rejected",
+  "stages": [
+    {
+      "stage": "validate",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T14:52:02.597219"
+    },
+    {
+      "stage": "assign_id",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T14:52:02.833782"
+    },
+    {
+      "stage": "move_to_processing",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T14:52:02.834119"
+    },
+    {
+      "stage": "extract_metadata",
+      "status": "failed",
+      "message": "Corrupt or unreadable PDF: Stream has ended unexpectedly",
+      "timestamp": "2026-07-30T14:52:02.862370"
+    }
+  ],
+  "paper_metadata": {},
+  "corpus_doc_id": "",
+  "priority_score": 0.0,
+  "experiment_spec": null,
+  "error": "Permanent failure at 'extract_metadata': Corrupt or unreadable PDF: Stream has ended unexpectedly",
+  "created_at": "2026-07-30T14:52:02.596461",
+  "updated_at": "2026-07-30T14:52:02.862709Z",
+  "retry_count": 0,
+  "processing_seconds": 0.26611474994570017
+}

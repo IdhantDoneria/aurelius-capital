@@ -1,0 +1,105 @@
+{
+  "id": "3260f378-f59f-4848-961d-59ecddf85ad4",
+  "original_filename": "unreadable.txt",
+  "file_path": "research_corpus/processed/unreadable.txt",
+  "content_hash": "14a02cc46d16e984ce6092e729c8e7bb8b47db0dd7498d66be805d674e1be1ad",
+  "status": "completed",
+  "stages": [
+    {
+      "stage": "validate",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T14:52:02.873921"
+    },
+    {
+      "stage": "assign_id",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T14:52:02.877685"
+    },
+    {
+      "stage": "move_to_processing",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T14:52:02.877925"
+    },
+    {
+      "stage": "extract_metadata",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T14:52:02.878569"
+    },
+    {
+      "stage": "classify",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T14:52:02.878629"
+    },
+    {
+      "stage": "store_corpus",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T14:52:02.893833"
+    },
+    {
+      "stage": "update_kg",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T14:52:02.893982"
+    },
+    {
+      "stage": "score",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T14:52:02.894081"
+    },
+    {
+      "stage": "plan_experiment",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T14:52:02.894160"
+    },
+    {
+      "stage": "archive",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T14:52:02.894366"
+    }
+  ],
+  "paper_metadata": {
+    "title": "unreadable",
+    "authors": [],
+    "year": null,
+    "doi": "",
+    "arxiv_id": "",
+    "abstract": "No abstract available.",
+    "methodology": "",
+    "results": "",
+    "conclusion": "",
+    "datasets_mentioned": [],
+    "features_mentioned": [],
+    "statistical_tests": [],
+    "reference_count": 0,
+    "word_count": 1,
+    "source_file": "unreadable.txt",
+    "_score": {
+      "paper_id": "doc_bfda9da32392",
+      "novelty": 0.3,
+      "influence": 0.0,
+      "reproducibility": 0.0,
+      "dataset_availability": 0.3,
+      "expected_value": 0.0,
+      "engineering_effort": 3.0,
+      "total": 1.9,
+      "rationale": "novelty=0.30 influence=0.00 reproducibility=0.00 dataset_avail=0.30 expected_value=0.00 effort=3.00"
+    }
+  },
+  "corpus_doc_id": "doc_bfda9da32392",
+  "priority_score": 1.9,
+  "experiment_spec": null,
+  "error": "",
+  "created_at": "2026-07-30T14:52:02.873868",
+  "updated_at": "2026-07-30T14:52:02.894419Z",
+  "retry_count": 0,
+  "processing_seconds": 0.02054874994792044
+}

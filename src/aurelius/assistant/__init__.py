@@ -29,7 +29,6 @@ __all__ = [
     "LLMClient",
     "PaperSummary",
     "ResearchAssistant",
-
 ]
 
 

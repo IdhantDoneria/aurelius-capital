@@ -3,6 +3,7 @@
 LLMClient is injected — same pattern as aurelius.assistant. Works offline
 (returns Paper unchanged) when no LLM is supplied.
 """
+
 from __future__ import annotations
 
 import json
@@ -21,8 +22,8 @@ Abstract: {abstract}
 
 Return valid JSON with exactly these keys:
 - keywords: list[str] — 3-8 domain keywords
-- asset_classes: list[str] — subset of [equities, fixed_income, fx, commodities, crypto, multi_asset, derivatives, real_estate, alternatives]
-- research_category: str — one of [factor_anomaly, market_microstructure, macro, portfolio_construction, risk, ml_ai, high_frequency, derivatives, esg, alternative_data, other]
+- asset_classes: list[str] — subset of [equities, fixed_income, fx, commodities, crypto, multi_asset, derivatives, real_estate, alternatives]  # noqa: E501
+- research_category: str — one of [factor_anomaly, market_microstructure, macro, portfolio_construction, risk, ml_ai, high_frequency, derivatives, esg, alternative_data, other]  # noqa: E501
 - methodology: str — one of [empirical, theoretical, simulation, survey, meta_analysis]
 - datasets: list[str] — dataset or data source names mentioned
 - factors_studied: list[str] — factor names (e.g. value, momentum, quality, low_volatility)

@@ -1,0 +1,818 @@
+Journal of Financial Economics 33 (1993) 3-56. North-Holland 
+Common risk factors in the returns on 
+stocks and bonds* 
+Eugene F. Fama and Kenneth R. French 
+Unirrrsit.v 01 Chicayo. Chiccup. I .L 60637, C;S;L 
+Received July 1992. final version received September 1992 
+This paper identities five common risk factors in the returns on stocks and bonds. There are three 
+stock-market factors: an overall market factor and factors related to firm size and book-to-market 
+equity. There are two bond-market factors. related to maturity and default risks. Stock returns have 
+shared variation due to the stock-market factors, and they are linked to bond returns through 
+shared variation in the bond-market factors. Except for low-grade corporates. the bond-market 
+factors capture the common variation in bond returns. Most important. the five factors seem to 
+explain average returns on stocks and bonds. 
+1. Introduction 
+The cross-section of average returns on U.S. common stocks shows little 
+relation to either the market /Is of the Sharpe (1964tLintner (1965) asset- 
+pricing model or the consumption ps of the intertemporal asset-pricing model 
+of Breeden (1979) and others. [See, for example, Reinganum (198 1) and Breeden, 
+Gibbons, and Litzenberger (1989).] On the other hand, variables that have 
+no special standing in asset-pricing theory show reliable power to explain 
+the cross-section of average returns. The list of empirically determined average- 
+return variables includes size (ME, stock price times number of shares), 
+leverage, earnings/price (E/P), and book-to-market equity (the ratio of the 
+book value of a firm’s common stock, BE, to its market value, ME). [See 
+Banz (1981). Bhandari (1988). Basu (1983). and Rosenberg, Reid, and Lanstein 
+(19853.1 
+Correspondence to: Eugene F. Fama. Graduate School of Business. University of Chicago, 1101 
+East 58th Street. Chicago. IL 60637, USA. 
+*The comments of David Booth, John Cochrane. Sai-fu Chen, Wayne Ferson. Josef Lakonishok. 
+Mark Mitchell, G. William Schwert. Jay Shanken. and Rex Sinquefield are gratefully acknowledged. 
+This research is supported by the National Science Foundation (Fama) and the Center for Research 
+in Securities Prices (French). 
+030%405X.93.S05.00 C 1993-Elsevier Science Publishers B.V. Ail rights reserved 
+
+4 E.F. Fuma and K.R. French. Common risk f&run in r~ock and bond remrns 
+Fama and French (1992a) study the joint roles of market 8, size, E;P, leverage, 
+and book-to-market equity in the cross-section of average stock returns. They 
+find that used alone or in combination with other variables, /I (the slope in the 
+regression of a stock’s return on a market return) has little information about 
+average returns. Used alone, size, E/P, leverage, and book-to-market equity 
+have explanatory power. In combinations, size (ME) and book-to-market equity 
+(BE/ME) seem to absorb the apparent roles of leverage and E;‘P in average 
+returns. The bottom-line result is that two empirically determined variables, size 
+and book-to-market equity, do a good job explaining the cross-section of 
+average returns on NYSE, Amex, and NASDAQ stocks for the 1963-1990 
+period. 
+This paper extends the asset-pricing tests in Fama and French (1992a) in three 
+ways. 
+(a) We expand the set of asset returns to be explained. The only assets con- 
+sidered in Fama and French (1992a) are common stocks. If markets are 
+integrated, a single model should also explain bond returns. The tests here 
+include U.S. government and corporate bonds as well as stocks. 
+(b) We also expand the set of variables used to explain returns. The size and 
+book-to-market variables in Fama and French (1992a) are directed at 
+stocks. We extend the list to term-structure variables that are likely to play 
+a role in bond returns. The goal is to examine whether variables that are 
+important in bond returns help to explain stock returns, and vice versa. The 
+notion is that if markets are integrated, there is probably some overlap 
+between the return processes for bonds and stocks. 
+(c) Perhaps most important, the approach to testing asset-pricing models is 
+different. Fama and French (1992a) use the cross-section regressions of 
+Fama and MacBeth (1973): the cross-section of stock returns is regressed on 
+variables hypothesized to explain average returns. It would be difficult to 
+add bonds to the cross-section regressions since explanatory variables like 
+size and book-to-market equity have no obvious meaning for government 
+and corporate bonds. 
+This paper uses the time-series regression approach of Black, Jensen, and 
+Scholes (1972). Monthly returns on stocks and bonds are regressed on the 
+returns to a market portfolio of stocks and mimicking portfolios for size, 
+book-to-market equity (BE/‘ME), and term-structure risk factors in returns. The 
+time-series regression slopes are factor loadings that, unlike size or BE/ME, 
+have a clear interpretation as risk-factor sensitivities for bonds as well as for 
+stocks. 
+The time-series regressions are also convenient for studying two important 
+asset-pricing issues. 
+(a) One of our central themes is that if assets are priced rationally, variables 
+that are related to average returns, such as size and book-to-market equity, must 
+proxy for sensitivity to common (shared and thus undiversiliable) risk factors in 
+
+E.F. Famu und K.R. French. Common risk factors in stock and bond returns 5 
+returns. The time-series regressions give direct evidence on this issue. In particu- 
+lar, the slopes and R’ values show whether mimicking portfolios for risk factors 
+related to size and BE/lVCIE capture shared variation in stock and bond returns 
+not explained by other factors. 
+(b) The time-series regressions use excess returns (monthly stock or bond 
+returns minus the one-month Treasury bill rate) as dependent variables and 
+either excess returns or returns on zero-investment portfolios as explanatory 
+variables. In such regressions, a well-specified asset-pricing model produces 
+intercepts that are indistinguishable from 0 [Merton (1973)J The estimated 
+intercepts provide a simple return metric and a formal test of how well different 
+combinations of the common factors capture the cross-section of average 
+returns. Moreover, judging asset-pricing models on the basis of the intercepts in 
+excess-return regressions imposes a stringent standard. Competing models are 
+asked to explain the one-month bill rate as well as the returns on longer-term 
+bonds and stocks. 
+Our main results are easy to summarize. For stocks, portfolios constructed to 
+mimic risk factors related to size and BE/ME capture strong common variation 
+in returns, no matter what else is in the time-series regressions. This is evidence 
+that size and book-to-market equity indeed proxy for sensitivity to common risk 
+factors in stock returns. Moreover, for the stock portfolios we examine, the 
+intercepts from three-factor regressions that include the excess market return 
+and the mimicking returns for size and BE/ME factors are close to 0. Thus 
+a market factor and our proxies for the risk factors related to size and book- 
+to-market equity seem to do a good job explaining the cross-section of average 
+stock returns. 
+The interpretation of the time-series regressions for stocks is interesting. Like 
+the cross-section regressions of Fama and French (1992a), the time-series regres- 
+sions say that the size and book-to-market factors can explain the differences in 
+average returns across stocks. But these factors alone cannot explain the large 
+difference between the average returns on stocks and one-month bills. This job is 
+left to the market factor. In regressions that also include the size and book- 
+to-market factors, all our stock portfolios produce slopes on the market factor 
+that are close to 1. The risk premium for the market factor then links the average 
+returns on stocks and bills. 
+For bonds, the mimicking portfolios for the two term-structure factors (a term 
+premium and a default premium) capture most of the variation in the returns on 
+our government and corporate bond portfolios. The term-structure factors also 
+‘explain’ the average returns on bonds, but the average premiums for the 
+term-structure factors, like the average excess bond returns, are close to 0. Thus, 
+the hypothesis that all the corporate and government bond portfolios have the 
+same long-term expected returns also cannot be rejected. 
+The common variation in stock returns is largely captured by three stock- 
+portfolio returns, and the common variation in bond returns is largely explained 
+
+by two bond-portfolio returns. The stock and bond markets. however, are far 
+from stochastically segmented. Used alone in the time-series regressions. the 
+term-structure factors capture strong variation in stock returns; indeed, the 
+slopes on the term-structure factors in the regressions for stocks are much like 
+those for bonds. But interestingly. when stock-market factors are also included 
+in the regressions, all of our stock portfolios load in about the same way on the 
+two term-structure factors and on the market factor in returns. As a result, 
+a market portfolio of stocks captures the common variation in stock returns 
+associated with the market factor and the two term-structure factors. 
+The stochastic links between the bond and stock markets do. however. seem 
+to come largely from the term-structure factors. Used alone. the excess market 
+return and the mimicking returns for the size and book-to-market equity factors 
+seem to capture common variation in bond returns. But when the two term- 
+structure factors are included in the bond regressions, the explanatory power of 
+the stock-market factors disappears for all but the low-grade corporate bonds. 
+In a nutshell, our results suggest that there are at least three stock-market 
+factors and two term-structure factors in returns. Stock returns have shared 
+variation due to the three stock-market factors, and they are linked to bond 
+returns through shared variation in the two term-structure factors. Except for 
+low-grade corporate bonds, only the two term-structure factors seem to produce 
+common variation in the returns on government and corporate bonds. 
+The story proceeds as follows. We first introduce the inputs to the time-series 
+regressions: the explanatory variables and the returns to be explained (sections 
+Z and 3). We then use the regressions to attack our two central asset-pricing 
+issues: how do different combinations of variables capture (a) the common 
+variation through time in the returns on bonds and stocks (section 4) and (b) the 
+cross-section of average returns (section 5). 
+2. The inputs to the time-series regressions 
+The explanatory variables in the time-series regressions include the returns on 
+a market portfolio of stocks and mimicking portfolios for the size. book- 
+to-market, and term-structure factors in returns. The returns to be explained are 
+for government bond portfolios in two maturity ranges, corporate bond port- 
+folios in five rating groups, and 25 stock portfolios formed on the basis of size 
+and book-to-market equity. 
+The explanatory variables fall into two sets, those likely to be important for 
+capturing variation in bond returns and those likely to be important for stocks. 
+Segmenting the explanatory variables in this way sets up interesting tests of 
+
+whether factors important in stock returns help to explain bond returns and vice 
+versa. 
+2.1 .I. Bond-mnrket factors 
+One common risk in bond returns arises from unexpected changes in interest 
+rates. Our proxy for this factor, TERM, is the difference between the monthly 
+long-term government bond return (from Ibbotson Associates) and the one- 
+month Treasury bill rate measured at the end of the previous month (from the 
+Center for Research in Security Prices, CRSP). The bill rate is meant to proxy 
+for the general level of expected returns on bonds. so that TERM proxies for the 
+deviation of long-term bond returns from expected returns due to shifts in 
+interest rates. 
+For corporate bonds. shifts in economic conditions that change the likelihood 
+of default give rise to another common factor in returns. Our proxy for 
+this default factor, DEF, is the difference between the return on a market 
+portfolio of long-term corporate bonds (the Composite portfolio on the corpo- 
+rate bond module of Ibbotson Associates) and the long-term government bond 
+return. 
+Chen. Roll, and Ross (1986) use TERM and a variable like DEF to help 
+explain the cross-section of average returns on NYSE stocks. They use the Fama 
+and MacBeth (1973) cross-section regression approach: the cross-section of 
+average stock returns is explained with the cross-section of slopes from time- 
+series regressions of returns on TERM, a default factor, and other factors. In 
+their tests. the default factor is the most powerful factor in average.stock returns. 
+and TER.Cl sometimes has power. We confirm that the tracks of TER,LI and 
+DEF show up clearly in the time-series variation of stock returns. We also find 
+that the two variables dominate the common variation in government and 
+corporate bond returns. In contrast to the cross-section regressions of Chen. 
+Roll, and Ross, however, our time-series regressions say that the average 
+premiums for DEF and TERM risks are too small to explain much variation in 
+the cross-section of average stock returns. [Shanken and Weinstein (1990) make 
+a similar point.] 
+2.1.2. Stock-market fuctors 
+Motiuztion - Although size and book-to-market equity seem like ad hoc 
+variables for explaining average stock returns, we have reason to expect that 
+they proxy for common risk factors in returns. In Fama and French (1992b) we 
+document that size and book-to-market equity are related to economic funda- 
+mentals. Not surprisingly, firms that have high BE/ME (a low stock price 
+relative to book value) tend to have low earnings on assets, and the low earnings 
+persist for at least five years before and five years after book-to-market equity is 
+
+measured. Conversely. low BE. .CfE (a high stock price relative to book value) is 
+associated with persistently high earnings. 
+Size is also related to profitability. Controlling for book-to-market equity, 
+small firms tend to have lower earnings on assets than big firms. The size effect in 
+earnings, however, is largely due to the 1980s. Until 1981. controlling for 
+BE;.LfE, small firms are only slightly less profitable than big firms. But for small 
+firms, the 198G1982 recession turns into a prolonged earnings depression. For 
+some reason, small firms do not participate in the economic boom of the middle 
+and late 1980s. 
+The fact that small firms can suffer a long earnings depression that bypasses 
+big firms suggests that size is associated with a common risk factor that might 
+explain the negative relation between size and average return. Similarly. the 
+relation between book-to-market equity and earnings suggests that relative 
+profitability is the source of a common risk factor in returns that might explain 
+the positive relation between BE:.CfE and average return. Measuring the com- 
+mon variation in returns associated with size and BE,hfE is a major task of this 
+paper. 
+The Buikfiny Blocks - To study economic fundamentals, Fama and French 
+(1992b) use six portfolios formed from sorts of stocks on .LfE and BE ‘IlIE. We 
+use the same six portfolios here to form portfolios meant to mimic the underly- 
+ing risk factors in returns related to size and book-to-market equity. This 
+ensures a correspondence between the study of common risk factors in returns 
+carried out here and our complementary study of economic fundamentals. 
+In June of each year t from 1963 to 1991, all NYSE stocks on CRSP are 
+ranked on size (price times shares). The median NYSE size is then used to 
+split NYSE, Amex. and (after 1972) NASDAQ stocks into two groups. small and 
+big (S and B). Most Amex and NASDAQ stocks are smaller than the NYSE 
+median, so the small group contains a disproportionate number of stocks 13,616 
+out of 4,797 in 1991). Despite its large number of stocks, the small group 
+contains far less than half (about 8% in 1991) of the combined value of the two 
+size groups. 
+We also break NYSE, Amex, and NASDAQ stocks into three book-to- 
+market equity groups based on the breakpoints for the bottom 30% (Lo\c), 
+middle 40% (LCfediurn). and top 30% (High) of the ranked values of BE’.\fE for 
+NYSE stocks. We define book common equity, BE. as the COMPUSTAT book 
+value of stockholders’ equity, plus balance-sheet deferred taxes and investment 
+tax credit (if available), minus the book value of preferred stock. Depending on 
+availability, we use the redemption, liquidation, or par value (in that order) to 
+estimate the value of preferred stock. Book-to-market equity, BE,‘,CfE. is then 
+book common equity for the fiscal year ending in calendar year t - 1, divided by 
+market equity at the end of December oft - 1. We do not use negative-BE firms, 
+which are rare before 1980, when calculating the breakpoints for BE) .bfE 
+or when forming the size-BE$.LfE portfolios. Also. only firms with ordinary 
+
+E.F. Fama und K.R. Fwnch. Common rusk /Lcrorr in srock and bond renum 9 
+common equity (as classified by CRSP) are included in the tests. This means that 
+ADRs, REITs, and units of beneficial interest are excluded. 
+Our decision to sort firms into three groups on BE,‘ICI E and only two on ME 
+follows the evidence in Fama and French (1992a) that book-to-market equity 
+has a stronger role in average stock returns than size. The splits are arbitrary, 
+however, and we have not searched over alternatives. The hope is that the tests 
+here and in Fama and French (1992b) are not sensitive to these choices. We see 
+no reason to argue that they are. 
+We construct six portfolios (S/L, S;,V, S,!H. B,‘L, B,!M, B/H) from the intersec- 
+tions of the two ,bfE and the three BE!hfE groups. For example. the S/L 
+portfolio contains the stocks in the small-%fE group that are also in the 
+low-BE/ME group, and the BI’H portfolio contains the big-.CIE stocks that also 
+have high BE,MEs. Monthly value-weighted returns on the six portfolios are 
+calculated from July of year t to June oft + 1. and the portfolios are reformed in 
+June of t + 1. We calculate returns beginning in July of year t to be sure that 
+book equity for year c - 1 is known. 
+To be included in the tests, a firm must have CRSP stock prices for December 
+of year t - 1 and June of t and COMPUSTAT book common equity for year 
+t - 1. Moreover, to avoid the survival bias inherent in the way COMPUSTAT 
+adds firms to its tapes [Banz and Breen (1986)], we do not include firms until 
+they have appeared on COMPUSTAT for two years. (COMPUSTAT says it 
+rarely includes more than two years of historical data when it adds firms). 
+Size- Our portfolio S,LfB (small minus big), meant to mimic the risk factor in 
+returns related to size, is the difference, each month, between the simple average 
+of the returns on the three small-stock portfolios (SjL, S/.Cf, and S,,H) and the 
+simple average of the returns on the three big-stock portfolios (B; L. B/&f, and 
+B/H). Thus, ShfB is the difference between the returns on small- and big-stock 
+portfolios with about the same weighted-average book-to-market equity. This 
+difference should be largely free of the influence of BE/ME, focusing instead on 
+the different return behaviors of small and big stocks. 
+BE//LIE - The portfolio HhfL (high minus low). meant to mimic the risk 
+factor in returns related to book-to-market equity, is defined similarly. HML is 
+the difference, each month, between the simple average of the returns on the two 
+high-BE/ME portfolios (S,‘H and B/H) and the average of the returns on the two 
+low- BE/ME portfolios (S;L and B/L). The two components of H,tlL are returns 
+on high- and low-BE,‘&fE portfolios with about the same weighted-average size. 
+Thus the difference between the two returns should be largely free of the size 
+factor in returns, focusing instead on the different return behaviors of high- and 
+low-BEllME firms. As testimony to the success of this simple procedure, the 
+correlation between the 1963-1991 monthly mimicking returns for the size and 
+book-to-market factors is only - 0.08. 
+True mimicking portfolios for the common risk factors in returns minimize 
+the variance of firm-specific factors. The six size-BEilV E portfolios in S&fB and 
+
+H,CfL are value-weighted. Using value-weighted components is in the spirit of 
+minimizing variance, since return vririances are negatively related to size 
+(table 1. below). More important, using value-weighted components results in 
+mimicking portfolios that capture the different return behaviors of small and big 
+stocks. or high- and low-BEl.VE stocks, in a way that corresponds to realistic 
+investment opportunities. 
+Market - Finally. our proxy for the market factor in stock returns is the excess 
+market return, R.M-RF. R&l is the return on the value-weighted portfolio of the 
+stocks in the six size-BE’ME portfolios, plus the negative-BE stocks excluded 
+from the portfolios. RF is the one-month bill rate. 
+22. The returns to he espkuiwd 
+Bonds -The set of dependent variables used in the time-series regressions 
+includes the excess returns on two government and five corporate bond port- 
+folios. The government bond portfolios (from CRSP) cover maturities from 1 to 
+5 years and 6 to 10 years. The five corporate bond portfolios, for Moody’s rating 
+groups Aaa, Aa. A, Baa. and LG (low-grade, that is, below Baa) are from the 
+corporate bond module of Ibbotson Associates (provided to us by Dimensional 
+Fund Advisors). 
+Stocks - For stocks. we use excess returns on 25 poitfolios, formed on size and 
+book-to-market equity. as dependent variables in the time-series regressions. 
+We use portfolios formed on size and BE/ME because we seek to determine 
+whether the mimicking portfolios SMB and HAIL capture common factors in 
+stock returns related to size and book-to-market equity. Portfolios formed on 
+size and BE.‘AIE will also produce a wide range of average returns to be 
+explained by competing asset-pricing equations [Fama and French (1992a)]. 
+Later, however, we use portfolios formed on E.P (earnings/price) and DiP 
+(dividend/price). variables that are also informative about average returns [e.g.. 
+Keim (1988)], to check the robustness of our results on the ability of our 
+explanatory factors to capture the cross-section of average returns. 
+The 25 size-BE,‘,LfE portfolios are formed much like the six size-BE;&LIE 
+portfolios discussed earlier. In June of each year t we sort NYSE stocks by size 
+and (independently) by book-to-market equity. For the size sort. .LIE is mea- 
+sured at the end of June. For the book-to-market sort, ME is market equity at 
+the end of December of c - 1. and BE is book common equity for the fiscal year 
+ending in calendar year r - 1. We use NYSE breakpoints for ME and BE;.tfE to 
+allocate NYSE. Amex. and (after 1972) NASDAQ stocks to five size quintiles 
+and five book-to-market quintiles. We construct 25 portfolios from the intersec- 
+tions of the size and BE, ,LfE quintiles and calculate value-weighted monthly 
+returns on the portfolios from July off to June of r + 1. The excess returns on 
+these 25 portfolios for July 1963 to December 1991 are the dependent variables 
+for stocks in the time-series regressions. 
+
+E.F. Fumo and R.R. French, Commor? rtsk /actors in srock und bond rerurns I1 
+Table I 
+Descriptive statistics for 25 stock portfolios formed on size and book-to-market equity: 1963-1991. 29 years.’ 
+Book-to-market equity (BE, ME) quintiies 
+Size 
+quintile Low 1 3 4 High Low z 3 4 High 
+Small 
+2 
+3 
+4 
+Big 
+Small 
+4 
+Big 
+Small 
+1 
+; 
+4 
+Big 
+Average of annual averages of firm size Average of annual 8. E ratios for portfolio 
+20.6 20.8 _ ‘0 ._ ’ 19.4 15.1 0.30 0.62 0.84 1.09 1.80 
+89.7 89.3 89.3 89.9 88.5 0.31 0.60 0.83 1.09 1.71 
+209.3 211.9 210.8 214.8 210.7 0.31 0.60 0.84 1.08 1.66 
+535.1 537.4 545.4 551.6 538.7 0.31 0.6 1 0.84 1.09 1.67 
+3583.7 2885.8 2819.5 2700.5 1337.9 0.29 0.59 0.83 1.08 1.56 
+Average of annual percent of market Average of annual number of firms in 
+value in portfolio portfolio 
+0.69 0.49 0.46 0.48 0.64 428.0 276.6 263.8 191.5 512.7 
+0.92 0.71 0.65 0.6 I 0.55 121.6 94.0 86.7 79.8 71.3 
+1.78 1.36 1.26 1.14 0.82 102.7 78.3 73.0 64.5 45.9 
+3.95 3.01 2.71 2.4 I 1.50 90. I 68.9 60.7 53.1 33.4 
+30.13 15.87 12.85 10.44 4.61 93.6 63.7 51.7 44.0 23.6 
+Average of annual E’P ratios (in percent) Average of annual D’P ratios (in percent) 
+for portfolio for portfolio 
+2.42 7.24 8.26 9.06 2.66 1.00 I .94 2.60 3.13 2.82 
+5.20 5.91 8.61 8.73 10.16 10.43 10.95 Il.61 10.78 9.28 l.59 1.56 2.45 3.03 4.04 3.45 4.25 4.68 4.53 4.64 
+5.85 8.94 10.45 11.64 11.39 1.80 3.09 4.22 5.01 4.94 
+6.00 9.07 10.90 12.45 13.92 2.34 3.69 4.68 5.49 5.90 
+“The 25 size-BE. ME stock portfolios are formed as follows. Each year t from 1963 to 1991 NYSE quinttle 
+breakpoints for size (.UE. stock price times shares outstanding), measured at the end of June, are used to 
+allocate NYSE. Amex. and NASDAQ stocks to five size quintiles. Similarly, NYSE quintile breakpoints for 
+BE, ME are used to allocate NYSE. Amex. and NASDAQ stocks to five book-to-market equity quintiles. The 
+25 size-BE,‘.LIE portfolios are formed as the intersections of the five size and the five BE. ME groups. Book 
+equity. BE. is the COMPUSTAT book value of stockholders’ equity, plus balance sheet deferred taxes and 
+investment tax credits lif available). minus the book value of preferred stock. Depending on avjailability. we use 
+the redemption. liquidation. or par value (in that order) to estimate the book value of preferred stock. Book- 
+to-market equity. BE .ME. for a stock is BE for the fiscal year ending in calendar year r - 1. divided by ME at 
+the end of December oft - 1. 
+A portfolio’s book-to-market equity, BE,‘XfE. for the portfolio formation year c is the sum of book equity. 
+BE. for the firms in the portfolio for the fiscal year endmg in calendar year t - I, divided by the sum of their 
+market equity. ME, in December oft - I. A portfolio’s earnings/price ratio (E P) for year I is the sum ofequity 
+income for the firms in the portfolio for the fiscal year ending in calendar year t - 1. divided by the sum of their 
+market equity in December of r - 1. Equity income is income before extraordinary items, plus income- 
+statement deferred taxes. minus preferred dividends. A portfolio’s dividend yield (D P) for year t is the sum 
+(across firms in the portfolio) of the dividends paid from July oft - 1 to June of r. divided by the sum of market 
+equity in June oft - I. We use the procedure described in Fama and French (1988) to estimate dividends. 
+The descriptive statistics are computed when the portfolio is formed in June ofeach year. 1963-1991, and are 
+then averaged across the 29 years. 
+
+12 E.F. Fama und K. R. French. Common risk /&tom in stock md bond returns 
+Table 1 shows that, because we use NYSE breakpoints to form the 25 
+size-BE, ,CIE portfolios, the portfolios in the smallest size quintile have the most 
+stocks (mostly small Amex and NASDAQ stocks). Although they contain many 
+stocks, each of the five portfolios in the smallest size quintile is on average less 
+than 0.70% of the combined value of stocks in the 25 portfolios. In contrast, the 
+portfolios in the largest size quintile have the fewest stocks but the largest 
+fractions of value. Together, the five portfolios in the largest JIE quintile 
+average about 74% of total value. The portfolio of stocks in both the largest size 
+and lowest BE/ME quintiles (big successful firms) alone accounts for more than 
+30% of the combined value of the 25 portfolios. And note that using all stocks, 
+rather than just NYSE stocks, to define the size quintiles would result in an even 
+more skewed distribution of value toward the biggest size quintile. 
+Table 1 also shows that in every size quintile but the smallest, both the 
+number of stocks and the proportion of total value accounted for by a portfolio 
+decrease from lower- to higher-BE/ME portfolios. This pattern has two causes. 
+First, using independent size and book-to-market sorts of NYSE stocks to form 
+portfolios means that the highest-BE/ME quintile is tilted toward the smallest 
+stocks. Second, Amex and NASDAQ stocks, mostly small, tend to have lower 
+book-to-market equity ratios than NYSE stocks of similar size. In other words, 
+NYSE stocks that are small in terms of ME are more likely to be fallen angels 
+(big firms with low stock prices) than small Amex and NASDAQ stocks. 
+3. The playing field 
+Table 2 summarizes the dependent and explanatory returns in the time-series 
+regressions. The average excess returns on the portfolios that serve as dependent 
+variables give perspective on the range of average returns that competing sets of 
+risk factors must explain. The average returns on the explanatory portfolios are 
+the average premiums per unit of risk (regression slope) for the candidate 
+common risk factors in returns. 
+3.1. The dependent retwxs 
+Stocks - The 25 stock portfolios formed on size and book-to-market equity 
+produce a wide range of average excess returns, from 0.32% to 1.05% per 
+month. The portfolios also confirm the Fama-French (1992a) evidence that 
+there is a negative relation between size and average return, and there is 
+a stronger positive relation between average return and book-to-market equity. 
+In all but the lowest-BE/ME quintile, average returns tend to decrease from the 
+small- to the big-size portfolios. The relation between average return and 
+book-to-market equity is more consistent. In every size quintile, average returns 
+tend to increase with BE/:bfE, and the differences between the average returns 
+
+E.F. Fame und K. R. French. Common risk fk!ors m slack and bond rerurm 13 
+for the highest- and lowest-BE;‘.CJE portfolios range from 0.19% to 0.62% per 
+month. 
+Our time-series regressions attempt to explain the cross-section of average 
+returns with the premiums for the common risk factors in returns. The wide 
+range of average returns on the 25 stock portfolios, and the size and book- 
+to-market effects in average returns, present interesting challenges for competing 
+sets of risk factors. 
+Most of the ten portfolios in the bottom two BEI’ME quintiles produce 
+average excess returns that are less than two standard errors from 0. This is an 
+example of a well-known problem [Merton (1980)] : because stock returns have 
+high standard deviations (around 6% per month for the size-BE ‘.CJE port- 
+folios), large average returns often are not reliably different from 0. The high 
+volatility of stock returns does not mean, however, that our asset-pricing tests 
+will lack power. The common factors in returns will absorb most of the variation 
+in stock returns, making the asset-pricing tests on the intercepts in the time- 
+series regressions quite precise. 
+Borrds - In contrast to the stock portfolios, the average excess returns on the 
+government and corporate bond portfolios in table 2 are puny. All the average 
+excess bond returns are less than 0.15% per month, and only one of seven is 
+more than 1.5 standard errors from 0. There is little evidence in table 2 that (a) 
+average returns on government bonds increase with maturity, (b) long-term 
+corporate bonds have higher average returns than government bonds, or (c) 
+average returns on corporate bonds are higher for lower-rating groups. 
+The flat cross-section of average bond returns does not mean that bonds are 
+uninteresting dependent variables in the asset-pricing tests. On the contrary. 
+bonds are good candidates for rejecting asset-pricing equations that predict 
+patterns in the cross-section of average returns based on different slopes on the 
+common risk factors in returns. 
+3.2. The explanatory returns 
+In the time-series regression approach to asset-pricing tests, the average risk 
+premiums for the common factors in returns are just the average values of the 
+explanatory variables. The average value of RXJ-RF (the average premium per 
+unit of market p) is 0.43% per month. This is large from an investment 
+perspective (about 5% per year), but it is a marginal 1.76 standard errors from 0. 
+The average S,VJB return (the average premium for the size-related factor in 
+returns) is only 0.27% per month (t = 1.73). We shall find, however, that 
+the slopes on SAJB for the 25 stock portfolios cover a range in excess of 1.7, so 
+the estimated spread in expected returns due to the size factor is large, about 
+0.46% per month. The book-to-market factor HAIL. produces an average 
+premium of 0.40% per month (t = 2.91), that is large in both practical and 
+statistical terms. 
+
+i 
+Kill 0.97 4.52 3.97 0.05 - 0.05 0.03 
+7‘11 0.54 0.22 45.97 0.94 0.90 0.65 
+l.‘i’(; 0.60 3.03 3.66 0.05 - 0.w 0.00 
+(‘1) 0.62 2.24 5.10 0.20 - 0.04 0.04 
+RWRb 0.43 4.54 I .76 
+RhlO OS0 3.55 2.61 
+Shf0 0.27 2.89 1.73 
+IlhfL 0.40 2.54 2.9 I 
+7’1:R hl 0.06 3.02 0.38 
+DEb O.O:! I.60 0.2 I 
+0.05 - 0.04 0.03 RIII-RI.’ RMO 
+- 0.10 - 0.05 0.02 0.78 I.00 
+0.19 0.07 0.23 0.32 - 0.00 
+O.II( 0.06 0.07 - 0.38 - 0.00 
+0.05 ~ 0.00 - 0.00 0.34 0.w 
+~ 0.20 -- 0.04 - 0.00 - 0.07 - 0.00 
+ari;iblcs: lixccss returns on governwznl and corporvk bonds 
+I SC; 0. I 2 
+6 IOG 0. I4 
+AAA 0.06 
+AA 0.07 
+A 0.0x 
+BAA 0.14 
+LG 0. I 3 
+Sld 
+1.25 
+2.03 
+2.34 
+2.23 
+2.25 
+2.35 
+2.52 
+Aulocorr. for lag 
+1 (tw1) I 2 12 
+Explanatory returns 
+Ikpendzlll \ 
+1.71 
+1.24 
+0.44 
+0.58 
+0.63 
+I.09 
+0. I 5 - 0.08 
+0. I ? - 0.05 
+0. I6 - 0.03 
+0. I9 - 0.04 
+0.2 I - 0.03 
+0.2 I 0.00 
+0.23 0.05 
+SMII 
+1.00 
+- 0.08 
+- 0.07 
+0. I7 
+0.01 
+0.02 
+0.02 
+0.03 
+0.04 
+0.03 
+0.08 
+I .m 
+- 0.05 I.00 c 
+0.0x - 0.69 c. 
+c- 
+? k 
+2 2 : 
+t 
+
+Dependent variables: Excess returns on 25 stock portfolios formed on ME and BE/ME 
+Size 
+quintilc 
+sm:111 
+2 
+3 
+4 
+Kg 
+LOW 
+0.39 
+0.44 
+0.43 
+0.48 
+0.40 
+Book-to-market equity (BE/ME) quintiles 
+~~~ ~____~~ ~_. _ 
+2 3 4 High Low 2 3 4 High 
+Means Standard deviations 
+0.70 0.79 0.88 1.01 7.76 6.84 6.29 5.99 6.27 
+0.71 0.85 0.84 I .02 7.28 6.42 5.85 5.33 6.06 
+0.66 0.68 0.8 I O.Y7 6.71 5.71 5.27 4.Y2 5.bY 
+0.35 0.57 0.17 I .05 5.97 5.44 5.03 4.95 5.75 
+0.36 0.32 0.56 0.59 4.95 4.70 4.38 4.27 4.85 
+t-statistics for means 
+Snxlll 0.93 I .8X 2.33 2.73 2.97 
+2 I.1 1 2.05 2.6’) 2.9 I 3.1 I 
+3 I.IX 2.12 2.39 3.04 3.15 
+4 I .49 1.19 2.08 LXX 3.36 
+I)& I .50 I .42 I .34 2.43 2.2b 
+‘Uhf is the value-weighted monthly percent return on the stocks in the 25 size-BE/ME portfolios, plus the negative-BE stocks excluded from the 
+portfolios. KF is the one-month Treasury bill rate, observed at the beginning of the month. LTG is the long-term government bond return. CB is the return 
+on ii proxy for the rmlrket portfolio of long-term corporate bonds. TERM is LTG-RF. DEF is CB~LTG. SMB (small minus big) is the drlTerence between 
+the returns on sndl-stock antI big-stock porttidios with ahout the s:mx weighted average hook-to-market equity. I/Ml. (high minus low) is the Merence 
+between the returns on high and low hook-to-market equity portfolios with ahuut the same weighted average size. RMO is the sum of the interccpl and 
+residuals l&n lhc regression (I) of KM -RF on ?‘ERM, L)EF, SMB, and IIML. 
+‘l‘he scvc’n hod portlidius used HIS dependcn~ vari;thles in the excess-return regressions are I - to 5-year and b- to IO-year governments (I -5G and 6 ~IW) 
+;IIIJ corlxnxte bonds rated AXI, A;I, A, Iklu. and below Hna (I.(;) by Moody’r. The 25 size-BE/ME stock portfoolios are formed as roollows. Each year r from 
+1903 to 1991 NYSE quintile hre;tkpoLits for size (ME, stock price times shares outstanding), measured al Ihe end of June, are used lo allocate NYSE. 
+An~x, and NASDAQ stocks to live size quintiles. Similarly, NYSE quintile breakpoints for BE/ME are used to allocate NY!%, Amex, and NASDAO 
+SIOC~S lo live hook-to-nl;lrkct equity quintiles. In U/:‘/ME, WB is hook comm~m equity for the liscal year ending in calendar year I - I, and ML’ is li)r the 
+cd ol’ Decemhcr d I - I. The 25 six &E/ME portfolios are hrmd as the intersections of the tivc size and the live HE/ME groups. Value-weighted 
+nlonthly prrcent returns on the pd’dios are caldad thrum July ul year I to June d I + I. 
+
+The average risk premiums for the term-structure factors are trivial relative to 
+those of the stock-market factors. TER.Ll (the term premium) and DEF (the 
+default premium) are on average 0.069/o and 0.029;b per month; both are within 
+0.3 standard errors of 0. Note, though, that TER,Zl and DEF are about as 
+volatile as the stock-market returns S.LfB and H.CIL. Low average premiums 
+will prevent TERM and DEF from explaining much cross-sectional variation in 
+average returns, but high volatility implies that the two factors can capture 
+substantial common variation in returns. In fact. the low means and high 
+volatilities of TER.\/I and DEF will be advantageous for explaining bond 
+returns. But the task of explaining the stron, 0 cross-sectional variation in 
+average stock returns falls on the stock-market factors. RN-RF. SMB, and 
+HML. which produce higher average premiums. 
+We turn now to the asset-pricing tests. In the time-series regression approach. 
+the tests have two parts. In section 4 vve establish that the two bond-market 
+returns, TER.tI and DEF, and the three stock-market returns, RXI-RF, SMB. 
+and H&IL, are risk factors in the sense that they capture common (shared and 
+thus undiversifiable) variation in stock and bond returns. In section 5 we use the 
+intercepts from the time-series regressions to test whether the average premiums 
+for the common risk factors in returns explain the cross-section of average 
+returns on bonds and stocks. 
+4. Common variation in returns 
+In the time-series regressions, the slopes and R’ values are direct evidence on 
+whether different risk factors capture common variation in bond and stock 
+returns. We first examine separately the explanatory power of bond-market 
+and stock-market factors. The purpose is to test for overlap between the 
+stochastic processes for stock and bond returns. Do bond-market factors 
+that are important in bond returns capture common variation in stock returns 
+and vice versa? We then examine the joint explanatory power of the bond- 
+and stock-market factors, to develop an overall story for the common variation 
+in returns. 
+1. I. Bond-market fktors 
+Table 3 shows that, used alone as the explanatory variables in the time-series 
+regressions, TERM and DEF capture common variation in stock and bond 
+returns. The 25 stock portfolios produce slopes on TERM that are all more than 
+five standard errors above 0; the smallest TER.Cf slope for the seven bond 
+portfolios is 18 standard errors from 0. The slopes on DEF are all more than 
+7.8 standard errors from 0 for bonds, and more than 3.5 standard errors from 0 
+for stocks. 
+
+Table 3 
+Regressions of excess stock and bond returns (in percent) on the bond-market returns. TER.\/ and 
+DEf: July 1963 to December 1991. 342 months.” 
+R(t) - RF(t) = a + mTERJf(t) + dDEF(r) -t e(t) 
+Dependent variable: Excess returns on 25 stock portfolios formed on size and book-to-market 
+equity 
+Book-to-market equity (BE, ME) qumtiles 
+Size 
+quintile Low 2 3 4 High Low 2 3 -I High 
+Small 
+2 
+3 
+4 
+Big 
+Small 
+z 
+3 
+4 
+Big 
+Small 
+2 
+3 
+4 
+Big 
+m r(m) 
+0.93 0.90 0.89 0.86 0.89 5.02 5.50 5.95 6.08 6.0 1 
+0.99 0.96 0.99 1.01 0.98 5.71 6.32 7.29 8.3-t 6.92 
+0.99 0.94 0.94 0.95 0.99 6.25 7.10 7.80 8.50 7.60 
+0.92 0.95 0.97 1.05 1.03 6.58 7.57 a.53 9.64 7.83 
+0.82 0.82 0.80 0.80 0.77 7.14 7.60 8.09 8.26 6.84 
+d rid) 
+-_ 
+1.39 1.31 1.33 1.45 1.X 3.96 4.27 4.73 5.45 5.45 
+1.26 1.28 1.35 1.38 1.41 3.84 4.47 5.28 6.05 5.29 
+1.21 1.19 I.25 1.24 1.21 4.05 4.74 5-19 5.89 4.98 
+0.96 1.01 1.13 1.21 1.22 3.65 1.28 5.25 5.89 4.91 
+0.78 0.73 0.78 0.83 0.89 3.59 3.60 4.18 4.56 4.15 
+R’ SW 
+0.06 0.08 0.09 0.10 0.10 7.50 6.57 6.00 5.68 5.95 
+0.08 0.10 0.13 0.17 0.12 6.97 6.09 5.45 4.87 5.69 
+0.10 0.12 0.15 0.17 0.14 6.38 5.35 1.86 4.48 5.2 
+0.11 0.14 0.17 0.21 0.15 5.63 5.04 4.57 1.39 5.31 
+0.13 0.15 0.16 0.17 0.12 4.61 4.33 4.00 3.89 4.55 
+Dependent variable: Excess returns on government and corporate bonds 
+I-5G 6-IOG Aaa Aa A Baa LG 
+m 0.45 0.72 I .02 0.99 1.00 1.01 0.81 
+t(m) 31.73 3880 99.94 130.44 139.80 56.24 18.05 
+d 0.25 0.27 0.94 0.96 I .02 1.10 1.01 
+t(d) 9.51 7.85 48.95 67.54 75.74 32.33 11.95 
+R’ 0.79 0.87 0.97 0.98 0.98 0.90 0.19 
+s(e) 0.57 0.75 0.41 0.30 0.29 0.72 1.80 
+“TERM is LTG-RF. where LX is the monthly percent long-term government bond return and 
+RF is the one-month Treasury bill rate. observed at the beginning of the month. DEF is C&LX, 
+where CB is the return on a proxy for the market portfolio of corporate bonds. 
+The seven bond portfolios used as dependent variables in the excess-return regressions are I- to 
+S-year and 6- to lo-year governments (I-5G and GlOG) and corporate bonds rated A.aa. Aa, A. Baa, 
+and below Baa (LG) by Moody’s, The 25 size-BE;.CfE stock portfolios are formed as follows. Each 
+year t from 1963 to 1991 NYSE quintile breakpoints for size (.WE, stock price times shares 
+outstanding). measured at the end of June. are used to allocate NYSE, Amex. and NASDAQ stocks 
+to five size quintiles. Similarly, NYSE quintile breakpoints for BE’.CfE are used to allocate NYSE, 
+Amex, and NASDAQ stocks to five book-to-market equity quintiles. In BE, ME, BE is book 
+common equity for the fiscal year ending in calendar year f - 1, and ME is for the end of December 
+oft - 1. The 25 size-BE, .1fE portfolios are formed as the intersections of the five size and the five 
+BE/ME groups. Value-weighted monthly percent returns on the portfolios are calculated from July 
+of year f to June oft + 1. 
+R’ and the residual standard error. s(e), are adjusted for degrees of freedom. 
+
+The slopes on TER.Cf and DEF allow direct comparisons of the common 
+variation in stock and bond returns tracked by the term-structure variables. 
+Interestingly. the common variation captured by TER.Cf and DEF is. if any- 
+thing, stronger for stocks than for bonds. Most of the DEF slopes for stocks are 
+bigger than those for bonds. The TER.tf slopes for stocks (all close to 1) are 
+similar to the largest slopes produced by bonds. 
+As one might expect, however, the fractions of return variance explained by 
+TER,M and DEF are higher for bonds. In the bond regression, R’ ranges from 
+0.49 for low-grade corporates to 0.97 and 0.98 for high-grade corporates. In 
+contrast, R’ ranges from 0.06 to 0.21 for stocks. Thus, TERM and DEF clearly 
+identify shared variation in stock and bond returns, but for stocks and low- 
+grade bonds. there is plenty of variation left to be explained by stock-market 
+factors. 
+There is an interesting pattern in the slopes for TER.Cl. The slopes increase 
+from 0.45 to 0.72 for I- to S-year and 6- to lo-year governments, and then settle 
+at values near I for four of the five long-term corporate bond portfolios. (The 
+low-grade portfolio LG. with a slope of 0.81. is the exception.) As one would 
+expect. long-term bonds are more sensitive than short-term bonds to the shifts in 
+interest rates measured by TER.LI. What is striking. however, is that the 25 stock 
+portfolios have TER.Ll slopes like those for long-term bonds. This suggests that 
+the risk captured by TER,Cf results from shocks to discount rates that affect 
+long-term securities. bonds and stocks, in about the same way. 
+There are interesting parallels between the TER,Lf slopes observed here and 
+our earlier evidence that yield spreads predict bond and stock returns. In Fama 
+and French (1959), kve find that a spread of long-term minus short-term bond 
+yields (an ex ante version of TERXI) predicts stock and bond returns, and 
+captures about the same variation through time in the expected returns on 
+long-term bonds and stocks. We conjectured that the yield spread captures 
+variation in a term premium for discount-rate changes that affect all long-term 
+securities in about the same way. The similar slopes on TER,Lf for long-term 
+bonds and stocks observed here seem consistent with that conjecture. 
+Our earlier work also finds that the return premium predicted by the long- 
+term minus short-term yield spread wanders between positive and negative 
+values, and is on average close to 0. This parallels the evidence here (table 2) that 
+the average premium for the common risk associated with shifts in interest rates 
+(the average value of TERM) is close to 0. 
+The pattern in the DEF slopes in table 3 is also interesting. The returns on 
+small stocks are more sensitike to the risk captured by DEF than the returns on 
+big stocks. The DEF slopes for stocks tend to be larger than those for corporate 
+bonds, which are larger than those for governments. DEF thus seems to capture 
+a common ‘default’ risk in returns that increases from government bonds to 
+corporates, from bonds to stocks. and from big stocks to small stocks. Again, 
+there is an interesting parallel between this pattern in the DEF slopes and the 
+
+E.F. Fumu und K.R. Frewh. Common risk fucrors in srocb und bond reiurns 19 
+similar pattern observed in Fama and French (1989) in time-series regressions of 
+stock and bond returns on an ex ante version of DEF (a spread of low-grade 
+minus high-grade bond yields). 
+Using the Fama-Macbeth (1973) cross-section regression approach and stock 
+portfolios formed on ranked values of size, Chan, Chen. and Hsieh (1985) and 
+Chen, Roll, and Ross (1986) find that the cross-section of slopes on a variable 
+like DEF goes a long way toward explaining the negative relation between size 
+and average stock returns. Given the negative relation between size and the 
+slopes on DEF in table 3, it is easy to see why the DEf slopes work well in 
+cross-section return regressions for size portfolios. 
+Our time-series regressions suggest, however, that DEF cannot explain the 
+size effect in average stock returns. In the time-series regressions, the average 
+premium for a unit of DEF slope is the mean of DEF, a tiny 0.02% per month. 
+Likewise, the average TERM return is only 0.06% per month. As a result, we 
+shall see that the intercepts in the regressions of stock returns on TERM and 
+DEF leave strong size and book-to-market effects in average returns. We shall 
+also find that when the stock-market factors are added to the regressions, the 
+negative relation between size and the DEF slopes in table 3 disappears. 
+42. Stock-market f&ton 
+The role of stock-market factors in returns is developed in three steps. u’e 
+examine (a) regressions that use the excess market return, RAGRF, to explain 
+excess bond and stock returns, (b) regressions that use SMB and NML, the 
+mimicking returns for the size and book-to-market factors, as explanatory 
+variables. and (c) regressions that use RM-RF, S‘SJB. and H,VfL. The three- 
+factor regressions work well for stocks, but the one- and two-factor regressions 
+help explain why. 
+The Murket - Table 4 shows, not surprisingly, that the excess return on the 
+market portfolio of stocks, RM-RF, captures more common variation in stock 
+returns than the term-structure factors in table 3. For later purposes. however. 
+the important fact is that the market leaves much variation in stock returns that 
+might be explained by other factors. The only RZ values near 0.9 are for the 
+big-stock low-book-to-market portfolios. For small-stock and high-BE/ME 
+portfolios, R’ values less than 0.8 or 0.7 are the rule. These are the stock 
+portfolios for which the size and book-to-market factors, SMB and H.LIL, will 
+have their best shot at showing marginal explanatory power. 
+The market portfolio of stocks also captures common variation in bond 
+returns. Although the market fls are much smaller for bonds than for stocks. 
+they are 5 to 12 standard errors from 0. Consistent with intuition, /? is higher for 
+corporate bonds than for governments and higher for low-grade than for 
+high-grade bonds. The /I for low-grade bonds (LG) is 0.30, and R.V-RF explains 
+a tidy 19% of the variance of the LG return. 
+
+Table 1 
+Regressions of excess stock and bond returns (in percent) on the excess stock-market return, 
+R.WRF: July 1963 to December 1991. 342 months.” 
+R(t) - RF(t) = a + b[R.Lf(rl - RF(r)] + r(r) 
+_ 
+Dependent variable: Excess returns on 25 stock portfolios formed on size and book-to-market 
+equity 
+Book-to-market equity (BE .CIE quintiles 
+Size 
+quintile Lou 2 3 1 High Low 2 3 1 Htgh 
+h r(h) 
+Small 1.40 1.26 I.11 I .06 I .08 16.33 28.12 27.01 25.03 23.01 
+2 I .‘I? I.15 I.12 I .02 1.13 35.76 35.56 33.12 33.1-I 
+3 
+29.04 
+1.36 I.15 I.04 0.96 I .oa 12.98 42.52 37.50 35.81 31.16 
+1 I.24 I.14 I .03 0.95 I.10 51.67 55.IZ 46.96 37.00 32.76 
+Btg I .03 0.99 0.89 0.84 0.89 5 I .92 61.51 13.03 35.96 27.75 
+R’ s(e) 
+Small 0.67 0.70 0.68 0.65 0.6 I -1.46 3.76 3.55 3.56 3.92 
+2 0.79 0.79 0.76 0.76 0.71 3.34 2.96 2.85 2.59 ? 
+3.25 
+0.8-l 0.81 0.80 0.79 0.74 2.65 2.28 2.33 3.26 2.90 
+; 0.89 0.90 0.87 0.80 0.76 2.0 I 1.73 I.% 2.2 1 2.83 
+Big 0.89 0.91 0.54 0.79 0.69 1.66 1.35 1.73 1.95 2.69 
+Dependent variable: Excess returns on government and corporate bonds 
+I -5G 6-IOG Aaa -\a A Baa LG 
+h 0.08 0.13 0.19 0.20 0.21 0.21 0.30 
+r(h) 5.24 5.57 7.53 8.14 8.42 8.73 II.90 
+RJ 0.07 0.0s 0.14 0.16 0.17 0.19 0.29 
+s(e) I.21 1.95 2.17 2.05 2.05 2.12 2.12 
+‘R.W is the value-heighted monthly percent return on all the stocks in the 25 size-BE.‘IW& 
+portfolios, plus the negative-BE stocks excluded from the 25 portfolios. RF is the one-month 
+Treasury bill rate. observed at the beginning of the month. 
+The seven bond portfolios used as dependent variables in the excess-return regressions are I- to 
+5-vear and 6- to IO-vear eovernments (I-SC and 6-IOG) and corporate bonds rated Aaa. Aa. .A. Baa. 
+and below Baa (LG) by Moody’s The 25 size

@@ -99,7 +99,9 @@ class PaperBroker:
                 still.append(r)
                 continue
             if self._crosses(r.request, tick.price):
-                if r.request.limit_price is None:  # _crosses() returns False when None; guard for -O
+                if (
+                    r.request.limit_price is None
+                ):  # _crosses() returns False when None; guard for -O
                     still.append(r)
                     continue
                 fills.append(
@@ -204,5 +206,3 @@ class PaperBroker:
     def _next_id(self) -> str:
         self._seq += 1
         return f"paper-{self._seq}"
-
-

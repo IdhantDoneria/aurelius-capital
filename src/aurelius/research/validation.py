@@ -110,6 +110,7 @@ def walk_forward(
     fold = max(1, (n - init) // n_folds)
     if n - init < n_folds:
         import warnings
+
         warnings.warn(
             f"walk_forward: {n - init} post-training bars < n_folds={n_folds}; "
             "returning partial results.",
@@ -171,7 +172,7 @@ def parameter_sensitivity(
     results: list[tuple[dict, float]] = []
     for combo in itertools.product(*param_grid.values()):
         params = dict(zip(keys, combo, strict=True))
-        _, oos = train_test(lambda p=params: factory_from_params(p), bars, config, train_frac)
+        _, oos = train_test(lambda p=params: factory_from_params(p), bars, config, train_frac)  # type: ignore
         results.append((params, getattr(oos, metric)))
     vals = [v for _, v in results]
     mean = statistics.mean(vals)

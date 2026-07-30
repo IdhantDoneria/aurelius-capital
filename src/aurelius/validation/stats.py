@@ -177,11 +177,13 @@ class StatEngine:
         if n_obs < 4:
             return float("inf")
         sr_daily = sharpe_ann / math.sqrt(trading_days)
-        se_daily = math.sqrt((1 + 0.5 * sr_daily ** 2) / n_obs)
+        se_daily = math.sqrt((1 + 0.5 * sr_daily**2) / n_obs)
         return se_daily * math.sqrt(trading_days)
 
     @staticmethod
-    def sharpe_z_ci(sharpe_ann: float, n_obs: int, ci: float = 0.95, trading_days: int = 252) -> tuple[float, float]:
+    def sharpe_z_ci(
+        sharpe_ann: float, n_obs: int, ci: float = 0.95, trading_days: int = 252
+    ) -> tuple[float, float]:
         """Closed-form CI for annualized Sharpe (Lo 2002). Faster than bootstrap for large n."""
         se = StatEngine.sharpe_se(sharpe_ann, n_obs, trading_days)
         z = _norm_ppf((1 + ci) / 2)
@@ -199,4 +201,4 @@ def _norm_ppf(p: float) -> float:
     t = math.sqrt(-2 * math.log(1 - p))
     c0, c1, c2 = 2.515517, 0.802853, 0.010328
     d1, d2, d3 = 1.432788, 0.189269, 0.001308
-    return t - (c0 + c1 * t + c2 * t ** 2) / (1 + d1 * t + d2 * t ** 2 + d3 * t ** 3)
+    return t - (c0 + c1 * t + c2 * t**2) / (1 + d1 * t + d2 * t**2 + d3 * t**3)

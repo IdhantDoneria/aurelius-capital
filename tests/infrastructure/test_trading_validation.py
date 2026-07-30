@@ -82,7 +82,7 @@ def test_stop_order_requires_stop_price():
 
 @pytest.mark.unit
 def test_stop_limit_requires_both_prices():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match=".*"):
         # Missing both limit_price and stop_price
         OrderCreateRequest(**_base_order(order_type="stop_limit"))
 
@@ -90,20 +90,22 @@ def test_stop_limit_requires_both_prices():
 @pytest.mark.unit
 def test_stop_limit_with_both_prices_valid():
     req = OrderCreateRequest(
-        **_base_order(order_type="stop_limit", limit_price=Decimal("184"), stop_price=Decimal("183"))
+        **_base_order(
+            order_type="stop_limit", limit_price=Decimal("184"), stop_price=Decimal("183")
+        )
     )
     assert req.order_type == "stop_limit"
 
 
 @pytest.mark.unit
 def test_invalid_order_type_rejected():
-    with pytest.raises(Exception, match="order_type"):
+    with pytest.raises(ValueError, match="order_type"):
         OrderCreateRequest(**_base_order(order_type="futures"))
 
 
 @pytest.mark.unit
 def test_invalid_side_rejected():
-    with pytest.raises(Exception, match="side"):
+    with pytest.raises(ValueError, match="side"):
         OrderCreateRequest(**_base_order(side="long"))
 
 
@@ -116,7 +118,7 @@ def test_all_valid_sides():
 
 @pytest.mark.unit
 def test_gtd_requires_good_till_date():
-    with pytest.raises(Exception, match="good_till_date"):
+    with pytest.raises(ValueError, match="good_till_date"):
         OrderCreateRequest(**_base_order(time_in_force="gtd"))
 
 
@@ -130,19 +132,19 @@ def test_gtd_with_date_valid():
 
 @pytest.mark.unit
 def test_invalid_tif_rejected():
-    with pytest.raises(Exception, match="time_in_force"):
+    with pytest.raises(ValueError, match="time_in_force"):
         OrderCreateRequest(**_base_order(time_in_force="eod"))
 
 
 @pytest.mark.unit
 def test_zero_quantity_rejected():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match=".*"):
         OrderCreateRequest(**_base_order(quantity=Decimal("0")))
 
 
 @pytest.mark.unit
 def test_negative_quantity_rejected():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match=".*"):
         OrderCreateRequest(**_base_order(quantity=Decimal("-10")))
 
 
@@ -166,14 +168,14 @@ def test_fill_valid():
 
 @pytest.mark.unit
 def test_fill_naive_timestamp_rejected():
-    with pytest.raises(Exception, match="timezone-aware"):
+    with pytest.raises(ValueError, match="timezone-aware"):
         FillIngest(**_base_fill(timestamp=datetime(2024, 1, 15)))  # naive
 
 
 @pytest.mark.unit
 def test_fill_notional_inconsistency_rejected():
     """notional must be within 0.01% of price x qty."""
-    with pytest.raises(Exception, match="notional_value"):
+    with pytest.raises(ValueError, match="notional_value"):
         FillIngest(**_base_fill(notional_value=Decimal("9000.00")))  # 185*100=18500, not 9000
 
 
@@ -186,13 +188,13 @@ def test_fill_notional_within_tolerance_accepted():
 
 @pytest.mark.unit
 def test_fill_zero_price_rejected():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match=".*"):
         FillIngest(**_base_fill(price=Decimal("0")))
 
 
 @pytest.mark.unit
 def test_fill_negative_commission_rejected():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match=".*"):
         FillIngest(**_base_fill(commission=Decimal("-1")))
 
 
@@ -204,7 +206,7 @@ def test_fill_commission_zero_accepted():
 
 @pytest.mark.unit
 def test_fill_negative_latency_rejected():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match=".*"):
         FillIngest(**_base_fill(execution_latency_ms=-1))
 
 
@@ -220,7 +222,7 @@ def test_position_close_market_no_limit_price():
 
 @pytest.mark.unit
 def test_position_close_limit_requires_price():
-    with pytest.raises(Exception, match="limit_price required"):
+    with pytest.raises(ValueError, match="limit_price required"):
         PositionCloseRequest(account_id=_ACCOUNT, symbol_id=_SYMBOL, order_type="limit")
 
 
@@ -234,13 +236,11 @@ def test_position_close_limit_with_price_valid():
 
 @pytest.mark.unit
 def test_position_close_partial_quantity():
-    req = PositionCloseRequest(
-        account_id=_ACCOUNT, symbol_id=_SYMBOL, close_quantity=Decimal("50")
-    )
+    req = PositionCloseRequest(account_id=_ACCOUNT, symbol_id=_SYMBOL, close_quantity=Decimal("50"))
     assert req.close_quantity == Decimal("50")
 
 
 @pytest.mark.unit
 def test_position_close_zero_quantity_rejected():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match=".*"):
         PositionCloseRequest(account_id=_ACCOUNT, symbol_id=_SYMBOL, close_quantity=Decimal("0"))

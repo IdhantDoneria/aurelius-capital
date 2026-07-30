@@ -1,0 +1,623 @@
+ 
+ 
+                                 
+ 
+ 
+Value and Momentum Everywhere
+Asness, Clifford S.; Moskowitz, Tobias; Heje Pedersen, Lasse
+Document Version
+Accepted author manuscript
+Published in:
+Journal of Finance
+DOI:
+10.1111/jofi.12021
+Publication date:
+2013
+License
+Other
+Citation for published version (APA):
+Asness, C. S., Moskowitz, T., & Heje Pedersen, L. (2013). Value and Momentum Everywhere. Journal of
+Finance, 68(3), 929-985. https://doi.org/10.1111/jofi.12021
+Link to publication in CBS Research Portal
+General rights
+Copyright and moral rights for the publications made accessible in the public portal are retained by the authors and/or other copyright owners
+and it is a condition of accessing publications that users recognise and abide by the legal requirements associated with these rights.
+Take down policy
+If you believe that this document breaches copyright please contact us (research.lib@cbs.dk) providing details, and we will remove access to
+the work immediately and investigate your claim.
+Download date: 30. Jul. 2026
+
+ 
+ 
+                                 
+ 
+ 
+ 
+ 
+ 
+Value and Momentum Everywhere 
+Clifford S. Asness, Tobias J. Moskowitz, and Lasse Heje Pedersen 
+Journal article (Post print version) 
+ 
+ 
+ 
+ 
+ 
+Asness, CS, Moskowitz, T & Heje This is the peer reviewed version of the following article 
+Pedersen, L 2013, 'Value and Momentum Everywhere' Journal of Finance, vol 68, nr. 3, s. 929-
+985., 10.1111/jofi.12021 which has been published in final form at . 
+This article may be used for non-commercial purposes in accordance with Wiley Terms and 
+Conditions for Self-Archiving. 
+ 
+ 
+ 
+ 
+ 
+Uploaded to Research@CBS: March 2016 
+ 
+ 
+
+Value and Momentum Everywhere 
+Cli
+fford S. Asness, Tobias J. Moskowitz, and Lasse Heje Pedersen∗ 
+Current Version: June 2012 
+Abs
+tract 
+We study the returns to value and momentum strategies jointly across eight diverse markets and asset 
+classes. Finding consistent value and momentum premia in every asset class, we further find strong 
+common factor structure among their returns. V alue and momentum are more positively correlated 
+across asset classes than passive exposures to the asset classes  themselves.  However, value and 
+momentum are negatively correlated both within and a cross asset classes. Our results indicate the 
+presence of common global risks that we characterize with a three factor model . G lobal funding 
+liquidity risk is a partial source of these patterns, which are identifiable only when examining value 
+and momentum  simultaneously across markets .  Our findings  present a challenge to existing 
+behavioral, institutional, and rational asset pricing theories that largely focus on U.S. equities. 
+∗Asness is at AQR Capital Management. Moskowitz is at the University of Chicago Booth School of Business and NBER  and is a consultant to AQR Capital. Pedersen is at the New York University Stern School of Business, 
+Copenhagen 
+Business School, AQR, CEPR, FRIC, and NBER. We thank Aaron Brown, John Cochrane, Kent 
+Daniel, 
+Gene Fama, Kenneth French, Cam Harvey (the editor), Ronen Israel, Robert Krail, John Liew, Harry 
+Mamaysky, Michael Mendelson, Stefan Nagel, Lars Nielsen, Otto Van Hemert, Jeff Wurgler, and an anonymous 
+referee 
+for helpful comments, as well as seminar participants at the University of Chicago, Princeton University, Duke 
+University, 
+the Danish Society of Financial Analysts with Henrik Amilon and Asbjørn Trolle as discussants, and the 
+NBER Summer Institute Asset Pricing Meetings with Kent Daniel as a discussant.  We also thank Radhika Gupta, 
+Kelvin 
+Hu, Sarah Jiang, Adam Klein, Ari Levine, Len Lorilla, Wes McKinney, and Karthik Sridharan for research 
+assistance.  AQR Capital invests in, among other things, value and momentum strategies.  The views expressed 
+here are those of the authors and not necessarily those of an y affiliated institution.  
+
+Two of the most studied capital market phenomena are the relation between an asset’s return and the 
+ratio of its “long-run” (or book) value relative to its current market value, termed the “ value” effect, 
+and the relation between an asset’s return and its recent relative performance history, termed the 
+“momentum” effect.  The returns to value and momentum strategies have become central to the 
+market efficiency debate and the focal points of asset pricing studies, generating numerous 
+competing theories for their existence. We offer new insights into these two market anomalies by 
+examining their returns jointly  across eight diverse markets and asset classes.  Chiefly, we find 
+significant return premia to value and momentum in every  asset class and strong co-movement of 
+their returns across asset classes , both of which challenge existing theories for their existence. We 
+provide a simple three factor model that captures the global returns across asset classes, the Fama -
+French U.S. stock portfolios, and a set of hedge fund indices. 
+The literature on market anomalies predominantly focuses on U.S. individual equities, and often 
+examines value or momentum separately. In the rare case where value and momentum are studied 
+outside of U.S. equities, they are also typically studied in isolation—separate from each other and 
+separate from other markets. We uncover unique evidence and features of value and momentum by 
+examining them jointly across eight different markets and asset classes (individual stocks in the U.S., 
+U.K., Europe, and Japan, country equity index futures, government bonds, currencies, and
+commodity futures).
+1  Although some of these markets have been analyzed in isolation, our joint
+approach provides unique evidence on several key and novel questions about these pervasive market
+phenomena.
+Specifically, how much variation exists  in value and momentum premia  across markets and 
+asset classes?  How correlated are value and momentum returns across these diverse markets and 
+asset classes with different geographies, structures, investor types, and securities?  What are the 
+economic drivers of value and momentum premia and their correlation structure? What is a natural 
+benchmark model for portfolios of global securities across different asset classes?  
+1Early evidence on U.S. equit ies finds value stocks on average outperform growth stocks (Stattman (1980), Rosenberg, Reid, and Lanstein (1985), and Fama and French (1992)) and stocks with high positive momentum (high 
+6-12 month past returns) outperform sto cks with low momentum, ( Jegadeesh and Titman (1993)  and  Asness 
+(1994)). Similar effects are found in other equity markets (Fama and French (1998), Rouwenhorst (1998), Liew and 
+Vassalou (2000), Griffin, Ji, and Martin (2003), Chui, Wei, and Titman (201 0)), and in country equity indices 
+(Asness, Liew, and Stevens (1997) and  Bhojraj and Swaminathan (2006)). Momentum is also foun d in currencies 
+(Shleifer and Summers  (1990), Kho (1 996), and LeBaron (1999)) and commodities (Erb  and Harvey (2 006) and 
+Gorton, Hayashi, and Rouwenhorst (2008)).
+1  
+
+ 2 
+We find consistent and ubiquitous evidence of value and momentum return premia across all the 
+markets we study , including value and momentum  in government bonds and value effects in 
+currencies and commodities, which are all novel to the literature.  Our broader set of portfolios 
+generates much larger cross-sectional dispersion in average returns than those from U.S. stocks only, 
+providing a richer set of asset returns that any asset pricing model should seek to explain.  Most 
+strikingly, we discover significant co- movement in value and momentum strategies across diverse 
+asset classes. Value strategies are positively correlated with other value strategies across otherwise 
+unrelated markets, and momentum strategies are positively correlated with other momentum 
+strategies globally.  However, value and momentum are negatively correlated wi th each other within 
+and across asset classes. 
+The striking co-movement pattern across asset classes is one of our central findings and suggests 
+the presence of common global factors related to value and momentum.  This common risk structure 
+implies a host  of results we investigate further.  For example, using a simple three factor model, 
+consisting of a global market index, a zero cost value strategy applied across all asset classes, and a 
+zero cost momentum strategy across all assets, we capture the co-movement and the cross section of 
+average returns both globally across asset classes and locally within an asset class.  We further show 
+that the global three factor model captures well the returns to the Fama and French U.S. stock 
+portfolios as well as a  set of hedge fund indices.  Our use of a simple three factor model in pricing a 
+variety of assets globally is motivated by finance research and practice becoming increasingly global 
+and the desire to have a single model that describes returns across asset  classes rather than 
+specialized models for each market.   We show that separate factors for value and momentum best 
+explain the data, rather than a single factor, since both strategies produce positive returns on average 
+yet are negatively correlated.
+2     
+We then i nvestigate the source of this common global factor structure.  We  find only modest 
+links to macroeconomic variables , such as business cycle, consumption, and default risk.  However, 
+we find significant evidence that liquidity risk is negatively related to value and positively related to 
+momentum globally across asset classes .  Pastor and Stambaugh (2003) and Sadka (2006) find that 
+measures of liquidity risk are positively related to momentum in U.S. individual stocks.  We show 
+that this link is also present in other markets and asset classes and show that value returns are 
+significantly negatively related to liquidity risk globally, implying that part of the negative 
+correlation between value and momentum is driven by opposite signed exposure to liquidity risk.  
+2 A single factor would require significant time variation in betas and/or risk premia to accommodate these facts.  
+We remain agnostic as to whether our factors capture such dynamics or represent separate unconditional factors. 
+
+ 3 
+Separating market from funding liquidity (see Brunnermeier and Pedersen (2009)) we further find 
+that the primary link between value and momentum returns comes from funding risk, whose 
+importance has increased over time, particularly after the funding crisis of 1998.  Importantly, these 
+results cannot be detected by examining a single market in isolation .  The statistical power gained by 
+looking across many markets at once — a unique feature of our analysis —allows these factor 
+exposures to be revealed.   
+In terms of economic magnitudes, however, liquidity risk can only explain a small fraction of 
+value and momentum return premia and co-movement .  While liquidity risk may partly explain the 
+positive risk premium associated with momentum, because value loads negatively on liquidity risk, 
+the positive premium associated with value becomes an even deeper puzzle.  Moreover, a simple 
+equal weighted combination of value and momentum  is immune to liquidity risk and generates 
+substantial abnormal returns.  Hence, funding liquidity risk can only provide a partial and incomplete 
+explanation for momentum , but cannot explain the value premium or the value and momentum 
+combination premium. 
+The evidence we uncover aims to shed light on explanations for the existence of value and  
+momentum premia.  For example, strong correlation structure among these strategies in otherwise 
+unrelated asset classes may indicate the presence of common global risk factors for which value and 
+momentum premia provide compensation. Conversely, such correlation structure is not a prediction 
+of existing behavioral models (e.g., Daniel, Hirshleifer, and Subrahmanyam (1998), Barberis, 
+Shleifer, and Vishny (1998), and Hong and Stein (1999)).  
+In addition to assuaging data mining concerns, evidence of consiste nt value and momentum 
+premia across diverse asset classes may be difficult to reconcile under rational asset pricing theories 
+that rely on firm investment risk or firm growth options as explanations for the value and momentum 
+premia,
+3 which are predominant ly motivated by firm equity.  These theories seem ill equipped to 
+explain the same and correlated effects we find in currencies, government bonds, and commodities.   
+We also highlight that studying value and momentum jointly is more powerful than examining 
+each in isolation. The negative correlation between value and momentum strategies and their high 
+positive expected returns implies that a simple combination of the two is much closer to the efficient 
+frontier than either strategy alone, and exhibits less variation across markets and over time. The 
+return premium to a combination of value and momentum applied across all asset classes, therefore, 
+3 See Gomes, Kogan, and Zhang (2003), Zhang (2005), Li, Livdan, and Zhang (2009), Belo (2010),  Li and Zhang 
+(2010), Liu and Zhang (2008), Berk, Green, and Naik (1999 ), Johnson (2002), Sagi and Seasholes (2007) , Liu, 
+Whited, and Zhang (2009). 
+
+ 4 
+presents an even bigger challenge for asset pricing theories to accommodate (e.g., the Hansen and 
+Jagannathan (1997) bound). 
+Our work also relates to the recent literature on global asset pricing.  Fama and French (2012) 
+examine the returns to size, value, and momentum in individual stocks across global equity markets 
+and find consiste nt risk premia across market s. Considering both global equities and other global 
+asset classes Frazzini and Pedersen (2010) find consistent returns to “betting against beta,” Koijen, 
+Moskowitz, Pedersen, and Vrugt (2012) document global “carry” returns, and Moskowitz, Ooi, and 
+Pedersen (2012) present global evidence of “time series momentum.” Time series momentum is a 
+timing strategy using each asset’s own past returns, which is separate from the cross -sectional 
+momentum strategies we study here. Focusing on this different  time series phenomenon, Moskowitz, 
+Ooi, and Pedersen (2012)  examine returns to futures contracts on equity indices, bonds, currencies, 
+and commodities—ignoring individual stocks, which comprise half our study here —and address a 
+different set of questions. Our focus is on the interaction between cross -sectional momentum and 
+value strategies and their common factor structure globally, where we find striking co- movement 
+across assets and a link to liquidity risk. 
+The link to funding liquidity risk may also be consistent with global arbitrage activity in the face 
+of funding constraints influencing  value and momentum returns  (Brunnermeier and Pedersen 
+(2009)). Why does momentum load positively on liquidity risk and value load negatively?  A simple 
+and natural story might be that momentum represents the most popular trades, as investors chase 
+returns and flock to the assets whose prices appreciated most recently.  Value, on the other hand, 
+represents a contrarian view.  When a liquidity shock occurs , investors engaged in liquidating sell 
+offs (due to cash needs and risk management) will put more price pressure on the most popular and 
+crowded trades, such as high momentum securities, as everyone runs for the exit at the same time 
+(Pedersen (2009)), while the less crowded contrarian/value trades  will be less affected. 
+Vayanos and Wooley (2012) offer a model of value and momentum returns due to delegated 
+management that may be consistent with these results.  They argue that flows between investment 
+funds can give rise to momentum effects from inertia due to slow moving capital, and eventually 
+push prices away from fundamentals causing reversals or value effects.  Correlation of value and 
+momentum across different asset classes could also be affected by funds flowing simultaneously 
+across asset classes , which could in turn be impacted by funding liquidity. However, matching the 
+magnitude of our empirical findings remains an open question.  
+The paper proceeds as follows. Section I outline s our data and portfolio construction. Section II 
+examines the performance of value and momentum across asset classes and documents their global 
+
+ 5 
+co-movement. Section III investigates the source of common variation by examining macroeconomic 
+and liquidity risk, and Section IV offers an empirically motivated three factor model to describe the 
+cross section of returns across asset classes . Section V briefly discusses the robustness of our results 
+to implementation issues.  Section VI concludes by discussing the implications of our findings. 
+I. Data and Portfolio Construction
+We describe our data and methodology for constructing value and momentum portfolios across 
+markets and asset classes.  
+A. Data
+Global Individual Stocks. We examine value and momentum portfolios of individual stocks
+globally across four equity markets:  U.S., U.K., continental Europe ( excluding the U.K.), and Japan. 
+The U.S. stock universe consists of all common equity in CRSP (sharecodes 10 and 11) with a book 
+value from Compustat in the previous six months, and at least 12 months of past return history  from 
+January 1972 to July 2011. We exclude ADR’s, REITS, financials, closed end funds, foreign shares, 
+and stocks with share prices less than $1 at the beginning of each month.  We limit the remaining 
+universe of stocks in each market to a very liquid set of securities that could be trade d for reasonably 
+low cost at reasonable trading volume size. Specifically, we rank stocks based on their beginning of 
+month market capitalization in descending order and include in our universe the number of stocks 
+that account cumulatively for 90% of the total market capitalization  of the entire stock market. 4 This 
+universe corresponds to a n extremely liquid and tradeable set of securities.  For instance, over our 
+sample period this universe corresponds to the largest 17% of firms on average. For the U.S. stock 
+market at the beginning of the sample period (January 1972) our universe consists of the 354 largest 
+firms and by the end of our sample (July 2011) the universe is the 676 largest names.  Hence, our 
+sample of U.S. equities is significantly larger and more liquid than the Russell 1000.   
+For stocks outside of the U.S., we use Datastream data from the U.K. , c ontinental Europe  
+(across all European stock markets, excluding the U.K.), and Japan.  W e restrict the universe in each 
+market using the same criteria used for U.S. stocks.  On average over the sample period, our universe 
+represents the largest 13%, 20%, and 26% of firms in the U.K., Europe, and Japan, respectively. Data 
+on prices and returns comes from Datastream, and data on book values is from Worldscope.   
+Most studies of individual stocks examine a much broader and less liquid set of securities. We 
+restrict our sample to a much more liquid universe (roughly the largest 20% of stocks in each market) 
+4 This procedure is similar to how MSCI defines its universe of stocks for its global stock indices.  
+
+ 6 
+to provide reasonable and conservative estimates of an implementable set of trading strategies  and to 
+better compare those strategies with the set of strategies we employ in index futures, currencies, 
+government bonds, and commodity futures, which are typically more liquid instruments.  Our results 
+are conservative since value and momentum premia are larger among smaller, less liquid securities 
+over the sample period we study.5 
+All series are monthly and  end in July 2011. The U.S. and U.K. stock samples begin in January 
+1972. The Europe and Japan stock samples begin in January 1974. The average (minimum) number 
+of stocks in each market over their respective sample periods is 724 (354) in the U.S., 147 (76) in the 
+U.K., 290 (96) in Europe, and 471 (148) in Japan.
+Global Equity Indices . The universe of country  equity index futures consists of the following 
+18 developed equity  markets: Australia, Austria, Belgium, Canada, Denmark, France, Germany, 
+Hong Kong, Italy, Japan, Netherlands, Norway, Portugal, Spain, Sweden, Switzerland, U.K., and 
+U.S.  Returns and price data as well as book values are obtained from MSCI. The sample covers the 
+period January 1978 to July 2011, with the minimum number of equity indices being eight and all 18 
+indices represented after 1980. The returns on the country equity index futures do not include any 
+returns on collateral from transacting in futures contracts, hence these are comparable to returns in 
+excess of the risk free rate. 
+Currencies. We obtain spot exchange rates from Datastream covering the following 10 
+currencies: Australia, Canada, Germany (spliced with the Euro), Japan, New Zealand, Norway, 
+Sweden, Switzerland, U.K., and U.S. The data cover the period January 1979 to July 2011, where the 
+minimum number of currencies is seven  at any point in time and all 10 currencies are available after 
+1980. We compute returns from currency forward contracts, where currency returns are all dollar 
+denominated and implicitly include the local interest rate differential. 
+Global Government Bonds. Bond index returns come from Datastream, short rates and 10 year 
+government bond yields are from Bloomberg, and inflation forecasts are obtained from investment 
+bank analysts' estimates as compiled by Consensus Economics. We obtain government bond data f or 
+the following 10 countries: Australia, Canada, Denmark, Germany, Japan, Norway, Sweden, 
+5 Hong, Lim, and Stein (2000), Grinblatt and Moskowitz (2004), Fama and French (2012 ), and Israel and 
+Moskowitz (2012) show that value and momentum returns are inversely related to the size of securities over the time 
+period studied here, though Israel and Moskowitz (2012 ) show this relation is no t robust for momentum in other 
+sample periods. Value and momentum returns have also been shown to be stronger in less liquid emerging markets 
+(Rouwenhorst (1999), Erb and Harvey (2006), Griffin, Ji, and Martin (2003)). A previous version of this paper used 
+a broader and less liquid set of stocks that exhibited significantly stronger value and momentum returns.  
+
+ 7 
+Switzerland, U.K., and U.S. over the period January 1982 to July 2011, where the minimum number 
+of country bond returns is six at any point in time and all 10 country bonds are available after 1990. 
+Commodity Futures. We cover 27 different commodity futures  obtained from several sources. 
+Data on Aluminum, Copper, Nickel, Zinc, Lead, and Tin are from the London Metal Exchange 
+(LME). Brent Crude and Gas Oil are from the Intercontinental Exchange (ICE). Live Cattle, Feeder 
+Cattle, and Lean Hogs are from the Chicago Mercantile Exchange (CME) . Corn, Soybeans, Soy 
+Meal, Soy Oil, and Wheat are from the Chicago Board of Trade (CBOT). WTI Crude, RBOB 
+Gasoline, Heating Oil, and Natural Gas are from the New York Mercantile Exchange (NYMEX). 
+Gold and Silver are from the New York Commodities Exchange (COMEX). Cotton, Coffee, Cocoa, 
+and Sugar are from New York Board of Trade (NYBOT), and Platinum data are from the Tokyo 
+Commodity Exchange (TOCOM).  The sample covers the period January 1972 to July 2011, with the 
+minimum number of commodities being 10 at any point in time and all 27 commodities ava ilable 
+after 1980. 
+Returns for commodity futures are calculated as follows. Each day we compute the daily excess 
+return of the most liquid futures contract, which is typically the nearest or  next nearest-to-delivery 
+contract, and then compound the daily returns to a total return index from which we compute returns 
+at a monthly horizon. Bessembinder (1992), de Roon, Nijman, and Veld (2000), Moskowitz, Ooi, 
+and Pedersen (2012), and Koijen, Moskowitz, Pedersen, and Vrugt (2012) compute futures returns 
+similarly. All returns are denominated in U.S. dollars  and do not include the return on collateral 
+associated with the futures contract. 
+B. Value and Momentum Measures
+To measure value and momentum, we use the simplest and, to the extent a standard exists, most
+standard measures.  We are not interested in coming up with the best predictors of returns in each 
+asset class.  Rather, our goal is to maintain a simple and fairly uniform approach that is consistent  
+across asset classes and minimizes the pernicious effects of data snooping. As such, if data snooping 
+can be avoided, our results may therefore understate the true gross returns to value and momentum 
+available from more thoughtfully chosen measures. 
+For individual stocks, we use the common value signal of the ratio of the book value of equity to 
+market value of equity, or book-to- market ratio, BE/ME (see Fama and French (1992, 1993) and 
+
+ 8 
+Lakonishok, Shleifer, and Vishny (1994)) of the stock.6 Book values are lagged six months to ensure 
+data availability to investors at the time, and the most recent market values are used to compute the 
+ratios.  For the purposes of this paper, using lagged or contemporary prices, rather than market values 
+matched contemporaneously in time as in Fama and French (1992), is not important.  When using 
+more recent prices in the value measure, the negative correlation between value and momentum is 
+more negative and the value premium is slightly reduced, but our conclus ions are not materially 
+affected.  A combination of value and momentum —one of the themes in this paper —obtains nearly 
+identical pricing results whether lagging price in the value measure or not. Asness and Frazzini 
+(2012) investigate this issue more thoroughly and argue that using contemporaneous market values 
+can be important and ease interpretation when examining value in the presence of momentum, as we 
+do in this paper.  Gerakos and Linnainmaa (2012) decompose value into book and market 
+components and find that the market value of equity drives most of the relevant pricing information. 
+For momentum, we use the common measure of the past 12 month cumulative raw return on the 
+asset (see Jegadeesh and Titman (1993) , Asness (1994), Fama and French (1996), and Grinblatt and 
+Moskowitz (2004)), skipping the most recent month’s return, MOM2-12. We skip the most recent 
+month, which is standard in the momentum literature,  to avoid the one month reversal in stock 
+returns, which may be related to liquidity or microstructure issues (Jegadeesh (1990), Lo and 
+MacKinaly (1990), Boudoukh, Richardson, and Whitelaw (1994), Asness (1994), Grinblatt and 
+Moskowitz (2004)).
+7  
+For all other asset classes, we attempt to define similar value and momentum meas ures. 
+Momentum is straightforward since we can use the same measure for all asset classes, namely the 
+return over the past 12 months skipping the most recent month. While excluding the most recent 
+month of returns is not necessary for some of the other ass et classes we consider because they suffer 
+6 While research has shown that there are other value measures that are more powerful for predicting stock returns 
+(e.g., Lakonishok, Shleifer, and Vishny (1994), Asness, Porter, and Stevens (2000), Piotroski (2000)), we maintain a 
+basic and simple approach that is somewhat consistent across asset classes.  
+7 Novy-Marx (2011) shows that the past 7 to 12 month return is a better momentum predictor in U.S. stocks than the 
+past 2 to 6 month return, though the past 2  to 6 month return is still a positive predictor.  We use the more standard 
+momentum measure based on the past 2  to 12 month return for several reasons.   First, as Novy-Marx (2011) shows, 
+the benefit of using returns from the past 7  to 12 months as opposed to the entire 2 to 12 month past return is 
+negligible in U.S. stocks.   Second, Goyal and Wahal (2012) examine the power of past 7 –to-12 versus past 2  to 6 
+month returns across 36 countries and find that there is no significant difference between these past return predictors 
+in 35 out of 36 countries —the exception being the U.S..   Third, MOM2-12 is the established momentum signal that 
+has worked well out of sample across time and geography and been studied by many authors.  While we believe 
+using MOM2-12 is the most prudent and reasonable measure to use for these reasons, using other momentum 
+signals, such as MOM7-12, should not alter any of our conclusions. 
+
+ 9 
+less from liquidity issues (e.g., equity index futures and currencies), we do so to maintain uniformity 
+across asset classes.  Momentum returns for these asset classes are in fact stronger when we don’t 
+skip the most recent month, hence our results are conservative. 
+For measures of value, attaining uniformity is more difficult because not all asset classes have a 
+measure of “book value.” For these assets, we try to use simple and consistent measures of value. For 
+country indices, we aggregate up the individual stocks’ BE/ME  ratios by computing the average 
+value weighted BE/ME among the index constituents of the country. This number matche s very 
+closely the BE/ME ratios reported by MSCI for our country indices over our sample period. For 
+commodities, we define “book value” as the spot price five  years ago, which we divide by the most 
+recent spot price  to get our value measure , which is essen tially the negative of the  spot return over 
+the last five years. Similarly, for currenc ies, our value measure is the negative of the five  year return 
+on the exchange rate, taking into account the interest earned measured using local 3 month LIBOR 
+rates.  The currency value measure is equivalently the five  year deviation from uncovered interest -
+rate parity, or, assuming that real rates are constant across countries, it is a five  year change in 
+purchasing power parity. For bonds, we similarly use the negative of the past five  year return as our 
+value measure. The use of  past five year returns as measures of value is motivated by DeBondt and 
+Thaler (1985), who use similar measures for individual stocks to identify “ cheap” and “expensive” 
+firms. Fama and French (1996) show that the negative of the past five year return generates portfolios 
+that are highly correlated with portfolios  formed on BE/ME, and Gerakos and Linnainmaa (2012) 
+document a direct link between pas t returns and BE/ME ratios.  Theory also suggests a link between 
+long-term returns and book-to -market value measures (e.g., Daniel, Hirshleifer, and Subrahmanyam 
+(1998), Barberis, Shleifer, and Vishny (1998), Hong and Stein (1999), and Vayanos and Wooley  
+(2011)).   
+In the Internet A ppendix accompanying this paper, Table A1 shows that individual stock 
+portfolios formed from the negative of past five  year returns are highly correlated with those formed 
+on BE/ME ratios in our sample.  For example, among U.S. stocks the returns to a value factor formed 
+from the negative of the past five  year return is 0.83 correlated with the return s formed from BE/ME 
+sorts. In the U.K., Europe, and Japan the correlation between portfolio returns formed on negative 
+past five year returns and BE/ME ratios is similarly high. Globally, a value factor averaged across all 
+four stock markets estimated from negative past five  year return sorts has a 0 .86 correlation with a 
+value factor formed from BE/ME sorts.  Hence, using past five year returns to measure value seems 
+reasonable.   
+
+ 10 
+C. Value and Momentum Portfolios: 48 New Test Assets
+Using the measures above, w e construct a set of value and momentum portfolios within each
+market and asset class by ranking securities within each asset class by value or momentum and 
+sorting them into three equal groups.  W e then form three portfolios—high, middle, and low —from 
+these groups, where for individual stocks  we value weight the returns in the portfolios by their 
+beginning of month market capitalization, and f or the non-stock asset classes we equal weight  
+securities.8  Given that our sample of stocks focuses exclusively on very large and liquid securities in 
+each market, typically the largest quintile of securi ties, further value weighting the securities within 
+this universe creates an extremely large and liquid set of portfolios that should yield very 
+conservative results compared to typical portfolios used in the literature.  Thus, we generate three 
+portfolios—low, middle, and high—for  each of the two characteristics —value and momentum —in 
+each of the eight asset classes, producing 3 × 2 × 8 = 48 test portfolios.   
+D. Value and Momentum Factors
+We also construct value and momentum factors for each asset class, which are zero cost long-
+short portfolios that use the entire cross  section of securities within an asset class . For any security 
+i=1,…,N at time t with signal S it (value or momentum), we weight securities in proportion  to their 
+cross-sectional rank based on the signal minus the cross -sectional average rank  of that signal.  
+Simply using ranks of the signals as portfolio weights helps mitigate the influence of outliers, but 
+portfolios constructed using the raw signals are similar and generate slightly better performance. 
+Specifically, the weight on security i at time t is 
+( ) ( ) (rank  –  rank / ),S
+it t it i itw c S SN= Σ ( 1) 
+where the weights across all stocks sum to zero, representing a dollar neutral long-short portfolio. We 
+include a scaling factor ct such that the overall portfolio is scaled to one dollar long and one dollar 
+short. The return on the portfolio is then, 
+ , where (value, momentum).SS
+t i it itr wr S= Σ∈  (2) 
+We also construct a 50/50 equal combination ( COMBO) factor of value and momentum, whose 
+returns are 
+ 0.5  0.5 .COMBO VALUE MOM
+t ttr rr = +  (3) 
+8 Weighting the non-stock asset classes by their ex ante volatility gives similar results. In addition, rebalancing back 
+to equal weights annually rather than monthly produces similar results. 
+
+ 11 
+These zero cost signal weighted portfolios are another way to examine the efficacy of value and 
+momentum across markets and are used as factors in our pricing model .  Although these factors are 
+not value weighted, the set of securities used to generate them are extremely large and liquid.  As we 
+will show, the signal  weighted factor portfolios outperform simple portfolio sort spreads because 
+security weights are a positive (linear) function of the signal, as opposed to the coarseness of only 
+classifying securities into three groups. In addition, the factors are better diversified since all 
+securities in the cross section are given non-zero weight.   
+II. Value and Momentum Returns and Co-movement
+Table I shows the consistent performance of value  and momentum, and the ir combination, 
+within each of the major markets and asset classes we study. O ther studies examine value and 
+momentum in some of the same asset classes, but to our knowledge we are the first to study them in 
+combination and simultaneously across asset classes. In addition, w e also discover new evidence for 
+value and momentum premia in asset classes not previously studied—both value and momentum in 
+government bonds and value effects in currencies and commodities . Our emphasis, however, is on 
+the power of applying value and momentum everywhere at once.   
+A. Return Premia
+Table I reports the annualized mean return, t-statistic of the mean, standard deviation, and
+Sharpe ratio of the low (P1), middle (P2), and high (P3) portfolios for value and momentum in each 
+market and asset class as well as the high minus low (P3-P1) spread portfolio and the signal weighted 
+factor portfolio from equation (2).  Also reported are the intercepts or alphas, and their t -statistics (in 
+parentheses) from a time  series regression of each return series on the return of the market index for 
+each asset class. The market index for the stock strategies is the MSCI equity index for each country, 
+for country index futures  it is the MSCI World Index, and for currencies, fixed income, and 
+commodities, the benchmark is an equal weighted basket of the securities in each asset class. The last 
+two columns of Table I report the same statistics for the 50/50 combination of value and momentum 
+for the P3-P1 spread and signal  weighted factors and the last row for each asset class reports the 
+correlation of returns between value and momentum for both the P3-P1zero cost spread portfolio and 
+the signal-weighted factor returns. 
+Panel A of Table I  reports results for each of the individual stock strategies. Consistent with 
+results in the literature, there is a significant return premium for value in every stock market, with the 
+strongest performance in Japan.  Momentum premia are also positive in every market, especially in 
+
+ 12 
+Europe, but are statistically insignificant in Japan. As the last row for each market indicates, the 
+correlation between value and momentu m returns is strongly negative, averaging about -0.60. 
+Combining two positive return strategies with such strong negative corr elation to each other 
+increases Sharpe ratio s significantly.  In every market, the value/ momentum comb ination 
+outperforms either value or momentum by itself.  Hence, many theories attempting to explain the 
+observed Sharpe ratio for value or momentum have a higher hurdle to meet if considering a simple 
+linear combination of both.  
+In addition, the combination of value and momentum is much more stable across markets. For 
+instance, previous research attempting to explain why momentum does not seem to work very well in 
+Japan (see Chui, Titman, and Wei (2010) for a behavioral explanation related to cultural biases) 
+should confront the fact that value has performed exceptionally well in Japan during the same time 
+period, and the fact that value and momentum are -0.64 correlated in Japan over this period.  So, 
+rather than explain why momentum did not work in Japan, it would be nearly equally appropriate to 
+ask why value did so well  (see Asness (2011)).  Moreover, an equal combination of value and 
+momentum realizes an even higher Sharpe ratio than value alone in Japan, suggesting that a positive 
+weight on momentum in Japan improves the efficient frontier, which is also confirmed from a static 
+portfolio optimization. 
+The last set of rows of Panel A of Table I  show the power of combining value and momentum 
+portfolios across markets. We report an average of value, momentum, and their c ombination across 
+all four regions (“ Global stocks”) by weighting each market by the inverse of their ex post sample 
+standard deviation.
+9 Value applied globally generates an annualized Sharpe ratio not much larger 
+than the average of the Sharpe ratios across each market, indicating strong covariation among value 
+strategies across markets. Likewise, momentum applied globally does not produce a Sharpe ratio 
+much larger than the average Sharpe ratio across markets, indicating strong correlation structure 
+among momentum portfolios globally, too. 
+Panel B of Table I  reports the same statistics for the non-stock asset classes.  There are 
+consistent value and momentum return premia in these asset classes as well, including some not 
+9 We compute the monthly standard deviation of returns in each market and weight each market by the inverse of 
+this number, rescaled to sum to one, to form a global portfolio across all markets.  Each market’s dollar contribution 
+to the global portfolio  is therefore proportional to the reciprocal of its measured volatility, but each market 
+contributes an equal fraction to the total volatility of the portfolio, ignoring correlations.  Weighting by total market 
+cap or equal weighting produces nearly identical results, but we use the equal volatility weighting scheme to be 
+consistent with what we do for the non-equity asset classes. 
+
+ 13 
+previously examined (e.g., bonds, value in currencies and commodities). 10  While value and 
+momentum returns vary somewhat across the asset classes, the combination of value and momentum 
+is quite robust  due to a consistent negative correlation between value and momentum within e ach 
+asset class that averages -0.54.  W e also examine a diversified portfolio of value, momentum, and 
+their combination across all asset classes.  Since, the volatilities of the portfolios are vastly different 
+across asset classes—for example, commodity strategies have about four times the volatility of bond 
+strategies—we weight each asset class by the inverse of its ex -post sample volatility, so that each 
+asset class contributes roughly an equal amount to the ex post volatility of the diversified portfolio. 11 
+The diversified portfolio across all asset classes yields small improvements in Sharpe ratios, which 
+suggests the presence of correlation structure in value and momentum returns across these different 
+asset classes.  Models that give ri se to value and momentum returns in equities , such as the 
+production or investment  based theories of Berk, Green, and Naik (1999), Johnson (2002), Gomes, 
+Kogan, and Zhang (2003), Zhang (2005), Sagi and Seasholes (2007), Liu, Whited, and Zhang (2009), 
+Li, Livdan, and Zhang (2009), Belo (2010), Li and Zhang (2010), Liu and Zhang (2008), may not 
+easily apply to other asset classes that yield the same and correlated effects. 
+Combining the stock (Panel A) and non-stock (Panel B) value and momentum strategies across 
+all asset classes produces even larger Sharpe ratios, with the 50/50 value and momentum 
+combination portfolio producing an annual Sharpe ratio of 1.42.  This Sharpe ratio presents an even 
+greater challenge for asset pricing models, which already struggle to explain the magnitude of the 
+U.S. equity premium and value and momentum premi a in U.S. stocks.  Considering value and 
+momentum together and applying them globally across all asset classes, the Sharpe ratio hurdle these 
+pricing models need to explain is several times larger than those found in U.S. equity data alone.   
+B. Alternative Measures
+We use a single measure for value and for momentum for all eight markets we study.  We
+choose the most studied or simplest measure in each case and attempt to maintain uniformity across 
+asset classes, in order to minimize the potential for data mining.  Using these simple, uniform 
+measures results in positive risk premia for value and momentum in ev ery asset class we study, 
+though some of the results are statistically insignificant.  In particular, our weakest results pertain to 
+10 The somewhat weaker returns for the non-stock asset classes would be partially attenuated if transactions costs are 
+considered, since trading costs are typically higher for individual stocks than the futures contracts we examine 
+outside of equities. Therefore, net of trading cost returns would elevate the relative importance of the non -stock 
+strategies. We discuss implementation issues briefly in Section V. 
+11 Using ex ante rolling measures of volatility and covariances yields similar results.  
+
+ 14 
+bonds, which do not produce statistically reliable premia.  However, data mining worries may be 
+weighed against the potenti al improvements from having better measures of value and momentum.  
+For example, take value strategies among bonds.  Using our current measure of value, the five year 
+change in yield, we are only able to produce a Sharpe ratio of 0.18 and an alpha of 1.9% that is not 
+statistically significant ( t-statistic of 1.68).  However, Panel C of Table 1 reports results for value 
+strategies among bonds that use alternative measures, such as the real bond yield, which is the yield 
+on 10 year bonds minus the fi ve year forecast in inflation, and the term spread, which is the yield on 
+10 year bonds minus the short rate.  As Panel C of Table 1 shows, these alternative value measures 
+produce Sharpe ratios of 0.73 and 0.55, respectively, and the t-statistics of their alphas are significant 
+at 2.36 and 2.78.   
+Moreover, we are able to produce even more reliable risk premia when using multiple measures 
+of value that diversify away measurement error or noise across variables. 12  Creating a composite 
+average index of  value measures using all three measures above, produces even stronger results, 
+where the value strategy generates a Sharpe ratio of 0.91 to 1.10 with t -statistics of their alphas being 
+4.40 and 5.48.  These alternative measures of value also blend nicely with our original measure for 
+momentum, where in each case the 50/50 value/momentum combination portfolios also improve with 
+these alternative measures. 
+Hence, our use of single, simple, and uniform value and momentum measures may understate 
+the true returns to these strategies in each asset class.  Nevertheless, we stick with these simple 
+measures to be conservative and to mitigate data mining concerns, even though in the case of bonds 
+the results appear to be insignificant with such simple measures. 
+C. Co-movement Across Asset Classes 
+Table II reports the correlations of value and momentum returns across diverse asset classes  to 
+identify their common movements.  The strength of co-movement may support or challenge vari ous 
+theoretical explanations for value and momentum, and may ultimately point to underlying economic 
+drivers for their returns.  The correlations are computed from the returns of the sig nal weighted zero 
+cost factor portfolios from equation (2), but results are similar using the top third minus bottom third 
+P3-P1 portfolio returns.   
+Panel A of Table II reports the correlations among value strategies and among momentum 
+strategies globally across asset markets.  We first compute the average return series for value and 
+                                                 
+12 Israel and Moskowitz (2012) show how other measures of value and momentum can improve the stability of 
+returns to these styles among individual equities.   
+
+ 15 
+momentum across all stock markets and across all non-stock asset classes separately.  For example, 
+we compute the volatility weighted average of all the individual stock value strategies across the four 
+equity markets—U.S., U.K., Europe, and Japan— and the weighted average of value strategies across 
+the non-equity asset classes —index futures, currencies, bonds, and co mmodities.  We do the same 
+for momentum.  We  then compute the correlation matrix between these average return series.  The 
+diagonal of the correlation matrix is computed as the average correlation between each individual 
+market's return series and the aver age of all other  return series in other markets.  For instance, the 
+first entry in the covariance matrix is the average of the correlations between each equity market’s 
+value strategy and a portfolio of all other equity market value strategies:  an average of the 
+correlation of U.S. value with a diversified value strategy in all other individual equity markets  
+(U.K., Europe, and Japan), correlation of U.K. value with a diversified value strategy in U.S., 
+Europe, and Japan, correlation of Europe value with a  diversified value strategy in U.S., U.K., and 
+Japan, and correlation of Japan value with a diversified value strategy in U.S., U.K., and Europe.  In 
+general, we obtain more powerful statistical findings when looking at the correlations of the average 
+return series rather than the average of individual correlations, since the former better diversifies  
+away random noise from each market, a theme we emphasize throughout the paper. 13  Correlations 
+are computed from quarterly returns  to help mitigate any non-syn chronous trading issues across 
+markets, due to illiquid assets that do not trade continuously or time zone differences .  An F-test on 
+the joint significance of the correlations is also performed. 
+Panel A of Table II  shows a consistent pattern, where value in one market or asset class is 
+positively correlated with value elsewhere, momentum in one market or asset class is positively 
+correlated to momentum elsewhere, and value and momentum are negatively correlated everywhere 
+across markets and asset classes.  The average individual stock value strategy is 0.68 correlated with 
+other stock market value strategies, and is 0.15 correlated with the average non-stock value strategy .  
+The average individual stock momentum strategy is 0.65 correlated with other stock market 
+momentum strategies and 0.37 correlated with the average non-stock momentum strategy. The strong 
+correlation structure among value and momentum strategies across such different assets is interesting 
+                                                 
+13 In the Internet Appendix to the paper, we report in Table A2 the average of the individual correlations among the 
+stock and non- stock value and momentum strategies, where we first compute the pair -wise correlations of all 
+individual strategies (e.g., U.S. value with Japan value) and then take the average for each group.  We exclude the 
+correlation of each strategy with itself (removing the 1’s) when averaging and also exclude the correlation of each 
+strategy with all other strategies within the same market (i.e., exclude U.S. momentum when examinin g U.S. value’s 
+correlation with other momentum strategies).  While these individual correlations are consistently weaker than those 
+obtained from taking averages first and then computing correlations, the average pairwise correlations also exhibit 
+strong co-movement among value and momentum across diverse assets. 
+
+ 16 
+since these asset classes face different types of investors, institutional and market structures, and 
+information environments. 
+Value and momentum are also negatively correlated across asset classes. A value strategy in one 
+stock market is on average -0.53 correlated with a portfolio of momentum strategies in other stock 
+markets.  In addition, value in one asset class is negatively correlated with momentum in another 
+asset class.  For example, the average stock value str

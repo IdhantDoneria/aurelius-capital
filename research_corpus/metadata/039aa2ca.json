@@ -1,0 +1,24 @@
+{
+  "id": "039aa2ca-287b-46ca-a1d7-fdcb49f2f6da",
+  "original_filename": "unsupported.docx",
+  "file_path": "research_corpus/rejected/unsupported.docx",
+  "content_hash": "",
+  "status": "rejected",
+  "stages": [
+    {
+      "stage": "validate",
+      "status": "failed",
+      "message": "Unsupported file type: .docx",
+      "timestamp": "2026-07-30T14:52:02.873531"
+    }
+  ],
+  "paper_metadata": {},
+  "corpus_doc_id": "",
+  "priority_score": 0.0,
+  "experiment_spec": null,
+  "error": "Stage 'validate' failed after retries",
+  "created_at": "2026-07-30T14:52:02.873478",
+  "updated_at": "2026-07-30T14:52:02.873690Z",
+  "retry_count": 0,
+  "processing_seconds": 0.00020920904353260994
+}

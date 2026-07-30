@@ -59,6 +59,14 @@ def _mock_symbol_result(ticker: str = _TICKER, sym_id: UUID = _SYMBOL_ID):
     return result
 
 
+def _mock_multi_symbol_result(tickers: list[str]):
+    """Resolver mock returning several (ticker, id) rows."""
+    rows = [SimpleNamespace(ticker=t, id=uuid4()) for t in tickers]
+    result = MagicMock()
+    result.__iter__ = MagicMock(return_value=iter(rows))
+    return result
+
+
 @pytest.mark.unit
 async def test_empty_batch_returns_zero_report():
     pipeline, _, _ = _make_pipeline()
@@ -188,3 +196,59 @@ async def test_gap_warning_logged():
 
     assert len(report.gap_warnings) == 1
     assert "AAPL" in report.gap_warnings[0]
+
+
+@pytest.mark.unit
+async def test_gaps_attributed_per_symbol_not_across_symbols():
+    """Regression for the grouped gap-detection pass.
+
+    Bars from two symbols are interleaved in input order. Gaps must be computed
+    within each symbol's own series, never across the global interleaved stream.
+    AAPL has an 18-day gap; MSFT is contiguous — exactly one warning, for AAPL.
+    """
+    pipeline, _, mock_session = _make_pipeline()
+    mock_session.execute.return_value = _mock_multi_symbol_result(["AAPL", "MSFT"])
+
+    bars = [
+        _raw_bar(symbol="AAPL", timestamp=datetime(2024, 1, 2, tzinfo=UTC)),
+        _raw_bar(symbol="MSFT", timestamp=datetime(2024, 1, 2, tzinfo=UTC)),
+        _raw_bar(symbol="MSFT", timestamp=datetime(2024, 1, 3, tzinfo=UTC)),
+        _raw_bar(symbol="MSFT", timestamp=datetime(2024, 1, 4, tzinfo=UTC)),
+        _raw_bar(symbol="AAPL", timestamp=datetime(2024, 1, 20, tzinfo=UTC)),  # 18-day gap
+    ]
+
+    with patch("aurelius.market_data.pipeline.ingestion.OHLCVRepository") as mock_repo_class:
+        mock_repo = AsyncMock()
+        mock_repo_class.return_value = mock_repo
+        mock_repo.bulk_insert.return_value = len(bars)
+
+        report = await pipeline.run(bars)
+
+    assert len(report.gap_warnings) == 1
+    assert "AAPL" in report.gap_warnings[0]
+    assert not any("MSFT" in w for w in report.gap_warnings)
+
+
+@pytest.mark.unit
+async def test_multiple_symbols_each_gap_reported_once():
+    """Two symbols each with their own gap → one warning per symbol."""
+    pipeline, _, mock_session = _make_pipeline()
+    mock_session.execute.return_value = _mock_multi_symbol_result(["AAPL", "MSFT"])
+
+    bars = [
+        _raw_bar(symbol="AAPL", timestamp=datetime(2024, 1, 2, tzinfo=UTC)),
+        _raw_bar(symbol="AAPL", timestamp=datetime(2024, 1, 20, tzinfo=UTC)),
+        _raw_bar(symbol="MSFT", timestamp=datetime(2024, 1, 2, tzinfo=UTC)),
+        _raw_bar(symbol="MSFT", timestamp=datetime(2024, 1, 25, tzinfo=UTC)),
+    ]
+
+    with patch("aurelius.market_data.pipeline.ingestion.OHLCVRepository") as mock_repo_class:
+        mock_repo = AsyncMock()
+        mock_repo_class.return_value = mock_repo
+        mock_repo.bulk_insert.return_value = len(bars)
+
+        report = await pipeline.run(bars)
+
+    assert len(report.gap_warnings) == 2
+    assert any("AAPL" in w for w in report.gap_warnings)
+    assert any("MSFT" in w for w in report.gap_warnings)

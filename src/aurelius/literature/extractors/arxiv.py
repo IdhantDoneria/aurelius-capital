@@ -1,4 +1,5 @@
 """arXiv q-fin.* extractor via the public Atom API (no auth required)."""
+
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET

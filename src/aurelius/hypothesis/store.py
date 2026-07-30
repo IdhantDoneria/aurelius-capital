@@ -1,4 +1,5 @@
 """DuckDB-backed hypothesis repository with version history."""
+
 from __future__ import annotations
 
 import json
@@ -11,6 +12,7 @@ import duckdb
 
 from aurelius.core.logging import get_logger
 from aurelius.hypothesis.models import HypothesisRecord
+from aurelius.knowledge import hooks as kg_hooks
 
 logger = get_logger(__name__)
 
@@ -44,7 +46,7 @@ CREATE TABLE IF NOT EXISTS hypotheses (
 
 _CREATE_VERSIONS = """
 CREATE TABLE IF NOT EXISTS hypothesis_versions (
-    hypothesis_id   VARCHAR NOT NULL,
+    hypothesis_id   VARCHAR NOT NULL REFERENCES hypotheses(id),
     version         INTEGER NOT NULL,
     snapshot        VARCHAR NOT NULL,
     changed_at      TIMESTAMPTZ NOT NULL,
@@ -80,9 +82,7 @@ class HypothesisStore:
     def insert(self, h: HypothesisRecord) -> bool:
         """Insert new hypothesis. Returns True if inserted, False if ID already exists."""
         with self._conn() as conn:
-            existing = conn.execute(
-                "SELECT 1 FROM hypotheses WHERE id=?", [h.id]
-            ).fetchone()
+            existing = conn.execute("SELECT 1 FROM hypotheses WHERE id=?", [h.id]).fetchone()
             if existing:
                 return False
             conn.execute(
@@ -90,14 +90,13 @@ class HypothesisStore:
                 self._to_row(h),
             )
             self._save_version(conn, h)
+            kg_hooks.on_hypothesis(h)
             return True
 
     def update(self, h: HypothesisRecord) -> None:
         """Update hypothesis, increment version, save version snapshot."""
         with self._conn() as conn:
-            current = conn.execute(
-                "SELECT version FROM hypotheses WHERE id=?", [h.id]
-            ).fetchone()
+            current = conn.execute("SELECT version FROM hypotheses WHERE id=?", [h.id]).fetchone()
             if current is None:
                 raise KeyError(f"Hypothesis {h.id} not found")
             h.version = current[0] + 1
@@ -113,25 +112,36 @@ class HypothesisStore:
                     generation_method=?, rejection_reason=?
                 WHERE id=?""",
                 [
-                    json.dumps(h.parent_papers), h.research_category,
-                    h.economic_intuition, h.testable_statement, h.expected_behavior,
-                    json.dumps(h.asset_classes), json.dumps(h.required_datasets),
-                    json.dumps(h.required_features), h.holding_period,
-                    json.dumps(h.expected_risks), h.confidence_score,
-                    json.dumps(h.assumptions), json.dumps(h.dependencies),
-                    json.dumps(h.validation_requirements), json.dumps(h.similar_to),
-                    h.status, h.version, h.updated_at, h.researcher,
-                    h.generation_method, h.rejection_reason,
+                    json.dumps(h.parent_papers),
+                    h.research_category,
+                    h.economic_intuition,
+                    h.testable_statement,
+                    h.expected_behavior,
+                    json.dumps(h.asset_classes),
+                    json.dumps(h.required_datasets),
+                    json.dumps(h.required_features),
+                    h.holding_period,
+                    json.dumps(h.expected_risks),
+                    h.confidence_score,
+                    json.dumps(h.assumptions),
+                    json.dumps(h.dependencies),
+                    json.dumps(h.validation_requirements),
+                    json.dumps(h.similar_to),
+                    h.status,
+                    h.version,
+                    h.updated_at,
+                    h.researcher,
+                    h.generation_method,
+                    h.rejection_reason,
                     h.id,
                 ],
             )
             self._save_version(conn, h)
+            kg_hooks.on_hypothesis(h)
 
     def get(self, hypothesis_id: str) -> HypothesisRecord | None:
         with self._conn() as conn:
-            row = conn.execute(
-                "SELECT * FROM hypotheses WHERE id=?", [hypothesis_id]
-            ).fetchone()
+            row = conn.execute("SELECT * FROM hypotheses WHERE id=?", [hypothesis_id]).fetchone()
             return self._row_to_record(row) if row else None
 
     def search(
@@ -149,9 +159,7 @@ class HypothesisStore:
         params: list = []
 
         if query:
-            clauses.append(
-                "(testable_statement ILIKE ? OR economic_intuition ILIKE ?)"
-            )
+            clauses.append("(testable_statement ILIKE ? OR economic_intuition ILIKE ?)")
             params += [f"%{query}%", f"%{query}%"]
         if category:
             clauses.append("research_category = ?")
@@ -207,7 +215,7 @@ class HypothesisStore:
 
     def stats(self) -> dict:
         with self._conn() as conn:
-            total = conn.execute("SELECT COUNT(*) FROM hypotheses").fetchone()[0]
+            total = conn.execute("SELECT COUNT(*) FROM hypotheses").fetchone()[0]  # type: ignore[index]
             by_status = conn.execute(
                 "SELECT status, COUNT(*) FROM hypotheses GROUP BY status ORDER BY status"
             ).fetchall()
@@ -228,11 +236,16 @@ class HypothesisStore:
     # ── helpers ───────────────────────────────────────────────────────────────
 
     def _save_version(self, conn: duckdb.DuckDBPyConnection, h: HypothesisRecord) -> None:
-        snapshot = json.dumps({
-            "id": h.id, "testable_statement": h.testable_statement,
-            "economic_intuition": h.economic_intuition, "status": h.status,
-            "version": h.version, "researcher": h.researcher,
-        })
+        snapshot = json.dumps(
+            {
+                "id": h.id,
+                "testable_statement": h.testable_statement,
+                "economic_intuition": h.economic_intuition,
+                "status": h.status,
+                "version": h.version,
+                "researcher": h.researcher,
+            }
+        )
         conn.execute(
             "INSERT OR REPLACE INTO hypothesis_versions VALUES (?,?,?,?)",
             [h.id, h.version, snapshot, datetime.now(UTC)],
@@ -240,25 +253,56 @@ class HypothesisStore:
 
     def _to_row(self, h: HypothesisRecord) -> list:
         return [
-            h.id, json.dumps(h.parent_papers), h.research_category,
-            h.economic_intuition, h.testable_statement, h.expected_behavior,
-            json.dumps(h.asset_classes), json.dumps(h.required_datasets),
-            json.dumps(h.required_features), h.holding_period,
-            json.dumps(h.expected_risks), h.confidence_score,
-            json.dumps(h.assumptions), json.dumps(h.dependencies),
-            json.dumps(h.validation_requirements), json.dumps(h.similar_to),
-            h.status, h.version, h.created_at, h.updated_at,
-            h.researcher, h.generation_method, h.rejection_reason,
+            h.id,
+            json.dumps(h.parent_papers),
+            h.research_category,
+            h.economic_intuition,
+            h.testable_statement,
+            h.expected_behavior,
+            json.dumps(h.asset_classes),
+            json.dumps(h.required_datasets),
+            json.dumps(h.required_features),
+            h.holding_period,
+            json.dumps(h.expected_risks),
+            h.confidence_score,
+            json.dumps(h.assumptions),
+            json.dumps(h.dependencies),
+            json.dumps(h.validation_requirements),
+            json.dumps(h.similar_to),
+            h.status,
+            h.version,
+            h.created_at,
+            h.updated_at,
+            h.researcher,
+            h.generation_method,
+            h.rejection_reason,
         ]
 
     def _row_to_record(self, row: tuple) -> HypothesisRecord:
         (
-            id_, parent_papers_j, research_category, economic_intuition,
-            testable_statement, expected_behavior, asset_classes_j,
-            required_datasets_j, required_features_j, holding_period,
-            expected_risks_j, confidence_score, assumptions_j, dependencies_j,
-            validation_requirements_j, similar_to_j, status, version,
-            created_at, updated_at, researcher, generation_method, rejection_reason,
+            id_,
+            parent_papers_j,
+            research_category,
+            economic_intuition,
+            testable_statement,
+            expected_behavior,
+            asset_classes_j,
+            required_datasets_j,
+            required_features_j,
+            holding_period,
+            expected_risks_j,
+            confidence_score,
+            assumptions_j,
+            dependencies_j,
+            validation_requirements_j,
+            similar_to_j,
+            status,
+            version,
+            created_at,
+            updated_at,
+            researcher,
+            generation_method,
+            rejection_reason,
         ) = row
 
         def _ts(v) -> datetime:

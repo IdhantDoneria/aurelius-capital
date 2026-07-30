@@ -18,6 +18,7 @@ from pathlib import Path
 import duckdb
 
 from aurelius.core.logging import get_logger
+from aurelius.knowledge import hooks as kg_hooks
 from aurelius.research.models import ExperimentRecord, Hypothesis, Verdict
 
 logger = get_logger(__name__)
@@ -36,7 +37,7 @@ CREATE TABLE IF NOT EXISTS hypotheses (
 _CREATE_EXPERIMENTS = """
 CREATE TABLE IF NOT EXISTS experiments (
     id               VARCHAR     PRIMARY KEY,
-    hypothesis_id    VARCHAR     NOT NULL,
+    hypothesis_id    VARCHAR     NOT NULL REFERENCES hypotheses(id),
     researcher       VARCHAR     NOT NULL,
     created_at       TIMESTAMPTZ NOT NULL,
     dataset_version  VARCHAR     NOT NULL,
@@ -176,6 +177,7 @@ class ResearchStore:
             verdict=r.verdict.value,
             oos_sharpe=round(r.oos_sharpe, 3),
         )
+        kg_hooks.on_experiment(rec)
 
     def experiments_for(self, hypothesis_id: str) -> list[dict]:
         return self._query(

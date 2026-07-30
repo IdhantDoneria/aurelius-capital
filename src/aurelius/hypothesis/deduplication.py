@@ -3,6 +3,7 @@
 Three tiers based on Jaccard similarity of testable_statement word sets.
 No ML dependencies. Fast enough for 10k hypotheses.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -18,15 +19,15 @@ _VARIATION_THRESHOLD = 0.40
 
 class DuplicateStatus(StrEnum):
     UNIQUE = "unique"
-    VARIATION = "variation"          # 0.40–0.69: note it, allow insert
-    NEAR_DUPLICATE = "near_duplicate"  # 0.70–0.99: flag for human review
-    DUPLICATE = "duplicate"          # 1.0: block insert
+    VARIATION = "variation"  # 0.40-0.69: note it, allow insert
+    NEAR_DUPLICATE = "near_duplicate"  # 0.70-0.99: flag for human review
+    DUPLICATE = "duplicate"  # 1.0: block insert
 
 
 @dataclass
 class DuplicateResult:
     status: DuplicateStatus
-    similar_ids: list[str]           # IDs of similar/duplicate hypotheses
+    similar_ids: list[str]  # IDs of similar/duplicate hypotheses
     max_similarity: float
 
 

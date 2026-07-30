@@ -44,20 +44,34 @@ class ComprehensiveReport:
     robustness: RobustnessAssessment
 
     # ── parameter sensitivity ─────────────────────────────────────────────────
-    param_cv: float | None              # None if no param grid was provided
+    param_cv: float | None  # None if no param grid was provided
     param_sensitivity_metric: str = "sharpe_ratio"
 
     # ── promotion ─────────────────────────────────────────────────────────────
-    promotion: PromotionDecision = field(default_factory=lambda: PromotionDecision(
-        state=__import__("aurelius.validation.promotion", fromlist=["PromotionState"]).PromotionState.REJECTED,
-        evidence=[], blocking_issues=[], confidence_score=0.0, next_steps=[],
-    ))
+    promotion: PromotionDecision = field(
+        default_factory=lambda: PromotionDecision(
+            state=__import__(
+                "aurelius.validation.promotion", fromlist=["PromotionState"]
+            ).PromotionState.REJECTED,
+            evidence=[],
+            blocking_issues=[],
+            confidence_score=0.0,
+            next_steps=[],
+        )
+    )
 
     # ── auditability ──────────────────────────────────────────────────────────
-    audit: AuditRecord = field(default_factory=lambda: AuditRecord(
-        validated_at=datetime.utcnow(), python_version="", platform="",
-        aurelius_commit="", config_hash="", dataset_fingerprint="", random_seed=0,
-    ))
+    audit: AuditRecord = field(
+        default_factory=lambda: AuditRecord(
+            validated_at=datetime.utcnow(),
+            python_version="",
+            platform="",
+            aurelius_commit="",
+            config_hash="",
+            dataset_fingerprint="",
+            random_seed=0,
+        )
+    )
 
     # ── narrative ─────────────────────────────────────────────────────────────
     known_weaknesses: list[str] = field(default_factory=list)
@@ -79,52 +93,57 @@ class ComprehensiveReport:
                 return obj.value
             return str(obj)
 
-        return json.loads(json.dumps({
-            "experiment_id": self.experiment_id,
-            "hypothesis_id": self.hypothesis_id,
-            "researcher": self.researcher,
-            "validated_at": self.validated_at.isoformat(),
-            "metrics": asdict(self.metrics),
-            "statistical_evidence": {
-                "sharpe_bootstrap_ci_95": {
-                    "lower": self.sharpe_bootstrap.ci_lower,
-                    "observed": self.sharpe_bootstrap.observed,
-                    "upper": self.sharpe_bootstrap.ci_upper,
-                    "bias": self.sharpe_bootstrap.bias,
-                    "n_samples": self.sharpe_bootstrap.n_samples,
+        return json.loads(
+            json.dumps(
+                {
+                    "experiment_id": self.experiment_id,
+                    "hypothesis_id": self.hypothesis_id,
+                    "researcher": self.researcher,
+                    "validated_at": self.validated_at.isoformat(),
+                    "metrics": asdict(self.metrics),
+                    "statistical_evidence": {
+                        "sharpe_bootstrap_ci_95": {
+                            "lower": self.sharpe_bootstrap.ci_lower,
+                            "observed": self.sharpe_bootstrap.observed,
+                            "upper": self.sharpe_bootstrap.ci_upper,
+                            "bias": self.sharpe_bootstrap.bias,
+                            "n_samples": self.sharpe_bootstrap.n_samples,
+                        },
+                        "permutation_pvalue": self.permutation.pvalue,
+                        "permutation_n": self.permutation.n_permutations,
+                        "bonferroni_adj_pvalue": self.bonferroni_adj_pvalue,
+                        "n_trials": self.n_trials,
+                    },
+                    "robustness": {
+                        "is_robust": self.robustness.is_robust,
+                        "regime_consistent": self.robustness.regime_consistent,
+                        "tc_breakeven_bps": self.robustness.tc_sweep.breakeven,
+                        "slippage_breakeven_bps": self.robustness.slippage_sweep.breakeven,
+                        "walk_forward_cv": self.robustness.walk_forward_cv,
+                        "walk_forward_sharpes": self.robustness.walk_forward_sharpes,
+                        "worst_fold_sharpe": self.robustness.worst_fold_sharpe,
+                        "regime_stats": [asdict(r) for r in self.robustness.regime_stats],
+                        "weaknesses": self.robustness.weaknesses,
+                        "strengths": self.robustness.strengths,
+                    },
+                    "parameter_sensitivity": {
+                        "cv": self.param_cv,
+                        "metric": self.param_sensitivity_metric,
+                    },
+                    "promotion": {
+                        "state": self.promotion.state.value,
+                        "confidence_score": self.promotion.confidence_score,
+                        "evidence": self.promotion.evidence,
+                        "blocking_issues": self.promotion.blocking_issues,
+                        "next_steps": self.promotion.next_steps,
+                    },
+                    "audit": self.audit.to_dict(),
+                    "known_weaknesses": self.known_weaknesses,
+                    "known_strengths": self.known_strengths,
                 },
-                "permutation_pvalue": self.permutation.pvalue,
-                "permutation_n": self.permutation.n_permutations,
-                "bonferroni_adj_pvalue": self.bonferroni_adj_pvalue,
-                "n_trials": self.n_trials,
-            },
-            "robustness": {
-                "is_robust": self.robustness.is_robust,
-                "regime_consistent": self.robustness.regime_consistent,
-                "tc_breakeven_bps": self.robustness.tc_sweep.breakeven,
-                "slippage_breakeven_bps": self.robustness.slippage_sweep.breakeven,
-                "walk_forward_cv": self.robustness.walk_forward_cv,
-                "walk_forward_sharpes": self.robustness.walk_forward_sharpes,
-                "worst_fold_sharpe": self.robustness.worst_fold_sharpe,
-                "regime_stats": [asdict(r) for r in self.robustness.regime_stats],
-                "weaknesses": self.robustness.weaknesses,
-                "strengths": self.robustness.strengths,
-            },
-            "parameter_sensitivity": {
-                "cv": self.param_cv,
-                "metric": self.param_sensitivity_metric,
-            },
-            "promotion": {
-                "state": self.promotion.state.value,
-                "confidence_score": self.promotion.confidence_score,
-                "evidence": self.promotion.evidence,
-                "blocking_issues": self.promotion.blocking_issues,
-                "next_steps": self.promotion.next_steps,
-            },
-            "audit": self.audit.to_dict(),
-            "known_weaknesses": self.known_weaknesses,
-            "known_strengths": self.known_strengths,
-        }, default=_default))
+                default=_default,
+            )
+        )
 
     def to_markdown(self) -> str:
         m = self.metrics
@@ -134,19 +153,19 @@ class ComprehensiveReport:
 
         lines: list[str] = [
             f"# Validation Report — {self.experiment_id}",
-            f"",
+            "",
             f"**Hypothesis:** `{self.hypothesis_id}`  ",
             f"**Researcher:** {self.researcher}  ",
             f"**Validated:** {self.validated_at.strftime('%Y-%m-%d %H:%M UTC')}  ",
             f"**Commit:** `{self.audit.aurelius_commit}`  ",
-            f"",
-            f"---",
-            f"",
-            f"## Promotion Decision",
-            f"",
+            "",
+            "---",
+            "",
+            "## Promotion Decision",
+            "",
             f"**State:** `{p.state.value.upper()}`  ",
             f"**Confidence Score:** {p.confidence_score:.2f} / 1.00  ",
-            f"",
+            "",
         ]
 
         if p.blocking_issues:
@@ -162,8 +181,8 @@ class ComprehensiveReport:
             "",
             "## Performance Metrics",
             "",
-            f"| Metric | Value |",
-            f"|---|---|",
+            "| Metric | Value |",
+            "|---|---|",
             f"| Total Return | {m.total_return:+.2%} |",
             f"| CAGR | {m.cagr:+.2%} |",
             f"| Annualized Volatility | {m.annualized_volatility:.2%} |",
@@ -177,49 +196,51 @@ class ComprehensiveReport:
             f"| Profit Factor | {m.profit_factor:.2f} |",
             f"| Expectancy | {m.expectancy:+.2f} |",
             f"| Annual Turnover | {m.annual_turnover:.1f}x |",
-            f"",
-            f"### Tail Risk",
-            f"",
-            f"| Metric | Value |",
-            f"|---|---|",
+            "",
+            "### Tail Risk",
+            "",
+            "| Metric | Value |",
+            "|---|---|",
             f"| VaR 95% (1-day) | {m.var_95:.2%} |",
             f"| VaR 99% (1-day) | {m.var_99:.2%} |",
             f"| CVaR 95% (1-day) | {m.cvar_95:.2%} |",
             f"| Skewness | {m.skewness:.3f} |",
             f"| Excess Kurtosis | {m.excess_kurtosis:.3f} |",
             f"| Tail Ratio | {m.tail_ratio:.2f} |",
-            f"",
-            f"### Cost Analysis",
-            f"",
-            f"| Metric | Value |",
-            f"|---|---|",
+            "",
+            "### Cost Analysis",
+            "",
+            "| Metric | Value |",
+            "|---|---|",
             f"| TC Drag | {m.tc_drag_bps:.1f} bps/yr |",
             f"| Slippage Drag | {m.slippage_drag_bps:.1f} bps/yr |",
-            f"| Capacity Estimate | {'%.0f' % m.capacity_estimate_mm + ' $M' if m.capacity_estimate_mm > 0 else 'unknown'} |",
-            f"",
+            f"| Capacity Estimate | {f'{m.capacity_estimate_mm:.0f} $M' if m.capacity_estimate_mm > 0 else 'unknown'} |",
+            "",
             "---",
             "",
             "## Statistical Evidence",
             "",
-            f"| Test | Value |",
-            f"|---|---|",
+            "| Test | Value |",
+            "|---|---|",
             f"| Bootstrap Sharpe CI 95% | [{bs.ci_lower:.3f}, {bs.ci_upper:.3f}] |",
             f"| Bootstrap Bias | {bs.bias:+.3f} |",
-            f"| Permutation p-value | {self.permutation.pvalue:.4f} (n={self.permutation.n_permutations}) |",
-            f"| Bonferroni adj p-value | {self.bonferroni_adj_pvalue:.4f} (n_trials={self.n_trials}) |",
-            f"",
+            f"| Permutation p-value | {self.permutation.pvalue:.4f} "
+            f"(n={self.permutation.n_permutations}) |",
+            f"| Bonferroni adj p-value | {self.bonferroni_adj_pvalue:.4f} "
+            f"(n_trials={self.n_trials}) |",
+            "",
             "---",
             "",
             "## Robustness Assessment",
             "",
             f"**Overall Robust:** {'Yes' if r.is_robust else 'No'}  ",
-            f"",
+            "",
             f"### Walk-Forward ({len(r.walk_forward_sharpes)} folds)",
-            f"",
+            "",
             f"Sharpes: {[round(s, 3) for s in r.walk_forward_sharpes]}  ",
             f"CV: {r.walk_forward_cv:.3f}  ",
             f"Worst fold: {r.worst_fold_sharpe:.3f}  ",
-            f"",
+            "",
             "### Regime Performance",
             "",
         ]
@@ -229,7 +250,8 @@ class ComprehensiveReport:
                 "| Regime | N Days | Sharpe | Return | Max DD |",
                 "|---|---|---|---|---|",
                 *[
-                    f"| {rs.label} | {rs.n_days} | {rs.sharpe:.3f} | {rs.total_return:.2%} | {rs.max_drawdown:.2%} |"
+                    f"| {rs.label} | {rs.n_days} | {rs.sharpe:.3f} | {rs.total_return:.2%} | "
+                    f"{rs.max_drawdown:.2%} |"
                     for rs in r.regime_stats
                 ],
                 "",
@@ -265,8 +287,8 @@ class ComprehensiveReport:
             "",
             "## Audit Trail",
             "",
-            f"| Field | Value |",
-            f"|---|---|",
+            "| Field | Value |",
+            "|---|---|",
             f"| Python | {self.audit.python_version.split()[0]} |",
             f"| Git Commit | `{self.audit.aurelius_commit}` |",
             f"| Config Hash | `{self.audit.config_hash}` |",

@@ -1,0 +1,199 @@
+{
+  "id": "efd85329-951b-4c4b-be45-6bc63a4bdd8c",
+  "original_filename": "Asness_Moskowitz_Pedersen_2013_Value_and_Momentum_Everywhere.pdf",
+  "file_path": "research_corpus/processed/Asness_Moskowitz_Pedersen_2013_Value_and_Momentum_Everywhere.pdf",
+  "content_hash": "ce867193872adbf5db2ab230c87d3dcc8516314d9ca033723532653cb3b47e21",
+  "status": "completed",
+  "stages": [
+    {
+      "stage": "validate",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:48.276668"
+    },
+    {
+      "stage": "assign_id",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:48.855688"
+    },
+    {
+      "stage": "move_to_processing",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:48.855987"
+    },
+    {
+      "stage": "extract_metadata",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.290831"
+    },
+    {
+      "stage": "classify",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.290968"
+    },
+    {
+      "stage": "store_corpus",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.302772"
+    },
+    {
+      "stage": "update_kg",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.638409"
+    },
+    {
+      "stage": "score",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.638631"
+    },
+    {
+      "stage": "plan_experiment",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.639745"
+    },
+    {
+      "stage": "archive",
+      "status": "success",
+      "message": "",
+      "timestamp": "2026-07-30T10:21:50.639973"
+    }
+  ],
+  "paper_metadata": {
+    "title": "Value and Momentum Everywhere",
+    "authors": [
+      "Asness",
+      "Clifford S.; Moskowitz",
+      "Tobias; Heje Pedersen",
+      "Lasse"
+    ],
+    "year": 2026,
+    "doi": "10.1111/jofi.12021",
+    "arxiv_id": "",
+    "abstract": "indicate the \npresence of common global risks that we characterize with a three factor model . G lobal funding \nliquidity risk is a partial source of these patterns, which are identifiable only when examining value \nand momentum  simultaneously across markets .  Our findings  present a challenge to ",
+    "methodology": "",
+    "results": "indicate the \npresence of common global risks that we characterize with a three factor model . G lobal funding \nliquidity risk is a partial source of these patterns, which are identifiable only when examining value \nand momentum  simultaneously across markets .  Our findings  present a challenge to existing \nbehavioral, institutional, and rational asset pricing theories that largely focus on U.S. equities. \n∗Asness is at AQR Capital Management. Moskowitz is at the University of Chicago Booth School of Business and NBER  and is a consultant to AQR Capital. Pedersen is at the New York University Stern School of Business, \nCopenhagen \nBusiness School, AQR, CEPR, FRIC, and NBER. We thank Aaron Brown, John Cochrane, Kent \nDaniel, \nGene Fama, Kenneth French, Cam Harvey (the editor), Ronen Israel, Robert Krail, John Liew, Harry \nMamaysky, Michael Mendelson, Stefan Nagel, Lars Nielsen, Otto Van Hemert, Jeff Wurgler, and an anonymous \nreferee \nfor helpful comments, as well as seminar participants at the University of Chicago, Princeton University, Duke \nUniversity, \nthe Danish Society of Financial Analysts with Henrik Amilon and Asbjørn Trolle as discussants, and the \nNBER Summer Institute Asset Pricing Meetings with Kent Daniel as a discussant.  We also thank Radhika Gupta, \nKelvin \nHu, Sarah Jiang, Adam Klein, Ari Levine, Len Lorilla, Wes McKinney, and Karthik Sridharan for research \nassistance.  AQR Capital invests in, among other things, value and momentum strategies.  The views e",
+    "conclusion": "",
+    "datasets_mentioned": [
+      "CRSP",
+      "Compustat",
+      "Bloomberg",
+      "Ken French",
+      "Russell",
+      "MSCI",
+      "Fama-French",
+      "Datastream"
+    ],
+    "features_mentioned": [
+      "momentum",
+      "value",
+      "size",
+      "profitability",
+      "volatility",
+      "beta",
+      "idiosyncratic",
+      "factor",
+      "signal",
+      "alpha",
+      "Sharpe",
+      "turnover",
+      "liquidity",
+      "sentiment"
+    ],
+    "statistical_tests": [
+      "t-statistic",
+      "p-value",
+      "Sharpe ratio",
+      "alpha",
+      "beta",
+      "regression",
+      "panel",
+      "Fama-MacBeth"
+    ],
+    "reference_count": 2,
+    "word_count": 29569,
+    "source_file": "Asness_Moskowitz_Pedersen_2013_Value_and_Momentum_Everywhere.pdf",
+    "_score": {
+      "paper_id": "doc_42944c3deca0",
+      "novelty": 1.0,
+      "influence": 0.42400000000000004,
+      "reproducibility": 0.65,
+      "dataset_availability": 0.625,
+      "expected_value": 1.0,
+      "engineering_effort": 7.8,
+      "total": 6.91,
+      "rationale": "novelty=1.00 influence=0.42 reproducibility=0.65 dataset_avail=0.62 expected_value=1.00 effort=7.80"
+    }
+  },
+  "corpus_doc_id": "doc_42944c3deca0",
+  "priority_score": 6.91,
+  "experiment_spec": {
+    "paper_id": "doc_42944c3deca0",
+    "title": "Value and Momentum Everywhere",
+    "strategy_name": "value_momentum_everywhere",
+    "hypothesis_statement": "Hypothesis derived from paper abstract: indicate the \npresence of common global risks that we characterize with a three factor model . G lobal funding \nliquidity risk is a partial source of these patterns, which are identifiable only when examining value \nand momentum  simultaneously across markets .",
+    "required_datasets": [
+      "crsp",
+      "compustat",
+      "bloomberg",
+      "ken_french",
+      "russell",
+      "msci",
+      "fama_french",
+      "datastream"
+    ],
+    "required_features": [
+      "momentum",
+      "value",
+      "size",
+      "profitability",
+      "volatility",
+      "beta",
+      "idiosyncratic",
+      "factor",
+      "signal",
+      "alpha"
+    ],
+    "methodology": "",
+    "params": {
+      "lookback": 20,
+      "rebalance_freq": "monthly",
+      "universe": "sp500"
+    },
+    "expected_metrics": [
+      "sharpe_ratio",
+      "max_drawdown",
+      "oos_return",
+      "t_stat"
+    ],
+    "reproducibility_checklist": [
+      "Paper methodology section reviewed",
+      "Required datasets confirmed: ['crsp', 'compustat', 'bloomberg', 'ken_french', 'russell', 'msci', 'fama_french', 'datastream']",
+      "Feature engineering pipeline validated",
+      "Backtest date range selected (avoid look-ahead bias)",
+      "IS/OOS split defined",
+      "Statistical significance threshold set (p < 0.05)",
+      "Transaction costs and slippage parameterized",
+      "Benchmark selected for comparison"
+    ],
+    "missing_prerequisites": [
+      "compustat",
+      "bloomberg",
+      "datastream"
+    ],
+    "ready_to_run": false,
+    "priority_score": 6.91
+  },
+  "error": "",
+  "created_at": "2026-07-30T10:21:48.275986",
+  "updated_at": "2026-07-30T10:21:50.640037Z",
+  "retry_count": 0,
+  "processing_seconds": 2.3635620420100167
+}

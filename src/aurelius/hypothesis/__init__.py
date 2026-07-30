@@ -1,4 +1,5 @@
 """Hypothesis Generation Framework — public API."""
+
 from aurelius.hypothesis.deduplication import DuplicateResult, DuplicateStatus, check_duplicates
 from aurelius.hypothesis.generator import LLMClient, generate
 from aurelius.hypothesis.models import HypothesisRecord

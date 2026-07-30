@@ -7,7 +7,6 @@ Creates: ENUMs, reference tables, market data tables, fundamental tables,
 Design notes inline at each major section.
 """
 
-# ruff: noqa: E501
 from __future__ import annotations
 
 import alembic.op as op
@@ -242,7 +241,7 @@ def upgrade() -> None:
             CONSTRAINT ck_ohlcv_high_gte_close  CHECK (high >= close),
             CONSTRAINT ck_ohlcv_low_lte_open    CHECK (low <= open),
             CONSTRAINT ck_ohlcv_low_lte_close   CHECK (low <= close),
-            CONSTRAINT ck_ohlcv_prices_positive CHECK (open > 0 AND high > 0 AND low > 0 AND close > 0),
+            CONSTRAINT ck_ohlcv_prices_positive CHECK (open > 0 AND high > 0 AND low > 0 AND close > 0),  # noqa: E501
             CONSTRAINT ck_ohlcv_volume_nonneg   CHECK (volume >= 0),
             CONSTRAINT ck_ohlcv_quality_range   CHECK (quality_score BETWEEN 0 AND 100)
         ) PARTITION BY RANGE (timestamp)
@@ -899,11 +898,11 @@ def upgrade() -> None:
     op.execute("""
         INSERT INTO exchanges (id, mic_code, name, country_code, timezone, open_time, close_time)
         VALUES
-            (gen_random_uuid(), 'XNYS', 'New York Stock Exchange', 'US', 'America/New_York', '09:30', '16:00'),
+            (gen_random_uuid(), 'XNYS', 'New York Stock Exchange', 'US', 'America/New_York', '09:30', '16:00'),  # noqa: E501
             (gen_random_uuid(), 'XNAS', 'NASDAQ', 'US', 'America/New_York', '09:30', '16:00'),
             (gen_random_uuid(), 'XCBF', 'CBOE', 'US', 'America/Chicago', '08:30', '15:15'),
             (gen_random_uuid(), 'XCME', 'CME Group', 'US', 'America/Chicago', '00:00', '23:59'),
-            (gen_random_uuid(), 'XCHI', 'Chicago Stock Exchange', 'US', 'America/Chicago', '09:30', '16:00'),
+            (gen_random_uuid(), 'XCHI', 'Chicago Stock Exchange', 'US', 'America/Chicago', '09:30', '16:00'),  # noqa: E501
             (gen_random_uuid(), 'XUNK', 'Unknown/OTC', 'US', 'America/New_York', NULL, NULL)
     """)
 

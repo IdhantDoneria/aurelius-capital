@@ -23,7 +23,6 @@ from aurelius.backtesting.analytics.performance import (
     EquityPoint,
     PerformanceCalculator,
     PerformanceMetrics,
-    RoundTrip,
 )
 from aurelius.backtesting.config import BacktestConfig
 from aurelius.backtesting.data.feed import BarData
@@ -31,7 +30,6 @@ from aurelius.research.runner import synth_bars
 from aurelius.research.templates import MeanReversionStrategy
 from aurelius.validation.audit import AuditRecord, capture_environment
 from aurelius.validation.metrics import (
-    ExtendedMetrics,
     MetricsCalculator,
     _excess_kurtosis,
     _percentile,
@@ -47,7 +45,6 @@ from aurelius.validation.robustness import RobustnessAnalyzer, _cost_adjusted_sh
 from aurelius.validation.service import DataIntegrityError, ValidationService
 from aurelius.validation.stats import StatEngine, _norm_ppf
 
-
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 
@@ -56,13 +53,15 @@ def _make_equity_curve(returns: list[float], start: float = 1.0) -> list[EquityP
     t = datetime(2020, 1, 1, tzinfo=UTC)
     pts = [EquityPoint(t, eq)]
     for r in returns:
-        eq *= (1 + r)
+        eq *= 1 + r
         t += timedelta(days=1)
         pts.append(EquityPoint(t, eq))
     return pts
 
 
-def _daily_returns(n: int = 252, seed: int = 1, drift: float = 0.0003, vol: float = 0.01) -> list[float]:
+def _daily_returns(
+    n: int = 252, seed: int = 1, drift: float = 0.0003, vol: float = 0.01
+) -> list[float]:
     rng = random.Random(seed)
     return [rng.gauss(drift, vol) for _ in range(n)]
 
@@ -266,19 +265,19 @@ def test_bonferroni_correction():
 
 def test_bh_fdr_all_null():
     pvals = [0.5, 0.6, 0.7, 0.8, 0.9]
-    adj, rejected = StatEngine.bh_fdr(pvals, alpha=0.05)
+    _adj, rejected = StatEngine.bh_fdr(pvals, alpha=0.05)
     assert not any(rejected)
 
 
 def test_bh_fdr_all_significant():
     pvals = [0.001, 0.002, 0.003]
-    adj, rejected = StatEngine.bh_fdr(pvals, alpha=0.05)
+    _adj, rejected = StatEngine.bh_fdr(pvals, alpha=0.05)
     assert all(rejected)
 
 
 def test_bh_fdr_mixed():
     pvals = [0.001, 0.04, 0.50, 0.80]
-    adj, rejected = StatEngine.bh_fdr(pvals, alpha=0.05)
+    _adj, rejected = StatEngine.bh_fdr(pvals, alpha=0.05)
     assert rejected[0]  # p=0.001 should be significant
     assert not rejected[3]  # p=0.80 should not
 
@@ -390,10 +389,16 @@ def test_robustness_regime_stats_empty_for_short_series():
 def test_promotion_requires_more_research_insufficient_obs():
     engine = PromotionEngine()
     decision = engine.decide(
-        oos_sharpe=0.8, is_sharpe=1.2, adj_pvalue=0.03,
+        oos_sharpe=0.8,
+        is_sharpe=1.2,
+        adj_pvalue=0.03,
         n_oos_observations=10,  # below min
-        tc_breakeven_bps=50, wf_consistent=True, regime_consistent=True,
-        param_cv=0.2, wf_sharpes=[0.8, 0.7], is_robust=True,
+        tc_breakeven_bps=50,
+        wf_consistent=True,
+        regime_consistent=True,
+        param_cv=0.2,
+        wf_sharpes=[0.8, 0.7],
+        is_robust=True,
     )
     assert decision.state == PromotionState.REQUIRES_MORE_RESEARCH
 
@@ -401,10 +406,16 @@ def test_promotion_requires_more_research_insufficient_obs():
 def test_promotion_rejected_negative_sharpe():
     engine = PromotionEngine()
     decision = engine.decide(
-        oos_sharpe=-0.8, is_sharpe=1.5, adj_pvalue=0.80,
+        oos_sharpe=-0.8,
+        is_sharpe=1.5,
+        adj_pvalue=0.80,
         n_oos_observations=100,
-        tc_breakeven_bps=5, wf_consistent=False, regime_consistent=False,
-        param_cv=2.0, wf_sharpes=[-0.8, -0.6], is_robust=False,
+        tc_breakeven_bps=5,
+        wf_consistent=False,
+        regime_consistent=False,
+        param_cv=2.0,
+        wf_sharpes=[-0.8, -0.6],
+        is_robust=False,
     )
     assert decision.state == PromotionState.REJECTED
 
@@ -412,10 +423,16 @@ def test_promotion_rejected_negative_sharpe():
 def test_promotion_approved_for_paper_trading():
     engine = PromotionEngine()
     decision = engine.decide(
-        oos_sharpe=0.8, is_sharpe=1.1, adj_pvalue=0.01,
+        oos_sharpe=0.8,
+        is_sharpe=1.1,
+        adj_pvalue=0.01,
         n_oos_observations=100,
-        tc_breakeven_bps=80, wf_consistent=True, regime_consistent=True,
-        param_cv=0.2, wf_sharpes=[0.7, 0.8, 0.9, 0.75], is_robust=True,
+        tc_breakeven_bps=80,
+        wf_consistent=True,
+        regime_consistent=True,
+        param_cv=0.2,
+        wf_sharpes=[0.7, 0.8, 0.9, 0.75],
+        is_robust=True,
     )
     assert decision.state == PromotionState.APPROVED_FOR_PAPER_TRADING
     assert decision.confidence_score > 0.7
@@ -424,10 +441,16 @@ def test_promotion_approved_for_paper_trading():
 def test_promotion_approved_for_further_validation():
     engine = PromotionEngine()
     decision = engine.decide(
-        oos_sharpe=0.4, is_sharpe=0.9, adj_pvalue=0.08,
+        oos_sharpe=0.4,
+        is_sharpe=0.9,
+        adj_pvalue=0.08,
         n_oos_observations=50,
-        tc_breakeven_bps=40, wf_consistent=True, regime_consistent=True,
-        param_cv=0.4, wf_sharpes=[0.4, 0.3, 0.5], is_robust=False,
+        tc_breakeven_bps=40,
+        wf_consistent=True,
+        regime_consistent=True,
+        param_cv=0.4,
+        wf_sharpes=[0.4, 0.3, 0.5],
+        is_robust=False,
     )
     assert decision.state == PromotionState.APPROVED_FOR_FURTHER_VALIDATION
 
@@ -435,11 +458,16 @@ def test_promotion_approved_for_further_validation():
 def test_promotion_archived_regime_only():
     engine = PromotionEngine()
     decision = engine.decide(
-        oos_sharpe=0.4, is_sharpe=0.9, adj_pvalue=0.07,
+        oos_sharpe=0.4,
+        is_sharpe=0.9,
+        adj_pvalue=0.07,
         n_oos_observations=60,
         tc_breakeven_bps=25,  # below paper threshold
-        wf_consistent=False, regime_consistent=False,
-        param_cv=0.5, wf_sharpes=[-0.2, 0.8, -0.3], is_robust=False,
+        wf_consistent=False,
+        regime_consistent=False,
+        param_cv=0.5,
+        wf_sharpes=[-0.2, 0.8, -0.3],
+        is_robust=False,
     )
     assert decision.state == PromotionState.ARCHIVED
 
@@ -448,9 +476,16 @@ def test_promotion_decision_always_has_evidence():
     engine = PromotionEngine()
     for sharpe, pval, obs in [(-1.0, 0.99, 100), (0.3, 0.20, 100), (0.8, 0.01, 100)]:
         d = engine.decide(
-            oos_sharpe=sharpe, is_sharpe=1.0, adj_pvalue=pval,
-            n_oos_observations=obs, tc_breakeven_bps=30, wf_consistent=True,
-            regime_consistent=True, param_cv=None, wf_sharpes=[], is_robust=True,
+            oos_sharpe=sharpe,
+            is_sharpe=1.0,
+            adj_pvalue=pval,
+            n_oos_observations=obs,
+            tc_breakeven_bps=30,
+            wf_consistent=True,
+            regime_consistent=True,
+            param_cv=None,
+            wf_sharpes=[],
+            is_robust=True,
         )
         assert len(d.evidence) > 0
         assert len(d.next_steps) > 0
@@ -460,9 +495,16 @@ def test_promotion_confidence_score_range():
     engine = PromotionEngine()
     for sharpe in [-1.0, 0.0, 0.5, 1.0, 2.0]:
         d = engine.decide(
-            oos_sharpe=sharpe, is_sharpe=1.0, adj_pvalue=0.05,
-            n_oos_observations=100, tc_breakeven_bps=50, wf_consistent=True,
-            regime_consistent=True, param_cv=0.3, wf_sharpes=[0.5], is_robust=True,
+            oos_sharpe=sharpe,
+            is_sharpe=1.0,
+            adj_pvalue=0.05,
+            n_oos_observations=100,
+            tc_breakeven_bps=50,
+            wf_consistent=True,
+            regime_consistent=True,
+            param_cv=0.3,
+            wf_sharpes=[0.5],
+            is_robust=True,
         )
         assert 0.0 <= d.confidence_score <= 1.0
 
@@ -471,9 +513,16 @@ def test_promotion_custom_criteria():
     strict = PromotionCriteria(min_sharpe_paper=1.5, max_adj_pvalue_paper=0.01)
     engine = PromotionEngine(strict)
     decision = engine.decide(
-        oos_sharpe=0.8, is_sharpe=1.1, adj_pvalue=0.03,
-        n_oos_observations=100, tc_breakeven_bps=80, wf_consistent=True,
-        regime_consistent=True, param_cv=0.2, wf_sharpes=[0.8], is_robust=True,
+        oos_sharpe=0.8,
+        is_sharpe=1.1,
+        adj_pvalue=0.03,
+        n_oos_observations=100,
+        tc_breakeven_bps=80,
+        wf_consistent=True,
+        regime_consistent=True,
+        param_cv=0.2,
+        wf_sharpes=[0.8],
+        is_robust=True,
     )
     # Sharpe 0.8 < strict threshold 1.5 → should not be approved for paper
     assert decision.state != PromotionState.APPROVED_FOR_PAPER_TRADING
@@ -541,36 +590,58 @@ def _make_minimal_report() -> ComprehensiveReport:
     sweep = SensitivitySweep("tc_bps", [0, 50, 100], [0.8, 0.5, 0.1], 120.0, -0.007)
     slip_sweep = SensitivitySweep("slippage_bps", [0, 30, 60], [0.8, 0.6, 0.3], 80.0, -0.01)
     robust = RobustnessAssessment(
-        is_robust=True, regime_stats=[], regime_consistent=True,
-        tc_sweep=sweep, slippage_sweep=slip_sweep,
-        walk_forward_sharpes=[0.7, 0.8], walk_forward_cv=0.1,
-        worst_fold_sharpe=0.7, best_fold_sharpe=0.8,
-        walk_forward_consistent=True, rolling_stable=True, rolling_sharpes=[],
-        weaknesses=[], strengths=["positive WF folds"],
+        is_robust=True,
+        regime_stats=[],
+        regime_consistent=True,
+        tc_sweep=sweep,
+        slippage_sweep=slip_sweep,
+        walk_forward_sharpes=[0.7, 0.8],
+        walk_forward_cv=0.1,
+        worst_fold_sharpe=0.7,
+        best_fold_sharpe=0.8,
+        walk_forward_consistent=True,
+        rolling_stable=True,
+        rolling_sharpes=[],
+        weaknesses=[],
+        strengths=["positive WF folds"],
     )
     promo = PromotionDecision(
         state=PromotionState.APPROVED_FOR_PAPER_TRADING,
-        evidence=["OOS Sharpe: 0.800"], blocking_issues=[],
-        confidence_score=0.75, next_steps=["paper trade"],
+        evidence=["OOS Sharpe: 0.800"],
+        blocking_issues=[],
+        confidence_score=0.75,
+        next_steps=["paper trade"],
     )
     audit = AuditRecord(
         validated_at=datetime(2026, 7, 28, tzinfo=UTC),
-        python_version="3.12", platform="Darwin",
-        aurelius_commit="abc1234", config_hash="deadbeef01234567",
-        dataset_fingerprint="fp12345678", random_seed=42,
+        python_version="3.12",
+        platform="Darwin",
+        aurelius_commit="abc1234",
+        config_hash="deadbeef01234567",
+        dataset_fingerprint="fp12345678",
+        random_seed=42,
         key_package_versions={"duckdb": "1.1.0"},
     )
     return ComprehensiveReport(
-        experiment_id="exp-001", hypothesis_id="hyp-001",
-        researcher="tester", validated_at=datetime(2026, 7, 28, tzinfo=UTC),
-        metrics=em, sharpe_bootstrap=bs, permutation=perm,
-        bonferroni_adj_pvalue=0.04, n_trials=5,
-        robustness=robust, param_cv=0.25, promotion=promo, audit=audit,
+        experiment_id="exp-001",
+        hypothesis_id="hyp-001",
+        researcher="tester",
+        validated_at=datetime(2026, 7, 28, tzinfo=UTC),
+        metrics=em,
+        sharpe_bootstrap=bs,
+        permutation=perm,
+        bonferroni_adj_pvalue=0.04,
+        n_trials=5,
+        robustness=robust,
+        param_cv=0.25,
+        promotion=promo,
+        audit=audit,
     )
 
 
 def test_report_to_dict_serializable():
     import json
+
     report = _make_minimal_report()
     d = report.to_dict()
     # Should be JSON-serializable
@@ -629,19 +700,23 @@ def test_service_rejects_negative_close():
     )
     svc = ValidationService()
     with pytest.raises(DataIntegrityError, match="non-positive"):
-        svc.validate(MeanReversionStrategy, [bad_bar] + bars[1:])
+        svc.validate(MeanReversionStrategy, [bad_bar, *bars[1:]])
 
 
 def test_service_rejects_high_less_than_low():
     bars = _bars(50)
     bad_bar = BarData(
-        symbol=bars[0].symbol, timestamp=bars[0].timestamp,
-        open=bars[0].open, high=Decimal("1.0"), low=Decimal("5.0"),
-        close=bars[0].close, volume=bars[0].volume,
+        symbol=bars[0].symbol,
+        timestamp=bars[0].timestamp,
+        open=bars[0].open,
+        high=Decimal("1.0"),
+        low=Decimal("5.0"),
+        close=bars[0].close,
+        volume=bars[0].volume,
     )
     svc = ValidationService()
     with pytest.raises(DataIntegrityError, match="high < low"):
-        svc.validate(MeanReversionStrategy, [bad_bar] + bars[1:])
+        svc.validate(MeanReversionStrategy, [bad_bar, *bars[1:]])
 
 
 def test_service_rejects_too_few_bars():
@@ -701,6 +776,7 @@ def test_service_report_metrics_finite(trending_bars):
 
 def test_service_report_serializable(trending_bars):
     import json
+
     svc = ValidationService(n_bootstrap=100, n_permutation=100, n_wf_folds=2, seed=1)
     report = svc.validate(MeanReversionStrategy, trending_bars)
     d = report.to_dict()

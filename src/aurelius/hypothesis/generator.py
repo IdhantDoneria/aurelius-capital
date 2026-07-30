@@ -1,8 +1,9 @@
 """HypothesisGenerator — converts enriched Papers into HypothesisRecords.
 
 LLMClient is injected (same seam as literature.enrichment and assistant).
-Offline fallback: template-based generation from factors × asset_classes.
+Offline fallback: template-based generation from factors x asset_classes.
 """
+
 from __future__ import annotations
 
 import json
@@ -31,7 +32,7 @@ Known limitations: {limitations}
 
 For each hypothesis return a JSON object with exactly these keys:
 - economic_intuition: string (1-2 sentences explaining WHY this should generate returns)
-- testable_statement: string (must contain IF or WHEN: "IF [measurable condition] THEN [expected outcome] AMONG [universe] OVER [horizon]")
+- testable_statement: string (must contain IF or WHEN: "IF [measurable condition] THEN [expected outcome] AMONG [universe] OVER [horizon]")  # noqa: E501
 - expected_behavior: string (what pattern to observe in the data)
 - asset_classes: list[string]
 - required_datasets: list[string] (specific data sources needed)
@@ -60,9 +61,7 @@ def generate(
     return _generate_template(paper, researcher)
 
 
-def _generate_llm(
-    paper: Paper, llm: LLMClient, researcher: str
-) -> list[HypothesisRecord]:
+def _generate_llm(paper: Paper, llm: LLMClient, researcher: str) -> list[HypothesisRecord]:
     prompt = _PROMPT.format(
         title=paper.title,
         authors=", ".join(paper.authors[:5]),
@@ -113,36 +112,38 @@ def _generate_template(paper: Paper, researcher: str) -> list[HypothesisRecord]:
                 f"Based on {paper.title}, {factor} shows predictive power in "
                 f"{asset_class}. The evidence suggests a systematic premium exists."
             )
-            records.append(HypothesisRecord(
-                id=str(uuid.uuid4()),
-                parent_papers=[paper.id],
-                research_category=paper.research_category or "other",
-                economic_intuition=intuition,
-                testable_statement=stmt,
-                expected_behavior=f"Top-decile {factor} portfolio outperforms bottom decile.",
-                asset_classes=[asset_class],
-                required_datasets=paper.datasets or ["price_data"],
-                required_features=[factor],
-                holding_period="1_month",
-                expected_risks=["factor_crowding", "data_mining"],
-                confidence_score=0.3,  # low confidence for template-generated
-                assumptions=[
-                    f"{factor} can be computed from available data",
-                    "Signal is available before return period",
-                ],
-                dependencies=[],
-                validation_requirements=[
-                    "OOS Sharpe > 0.5",
-                    "Positive after transaction costs",
-                    "Stable across sub-periods",
-                ],
-                status="Draft",
-                version=1,
-                created_at=now,
-                updated_at=now,
-                researcher=researcher,
-                generation_method="template",
-            ))
+            records.append(
+                HypothesisRecord(
+                    id=str(uuid.uuid4()),
+                    parent_papers=[paper.id],
+                    research_category=paper.research_category or "other",
+                    economic_intuition=intuition,
+                    testable_statement=stmt,
+                    expected_behavior=f"Top-decile {factor} portfolio outperforms bottom decile.",
+                    asset_classes=[asset_class],
+                    required_datasets=paper.datasets or ["price_data"],
+                    required_features=[factor],
+                    holding_period="1_month",
+                    expected_risks=["factor_crowding", "data_mining"],
+                    confidence_score=0.3,  # low confidence for template-generated
+                    assumptions=[
+                        f"{factor} can be computed from available data",
+                        "Signal is available before return period",
+                    ],
+                    dependencies=[],
+                    validation_requirements=[
+                        "OOS Sharpe > 0.5",
+                        "Positive after transaction costs",
+                        "Stable across sub-periods",
+                    ],
+                    status="Draft",
+                    version=1,
+                    created_at=now,
+                    updated_at=now,
+                    researcher=researcher,
+                    generation_method="template",
+                )
+            )
 
     return records
 

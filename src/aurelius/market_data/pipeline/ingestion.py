@@ -22,6 +22,7 @@ Quality measurement:
   - Bars with quality_score < 60 are flagged but still stored — research decides cutoff.
 """
 
+from collections import defaultdict
 from dataclasses import dataclass, field
 from decimal import Decimal
 from time import monotonic
@@ -124,12 +125,14 @@ class IngestionPipeline:
 
         known_bars = [b for b in normalized if b.symbol in symbol_map]
 
-        # 3. Detect gaps per symbol — log warnings, don't reject
-        for ticker, _sym_id in symbol_map.items():
-            sym_bars = sorted(
-                [b for b in known_bars if b.symbol == ticker],
-                key=lambda b: b.timestamp,
-            )
+        # 3. Detect gaps per symbol — single grouping pass, then per-symbol scan.
+        # Was O(symbols × total_bars): re-scanned all of known_bars once per ticker.
+        # Now one pass to bucket by symbol, then sort+scan each bucket.
+        bars_by_symbol: dict[str, list] = defaultdict(list)
+        for b in known_bars:
+            bars_by_symbol[b.symbol].append(b)
+        for ticker in sorted(bars_by_symbol):
+            sym_bars = sorted(bars_by_symbol[ticker], key=lambda b: b.timestamp)
             for gap_ts in detect_gaps(sym_bars):
                 msg = f"{ticker}: gap detected after {gap_ts.date()}"
                 report.gap_warnings.append(msg)

@@ -17,7 +17,15 @@ from aurelius.core.errors import AureliusError
 from aurelius.core.logging import configure_logging, get_logger
 from aurelius.catalog.api import catalog_router
 from aurelius.catalog.store import CatalogStore
+from aurelius.corpus.api import get_corpus_store
 from aurelius.corpus.api import router as corpus_router
+from aurelius.operations.api import configure as configure_operations
+from aurelius.operations.api import operations_router
+from aurelius.operations.config import OperationsConfig
+from aurelius.operations.monitor import OperationsMonitor
+from aurelius.operations.pipeline import PipelineOrchestrator
+from aurelius.operations.reporter import DailyReporter
+from aurelius.operations.watcher import FolderWatcher
 from aurelius.director.api import router as director_router
 from aurelius.discovery.api import discovery_router
 from aurelius.infrastructure.cache.redis import CacheManager
@@ -51,9 +59,22 @@ def create_app() -> FastAPI:
         cache_manager.init()
         kg_hooks.configure(_get_kg())  # wire live-update hooks
         CatalogStore(settings.catalog_path).bootstrap()
+
+        # Operations engine — wired to live corpus + KG
+        ops_config = OperationsConfig()
+        ops_config.ensure_dirs()
+        ops_pipeline = PipelineOrchestrator(ops_config, get_corpus_store(), _get_kg())
+        ops_monitor = OperationsMonitor(ops_config)
+        ops_reporter = DailyReporter(ops_config)
+        ops_watcher = FolderWatcher(ops_config, ops_pipeline)
+        configure_operations(ops_config, ops_pipeline, ops_monitor, ops_reporter, ops_watcher)
+        ops_watcher.start()
+        ops_pipeline.resume_incomplete()
+
         logger.info("startup_complete")
         yield
         logger.info("shutdown_begin")
+        ops_watcher.stop()
         await db_manager.close()
         await cache_manager.close()
         logger.info("shutdown_complete")
@@ -103,6 +124,12 @@ def create_app() -> FastAPI:
     app.include_router(lab_router)
     app.include_router(discovery_router)
     app.include_router(catalog_router)
+    app.include_router(operations_router)
+
+    @app.get("/operations/dashboard/view", include_in_schema=False)
+    async def operations_dashboard_view():
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/operations/dashboard")
 
     @app.get("/kg/explore", include_in_schema=False)
     async def kg_explorer() -> FileResponse:

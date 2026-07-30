@@ -29,7 +29,6 @@ __all__ = [
     "TradeJournal",
     "TradingEngine",
     "build_snapshot",
-
     "render_text",
     "replay",
 ]

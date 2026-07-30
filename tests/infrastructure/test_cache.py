@@ -89,6 +89,7 @@ async def test_get_returns_none_for_missing_key():
 async def test_get_redis_error_raises_cache_error():
     mgr, client = _manager_with_mock_client()
     from redis.exceptions import RedisError
+
     client.get.side_effect = RedisError("connection lost")
     with pytest.raises(CacheError, match="Cache get failed"):
         await mgr.get("key")
@@ -119,6 +120,7 @@ async def test_set_with_ttl_passes_ex():
 async def test_set_redis_error_raises_cache_error():
     mgr, client = _manager_with_mock_client()
     from redis.exceptions import RedisError
+
     client.set.side_effect = RedisError("oom")
     with pytest.raises(CacheError, match="Cache set failed"):
         await mgr.set("k", "v")
@@ -140,6 +142,7 @@ async def test_delete_returns_count():
 async def test_delete_redis_error_raises_cache_error():
     mgr, client = _manager_with_mock_client()
     from redis.exceptions import RedisError
+
     client.delete.side_effect = RedisError("dead")
     with pytest.raises(CacheError, match="Cache delete failed"):
         await mgr.delete("k")
@@ -166,6 +169,7 @@ async def test_exists_false_when_missing():
 async def test_exists_redis_error_raises_cache_error():
     mgr, client = _manager_with_mock_client()
     from redis.exceptions import RedisError
+
     client.exists.side_effect = RedisError("err")
     with pytest.raises(CacheError, match="Cache exists check failed"):
         await mgr.exists("k")

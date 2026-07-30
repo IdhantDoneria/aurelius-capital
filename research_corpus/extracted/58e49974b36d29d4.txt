@@ -1,0 +1,774 @@
+THE JOURNAL OF FINANCE • VOL. LII, NO.1. MARCH 1997
+On Persistence in Mutual Fund Performance
+MARK M. CARHART*
+ABSTRACT
+Using a sample free of survivor bias, I demonstrate that common factors in stock
+returns and investment expenses almost completely explain persistence in equity
+mutual funds' mean and risk-adjusted returns. Hendricks, Patel and Zeckhauser's
+(1993) "hot hands" result is mostly driven by the one-year momentum effect of
+Jegadeesh and Titman (1993), but individual funds do not earn higher returns from
+following the momentum strategy in stocks. The only significant persistence not
+explained is concentrated in strong underperformance by the worst-return mutual
+funds, The results do not support the existence of skilled or informed mutual fund
+portfolio managers.
+PERSISTENCEIN MUTUAL FUND performance does not reflect superior stock-picking
+skill. Rather, common factors in stock returns and persistent differences in
+mutual fund expenses and transaction costs explain almost all of the predict­
+ability in mutual fund returns. Only the strong, persistent underperformance
+by the worst-return mutual funds remains anomalous.
+Mutual fund persistence is well documented in the finance literature, but
+not well explained. Hendricks, Patel, and Zeckhauser (1993), Goetzmann and
+Ibbotson (1994), Brown and Goetzmann (1995), and Wermers (1996) find
+evidence of persistence in mutual fund performance over short-term horizons
+of one to three years, and attribute the persistence to "hot hands" or common
+investment strategies. Grinblatt and Titman (1992), Elton, Gruber, Das, and
+Hlavka (1993), and Elton, Gruber, Das, and Blake (1996) document mutual
+fund return predictability over longer horizons of five to ten years, and at­
+tribute this to manager differential information or stock-picking talent. Con­
+trary evidence comes from Jensen (1969), who does not find that good subse­
+quent performance follows good past performance. Carhart (1992) shows that
+persistence in expense ratios drives much of the long-term persistence in
+mutual fund performance.
+My analysis indicates that Jegadeesh and Titman's (1993) one-year momen­
+tum in stock returns accounts for Hendricks, Patel, and Zeckhauser's (1993)
+hot hands effect in mutual fund performance. However, funds that earn higher
+* School of Business Administration, University of Southern California. I have benefited from
+helpful conversations with countless colleagues and participants at various workshops and sem­
+inars. I express particular thanks to Gene Fama, my dissertation committee chairman. I am also
+grateful to Gene Fama, the Oscar Mayer Fellowship, and the Dimensional Fund Advisors Fellow­
+ship for financial support. I thank Cliff Asness, Gene Fama, Ken French, and Russ Wermers for
+generously providing data. Finally, I thank Bill Crawford, Jr., Bill Crawford, Sr., and ICDII
+Micropal for access to, and assistance with, their database.
+57
+
+58 The Journal of Finance
+one-year returns do so not because fund managers successfully follow momen­
+tum strategies, but because some mutual funds just happen by chance to hold
+relatively larger positions in last year's winning stocks. Hot-hands funds
+infrequently repeat their abnormal performance. This is in contrast to Werm­
+ers (1996), who suggests that it is the momentum strategies themselves that
+generate short-term persistence, and Grinblatt, Titman, and Wermers (1995),
+who find that funds following momentum strategies realize better performance
+before management fees and transaction expenses. While measuring whether
+funds follow the momentum strategy is imperfect in my sample, individual
+mutual funds that appear to follow the one-year momentum strategy earn
+significantly lower abnormal returns after expenses. Thus, I conclude that
+transaction costs consume the gains from following a momentum strategy in
+stocks.
+I demonstrate that expenses have at least a one-for-one negative impact on
+fund performance, and that turnover also negatively impacts performance. By
+my estimates, trading reduces performance by approximately 0.95 percent of
+the trade's market value. Variation in costs per transaction across mutual
+funds also explains part of the persistence in performance. In addition, I find
+that fund performance and load fees are strongly and negatively related,
+probably due to higher total transaction costs for load funds. Holding expense
+ratios constant, load funds underperform no-load funds by approximately 80
+basis points per year. (This figure ignores the load fees themselves.)
+The joint-hypothesis problem of testing market efficiency conditional on the
+imposed equilibrium model of returns clouds what little evidence there is in
+this article to support the existence of mutual fund manager stock-picking
+skill. Funds with high past alphas demonstrate relatively higher alphas and
+expected returns in subsequent periods. However, these results are sensitive
+to model misspecification, since the same model is used to rank funds in both
+periods. In addition, these funds earn expected future alphas that are insig­
+nificantly different from zero. Thus, the best past-performance funds appear to
+earn back their expenses and transaction costs even though the majority
+underperform by approximately their investment costs.
+This study expands the existing literature by controlling for survivor bias,
+and by documenting common-factor and cost-based explanations for mutual
+fund persistence. Section I discusses the database and its relation to other
+survivor-bias corrected data sets. Section II presents models of performance
+measurement and their resulting pricing error estimates on passively-man­
+aged benchmark equity portfolios. Section III documents and explains the
+one-year persistence in mutual fund returns, and Section IV further interprets
+the results. Section V examines and explains longer-term persistence, and
+Section VI concludes.
+I. Data
+My mutual fund database covers diversified equity funds monthly from Jan­
+uary 1962 to December 1993. The data are free of survivor bias, since they
+
+On Persistence in Mutual Fund Performance 59
+Table I
+Mutual Fund Database Summary Statistics
+The table reports time-series averages of annual cross-sectional averages from 1962 to 1993. TNA
+is total net assets, Flow is the percentage change in TNA adjusted for investment return and
+mutual fund mergers. Exp ratio is total annual management and administrative expenses divided
+by average TNA. Mturn is modified turnover and represents reported turnover plus 0.5 times
+Flow. Maximum load is the total of maximum front-end, rear-end, and deferred sales charges as
+a percentage of the investment. Live funds are those in operation at the end of the sample,
+December 31, 1993. Dead funds are those that discontinued operations prior to this date.
+Time-Series Averages of Cross-Sectional Average Annual Attributes, 1962-
+1993
+Avg AvgExp Avg Avg Avg
+Total Avg AvgTNA Flow Ratio Mturn Percentage Max Age
+Group Number Number ($ millions) (%/year) (%/year) (%/year) with Load Load (years)
+All funds 1,892 509.1 $217.8 3.4% 1.14% 77.3% 64.5% 7.33% 18.1
+By fund category
+Aggressive 675 169.2 $ 95.6 5.0% 1.55% 99.7% 58.2% 7.38% 12.3
+growth
+Long term 618 168.5 $221.4 5.5% 1.09% 79.5% 59.7% 7.38% 16.4
+growth
+Growth & 599 171.4 $328.5 1.5% 0.91% 60.9% 70.0% 7.27% 23.8
+income
+By current status
+Live funds 1,310 352.3 $268.7 4.3% 1.07% 76.2% 63.3% 7.29% 19.2
+Dead funds 582 156.8 $ 46.8 -1.2% 1.44% 83.1% 68.5% 7.44% 14.9
+include all known equity funds over this period. I obtain data on surviving
+funds, and for funds that have disappeared since 1989, from MicropallInvest­
+ment Company Data, Inc. (ICDI). For all other nonsurviving funds, the data
+are collected from FundScope Magazine, United Babson Reports, Wiesenberger
+Investment Companies, the Wall Street Journal, and past printed reports from
+ICDI. See Carhart (l995a) for a more detailed description of database
+construction.
+Table I reports summary statistics on the mutual fund data. My sample
+includes a total of 1,892 diversified equity funds and 16,109 fund years. The
+sample omits sector funds, international funds, and balanced funds. The
+remaining funds are almost equally divided among aggressive growth, long­
+term growth, and growth-and-income categories. In an average year, the
+sample includes 509 funds with average total net assets (TNA) of $218 million
+and average expenses of 1.14 percent per year. In addition, funds trade 77.3
+percent of the value of their assets (Mturn) in an average year. Since reported
+turnover is the minimum of purchases and sales over average TNA, I obtain
+Mturn by adding to reported turnover one-half of the percentage change in
+TNA adjusted for investment returns and mergers. Also, over the full sample,
+64.5 percent of funds charge load fees, which average 7.33 percent.
+
+60 The Journal of Finance
+By December 31, 1993, about one-third of the total funds in my sample had
+ceased operations, so a sizeable portion of the database is not observable in
+most commercially available mutual fund databases. Thus, survivor bias is an
+important issue in mutual fund research. (See Brown, Goetzmann, Ibbotson,
+and Ross (1992), Carhart (1995b), and Wermers (1996).) While my sample is,
+to my knowledge, the largest and most complete survivor-bias-free mutual
+fund database currently available, Grinblatt and Titman (1989), Malkiel
+(1995), Brown and Goetzmann (1995), and Wermers (1996) use similar data­
+bases to study mutual funds. Grinblatt and Titman (1989) and Wermers (1996)
+use quarterly "snapshots" of the mutual funds' underlying stock holdings since
+1975 to estimate returns gross of transactions costs and expense ratios,
+whereas my data set uses only the net returns. Malkiel (1995) uses quarterly
+data from 1971 to 1991, obtained from Lipper Analytical Services. Although
+Malkiel studies diversified equity funds, his data set includes about 100 fewer
+funds each year than mine, raising the possibility of some selection bias in the
+Lipper data set. (We both exclude balanced, sector, and international funds.)
+Nonetheless, Malkiel's mean mutual fund return estimate from 1982 to 1990,
+12.9 percent, is very close to the 13 percent that I find.
+Brown and Goetzmann (1995) study a sample of mutual funds very similar
+to mine, but calculate their returns differently. Their sample is from the
+Wiesenberger Investment Companies annual volumes from 1976 to 1988. They
+calculate annual returns from the changes in net asset value per share (NAV),
+and income and capital gains distributions reported annually in Wiesenberger.
+As Brown and Goetzmann acknowledge, their data suffer from some selection
+bias, because the first years of new funds and last years of dead funds are
+missing. In addition, because funds voluntarily report this information to
+Wiesenberger, some funds may not report data in years of poor performance.
+Working in the opposite direction, Brown and Goetzmann calculate return as
+the sum of the percentage change in NAV (adjusted for capital gains distribu­
+tions when available) and percentage income return. This procedure biases
+their return estimates downward somewhat, since it ignores dividend rein­
+vestment. My data set mitigates these problems because I obtain monthly total
+returns from multiple sources and so have very few missing returns. In
+addition, I obtain from ICDI the reinvestment NAVs for capital gains and
+income distributions. Over the 1976 to 1988 period, Brown and Goetzmann
+report a mean annual return estimate of 14.5 percent, very close to the 14.3
+percent in my data set. By these calculations, selection bias accounts for at
+least 20 basis points per year in Brown and Goetzmann's sample. It could
+be somewhat more, however, due to the downward bias in their return
+calculations.
+II. Models of Performance Measurement
+I employ two models of performance measurement: the Capital Asset Pricing
+Model (CAPM) described in Sharpe (1964) and Lintner (1965), and my (Car­
+hart (1995)) 4-factor model. This section briefly describes these models, and
+
+On Persistence in Mutual Fund Performance 61
+evaluates their performance estimates on quantitatively-managed portfolios of
+New York Stock Exchange (NYSE), American Stock Exchange (Amex), and
+Nasdaq stocks. For comparative purposes, this section also reports perfor­
+mance estimates from Fama and French's (1993) 3-factor model.!
+I construct my 4-factor model using Fama and French's (1993) 3-factor model
+plus an additional factor capturing Jegadeesh and Titman's (1993) one-year
+momentum anomaly.P The 4-factor model-is consistent with a model of market
+equilibrium with four risk factors. Alternately, it may be interpreted as a
+performance attribution model, where the coefficients and premia on the
+factor-mimicking portfolios indicate the proportion of mean return attribut­
+able to four elementary strategies: high versus low beta stocks, large versus
+small market capitalization stocks, value versus growth stocks, and one-year
+return momentum versus contrarian stocks. I employ the model to "explain"
+returns, and leave risk interpretations to the reader.
+I estimate performance relative to the CAPM, 3-factor, and 4-factor models
+as
+t = 1, 2, ... , T
+t = 1, 2,
+(1)
+,T (2)
+rit = exiT + biTRMRFt + si~MBt + hiTHMLt + PiTPR1YR t + eit
+t = 1, 2, ... ,T (3)
+where rit is the return on a portfolio in excess of the one-month T-bill return;
+VWRF is the excess return on the CRSP value-weighted portfolio of all NYSE,
+Amex, and Nasdaq stocks; RMRF is the excess return on a value-weighted
+aggregate market proxy; and 5MB, HML, and PR1YR are returns on value­
+weighted, zero-investment, factor-mimicking portfolios for size, book-to-mar­
+ket equity, and one-year momentum in stock returns."
+Summary statistics on the factor portfolios reported in Table II indicate that
+the 4-factor model can explain considerable variation in returns. First, note the
+relatively high variance of the 5MB, HML, and PR1YR zero-investment port­
+folios and their low correlations with each other and the market proxies. This
+suggests the 4-factor model can explain sizeable time-series variation. Second,
+1 I find (Carhart (1995a)) that 3-factor performance estimates on mutual funds are more
+precise, but generally not economically different from the CAPM. Estimates from the 4-factor
+model frequently differ, however, due to significant loadings on the one-year momentum factor.
+2 This is motivated by the 3-factor model's inability to explain cross-sectional variation in
+momentum-sorted portfolio returns (Fama and French (1996).) Chan, Jegadeesh, and Lakonishok
+(1996) suggest that the momentum anomaly is a market inefficiency due to slow reaction to
+information. However, the effect is robust to time-periods (Jegadeesh and Titman (1993)) and
+countries (Asness, Liew, and Stevens (1996)).
+3 5MB and HML are obtained from Gene Fama and Ken French. I construct PR1YR as the
+equal-weight average offirms with the highest 30 percent eleven-month returns lagged one month
+minus the equal-weight average of firms with the lowest 30 percent eleven-month returns lagged
+one month. The portfolios include all NYSE, Amex, and Nasdaq stocks and are re-formed monthly.
+
+62 The Journal of Finance
+Table II
+Performance Measurement Model Summary Statistics, July 1963 to
+December 1993
+VWRF is the Center for Research in Security Prices (CR8P) value-weight stock index minus the
+one-month T-bill return. RMRF is the excess return on Fama and French's (1993) market proxy.
+5MB and HML are Fama and French's factor-mimicking portfolios for size and book-to-market
+equity. PR1YR is a factor-mimicking portfolio for one-year return momentum.
+Monthly Cross-Correlations
+Factor Excess 8td t-stat for
+Portfolio Return Dev Mean = 0 VWRF RMRF 5MB HML PR1YR
+VWRF 0.44 4.39 1.93 1.00
+RMRF 0.47 4.43 2.01 1.00 1.00
+8MB 0.29 2.89 1.89 0.35 0.32 1.00
+HML 0.46 2.59 3.42 -0.36 -0.37 0.10 1.00
+PR1YR 0.82 3.49 4.46 0.01 0.01 -0.29 -0.16 1.00
+the high mean returns on 5MB, HML,. and PR1YR suggest that these three
+factors could account for much cross-sectional variation in the mean return on
+stock portfolios. In addition, the low cross-correlations imply that multicol­
+linearity does not substantially affect the estimated 4-factor model loadings.
+In tests not reported, I find that the 4-factor model substantially improves on
+the average pricing errors of the CAPM and the 3-factor model.s I estimate
+pricing errors on 27 quantitatively-managed portfolios of stocks from Carhart,
+Krail, Stevens, and Welch (1996), where the portfolios are formed on the
+market value of equity, book-to-market equity and trailing eleven-month re­
+turn lagged one month. Not surprisingly, the 3-factor model improves on the
+average pricing errors from the CAPM, since it includes both size and book­
+to-market equity factors. However, the 3-factor model errors are strongly
+negative for last year's loser stock portfolios and strongly positive for last
+year's winner stock portfolios. In contrast, the 4-factor model noticeably re­
+duces the average pricing errors relative to both the CAPM and the 3-factor
+model. For comparative purposes, the mean absolute errors from the CAPM,
+3~factor, and 4-factor models are 0.35 percent, 0.31 percent, and 0.14 percent
+per month, respectively. In addition, the 4-factor model eliminates almost all
+of the patterns in pricing errors, indicating that it well describes the cross­
+sectional variation in average stock returns.
+III. Persistence in One-Year Return-Sorted Mutual Fund Portfolios
+A. Common-Factor Explanations of One-Year Mutual Fund Persistence
+In this section, I form portfolios of mutual funds on lagged one-year returns
+and estimate performance on the resulting portfolios, thus replicating the
+4 These results are not included for sake of brevity, but are available from the author upon
+request.
+
+On Persistence in Mutual Fund Performance 63
+methodology of Hendricks, Patel, and Zeckhauser (1993). On January 1 ofeach
+year, I form ten equal-weighted portfolios of mutual funds, using reported
+returns. Reported returns are net of all operating expenses (expense ratios)
+and security-level transaction costs, but do not include sales charges. I hold the
+portfolios for one year, then re-form them. This yields a time series of monthly
+returns on each decile portfolio from 1963 to 1993. Funds that disappear
+during the course of the year are included in the equal-weighted average until
+they disappear, then the portfolio weights are readjusted appropriately. For
+added detail, I subdivide the top and bottom portfolios into thirds.
+The portfolios of mutual funds sorted on one-year past returns demonstrate
+strong variation in mean return, as shown in Table III. The post-formation
+monthly excess returns on the decile portfolios decrease nearly monotonically
+in portfolio rank, and indicate a sizeable annualized spread of approximately
+8 percent. (This spread is 24 percent in the ranking year.) The subdivided
+extreme portfolios exhibit even larger return spreads. Portfolio lA, which
+contains the top thirtieth offunds (14 funds on average), outperforms portfolio
+10C, the bottom thirtieth of funds, by 1 percent per month. Cross-sectional
+variation in return is considerably larger among the previous year's worst
+performing funds than the previous year's best funds. The subportfolios of the
+top decile show a modest spread of 12 basis points per month (63 to 75), but the
+spread in the bottom decile is a substantial 50 basis points. Further, the
+bottom thirtieth ofthe previous year's funds seem to demonstrate anomalously
+poor returns. In the year after their bottom-decile ranking, these funds show
+high variance and still underperform T-bills by 25 basis points per month.
+The CAPM does not explain the relative returns on these portfolios. The
+CAPM betas on the top and bottom deciles and subdeciles are virtually iden­
+tical, so the CAPM alphas reproduce as much dispersion as simple returns. In
+addition, the performance estimates from the CAPM indicate sizeable positive
+abnormal returns of about 22 basis points per month (2.6 percent per year) for
+the previous year's top-decile funds, and even larger negative abnormal re­
+turns of about 45 basis points per month (5.4 percent per year) for the bottom­
+decile funds. If the CAPM correctly measures risk, both the best and worst
+mutual funds possess differential information, yet the worst funds appear to
+use this information perversely to reduce performance.
+In contrast to the CAPM, the 4-factor model explains most of the spread and
+pattern in these portfolios, with sensitivities to the size (8MB) and momentum
+(PR1YR) factors accounting for most of the explanation. The top decile portfo­
+lios appear to hold more small stocks than the bottom deciles. More important,
+however, is the pronounced pattern in the funds' PR1YR coefficients. The
+returns on the top decile funds are strongly, positively correlated with the
+one-year momentum factor, while the returns in the bottom decile are strongly,
+negatively correlated with the factor. Of the 67-basis-point spread in mean
+monthly return between deciles 1 and 10, the momentum factor explains 31
+basis points, or almost half. Further, of the 28-basis-point spread in monthly
+return not explained by the 4-factor model, the spread between the ninth and
+tenth deciles accounts for 20 basis points. Except for the relative underperfor-
+
+
+
+On Persistence in Mutual Fund Performance 65
+mance by last year's worst performing funds, the 4-factor model accounts for
+almost all of the cross-sectional variation in expected return on portfolios of
+mutual funds sorted on lagged one-year return.
+I also perform the Spearman nonparametric test on the rank ordering of
+performance measures. Here the null hypothesis is that the performance
+measures are randomly ordered. The Spearman test falls in the 5.7 percent
+fractile on the CAPM alphas and the 13.2 percent fractile on the 4-factor
+alphas. In both cases, random rank-ordering cannot be rejected. However,
+since the Spearman test treats the ordering of each decile portfolio equally, it
+lacks power against the hypothesis that predictability in performance is con­
+centrated in the tails of the distribution of mutual fund returns."
+B. Characteristics of the Mutual Fund Portfolios
+I now examine whether any of the remaining short-term persistence in
+mutual fund returns is related to heterogeneity in the average characteristics
+of the mutual funds in each decile portfolio. In each year, I calculate a
+cross-sectional average for each decile portfolio of fund age, total net assets
+(TNA), expense ratio, turnover (Mturn), and maximum load fees.
+The average portfolio characteristics reported in Table IV indicate that
+expenses and turnover are related to performance. Decile 10 particularly
+stands out with higher than average expenses and turnover. The 70-basis­
+point difference in expense ratios between deciles 9 and 10 explains about six
+of the 20-basis-point spread between monthly 4-factor alphas on these portfo­
+lios. It does not appear that fund age, size, or load fees can explain the large
+spread in performance on these portfolios, since these characteristics are very
+similar for the top and bottom deciles.
+Differences in portfolio turnover do not explain a sizeable portion of the
+remaining portfolio nine-ten spread in alphas. If funds pay 1 percent in costs
+per round-trip transaction, the difference in trading frequency between the
+ninth and tenth deciles accounts for only 0.5 basis points of the spread in
+4-factor alphas. After accounting for expense ratios and turnover, tests on the
+difference between alphas on deciles 9 and 10 yield t-statistics of 2.69 relative
+to the CAPM, and 2.19 relative to the 4-factor model. Thus, expense ratios and
+5 I also test the robustness of these findings to time period, performance measurement bench­
+mark, and sorting procedure. In these tests, not reported but available from the author upon
+request, I divide the complete sample into three equal subperiods, with insignificant effects on the
+results. I also estimate performance on the mutual fund portfolios using the alternative perfor­
+mance measures of Ferson and Schadt (1996), Chen and Knez (1995), and Carhart, Krail, Stevens,
+and Welch (1996). Ferson and Schadt model time-variation in factor risk loadings as linear
+functions of instrumental variables. The Chen and Knez nonparametric method and the linear
+factor pricing kernel approach in Carhart et al. are cross-section estimators of the stochastic
+discount factor. Carhart et al. also permit time-variation in model parameters. The estimates from
+these methods do not change any inferences. As a final robustness check, I perform tests on the
+investment objective categories separately (aggressive growth, long-term growth, and growth-and­
+income) and find that the persistence evidence is virtually as strong in each objective category as
+the diversified equity universe as a whole.
+
+66 The Journal of Finance
+Table IV
+Characteristics of the Portfolios of Mutual Funds Formed on Lagged
+I·Year Return
+Mutual funds are sorted annually from 1963 to 1993 into equal-weight decile portfolios based on
+lagged one-year return. Funds with the. highest past one-year return comprise decile 1, and funds
+with the lowest comprise decile 10. Deciles 1 and 10 are further subdivided into thirds on the same
+measure. The values in the table represent the time-series averages of annual cross-sectional
+averages of the funds in each portfolio. TNA is total net assets. Expense ratio is management,
+administrative, and 12b-1 expenses divided by average TNA. Mturn is modified turnover and
+represents reported turnover plus 0.5 times the percentage change in portfolio TNA adjusted for
+investment returns and mergers. Maximum load is the sum of maximum front-end, back-end, and
+deferred sales charges.
+Average Annual Portfolio Attributes
+Age TNA($ Expense Maximum
+Portfolio (years) millions) Ratio Mturn Load
+1A 11.7 110.0 1.38 116.2 3.93
+1B 14.0 148.8 1.16 86.9 3.99
+1C 16.5 127.4 1.11 75.8 4.62
+1 (high) 14.1 128.7 1.22 92.9 4.18
+2 16.6 190.8 1.08 75.3 4.97
+3 17.3 194.3 1.10 76.3 4.72
+4 17.6 183.7 1.11 67.2 4.82
+5 18.3 185.9 1.09 68.4 4.71
+6 17.5 199.1 1.15 65.8 4.33
+7 18.3 169.7 1.14 62.2 4.50
+8 17.5 149.3 1.13 65.3 4.76
+9 15.8 145.6 1.22 75.1 4.59
+10 (low) 13.6 77.1 1.92 81.4 4.38
+lOA 14.5 91.9 1.55 76.8 4.55
+lOB 14.4 87.4 1.71 76.7 4.57
+10C 11.9 52.0 2.51 88.8 4.02
+turnover alone cannot explain the anomalous negative abnormal performance
+by the worst-return decile of funds. This conclusion is even stronger when
+considering portfolio 10C, the bottom thirtieth of funds.
+C. Characteristics of Individual Mutual Funds
+Mutual fund managers claim that expenses and turnover do not reduce
+performance, since investors are paying for the quality of the manager's
+information, and because managers trade only to increase expected returns net
+of transactions costs. Thus, expenses and turnover should not have a direct
+negative effect on performance, as implied in the previous section, but rather
+a neutral or positive effect. I evaluate this claim by directly measuring the
+marginal effect of these and other variables on abnormal performance.
+In each month, I estimate the cross-section regression:
+i = 1, ... ,N, t = 1, ... , T (4)
+
+On Persistence in Mutual Fund Performance 67
+where OI.it is an individual fund performance estimate and Xit is a fund charac­
+teristic. As in Fama and MacBeth (1973), I estimate the cross-sectional rela­
+tion each month, then average the coefficient estimates across the complete
+sample period. This yields 330 cross-sectional regressions which average 350
+observations each for a combined sample of about 116,000 observations. To
+mitigate look-ahead bias, I estimate OI.it as a one-month abnormal return from
+the 4-factor model, where the 4-factor model loadings are estimated over the
+prior three years:
+I estimate one-month alphas each month on every fund, using a minimum of
+30 observations, then estimate the cross-section relation of equation (4) using
+the Fama-MacBeth estimator.
+The explanatory variables in equation (4) are expense ratio, turnover
+(Mturn), In(TNA), and maximum load fees. Since I intend to explain perfor­
+mance, not predict it, I measure expense ratio and turnover contemporaneous
+with return. TNA is lagged one year to avoid spurious correlation (Granger and
+Newbold, 1974). Load fees are lagged one year to avoid the confounding
+possibility that funds change these fees in response to performance. I construct
+two additional explanatory variables from turnover to separate the effects of
+buy and sell trading. The latter two are
+Buy Turnover., = Turnover., + maxtMflow.; 0)
+and
+Sell Turnover., = Turnover., - minrMflow.; 0)
+where Mflow., measures the percentage change in TNA adjusted for invest­
+ment returns and mergers. Because I find expense ratios are strongly related
+to the other variables, I estimate the cross-section regression for TNA, load,
+and the turnover measures using returns after adding back expense ratios.
+The results in Table V indicate a strong relation between performance and
+size, expense ratios, turnover, and load fees. The resulting relation between
+performance and expense ratios and modified turnover suggest that mutual
+funds, on average, do not recoup their investment costs through higher re­
+turns. The -1.54 coefficient on expense ratio implies that for every 100-basis­
+point increase in expense ratios, annual abnormal return drops by about 154
+basis points. The turnover coefficient of -0.95 suggests that for every 100­
+basis-point increase in turnover, annual abnormal return drops by about 95
+basis points. We can interpret the turnover coefficient as a measure of the net
+costs of trading, since it reveals the marginal performance effect of a small
+change in turnover. Thus, the turnover estimate implies transactions costs of
+95 basis points per round-trip transaction. When partitioned into buy turnover
+
+68 The Journal of Finance
+Table V
+Fama-MacBeth (1973) Cross-Sectional Regressions
+Estimated univariate cross-sectional regressions for each month from July 1966 to December 1993
+across all funds in the sample at that time. The dependent variable is the monthly residual from
+the 4-factor model, where the factor loadings are estimated on the prior 3 years of monthly returns.
+The independent variables are expense ratio, turnover, the natural log of TNA, maximum load
+fees, and measures of buy and sell turnover. Expense ratio is management, administrative, and
+12b-1 expenses divided by average TNA. TNA is total net assets. Turnover represents reported
+turnover plus 0.5 times the percentage change in portfolio TNA adj\1~ted for investment returns
+and mergers. Maximum load is the sum of maximum front-end, back-end and deferred sales
+charges. Buy turnover is reported turnover plus the maximum of 0 and the percentage change in
+TNA adjusted for investment returns and mergers. Sell turnover is reported turnover minus the
+minimum of 0 and the adjusted percentage change in TNA. Expense ratio and the turnover
+measures are divided by 12 and measured contemporaneous with the dependent variable. The
+reported estimates are time-series averages of monthly cross-sectional regression slope estimates
+as in Fama and MacBeth (1973). The t-statistics are on the time-series means of the coefficients.
+The regressions on TNA, maximum load, and the turnover measures use the residuals from
+reported returns after adding back expense ratios.
+Independent Variables
+(Coefficients x 100)
+Expense ratio (t)
+Turnover (t) (Mturn)
+In TNA (t-I)
+Maximum Load (t-L)
+Buy turnover (t)
+Sell turnover (t)
+Estimate
+-1.54
+-0.95
+-0.05
+-0.11
+-0.43
+-1.26
+t-statistic
+(-5.99)
+(-2.36)
+(-0.66)
+(-3.55)
+(-1.16)
+(-3.00)
+and sell turnover, the estimates imply a 21.5 basis point cost for (one-way) buy
+trades and a 63 basis point cost for sell trades.
+TNA is insignificantly related to the cross-section of performance estimates,
+but maximum load fees are significantly negatively related to performance.
+The negative slope on load fees contradicts the oft-cited claim by load funds
+that their managers are more skilled and investment expenses lower than
+no-load funds. Although the coefficient appears small, it implies that annual
+. abnormal returns are reduced by about 11 basis points for every 100 basis
+point increase in load fees. For a load fund with the average total sales charges
+of 7.3 percent, the reduction in annual return is 79 basis points. To test the
+sensitivity of this result to the poor-performing outliers, I repeat the analysis
+after removing the funds in the bottom two deciles. The results (not reported)
+are virtually unchanged. The underperformance of load funds is probably
+partially explained by higher total transactions costs, since load funds exhibit
+higher turnover than no-load funds (Carhart (1995a).)
+D. Cross-Sectional Variation in Transaction Costs
+Thus far, sensitivity to common factors and persistence in expense ratios
+explain most of the persistence in mutual fund performance. In addition, the
+cross-section tests indicate that turnover reduces performance for the average
+
+On Persistence in Mutual Fund Performance 69
+fund. However, since turnover ratios on the worst-performing funds are only
+slightly higher than on the average fund, transaction costs can only explain the
+anomalous underperformance of the worst funds if these funds also have
+higher costs per transaction. This section evaluates whether estimates of costs
+per transaction explain any of the remaining abnormal performance not fully
+accounted for by the 4-factor model, expense ratios, and turnover.
+I find that transaction costs describe most of the unexplained mutual fund
+performance. From the 4-factor model alphas, expense ratios, and turnover
+ratios, I assume market efficiency to infer the cost per transaction necessary to
+zero out the gross 4-factor alpha. The average fund's alpha of -0.15 percent,
+expense ratio of 1.14 percent, and turnover of 77.4 percent imply a cost of 85
+basis points per round-trip transaction. The previously reported cross-section
+estimate of round-trip transactions cost is 95 basis points, with a standard
+error of 40 basis points. Thus, for the average fund, the implied transactions
+cost lies well within 0.25 standard errors of the estimated cost.
+In addition to explaining performance on the average fund, transaction costs
+also explain much of the cross-sectional variation in return on the portfolios
+sorted on lagged one-year return. I sort the sample into quintiles to create
+subsamples large enough to yield reliable cross-section estimates. After re­
+peating my calculations and cross-section estimates, I find that the implied
+transaction costs are very near to their cross-section estimates. Only in one
+quintile (quintile 2) is the estimated round-trip transactions cost more than
+two standard errors from implied. Although the quintile sort is coarse, cross­
+sectional variation in costs per transaction explains the return spread on these
+portfolios unrelated to the 4-factor model and expense ratios.
+However, the estimated round-trip transaction costs in finer sorts of the
+bottom quintile are not large enough to explain its underperformance. In order
+to estimate transaction costs on the relatively small samples of the decile or
+subdecile portfolios, I pool the cross-section and time-series observations in the
+estimation. The estimated round-trip transaction costs on decile 10 undershoot
+the implied costs of 354 basis points by more than four standard errors. The
+implied costs on the three subportfolios of decile 10 suggest that portfolios lOB
+and 10C drive this unusually high implied transaction cost estimate. To fully
+explain 4-factor model abnormal performance, portfolio lOB requires a 356­
+basis-point round-trip cost, and 10C requires a 582-basis-point cost. At seven
+and 252 basis points, however, the cross-section estimates for these portfolios
+are considerably less than implied. While their pattern suggests that relative
+transaction costs play an important role in the cross-section of mutual fund
+performance, the magnitude of the cross-section estimates leaves unexplained
+much of the abnormal return in the worst-return mutual funds.
+For robustness, I employ a second method for inferring cross-sectional vari­
+ation in transaction costs that exploits the time-series properties of the mutual
+fund portfolios. Since round-trip transactions costs should decrease in the
+trading liquidity of the underlying securities, mutual funds holding illiquid
+securities should be correlated with a factor-mimicking portfolio for trading
+liquidity. Assuming that the time-series properties of illiquid stocks differ from
+
+70 The Journal of Finance
+liquid stocks, a portfolio long in illiquid stocks and short in liquid stocks should
+capture these patterns.
+The liquidity factor-mimicking portfolio, VLMH, is the spread between re­
+turns on low- and high-trading-volume stocks orthogonalized to the 4-factor
+model." I find that the VLMH-Ioading estimates on mutual fund portfolios are
+strongly related to performance. The best one-year-return portfolios load sig­
+nificantly and negatively on VLMH, indicating relatively more liquid stocks.
+The worst portfolios load significantly and positively, indicating relatively
+more illiquid stocks. Since illiquid stocks are more costly to trade, the VLMH
+loadings suggest that the costs per transaction are higher for the lower-past­
+return portfolios. Although these results do not measure the incremental cost
+of trading illiquid stocks, they do suggest that higher transaction costs might
+explain the strong underperformance of the worst funds.
+Overall, my results suggest that short-run mutual fund returns persist
+strongly, and that most of the persistence is explained by common-factor
+sensitivities, expenses, and transaction costs. The net gain in returns from
+buying the decile of past winners and selling the decile oflosers is 8 percent per
+year. I explain 4.6 percent with size, book-to-market and one-year momentum
+in stock returns; 0.7 percent with expense ratios; and 1 percent with transac­
+tion costs. However, of the 5.4 percent spread between deciles 1 and 9, the
+4-factor model explains 4.4 percent and expense ratios and transaction costs
+explain 0.9 percent, leaving only 0.1 percent annual spread unexplained.
+Underperforming by twice its expense ratio and estimated transaction costs,
+the performance on the lowest decile is still anomalous after these explana­
+tions. Thus, the cross-section of average mutual fund returns not explained by
+the variables is almost entirely concentrated in the spread between the bottom
+two past-returns sorted decile portfolios.
+IV. Interpreting the Performance on Past-Winner Mutual Funds
+Previous sections demonstrated strong patterns in 4-factor model coeffi­
+cients on portfolios of mutual funds sorted on one-year return. This finding
+suggests sorting funds on one-year return groups with similar time-series
+properties, at least over the period while they are ranked in a particular decile.
+There are at least two possible explanations for this groupwise commonality.
+First, the funds in each portfolio might be relatively stable with consistent
+strategies through time. Second, the funds in each portfolio might be unstable
+through time, but the funds in a particular decile might hold similar securities
+while they are in that portfolio. The implications of these two explanations
+differ drastically, since the former suggests that managers follow consistent
+strategies that determine their expected returns, whereas the latter is consis­
+tent with managers choosing securities randomly but holding them for one to
+two years.
+6 Details on the construction of the VLMH portfolio, and the specific estimates discussed in this
+section, are available from the author upon request.
+
+SubsequentRanking
+On Persistence in Mutual Fund Performance
+Initial Ranking
+71
+25%
+20%
+J:a
+15% :s
+10% J
+1:$
+5% !'";f
+0%
+Figure 1. Contingency table of initial and subsequent one-year performance rankings.
+In each calendar year from 1962 to 1992, funds are ranked into decile portfolios based on one-year
+gross return. These initial decile rankings are paired with the fund's subsequent one-year gross
+return ranking. Funds that do not survive the complete subsequent year are placed in a separate
+category for dead funds. The bars in cell (j, i) represent the conditional probability of achieving a
+subsequent ranking of decile j (or dying) given an initial ranking of decile i, I estimate gross
+returns by adding back expense ratios to reported returns.
+A. Consistency in Ranking
+I test the consistency in fund ranking by constructing a contingency table of
+initial and subsequent one-year mutual fund rankings. I use simple returns
+gross of expense ratios to remove the predictable expense element in reported
+returns. The contingency table is displayed in Figure 1. The bars for initial
+rank i and subsequent rank} represent Pr (rank) next year Irank i last year).
+From the figure, it is apparent that winners are somewhat more likely to
+remain winners, and losers are more likely to either remain losers or perish.
+However, the funds in the top decile differ substantially each year, with more
+than 80 percent annual turnover in composition. In addition, last year's win­
+ners frequently become next year's losers and vice versa, which is consistent
+with gambling behavior by mutual funds. Further, the probability of disap­
+pearing from the database decreases monotonically in the previous-year's
+return. Thus, while the ranks of a few of the top and many of the bottom funds
+persist, the year-to-year rankings on most funds appear largely random.
+
+
+72 The Journal of Finance
+0.6% ,--------------------------------.,
+Decile1
+0.0%
+'i? 0.4%
+§
+~
+J0.2%
+f
+I
+Decile10
+....
+-0.2% L-__--'---- -----"- --'---- -----"- ---l.- ---.l __------l
+FormationYear + 1 Year + 2 Years + 3 Years +4 Years +5 Years
+Figure 2. Post-formation returns on portfolios of mutual funds sorted on lagged one­
+year return. In each calendar year from 1962 to 1987, funds are ranked into equal-weight decile
+portfolios based on one-year return. The lines in the graph represent the excess returns on the
+decile portfolios in the year subsequent to initial ranking (the "formation" year) and in each of the
+next five years after formation. Funds with the highest one-year return comprise decile 1 and
+funds with the lowest comprise decile 10. The portfolios are equally weighted each month, so the
+weights are readjusted whenever a fund disappears from the sample.
+B. Returns on the Portfolios of Mutual Funds after Ranking
+The large number of top-decile funds that revert to lower ranks suggests that
+the relatively high returns on the funds in this portfolio are short-lived. Figure
+2 presents the average returns of the funds in each decile portfolio in each of
+the five years after their original formation. From the figure, it is clear that
+one-year performance persistence is mostly eliminated after one year. Except
+for the persistent underperformance by the worst funds, mean returns and
+abnormal performance across deciles do not differ statistically significantly
+after one year.
+Furthermore, the returns on the top and bottom decile funds are not nearly
+so strongly related to the one-year momentum effect in stock returns outside of
+the ranking and formation years. In the year before ranking, funds that will
+comprise decile 1 have a PRlYR loading ofO.lB, and funds that will comprise
+decile 10 have a PRI YR loading indistinguishable from zero. In the year after
+portfolio formation, decile 1 funds have a PRIYR loading of only 0.14, and
+decile 10 funds have a PRIYR loading of 0.04. These coefficients contrast
+
+On Persistence in Mutual Fund Performance 73
+sharply with the top- and bottom-decile .PR1YR loadings in the portfolio
+formation year of 0.29 and -0.09. (See Table III.)
+C. Portfolios Sorted on PRIYR Loadings
+The results from the previous two sections suggest that most top-ranked
+mutual funds do not maintain their high relative returns. However, funds that
+follow a momentum strategy in stocks might consistently earn above-average
+returns, even if their 4-factor model performance is not abnormal. To test
+whether momentum managers earn consistently higher returns, I sort mutual
+funds into portfolios on their 4-factor model PR1YR loadings and find that
+one-year momentum funds do not earn substantially higher returns than
+contrarian funds." Relative to the 4-factor model, in fact, one-year momentum
+funds underperform one-year contrarian funds. Momentum funds also have
+high turnover and expense ratios, suggesting that most of the gains from
+following the one-year momentum strategy are consumed by higher expenses
+and transaction costs. This result contrasts with Wermers (1996), who finds
+that momentum funds outperform on a gross performance basis.
+My results suggest that Jegadeesh and Titman's (1993) spread in mean
+return among last-year's winning and losing stocks is not an investable strat­
+egy at the individual security level. My results also suggest that there is a
+simple explanation for the strong pattern in PR1YR loadings on portfolios
+sorted on lagged one-year returns: These mutual funds don't follow the mo­
+mentum strategy, but are funds that accidentally end up holding last year's
+winners. Since the returns on these stocks are above average in the ensuing
+year, if these funds simply hold their winning stocks, they will enjoy higher
+one-year expected returns and incur no additional transaction costs for this
+portfolio. With so many mutual funds, it does not seem unlikely that some
+funds will be holding many of last year's winning stocks simply by chance.
+D. Evidence that PRIYR and VLMH Loadings Capture Momentum and
+Trading Volume
+Daniel and Titman (1997) suggest that firms' actual size and book-to-market
+equity contain more explanatory power for mean returns than do time-series
+estimates of factor loadings. Their results suggest that generalizations about
+the securities held or strategies followed by mutual funds based on time-series
+factor loadings might be misleading. Fama and French (1993) find that 5MB
+and HML loadings are related to the average market capitalization and book­
+to-market equity on their test portfolios. Thus, I examine the information
+content of PR1YR and VLMH loadings by comparing the factor loadings with
+direct measures of momentum and trading liquidity. If the factor loadings
+capture the liquidity and momentum of these quantitatively-managed portfo­
+lios, they should strongly correlate with direct measures of liquidity and
+momentum.
+7 This material is available from the author upon request.
+
+74 The Journal of Finance
+To test this hypothesis, I construct two sets of25 value-weighted stock portfolios
+by sorting all NYSE, AMEX,and Nasdaq stocks first on size, and then on one-year
+momentum or trading volume. The patterns in VLMH loadings on the size­
+trading volume portfolios support my previous generalizations about the relative
+liquidity of stocks held by mutual funds," Within each size quintile, the VLMH
+loadings decrease in the dollar volume of trading. Since VLMH is long in low­
+trading-volume stocks and short in high-volume stocks, I expect this inverse
+relation between trading volume and VLMH loading. Further, VLMH is con­
+structed orthogonally to the size factor, so the VLMH loading does not reveal the
+magnitude of trading volume, only the magnitude of trading relative to firm size.
+After subtracting the average trading volume for each size quintile, the correla­
+tion between trading volume and VLMH coefficients is 0.74.
+I also find that PRIYR loadings are informative on the momentum of stocks
+in each portfolio. On the size-momentum portfolios, the PRIYR loadings are
+monotonic in momentum within every size quintile, and the overall correlation
+between momentum and factor loadings is 0.95. Thus, covariance with the
+PRIYR factor appears to be a relatively good indication of the momentum of
+the underlying stocks in a portfolio.
+v. Longer-Term Persistence in Mutual Fund Portfolios
+A. Two- to Five-Year-Return Sorted Portfolios
+Contrary to the suggestions of Hendricks, Patel, and Zeckhauser (1993),
+mutual fund manager stock-picking skill is not required to explain the one­
+year persistence in mutual fund returns. However, if manager skill exists, a
+one-year return is probably a noisy measure. To reduce the noise in past­
+performance rankings, I form portfolios of mutual funds on lagged two- to
+five-year returns. I then repeat my earlier analyses to examine how much
+cross-sectional variation in mean return can be explained by the 4-factor
+model, expense ratios, and transaction costs. Figure 3 summarizes these and
+the results from the one-year past-return sorted portfolios.
+Using longer intervals of past returns does not reveal more information
+about expected future mutual fund return or 4-factor performance. While the
+4-factor model explains more than half the spread in return on the one-year­
+return portfolios, it explains a smaller fraction of return spread in the two- to
+four-year portfolios, and none of the spread in the five-year portfolios. It turns
+out that the 4-factor model explains less of the return spread because of a
+less-pronounced pattern in PRIYR loadings and a more pronounced pattern in
+HML loadings. Past-winner mutual funds load negatively on HML and posi­
+tively on PRI YR, while past-loser mutual funds do not load significantly on
+either factor. Expense ratios explain a similar return spread across sorting
+intervals, approximately 1 percent per year. Estimates of total transaction
+costs from turnover and cross-section estimates of costs per transaction ex-
+8 This material is available from the author upon request.
+
+On Persistence in Mutual Fund Performance 75
+6%
+10% r----------------------------------,
+Spre
