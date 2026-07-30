@@ -34,3 +34,5 @@ htmlcov/
 
 # Local research data (DuckDB files; not committed)
 data/
+
+.claude/worktrees/
