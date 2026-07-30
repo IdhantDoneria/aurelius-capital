@@ -19,3 +19,15 @@ to appear complete is worse than an honest, documented skip.
 
 Every skip must be recorded in the relevant `docs/*.md` under a **Known
 limitations** / **Skipped** section, with the same three points.
+
+## HARD RULE: commit every meaningful change immediately
+
+After any meaningful change — new script/module, a reproduction or campaign run,
+a report, a bug fix, a doc — `git commit` it before moving on. No batching a
+session's worth of work into one uncommitted pile; uncommitted work is lost work.
+
+"Meaningful" = anything you'd be unhappy to lose. Trivial scratch (a print
+tweak reverted seconds later) does not need its own commit.
+
+Commit message: conventional-commit type + one-line what/why. End with
+`Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
