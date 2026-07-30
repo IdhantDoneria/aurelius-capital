@@ -35,6 +35,9 @@ is required in-file **or** passed as `default_symbol`.
 - Sample: `data/market_data/sample_momentum_universe.csv`
 - Analytical store (destination): `data/analytics.duckdb`, table `ohlcv`,
   PK `(symbol, timestamp, frequency)`, `INSERT OR REPLACE` (idempotent re-load).
+- Write path is bulk (DataFrame register + `INSERT OR REPLACE ... SELECT`),
+  ~256k rows/sec measured — 37.8M rows (5000×30y) loads in ~2.5min. Benchmark +
+  scale/validation evidence: `docs/DATA_READINESS_REPORT.md`.
 
 ## Date format
 
