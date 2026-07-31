@@ -102,19 +102,52 @@ def _bar_row(sym: str, ts: datetime, price: float) -> dict:
     }
 
 
-def test_g2_validated_filter_excludes_truncated_toy_series():
-    """A short synthetic series (like the 520-bar toy residue) is excluded from a
-    reproduction universe, while an adequate-history real series is admitted."""
-    store = DuckDBStore(":memory:")
-    t0 = datetime(2015, 1, 1, tzinfo=UTC)
-    real = [_bar_row("REAL", t0 + timedelta(days=i), 100 + i * 0.1)
-            for i in range(MIN_VALIDATED_BARS + 5)]
-    toy = [_bar_row("TOY", t0 + timedelta(days=i), 216.0) for i in range(10)]
-    store.write_bars(real + toy)
+# Real contamination signature measured on production analytics.duckdb.
+TOY_BARS = 520          # every known toy series carries exactly 520 bars
+LEGIT_MIN_BARS = 2201   # smallest real US/India series
 
-    rows = store.query(f"SELECT DISTINCT symbol FROM ohlcv WHERE "
-                       f"{validated_universe_filter()}")
-    syms = {r["symbol"] for r in rows}
+
+def _seed(store: DuckDBStore, symbol: str, n_bars: int, price: float) -> None:
+    t0 = datetime(2015, 1, 1, tzinfo=UTC)
+    store.write_bars(
+        [_bar_row(symbol, t0 + timedelta(days=i), price) for i in range(n_bars)]
+    )
+
+
+def test_g2_threshold_sits_between_toy_and_legit():
+    """The gate must reject the 520-bar toy signature and admit real data."""
+    assert TOY_BARS < MIN_VALIDATED_BARS <= LEGIT_MIN_BARS
+
+
+def test_g2_validated_filter_rejects_real_toy_signature():
+    """Actual contaminated tickers (real names, real 520-bar signature) are
+    rejected, while legitimate production symbols remain admitted. Replaces the
+    earlier 10-bar stub that never exercised the true contamination length."""
+    store = DuckDBStore(":memory:")
+    toy_tickers = ["GE", "JPM", "KO", "META", "MSFT", "NVDA", "PG", "T", "XOM"]
+    for t in toy_tickers:
+        _seed(store, t, TOY_BARS, 216.0)          # 520-bar synthetic residue
+    _seed(store, "REALCO", LEGIT_MIN_BARS, 100.0)  # legitimate production series
+
+    rows = store.query(
+        f"SELECT DISTINCT symbol FROM ohlcv WHERE {validated_universe_filter()}"
+    )
+    admitted = {r["symbol"] for r in rows}
     store.close()
-    assert "REAL" in syms
-    assert "TOY" not in syms
+
+    assert admitted == {"REALCO"}, f"toy leaked through gate: {admitted}"
+    assert not (set(toy_tickers) & admitted)
+
+
+def test_g2_boundary_520_rejected_521_admitted():
+    """Tight boundary: a 520-bar series is rejected, a 521-bar series is admitted."""
+    store = DuckDBStore(":memory:")
+    _seed(store, "AT520", TOY_BARS, 50.0)
+    _seed(store, "AT521", TOY_BARS + 1, 50.0)
+    rows = store.query(
+        f"SELECT DISTINCT symbol FROM ohlcv WHERE {validated_universe_filter()}"
+    )
+    admitted = {r["symbol"] for r in rows}
+    store.close()
+    assert "AT520" not in admitted
+    assert "AT521" in admitted

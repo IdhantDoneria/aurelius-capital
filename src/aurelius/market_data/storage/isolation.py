@@ -21,10 +21,13 @@ from pathlib import Path
 PRODUCTION_DB = "./data/analytics.duckdb"
 TOY_DB = "./data/toy.duckdb"
 
-# A real ingested daily series spans years; the known toy contamination carried
-# ~520 bars over a single 2-year synthetic window. Require >=2y (~504 trading
-# days) of history for a symbol to count as validated production data.
-MIN_VALIDATED_BARS = 504
+# Evidence-based gate (G2, reopened). Measured on production analytics.duckdb:
+#   known toy contamination : max 520 bars (synthetic 2022-2023 window)
+#   legitimate production    : min 2201 bars (US+India), median ~3162
+# 521 is the minimum threshold that rejects every known 520-bar toy series while
+# admitting all real data. The 521..2201 gap is wide, so 521 also stays maximally
+# permissive toward legitimate short-history listings.
+MIN_VALIDATED_BARS = 521
 
 
 class ProductionIsolationError(RuntimeError):
