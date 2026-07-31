@@ -79,14 +79,25 @@ def train_test(
     config: BacktestConfig | None = None,
     train_frac: float = 0.7,
 ) -> tuple[PerformanceMetrics, PerformanceMetrics]:
-    """Return (in_sample_metrics, out_of_sample_metrics) from one run."""
+    """Return (in_sample_metrics, out_of_sample_metrics) from TWO independent runs.
+
+    G1 fix: IS and OOS run as completely separate backtests, each with a fresh
+    engine — fresh portfolio, risk, execution and circuit-breaker state. A
+    drawdown halt tripped in-sample can therefore no longer bleed into (and zero
+    out) the out-of-sample window, which was the verified reproduction defect.
+    Config is identical across both runs. Note: the OOS run starts cold, so its
+    indicators warm up from the OOS bars rather than the IS tail.
+    """
     config = config or BacktestConfig()
     ts = _timestamps(bars)
     cut = ts[int(len(ts) * train_frac)]
-    full = run_backtest(factory, bars, config)
+    is_bars = [b for b in bars if b.timestamp < cut]
+    oos_bars = [b for b in bars if b.timestamp >= cut]
+    is_full = run_backtest(factory, is_bars, config)
+    oos_full = run_backtest(factory, oos_bars, config)
     return (
-        _window_metrics(full, ts[0], cut, config),
-        _window_metrics(full, cut, None, config),
+        _window_metrics(is_full, None, None, config),
+        _window_metrics(oos_full, None, None, config),
     )
 
 

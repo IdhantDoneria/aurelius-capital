@@ -22,12 +22,15 @@ from aurelius.backtesting.data.feed import BarData
 from aurelius.hypothesis.store import HypothesisStore
 from aurelius.market_data.adapters.csv_loader import CSVLoader
 from aurelius.market_data.storage.duckdb_store import DuckDBStore
+from aurelius.market_data.storage.isolation import TOY_DB, assert_not_production
 from aurelius.research.runner import ResearchRunner, research_config
 from aurelius.research.store import ResearchStore
 from aurelius.research.templates import MomentumStrategy
 
 CSV = Path("data/market_data/sample_momentum_universe.csv")
-STORE_DB = "./data/analytics.duckdb"
+# G2: this is a toy/sample loader — it writes to an ISOLATED store, never the
+# production database. assert_not_production() enforces the boundary at runtime.
+STORE_DB = TOY_DB
 
 
 def load_csv_into_store(store: DuckDBStore) -> int:
@@ -84,6 +87,7 @@ def top_momentum_hypothesis() -> tuple[str, str]:
 
 
 def main() -> None:
+    assert_not_production(STORE_DB)  # G2: refuse to contaminate production DB
     store = DuckDBStore(STORE_DB)
 
     n = load_csv_into_store(store)

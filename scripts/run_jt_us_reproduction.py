@@ -23,22 +23,17 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from aurelius.backtesting.data.feed import BarData
 from aurelius.market_data.storage.duckdb_store import DuckDBStore
+from aurelius.market_data.storage.isolation import validated_universe_filter
 from aurelius.research.runner import ResearchRunner, research_config
 from aurelius.research.store import ResearchStore
 from aurelius.research.templates import FactorStrategy
 
 STORE_DB = "./data/analytics.duckdb"
 # US universe = symbols with no exchange suffix (India names carry .NS / .BO).
-# EXCLUDE 9 contaminated toy tickers left in analytics.duckdb by the old
-# load_and_run_momentum.py toy loader: they carry synthetic 2022-2023 prices
-# (e.g. AT&T 'T' at $216) and only 520 bars vs ~3181 for real names. Removing
-# known-corrupt data is universe QA, not tuning. AAPL/AMZN/GOOG are clean
-# (real ingest overwrote their toy rows on the shared primary key).
-TOY_CONTAMINATED = ("GE", "JPM", "KO", "META", "MSFT", "NVDA", "PG", "T", "XOM")
-US_FILTER = (
-    "frequency='1d' AND symbol NOT LIKE '%.%' "
-    f"AND symbol NOT IN {TOY_CONTAMINATED}"
-)
+# G2: validated_universe_filter admits only symbols with adequate history, so
+# truncated toy residue (the old 520-bar synthetic series) is excluded on a
+# principled data-quality basis rather than a hardcoded ticker blacklist.
+US_FILTER = validated_universe_filter("frequency='1d' AND symbol NOT LIKE '%.%'")
 
 
 def load_us_bars() -> list[BarData]:
