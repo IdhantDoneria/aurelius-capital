@@ -15,12 +15,14 @@ action, and must run unattended. Same broker/risk/execution contracts — only t
 data source and the survival machinery change.
 """
 
+from aurelius.paper.alpaca_broker import AlpacaBroker
 from aurelius.paper.broker import OrderRequest, OrderResult, PaperBroker, Tick
 from aurelius.paper.dashboard import build_snapshot, render_text
 from aurelius.paper.engine import Health, TradingEngine, replay
 from aurelius.paper.journal import TradeJournal
 
 __all__ = [
+    "AlpacaBroker",
     "Health",
     "OrderRequest",
     "OrderResult",
