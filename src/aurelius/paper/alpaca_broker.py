@@ -78,16 +78,15 @@ class AlpacaBroker:
 
     def account(self) -> dict:
         acc = self._http.get("/v2/account").raise_for_status().json()
-        positions = {
-            p["symbol"]: Decimal(p["qty"])
-            for p in self._http.get("/v2/positions").raise_for_status().json()
-        }
+        pos_list = self._http.get("/v2/positions").raise_for_status().json()
+        positions = {p["symbol"]: Decimal(p["qty"]) for p in pos_list}
+        unrealized = sum(Decimal(p.get("unrealized_pl", "0")) for p in pos_list)
         return {
             "cash": Decimal(acc["cash"]),
             "equity": Decimal(acc["equity"]),
             "buying_power": Decimal(acc["buying_power"]),
-            "unrealized_pnl": Decimal(acc["unrealized_pl"]),
-            "realized_pnl": Decimal(acc["realized_pl"]) if "realized_pl" in acc else Decimal(0),
+            "unrealized_pnl": unrealized,
+            "realized_pnl": Decimal(0),  # ponytail: Alpaca doesn't expose realized PnL on account endpoint
             "positions": positions,
             "open_orders": self.open_orders,
         }
