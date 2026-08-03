@@ -1,0 +1,1 @@
+{"market": "india", "label": "hold_3m", "params": {"lookback": 126, "quantile": 0.1, "rebalance_days": 63, "allow_short": true}, "is_sharpe": -0.0271, "oos_sharpe": -0.4316, "oos_return": -1.9659, "oos_max_drawdown": -1.8034, "oos_trades": 105, "adjusted_pvalue": 1.0, "verdict": "reject", "runtime_s": 724.9}

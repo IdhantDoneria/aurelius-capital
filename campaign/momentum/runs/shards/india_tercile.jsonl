@@ -1,0 +1,1 @@
+{"market": "india", "label": "tercile", "params": {"lookback": 126, "quantile": 0.33, "rebalance_days": 21, "allow_short": true}, "is_sharpe": 0.7048, "oos_sharpe": 0.603, "oos_return": -1.4456, "oos_max_drawdown": -1.3691, "oos_trades": 487, "adjusted_pvalue": 0.2914, "verdict": "reject", "runtime_s": 406.0}

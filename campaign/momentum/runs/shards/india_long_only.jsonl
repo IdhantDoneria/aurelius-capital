@@ -1,0 +1,1 @@
+{"market": "india", "label": "long_only", "params": {"lookback": 126, "quantile": 0.1, "rebalance_days": 21, "allow_short": false}, "is_sharpe": 0.7743, "oos_sharpe": 1.012, "oos_return": 4.1647, "oos_max_drawdown": -0.6529, "oos_trades": 959, "adjusted_pvalue": 0.0259, "verdict": "accept", "runtime_s": 1925.5}

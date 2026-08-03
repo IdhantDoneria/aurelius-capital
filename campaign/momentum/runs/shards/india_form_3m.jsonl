@@ -1,0 +1,1 @@
+{"market": "india", "label": "form_3m", "params": {"lookback": 63, "quantile": 0.1, "rebalance_days": 21, "allow_short": true}, "is_sharpe": -1.8345, "oos_sharpe": 0.5421, "oos_return": -1.4747, "oos_max_drawdown": -1.2903, "oos_trades": 82, "adjusted_pvalue": 0.3513, "verdict": "reject", "runtime_s": 382.1}
