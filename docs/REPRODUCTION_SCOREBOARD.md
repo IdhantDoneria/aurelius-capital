@@ -1,12 +1,13 @@
 # Institutional Reproduction Program — Live Scoreboard
 
-Canonical source of truth. Updated 2026-07-30.
+Canonical source of truth. Updated 2026-08-03 (momentum campaign).
 
 ## Phase 7 — Per-paper scoreboard
 
 | # | Paper | Status | Data | Exp status | Reproduced (published magnitude) | Construction faithful | Validation | Manual steps | Eng issues | Confidence | Date |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | Jegadeesh-Titman 1993 (momentum) | DONE | toy (12×2yr) | run, REJECT | NO (−0.29% vs +0.95%/mo) | YES | 2 OOS trades = no power | driver existed | none | HIGH (diagnosis) | 2026-07-30 |
+| 1 | Jegadeesh-Titman 1993 (momentum) | DONE | **real US+India daily 2014–26** | run, REJECT | **directional** (US OOS +58.8% WML, Sharpe 0.935, p 0.161; not sig) | YES | 345 US OOS trades (real power) | driver reused | none | HIGH | 2026-08-03 |
+| 1b | JT extension — momentum campaign (14 runs, US+India robustness/cross-market) | DONE | **real US+India** | 14 run: 1 ACCEPT / 13 REJECT | India long-only **significant** (+416%, Sharpe 1.012, **p 0.026**) | YES | up to 1076 OOS trades | grid driver | none | HIGH | 2026-08-03 |
 | 2 | Gatev et al. 2006 (pairs) | DONE | toy (12×2yr) | run, REJECT | NO (−1.51% vs +11%/yr) | YES | 22 OOS trades | 1 driver written | none | HIGH (diagnosis) | 2026-07-30 |
 | 3 | Sharpe 1964 (CAPM) | BLOCKED | needs mkt portfolio + betas | — | — | — | — | — | data | — | — |
 | 4 | Asness et al. (Value & Momentum) | BLOCKED | needs fundamentals | — | — | — | — | — | data | — | — |
@@ -52,3 +53,25 @@ The 10-paper reproduction TARGET is **not achievable on current data** — a
 verified data blocker, not an engineering defect. Per Phase 9, no architectural
 work is recommended; per the anti-fabrication rule, remaining papers are NOT run
 on toy data to fake completion. Program pauses pending real datasets.
+
+## Phase — Momentum Campaign update (2026-08-03)
+
+The Phase 9 data blocker is RESOLVED for the price-executable momentum family: a
+real US+India daily panel (2014–2026, 2143 symbols) was ingested. JT-1993 now
+runs on real data with genuine OOS power (345 US trades, not 2), and a 14-run
+robustness + cross-market campaign extends it. Full artifacts under
+`campaign/momentum/` (Momentum_Campaign_Report, Cross_Market_Report,
+Robustness_Report, Production_Strategy, Leverage_Investigation, Executive_Summary).
+
+- Momentum runs executed: **14** (7 US + 7 India), no tuning, one OOS split each.
+- Statistically significant (adj p < 0.05): **1 / 14** — India long-only decile
+  (+416.5%, Sharpe 1.012, p 0.026).
+- Directional-positive but insignificant: US JT decile L/S (+58.8%, p 0.161).
+- Construction-faithful: YES (same frozen `FactorStrategy`); magnitude-faithful:
+  NO (fidelity gaps M1/M2/M3/M6/M8 identified, not implemented under freeze).
+- Engineering defects: **0** (incl. a full leverage root-cause investigation →
+  Category B methodology/M3, not a defect).
+- Still BLOCKED (data, honest): Carhart 1997, MOP 2012, AMP 2013 — need
+  fundamentals / multi-asset panels; NOT run on toy data.
+- Strategy: Momentum v1 = long-only 6-1-1 top-decile equal-weight monthly, single
+  market, ≤1× gross — **paper-trade only** (survivorship + single-regime caveats).

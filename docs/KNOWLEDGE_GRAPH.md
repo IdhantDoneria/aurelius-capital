@@ -226,3 +226,26 @@ Run automatically via `GET /kg/qc`. Detects:
 - **Self-loops** — edge from node to itself (always a bug)
 
 Missing metadata detection: use `raw_query` with `json_extract_string(properties, '$.field') IS NULL`.
+
+---
+
+## Momentum Campaign synthesis (2026-08-03)
+
+Institutional-memory deltas from the 14-run US+India momentum campaign
+(`campaign/momentum/Knowledge_Graph_Summary.md`):
+
+1. **Momentum is market-structure-dependent, not universal.** US = weak,
+   insignificant long/short relative-strength (best +58.8% WML, p 0.161). India =
+   significant long-only trend (+416%, Sharpe 1.012, p 0.026); its L/S version is
+   destroyed by the short leg.
+2. **The short leg is the liability.** Carries the −71% drawdown in the US;
+   flips every India L/S book negative in a bull regime (momentum-crash asymmetry).
+3. **Leverage-cap × decile-breadth (M3) is a first-order fidelity constraint on
+   all L/S factor books.** Fixed 5%/name × ~200 decile names = ~10× nominal gross
+   vs a 1.5× cap → ~30 names fill. Uniform US+India; not a defect.
+4. **Long-only > long/short momentum in a trending single-regime market**
+   (India). Regime- and survivorship-dependent.
+5. **0 platform defects** across 14 runs + a leverage root-cause investigation.
+6. **Robust vs fragile:** robust (directional) = 6m formation, extreme deciles,
+   monthly rebalance; fragile = the L/S spread, tercile breadth, 63-day holding;
+   data-dependent = India significance (bull + survivorship).
