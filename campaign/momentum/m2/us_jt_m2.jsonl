@@ -1,0 +1,1 @@
+{"label": "JT_6-1-6_decile_m2", "params": {"lookback": 126, "quantile": 0.1, "rebalance_days": 21, "allow_short": true, "equal_weight": true, "min_price": 5.0}, "is_sharpe": 0.3215, "oos_sharpe": 0.098, "oos_return": -0.2379, "oos_max_drawdown": -0.7578, "oos_trades": 672, "adjusted_pvalue": 0.4244, "verdict": "reject", "runtime_s": 1282.1}
