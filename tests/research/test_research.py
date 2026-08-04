@@ -103,6 +103,35 @@ def test_all_templates_run():
         assert len(m.equity_curve) > 0
 
 
+def test_equal_weight_parameter_and_run():
+    """M1: equal_weight=True is reflected in parameters and the strategy runs
+    end-to-end with max_position_pct=1.0 (strength IS the target NAV fraction)."""
+    from decimal import Decimal
+    from aurelius.backtesting.config import BacktestConfig
+
+    # parameters dict carries the flag
+    strat = FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                           allow_short=True, equal_weight=True)
+    assert strat.parameters["equal_weight"] is True
+
+    # existing FactorStrategy without flag: equal_weight defaults False, backward-compat
+    strat_old = FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10)
+    assert strat_old.parameters["equal_weight"] is False
+
+    # runs without error with max_position_pct=1.0
+    bars = synth_bars(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"], days=200, seed=42)
+    cfg = BacktestConfig(max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"))
+    m = run_backtest(lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                                            allow_short=True, equal_weight=True), bars, cfg)
+    assert isinstance(m, PerformanceMetrics)
+    assert len(m.equity_curve) > 0
+
+    # long-only equal_weight runs too
+    m2 = run_backtest(lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                                             allow_short=False, equal_weight=True), bars, cfg)
+    assert isinstance(m2, PerformanceMetrics)
+
+
 # ── validation mechanics ──────────────────────────────────────────────────────
 
 

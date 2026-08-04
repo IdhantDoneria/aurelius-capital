@@ -200,6 +200,11 @@ class FactorStrategy(Strategy):
 
     Leak-safe: the cross-section at time t is built from ctx.history (bars <= t)
     for every symbol. Rebalances on a fixed cadence to control turnover.
+
+    equal_weight=True (M1): each decile name receives an equal share of the
+    gross leverage budget (0.75/n per leg for L/S; 1.0/n for long-only) so the
+    full decile expresses without hitting the gross cap. Requires the backtest
+    config to use max_position_pct=1.0 (strength IS the target NAV fraction).
     """
 
     name = "factor"
@@ -210,11 +215,13 @@ class FactorStrategy(Strategy):
         quantile: float = 0.33,
         rebalance_days: int = 21,
         allow_short: bool = True,
+        equal_weight: bool = False,
     ) -> None:
         self.lookback = lookback
         self.quantile = quantile
         self.rebalance_days = rebalance_days
         self.allow_short = allow_short
+        self.equal_weight = equal_weight
 
     @property
     def parameters(self) -> dict:
@@ -223,6 +230,7 @@ class FactorStrategy(Strategy):
             "quantile": self.quantile,
             "rebalance_days": self.rebalance_days,
             "allow_short": self.allow_short,
+            "equal_weight": self.equal_weight,
         }
 
     def on_bar(self, ctx: StrategyContext, bar: MarketEvent) -> list[SignalEvent]:
@@ -249,4 +257,11 @@ class FactorStrategy(Strategy):
             d = Direction.SHORT
         else:
             d = Direction.FLAT
-        return [SignalEvent(bar.timestamp, bar.symbol, d, strategy_id=self.name)]
+        # M1: equal-weight within gross leverage budget.
+        # gross_budget=1.5 split 50/50 long/short → 0.75/_count per leg;
+        # long-only → 1.0/_count (fully invested). Requires max_position_pct=1.0.
+        if self.equal_weight and d != Direction.FLAT:
+            strength = (0.75 if self.allow_short else 1.0) / _count
+        else:
+            strength = 1.0
+        return [SignalEvent(bar.timestamp, bar.symbol, d, strategy_id=self.name, strength=strength)]
