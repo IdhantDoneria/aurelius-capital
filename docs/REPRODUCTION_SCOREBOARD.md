@@ -102,6 +102,25 @@ element and is KEEP/REJECT-certified on OOS risk-adjusted evidence + fidelity.
   (engine unfreeze). See `campaign/momentum/m3/M3_Fidelity_Report.md` +
   `Leverage_Investigation.md`.
 
+**M5 — gross vs net reporting fidelity (2026-08-04).** Audit: reproduction reports
+**net**-of-cost (commission 10bps + spread 5bps + slippage); JT-1993 reports
+**gross**. They differ → surfaced the gross-comparable metric by running the M4
+baseline under a zero-cost config (config-only, no engine/strategy/stats change).
+
+| Basis | OOS return | OOS Sharpe | OOS DD | Trades | Adj p |
+|---|---|---|---|---|---|
+| NET (production, M4) | −24.84% | +0.1124 | −77.24% | 593 | 0.4134 |
+| GROSS (JT-comparable, M5) | −23.76% | +0.1165 | −77.14% | 589 | 0.4103 |
+
+- **Decision: KEEP M5** — gross now reported alongside net (JT-comparability);
+  net production metrics preserved; 595 tests pass; 0 forbidden-surface change.
+- **Cost wedge = ~1.08 pp OOS return.** Gross OOS return still **negative** →
+  transaction costs are NOT the reproduction gap; the ~80 pp shortfall vs JT is
+  structural (survivorship + Cat C decay + leverage-cap + single-slice power).
+- Institutional baseline **strategy** unchanged (M1+M2+M4); M5 is a reporting
+  standard: every reproduction reported on both bases. See
+  `campaign/momentum/m5/M5_Fidelity_Report.md`.
+
 ## Phase — Pairs Campaign update (2026-08-04)
 
 The 2026-07-30 Gatev toy blocker (12 names, 22 trades, no power) is RESOLVED: a

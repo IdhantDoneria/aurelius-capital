@@ -74,6 +74,7 @@ across 14 runs + a leverage investigation.
 | M2 | + $5 price screen | +0.098 | 672 | 0.424 | KEEP | A |
 | M3 | + overlapping cohorts | +0.006 | 4781 | 0.495 | BLOCKED | E (engine) |
 | **M4** | **+ 1-month skip** | **+0.112** | **593** | **0.413** | **KEEP** | **A** |
+| M5 | gross-vs-net reporting | +0.117 (gross) | 589 | 0.410 | KEEP | A (reporting) |
 
 - **Institutional baseline = M4** (M1 equal-weight + M2 price screen + M4 skip).
 - M4 new KG facts: (5) the JT 1-month skip is regime-split — it removes reversal
@@ -83,3 +84,10 @@ across 14 runs + a leverage investigation.
   deterioration is Category D regime/noise.
 - Failure-registry addition: IS Sharpe collapse under skip (+0.322→−0.167) — Class
   D regime-dependence (IS continuation vs OOS reversal), not a defect.
+- **M5 new KG facts:** (8) reproduction reports NET-of-cost, JT reports GROSS —
+  now reported on both bases (config-only zero-cost run, no engine change). (9) the
+  transaction-cost wedge is ~1.08 pp OOS return; gross OOS return is still NEGATIVE
+  (−23.76%) → **costs are NOT the reproduction gap** vs JT's published magnitude;
+  the ~80 pp shortfall is structural (survivorship + Cat C decay + leverage-cap +
+  single-slice power). (10) gross ≥ net is a locked reporting invariant
+  (`test_gross_vs_net_reporting`).

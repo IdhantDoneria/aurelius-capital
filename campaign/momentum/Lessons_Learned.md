@@ -92,3 +92,19 @@ campaign (power limit, L7). Baseline promotion (M2, then M4) is a separate
 judgment: does the paper-faithful change improve OOS risk-adjusted performance?
 Both M2 and M4 were KEPT on OOS-Sharpe + fidelity while the engine verdict stayed
 REJECT. Keep the two ledgers distinct.
+
+**L14 — gross vs net is a config toggle, not an engine change.** The reproduction
+reports NET-of-cost; JT reports GROSS. Surfacing the gross-comparable metric needed
+zero code on any protected surface — just re-run the identical baseline with
+`commission_rate=spread_bps=slippage_impact_bps=0` (BacktestConfig inputs). Same
+validated `PerformanceCalculator`, gross equity path. When the paper and the
+platform disagree on a *reporting convention*, look for a config lever before
+touching code.
+
+**L15 — quantify the cost wedge before blaming costs.** The transaction-cost wedge
+is only ~1.08 pp of OOS return, and the GROSS OOS return is still negative
+(−23.76%). Costs are NOT why the reproduction misses JT's ~1%/month — the ~80 pp
+gap is structural (survivorship, Cat C decay, leverage-cap, single-slice power).
+Measuring the wedge (M5) turned a plausible-sounding explanation into a ruled-out
+one. Caveat honestly: `SlippageModel`'s 5 bps zero-volume fallback isn't
+config-wired (engine-frozen), a negligible residual on the volume-populated panel.
