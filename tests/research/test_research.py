@@ -132,6 +132,36 @@ def test_equal_weight_parameter_and_run():
     assert isinstance(m2, PerformanceMetrics)
 
 
+def test_min_price_parameter_and_run():
+    """M2: min_price filter reflected in parameters; backward-compat default 0.0.
+    With a high min_price, low-price synth names are excluded from the cross-section."""
+    from decimal import Decimal
+    from aurelius.backtesting.config import BacktestConfig
+
+    strat = FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                           equal_weight=True, min_price=5.0)
+    assert strat.parameters["min_price"] == 5.0
+
+    strat_old = FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10)
+    assert strat_old.parameters["min_price"] == 0.0  # backward-compat
+
+    bars = synth_bars(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"], days=200, seed=42)
+    cfg = BacktestConfig(max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"))
+
+    # M2 runs end-to-end (synth prices ~$20-50 so filter doesn't starve universe)
+    m = run_backtest(lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                                            allow_short=True, equal_weight=True,
+                                            min_price=5.0), bars, cfg)
+    assert isinstance(m, PerformanceMetrics)
+    assert len(m.equity_curve) > 0
+
+    # Very high min_price starves cross-section — must not crash, just fewer/no trades
+    m_starved = run_backtest(
+        lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                               equal_weight=True, min_price=1_000_000.0), bars, cfg)
+    assert isinstance(m_starved, PerformanceMetrics)
+
+
 # ── validation mechanics ──────────────────────────────────────────────────────
 
 

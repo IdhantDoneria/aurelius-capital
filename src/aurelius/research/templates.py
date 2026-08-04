@@ -205,6 +205,11 @@ class FactorStrategy(Strategy):
     gross leverage budget (0.75/n per leg for L/S; 1.0/n for long-only) so the
     full decile expresses without hitting the gross cap. Requires the backtest
     config to use max_position_pct=1.0 (strength IS the target NAV fraction).
+
+    min_price (M2): formation-time price screen. JT-2001 explicitly drops
+    stocks with price < $5 to remove penny-stock microstructure noise. Applied
+    at each rebalance: a name below min_price is excluded from the cross-section
+    for that period. Default 0.0 (off) for backward compatibility.
     """
 
     name = "factor"
@@ -216,12 +221,14 @@ class FactorStrategy(Strategy):
         rebalance_days: int = 21,
         allow_short: bool = True,
         equal_weight: bool = False,
+        min_price: float = 0.0,
     ) -> None:
         self.lookback = lookback
         self.quantile = quantile
         self.rebalance_days = rebalance_days
         self.allow_short = allow_short
         self.equal_weight = equal_weight
+        self.min_price = min_price
 
     @property
     def parameters(self) -> dict:
@@ -231,6 +238,7 @@ class FactorStrategy(Strategy):
             "rebalance_days": self.rebalance_days,
             "allow_short": self.allow_short,
             "equal_weight": self.equal_weight,
+            "min_price": self.min_price,
         }
 
     def on_bar(self, ctx: StrategyContext, bar: MarketEvent) -> list[SignalEvent]:
@@ -241,6 +249,9 @@ class FactorStrategy(Strategy):
         for s in ctx.symbols_with_data:
             c = _closes(ctx, s, self.lookback + 1)
             if len(c) < self.lookback + 1 or c[0] == 0:
+                continue
+            # M2 price screen: JT-2001 drops stocks priced below $5.
+            if self.min_price > 0 and float(c[-1]) < self.min_price:
                 continue
             scores[s] = (c[-1] - c[0]) / c[0]
         if bar.symbol not in scores or len(scores) < 3:
