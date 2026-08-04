@@ -355,6 +355,13 @@ class FactorStrategy(Strategy):
     stocks with price < $5 to remove penny-stock microstructure noise. Applied
     at each rebalance: a name below min_price is excluded from the cross-section
     for that period. Default 0.0 (off) for backward compatibility.
+
+    skip (M4): one-month skip period. JT-1993 ranks on the formation window
+    ending `skip` bars BEFORE the holding period begins, to remove the
+    short-term (1-month) reversal contaminating the momentum signal. The
+    formation return is measured from lookback+skip bars ago to skip bars ago;
+    the most recent `skip` bars are excluded from ranking. Default 0 (off,
+    contiguous formation→holding) for backward compatibility.
     """
 
     name = "factor"
@@ -367,6 +374,7 @@ class FactorStrategy(Strategy):
         allow_short: bool = True,
         equal_weight: bool = False,
         min_price: float = 0.0,
+        skip: int = 0,
     ) -> None:
         self.lookback = lookback
         self.quantile = quantile
@@ -374,6 +382,7 @@ class FactorStrategy(Strategy):
         self.allow_short = allow_short
         self.equal_weight = equal_weight
         self.min_price = min_price
+        self.skip = skip
 
     @property
     def parameters(self) -> dict:
@@ -384,6 +393,7 @@ class FactorStrategy(Strategy):
             "allow_short": self.allow_short,
             "equal_weight": self.equal_weight,
             "min_price": self.min_price,
+            "skip": self.skip,
         }
 
     def on_bar(self, ctx: StrategyContext, bar: MarketEvent) -> list[SignalEvent]:
@@ -391,14 +401,19 @@ class FactorStrategy(Strategy):
         if len(ctx.history(bar.symbol)) % self.rebalance_days != 0:
             return []
         scores: dict[str, float] = {}
+        need = self.lookback + self.skip + 1
         for s in ctx.symbols_with_data:
-            c = _closes(ctx, s, self.lookback + 1)
-            if len(c) < self.lookback + 1 or c[0] == 0:
+            c = _closes(ctx, s, need)
+            if len(c) < need or c[0] == 0:
                 continue
-            # M2 price screen: JT-2001 drops stocks priced below $5.
+            # M2 price screen: JT-2001 drops stocks priced below $5 (current price).
             if self.min_price > 0 and float(c[-1]) < self.min_price:
                 continue
-            scores[s] = (c[-1] - c[0]) / c[0]
+            # M4 skip: formation return ends `skip` bars ago, not at the current
+            # bar. c[-1-skip] is the formation-window end; c[0] is its start,
+            # exactly lookback bars earlier. skip=0 → c[-1], identical to M2.
+            end = c[-1 - self.skip]
+            scores[s] = (end - c[0]) / c[0]
         if bar.symbol not in scores or len(scores) < 3:
             return []
         ranked = sorted(scores.values())

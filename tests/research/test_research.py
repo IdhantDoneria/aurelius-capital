@@ -163,6 +163,36 @@ def test_min_price_parameter_and_run():
     assert isinstance(m_starved, PerformanceMetrics)
 
 
+def test_skip_parameter_and_run():
+    """M4: skip period reflected in parameters; backward-compat default 0.
+    skip shifts the formation window back by `skip` bars; skip=0 == M2."""
+    from decimal import Decimal
+    from aurelius.backtesting.config import BacktestConfig
+
+    strat = FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                           equal_weight=True, min_price=5.0, skip=5)
+    assert strat.parameters["skip"] == 5
+
+    strat_old = FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10)
+    assert strat_old.parameters["skip"] == 0  # backward-compat: contiguous
+
+    bars = synth_bars(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"], days=200, seed=42)
+    cfg = BacktestConfig(max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"))
+
+    # M4 runs end-to-end (needs lookback+skip+1 bars of history to rank)
+    m = run_backtest(lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                                            allow_short=True, equal_weight=True,
+                                            min_price=5.0, skip=5), bars, cfg)
+    assert isinstance(m, PerformanceMetrics)
+    assert len(m.equity_curve) > 0
+
+    # Large skip that starves history (needs >200 bars) must not crash
+    m_starved = run_backtest(
+        lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                               equal_weight=True, skip=300), bars, cfg)
+    assert isinstance(m_starved, PerformanceMetrics)
+
+
 def test_overlapping_factor_parameters_and_run():
     """M3: OverlappingFactorStrategy exposes K/lookback/etc; runs end-to-end.
     K=2 cohorts with short lookback so both cohorts fill within 200 synthetic bars."""
