@@ -161,6 +161,40 @@ class PairsStrategy(Strategy):
         return []
 
 
+class MultiPairStrategy(Strategy):
+    """Gatev portfolio: trade N pairs' spreads at once in ONE backtest, so the
+    equity curve carries genuine cross-pair diversification (not an average of N
+    single-pair Sharpes, which would fake it). Pure composition of PairsStrategy
+    — each sub-strategy owns one pair; on_bar concatenates their signals. Engine
+    untouched; it already sizes/nets a multi-symbol long/short book.
+    """
+
+    name = "multi_pairs"
+
+    def __init__(self, pairs: list[tuple], lookback: int = 126,
+                 entry_z: float = 2.0, exit_z: float = 0.5) -> None:
+        # pairs: list of (symbol_x, symbol_y, hedge)
+        self._subs = [
+            PairsStrategy(x, y, lookback=lookback, entry_z=entry_z,
+                          exit_z=exit_z, hedge=hedge)
+            for x, y, hedge in pairs
+        ]
+        self._pairs = pairs
+        self.lookback, self.entry_z, self.exit_z = lookback, entry_z, exit_z
+
+    @property
+    def parameters(self) -> dict:
+        return {"n_pairs": len(self._subs), "lookback": self.lookback,
+                "entry_z": self.entry_z, "exit_z": self.exit_z,
+                "pairs": [f"{x}|{y}" for x, y, _ in self._pairs]}
+
+    def on_bar(self, ctx: StrategyContext, bar: MarketEvent) -> list[SignalEvent]:
+        out: list[SignalEvent] = []
+        for sub in self._subs:
+            out.extend(sub.on_bar(ctx, bar))
+        return out
+
+
 class FactorStrategy(Strategy):
     """Cross-sectional momentum factor: long the top quantile, short the bottom.
 
