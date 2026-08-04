@@ -193,6 +193,31 @@ def test_skip_parameter_and_run():
     assert isinstance(m_starved, PerformanceMetrics)
 
 
+def test_gross_vs_net_reporting():
+    """M5: gross (zero-cost config) return >= net (full-cost config) return for
+    the same strategy/bars. Locks the reporting invariant the M5 gross view rests
+    on — costs can only subtract, so gross must dominate net. Config-only, no
+    engine/strategy change."""
+    from decimal import Decimal
+    from aurelius.backtesting.config import BacktestConfig
+
+    bars = synth_bars(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"], days=200, seed=42)
+
+    def _factory():
+        return FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                              allow_short=True, equal_weight=True, min_price=5.0)
+
+    net_cfg = BacktestConfig(max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"))
+    gross_cfg = BacktestConfig(
+        max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"),
+        commission_rate=Decimal("0"), spread_bps=Decimal("0"),
+        slippage_impact_bps=Decimal("0"),
+    )
+    net = run_backtest(_factory, bars, net_cfg)
+    gross = run_backtest(_factory, bars, gross_cfg)
+    assert gross.total_return >= net.total_return  # costs only subtract
+
+
 def test_overlapping_factor_parameters_and_run():
     """M3: OverlappingFactorStrategy exposes K/lookback/etc; runs end-to-end.
     K=2 cohorts with short lookback so both cohorts fill within 200 synthetic bars."""
