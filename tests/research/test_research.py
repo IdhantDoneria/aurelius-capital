@@ -15,6 +15,7 @@ from aurelius.research.templates import (
     FactorStrategy,
     MeanReversionStrategy,
     MomentumStrategy,
+    OverlappingFactorStrategy,
     PairsStrategy,
 )
 from aurelius.research.validation import (
@@ -159,6 +160,47 @@ def test_min_price_parameter_and_run():
     m_starved = run_backtest(
         lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
                                equal_weight=True, min_price=1_000_000.0), bars, cfg)
+    assert isinstance(m_starved, PerformanceMetrics)
+
+
+def test_overlapping_factor_parameters_and_run():
+    """M3: OverlappingFactorStrategy exposes K/lookback/etc; runs end-to-end.
+    K=2 cohorts with short lookback so both cohorts fill within 200 synthetic bars."""
+    from decimal import Decimal
+    from aurelius.backtesting.config import BacktestConfig
+
+    strat = OverlappingFactorStrategy(K=2, lookback=42, rebalance_days=21, quantile=0.20,
+                                      allow_short=True, equal_weight=True, min_price=0.0)
+    p = strat.parameters
+    assert p["K"] == 2
+    assert p["lookback"] == 42
+    assert p["equal_weight"] is True
+    assert p["min_price"] == 0.0
+
+    # Defaults: K=6, lookback=126, min_price=5.0 (M2+M3 combined baseline)
+    strat_default = OverlappingFactorStrategy()
+    assert strat_default.parameters["K"] == 6
+    assert strat_default.parameters["min_price"] == 5.0
+
+    bars = synth_bars(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"], days=200, seed=42)
+    cfg = BacktestConfig(max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"))
+
+    # K=2, lookback=42: both cohorts active by trading day ~84; run should produce trades
+    m = run_backtest(
+        lambda: OverlappingFactorStrategy(K=2, lookback=42, rebalance_days=21,
+                                          quantile=0.20, allow_short=True,
+                                          equal_weight=True, min_price=0.0),
+        bars, cfg,
+    )
+    assert isinstance(m, PerformanceMetrics)
+    assert len(m.equity_curve) > 0
+
+    # High min_price starves universe — must not crash
+    m_starved = run_backtest(
+        lambda: OverlappingFactorStrategy(K=2, lookback=42, rebalance_days=21,
+                                          min_price=1_000_000.0),
+        bars, cfg,
+    )
     assert isinstance(m_starved, PerformanceMetrics)
 
 

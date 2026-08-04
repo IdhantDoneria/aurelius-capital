@@ -195,6 +195,151 @@ class MultiPairStrategy(Strategy):
         return out
 
 
+class OverlappingFactorStrategy(Strategy):
+    """JT-1993 overlapping K-cohort momentum portfolio.
+
+    Maintains K independent cohorts, each rebalancing every K*period bars
+    (the holding period). At each period, exactly one cohort updates its
+    selection while the other K-1 retain their prior selections. The signal
+    for each symbol is the net vote across all K cohorts, weighted by
+    conviction (long_count - short_count) / K.
+
+    This matches JT's description: 'at the beginning of each month t, the
+    securities are ranked in ascending order on the basis of their returns in
+    the past J months. Based on these rankings, ten decile portfolios are
+    formed … the portfolios are held for K months.'  The strategy rebalances
+    1/K of the book each period so at any time the book carries K overlapping
+    vintages.
+
+    M3 baseline = M1 (equal_weight) + M2 (min_price) + overlapping cohorts.
+
+    Engine compatibility: the engine has one position per symbol, so all K
+    cohorts must be aggregated into a SINGLE signal per symbol before dispatch.
+    State (cohort memberships) is stored in self and updated once per
+    portfolio-level rebalance timestamp.
+    """
+
+    name = "overlapping_factor"
+
+    def __init__(
+        self,
+        K: int = 6,
+        lookback: int = 126,
+        rebalance_days: int = 21,
+        quantile: float = 0.10,
+        allow_short: bool = True,
+        equal_weight: bool = True,
+        min_price: float = 5.0,
+    ) -> None:
+        self.K = K
+        self.lookback = lookback
+        self.rebalance_days = rebalance_days
+        self.quantile = quantile
+        self.allow_short = allow_short
+        self.equal_weight = equal_weight
+        self.min_price = min_price
+        # Per-cohort cached cross-section: cohort k -> {symbol: Direction}
+        self._memberships: list[dict[str, Direction]] = [{} for _ in range(K)]
+        self._n_decile: list[int] = [0] * K
+        # Global portfolio-level clock (shared across all symbol on_bar calls)
+        self._last_seen_ts: object = None
+        self._trading_day: int = 0    # incremented once per unique timestamp
+        self._last_period_computed: int = -1  # period_idx of last cohort update
+
+    @property
+    def parameters(self) -> dict:
+        return {
+            "K": self.K,
+            "lookback": self.lookback,
+            "rebalance_days": self.rebalance_days,
+            "quantile": self.quantile,
+            "allow_short": self.allow_short,
+            "equal_weight": self.equal_weight,
+            "min_price": self.min_price,
+        }
+
+    def _build_cross_section(self, ctx: StrategyContext) -> tuple[dict[str, Direction], int]:
+        scores: dict[str, float] = {}
+        for s in ctx.symbols_with_data:
+            c = _closes(ctx, s, self.lookback + 1)
+            if len(c) < self.lookback + 1 or c[0] == 0:
+                continue
+            if self.min_price > 0 and float(c[-1]) < self.min_price:
+                continue
+            scores[s] = (c[-1] - c[0]) / c[0]
+        if len(scores) < 3:
+            return {}, 0
+        ranked = sorted(scores.values())
+        n = len(ranked)
+        n_decile = max(1, int(self.quantile * n))
+        lo, hi = ranked[n_decile - 1], ranked[n - n_decile]
+        memberships: dict[str, Direction] = {}
+        for s, v in scores.items():
+            if v >= hi:
+                memberships[s] = Direction.LONG
+            elif self.allow_short and v <= lo:
+                memberships[s] = Direction.SHORT
+            else:
+                memberships[s] = Direction.FLAT
+        return memberships, n_decile
+
+    def on_bar(self, ctx: StrategyContext, bar: MarketEvent) -> list[SignalEvent]:
+        # Advance global trading-day counter once per unique timestamp.
+        if ctx.now != self._last_seen_ts:
+            self._trading_day += 1
+            self._last_seen_ts = ctx.now
+
+        b = self._trading_day
+        if b % self.rebalance_days != 0:
+            return []
+
+        # Which cohort rebalances this period?
+        period_idx = b // self.rebalance_days
+        active_k = period_idx % self.K
+
+        # Recompute active cohort once per portfolio-level rebalance period.
+        # First symbol at this timestamp (period_idx changed) triggers the update;
+        # subsequent symbols at the same timestamp use the cached memberships.
+        if period_idx != self._last_period_computed:
+            m, n_d = self._build_cross_section(ctx)
+            self._memberships[active_k] = m
+            self._n_decile[active_k] = n_d
+            self._last_period_computed = period_idx
+
+        # Aggregate votes across all K cohorts that have been initialized.
+        active_cohorts = [k for k in range(self.K) if self._n_decile[k] > 0]
+        if not active_cohorts:
+            return []
+
+        sym_directions = [self._memberships[k].get(bar.symbol, Direction.FLAT)
+                          for k in active_cohorts]
+        long_count = sym_directions.count(Direction.LONG)
+        short_count = sym_directions.count(Direction.SHORT)
+
+        if long_count > short_count:
+            d = Direction.LONG
+        elif short_count > long_count:
+            d = Direction.SHORT
+        else:
+            d = Direction.FLAT
+
+        if d == Direction.FLAT:
+            return [SignalEvent(bar.timestamp, bar.symbol, d, strategy_id=self.name)]
+
+        if self.equal_weight:
+            # Net conviction as fraction of full K cohorts × equal-weight budget.
+            # max n_decile across active cohorts = reference decile size.
+            n_ref = max(self._n_decile[k] for k in active_cohorts)
+            net = abs(long_count - short_count)
+            gross_factor = 0.75 if self.allow_short else 1.0
+            strength = (net / self.K) * (gross_factor / n_ref)
+        else:
+            strength = 1.0
+
+        return [SignalEvent(bar.timestamp, bar.symbol, d, strategy_id=self.name,
+                            strength=strength)]
+
+
 class FactorStrategy(Strategy):
     """Cross-sectional momentum factor: long the top quantile, short the bottom.
 
