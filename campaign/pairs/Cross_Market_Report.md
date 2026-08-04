@@ -21,9 +21,10 @@
 
 ## 2. India is consistently less-bad than US
 
-On 5 of 7 configs India has the higher (less-negative) OOS Sharpe, and India keeps
-faint *positive* returns on 5 configs (gatev +8.7%, exit_0.25 +13.8%, top5 +3.5%,
-entry_2.5 +3.9%, window_63 +4.5%) while US is mostly negative. The single least-bad
+On 6 of 7 configs India has the higher (less-negative) OOS Sharpe (US wins only
+entry_2.5: −0.410 vs −0.840), and India keeps faint *positive* returns on 5 configs
+(gatev +8.7%, exit_0.25 +13.8%, top5 +3.5%, entry_2.5 +3.9%, window_63 +4.5%) while
+US is mostly negative. The single least-bad
 book in the whole campaign is **India exit_0.25 (−0.14 Sharpe, +13.8% ret)** —
 still a reject, still negative risk-adjusted.
 

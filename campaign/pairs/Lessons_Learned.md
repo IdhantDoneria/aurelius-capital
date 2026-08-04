@@ -18,9 +18,9 @@
   on 22 trades (no power). This run has 591–4833 OOS trades/config — the null is
   *economic*, not a sample artifact. "Reproduced faithfully and it doesn't work" is
   a publishable institutional finding, not a failure to complete.
-- **L4 — India less-efficient ⇒ less-bad, not good.** India beat US on 5/7 configs and
-  kept faint positive returns, but every India config still REJECTs and the returns
-  are survivorship-inflated. Efficiency gradients move the *degree* of failure, not
+- **L4 — India less-efficient ⇒ less-bad, not good.** India had the higher OOS Sharpe
+  on 6/7 configs and kept faint positive returns on 5, but every India config still
+  REJECTs and the returns are survivorship-inflated. Efficiency gradients move the *degree* of failure, not
   the *sign* of the conclusion.
 - **L5 — Sharpe is unstable for near-zero-vol books.** US top5 posted −13.54 Sharpe on
   a −1.2% return / −1.4% drawdown — a denominator artifact, not a −13× loss. Read
