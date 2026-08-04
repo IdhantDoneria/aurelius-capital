@@ -65,3 +65,21 @@ not universal; (2) the leverage-cap × decile-breadth interaction (M3) is a
 first-order fidelity constraint on all L/S factor books; (3) long-only momentum >
 long/short momentum in a trending single-regime market; (4) 0 platform defects
 across 14 runs + a leverage investigation.
+
+## Sequential fidelity ledger (M1→M4, US canonical)
+
+| Step | Change | OOS Sharpe | OOS trades | Adj p | Decision | Class |
+|---|---|---|---|---|---|---|
+| M1 | equal-weight decile L/S | −0.687 | 848 | 1.000 | baseline | — |
+| M2 | + $5 price screen | +0.098 | 672 | 0.424 | KEEP | A |
+| M3 | + overlapping cohorts | +0.006 | 4781 | 0.495 | BLOCKED | E (engine) |
+| **M4** | **+ 1-month skip** | **+0.112** | **593** | **0.413** | **KEEP** | **A** |
+
+- **Institutional baseline = M4** (M1 equal-weight + M2 price screen + M4 skip).
+- M4 new KG facts: (5) the JT 1-month skip is regime-split — it removes reversal
+  OOS (Sharpe↑, turnover↓) but discards continuation signal IS (Sharpe↓); judge on
+  OOS. (6) skip's operational fingerprint is *lower turnover* (−12%), corroborating
+  the mechanism independent of P&L. (7) M4 adds zero platform defects — every
+  deterioration is Category D regime/noise.
+- Failure-registry addition: IS Sharpe collapse under skip (+0.322→−0.167) — Class
+  D regime-dependence (IS continuation vs OOS reversal), not a defect.

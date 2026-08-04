@@ -77,6 +77,31 @@ Robustness_Report, Production_Strategy, Leverage_Investigation, Executive_Summar
 - Strategy: Momentum v1 = long-only 6-1-1 top-decile equal-weight monthly, single
   market, ≤1× gross — **paper-trade only** (survivorship + single-regime caveats).
 
+## Phase — Momentum Sequential Fidelity update (2026-08-04)
+
+Sequential single-change methodology campaign (M1→M4) on the canonical JT US
+panel, engine frozen, no tuning. Each step isolates one JT-1993 construction
+element and is KEEP/REJECT-certified on OOS risk-adjusted evidence + fidelity.
+
+| Step | Isolated change | OOS Sharpe | OOS trades | Adj p | Decision |
+|---|---|---|---|---|---|
+| M1 | equal-weight decile L/S | −0.687 | 848 | 1.000 | baseline |
+| M2 | + $5 price screen (JT-2001) | +0.098 | 672 | 0.424 | KEEP |
+| M3 | + overlapping cohorts (JT-1993) | +0.006 | 4781 | 0.495 | **BLOCKED** (engine NAV-% vs dollar-hold; verified, not a defect) |
+| **M4** | **+ 1-month skip (JT-1993)** | **+0.112** | **593** | **0.413** | **KEEP** |
+
+- **Institutional baseline = M4**: `FactorStrategy(lookback=126, quantile=0.10,
+  rebalance_days=21, allow_short=True, equal_weight=True, min_price=5.0, skip=21)`,
+  `max_position_pct=1.0`. Artifacts: `campaign/momentum/m{1,2,3,4}/`.
+- M4 verdict is still engine-REJECT (single-slice p-gate; nothing clears α=0.05 —
+  power limit, not economic). Baseline promotion is the separate fidelity+OOS
+  decision: OOS Sharpe ↑ (+0.098→+0.112), turnover ↓ 12%, fidelity restored.
+- M4 root-cause: all differences Category A (fidelity: OOS Sharpe, turnover) or D
+  (regime: IS collapse; sub-1.5 pp OOS return/DD noise). **Engineering defects: 0.**
+- M3 remains BLOCKED, not revisited; unblock = dollar-hold position mode
+  (engine unfreeze). See `campaign/momentum/m3/M3_Fidelity_Report.md` +
+  `Leverage_Investigation.md`.
+
 ## Phase — Pairs Campaign update (2026-08-04)
 
 The 2026-07-30 Gatev toy blocker (12 names, 22 trades, no power) is RESOLVED: a

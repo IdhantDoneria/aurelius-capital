@@ -69,3 +69,26 @@ absent, so Carhart/MOP/AMP are honest BLOCKED stops, not evasions.
 initially assumed India-specific; grepping both logs showed US hit it *harder*.
 Every headline number in this campaign traces to a `runs/*.jsonl` line for exactly
 this reason.
+
+## 4. Sequential methodology fidelity (M1→M4)
+
+**L11 — a fidelity element can be regime-split between IS and OOS.** M4 (JT
+1-month skip) *collapsed* IS Sharpe (+0.322 → −0.167) yet *improved* OOS Sharpe
+(+0.098 → +0.112). The 2014–2020 IS window had short-term continuation (recent
+month informative → skipping it hurt); the 2020–2026 OOS window had reversal
+(skipping it helped). A single metric can move opposite directions across the
+split for a sound mechanism — judge a fidelity change on the deployment (OOS)
+window, classify the IS move as Category D regime-dependence, not a defect.
+
+**L12 — lower turnover is the skip's fingerprint.** M4 cut trades 12% (672→593)
+with no cost/engine change. Skipping the most recent month stabilizes the
+formation-boundary ranking, so fewer names churn in/out of the decile on 1-month
+noise. When a methodology's *intended* operational signature (here: less churn)
+shows up in the trade count, that corroborates the mechanism beyond the P&L.
+
+**L13 — KEEP-despite-REJECT is a fidelity decision, not a p-gate decision.** The
+research engine's single-run verdict gate (α=0.05) rejects everything in this
+campaign (power limit, L7). Baseline promotion (M2, then M4) is a separate
+judgment: does the paper-faithful change improve OOS risk-adjusted performance?
+Both M2 and M4 were KEPT on OOS-Sharpe + fidelity while the engine verdict stayed
+REJECT. Keep the two ledgers distinct.
