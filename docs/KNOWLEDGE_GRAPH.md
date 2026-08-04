@@ -249,3 +249,32 @@ Institutional-memory deltas from the 14-run US+India momentum campaign
 6. **Robust vs fragile:** robust (directional) = 6m formation, extreme deciles,
    monthly rebalance; fragile = the L/S spread, tercile breadth, 63-day holding;
    data-dependent = India significance (bull + survivorship).
+
+## Pairs Trading Campaign synthesis (2026-08-04)
+
+Institutional-memory deltas from the 14-run US+India pairs campaign
+(`campaign/pairs/Knowledge_Graph_Summary.md`):
+
+1. **Distance-pairs stat-arb does NOT survive to 2014–2026 US+India.** 0/14 configs
+   significant (all adjusted p = 1.000, all OOS Sharpe negative). Do & Faff's
+   (2010/2012) decay-to-below-costs, confirmed empirically. A well-powered null
+   (591–4833 OOS trades/config), not a sample artifact — the old toy blocker (22
+   trades) is resolved.
+2. **Gatev faithfully reproduced, still rejects.** 12-mo SSD formation, top-N
+   portfolio, 2-SD entry / convergence exit on 300 liquid names; US canonical
+   −1.076 / −5.7%, India −0.425 / +8.7%, both REJECT. Failure is Class D (market
+   evolution), not a defect.
+3. **Diversification INVERTS under fixed-% sizing + the 1.5× gross cap.** top40 is
+   the worst config in both markets (−60% / −42% drawdown): 40 pairs × 2 legs × 5%
+   = 400% nominal gross → truncation breaks dollar-neutrality → directional risk.
+   Same leverage constraint as momentum (M3/P5); first-order for any market-neutral
+   book. More pairs made it worse — opposite of Gatev.
+4. **India less-efficient ⇒ less-bad, not good** — beats US on 5/7 configs, faint
+   positive returns, but every config still insignificant and survivorship-inflated.
+5. **0 platform defects** across 14 pairs runs.
+6. **No production strategy justified** (unlike momentum's 1 config). Negative
+   result is the deliverable; gate any revisit behind P5 sizing + P3 re-formation +
+   delisting data.
+7. **`MultiPairStrategy` = composition, not engine change** — N `PairsStrategy` in
+   one backtest yields a true diversified equity curve (averaging N Sharpes would
+   fake it).

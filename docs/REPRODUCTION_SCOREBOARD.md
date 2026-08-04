@@ -8,7 +8,8 @@ Canonical source of truth. Updated 2026-08-03 (momentum campaign).
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 1 | Jegadeesh-Titman 1993 (momentum) | DONE | **real US+India daily 2014–26** | run, REJECT | **directional** (US OOS +58.8% WML, Sharpe 0.935, p 0.161; not sig) | YES | 345 US OOS trades (real power) | driver reused | none | HIGH | 2026-08-03 |
 | 1b | JT extension — momentum campaign (14 runs, US+India robustness/cross-market) | DONE | **real US+India** | 14 run: 1 ACCEPT / 13 REJECT | India long-only **significant** (+416%, Sharpe 1.012, **p 0.026**) | YES | up to 1076 OOS trades | grid driver | none | HIGH | 2026-08-03 |
-| 2 | Gatev et al. 2006 (pairs) | DONE | toy (12×2yr) | run, REJECT | NO (−1.51% vs +11%/yr) | YES | 22 OOS trades | 1 driver written | none | HIGH (diagnosis) | 2026-07-30 |
+| 2 | Gatev et al. 2006 (pairs) | DONE | **real US+India daily 2014–26** | 14 run, REJECT | NO — edge decayed (US −5.7%/−1.08 Sh, India +8.7%/−0.43 Sh vs +11%/yr) | YES | **3999 US / 3303 India OOS trades** (real power) | grid driver | none | HIGH | 2026-08-04 |
+| 2b | Do & Faff 2010/2012 (pairs decay) | DONE (directional) | real US+India | via pairs campaign | **supported** — our 0/14 decay-to-reject *is* their finding | YES | 14 runs | grid driver | none | HIGH | 2026-08-04 |
 | 3 | Sharpe 1964 (CAPM) | BLOCKED | needs mkt portfolio + betas | — | — | — | — | — | data | — | — |
 | 4 | Asness et al. (Value & Momentum) | BLOCKED | needs fundamentals | — | — | — | — | — | data | — | — |
 | 5 | Fama-French 1993 (3-factor) | BLOCKED | needs size + B/M (Compustat) | — | — | — | — | — | data | — | — |
@@ -75,3 +76,30 @@ Robustness_Report, Production_Strategy, Leverage_Investigation, Executive_Summar
   fundamentals / multi-asset panels; NOT run on toy data.
 - Strategy: Momentum v1 = long-only 6-1-1 top-decile equal-weight monthly, single
   market, ≤1× gross — **paper-trade only** (survivorship + single-regime caveats).
+
+## Phase — Pairs Campaign update (2026-08-04)
+
+The 2026-07-30 Gatev toy blocker (12 names, 22 trades, no power) is RESOLVED: a
+12-month Gatev formation window on the real US+India panel yields 864–1127
+complete-history names → a genuine top-N distance-pair book. Gatev now runs with
+real power and a 14-run robustness/cross-market campaign extends it. Full artifacts
+under `campaign/pairs/` (Pairs_Campaign_Report, Canonical_Reproductions, Robustness,
+Cross_Market, Production_Strategy, Methodology_Fidelity, Executive_Summary).
+
+- Pairs runs executed: **14** (7 US + 7 India), no tuning, one OOS split each.
+- Statistically significant (adj p < 0.05): **0 / 14** — every config REJECT, all
+  adjusted p = 1.000, every OOS Sharpe negative.
+- Reproduction: Gatev construction-faithful (SSD 12-mo formation, top-N portfolio,
+  2-SD entry / convergence exit) with genuine power (3999 US / 3303 India OOS trades
+  on the canonical) — the published ~11%/yr premium **does not survive to 2014–2026**
+  (Class D market evolution, per Do-Faff).
+- Engineering defects: **0.** The top40 blow-up (−60% US / −42% India) is the
+  fixed-% sizing + 1.5× gross-cap truncation breaking dollar-neutrality — Class B
+  (P5/M3), a documented fidelity gap, not a defect.
+- Still BLOCKED (data/selector, honest): Vidyamurthy cointegration, Avellaneda-Lee
+  PCA/ETF OU, Kalman dynamic hedge, sector-matched (Do-Faff refinement),
+  cross-country/ADR — need selectors/data absent from the frozen platform.
+- Strategy: **NONE.** 0/14 significant → no evidence-justified production pairs
+  strategy; naming a config would be tuning. Recommend not funding further pairs
+  engineering; gate any revisit behind P5 sizing + P3 rolling re-formation + a
+  delisting-returns dataset.
