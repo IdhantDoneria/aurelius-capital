@@ -1,0 +1,1 @@
+{"market": "us", "label": "entry_2.5", "params": {"n_pairs": 20, "lookback": 126, "entry_z": 2.5, "exit_z": 0.5}, "is_sharpe": -0.4779, "oos_sharpe": -0.4095, "oos_return": 0.0892, "oos_max_drawdown": -0.0707, "oos_trades": 1371, "adjusted_pvalue": 1.0, "verdict": "reject", "runtime_s": 860.0}

@@ -1,0 +1,1 @@
+{"market": "india", "label": "gatev_top20", "params": {"n_pairs": 20, "lookback": 126, "entry_z": 2.0, "exit_z": 0.5}, "is_sharpe": -0.6439, "oos_sharpe": -0.425, "oos_return": 0.0872, "oos_max_drawdown": -0.0743, "oos_trades": 3303, "adjusted_pvalue": 1.0, "verdict": "reject", "runtime_s": 1021.9}

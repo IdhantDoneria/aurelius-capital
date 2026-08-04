@@ -1,0 +1,1 @@
+{"market": "india", "label": "window_63", "params": {"n_pairs": 20, "lookback": 63, "entry_z": 2.0, "exit_z": 0.5}, "is_sharpe": 0.6892, "oos_sharpe": -0.5227, "oos_return": 0.045, "oos_max_drawdown": -0.1922, "oos_trades": 3360, "adjusted_pvalue": 1.0, "verdict": "reject", "runtime_s": 1015.4}

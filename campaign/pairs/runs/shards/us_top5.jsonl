@@ -1,0 +1,1 @@
+{"market": "us", "label": "top5", "params": {"n_pairs": 5, "lookback": 126, "entry_z": 2.0, "exit_z": 0.5}, "is_sharpe": -12.2738, "oos_sharpe": -13.5422, "oos_return": -0.0122, "oos_max_drawdown": -0.0144, "oos_trades": 1055, "adjusted_pvalue": 1.0, "verdict": "reject", "runtime_s": 859.0}
