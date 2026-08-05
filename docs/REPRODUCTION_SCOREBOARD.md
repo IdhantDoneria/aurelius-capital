@@ -221,6 +221,38 @@ de-levers gross (1.5→0.15) rather than concentrating.
   channel it controls; the rest needs synchronous rebalance + dollar-hold sizing
   (M3 unblock). 0 platform defects.
 
+## Phase — Momentum M9 Engine Reproducibility & Vintage Audit (2026-08-05) — REJECT (no defect)
+
+Forensic audit of the M7 anomaly (OOS −95.85% / −115.87% DD). Read-only tracing +
+config-switch isolation; **no signal/factor/portfolio/cost/reporting/ingestion
+change, no code correction required.** Report:
+`campaign/momentum/m9/M9_Engine_Reproducibility_Audit_Report.md`. Records:
+`m7_repro_runB.jsonl`, `m9_isolation.json`.
+
+- **Phase 1:** M7 Run B reproduced **byte-identical** (−0.0321/0.2767/−0.9585/
+  −1.1587/387/0.2952) → deterministic, stable config property.
+- **Phase 2 (leakage):** none. Engine fills at the NEXT bar's open, own-symbol
+  guarded (signal@t→fill@t+1). A −96% *loss* is the opposite of a leakage signature.
+- **Phase 3 (composition):** drift is an amplifier (~+36pp: −96%→−54% when frozen)
+  not the root; frozen 50-name book still −54%. PIT & survivorship-controlled
+  universes **DEFERRED** (no as-of-date/delisting data, M6).
+- **Phase 4 (isolation, fixed 5% universe):**
+
+| construction | cap | Return | Max DD | Vol | Trades |
+|---|---|---|---|---|---|
+| baseline | 1.5× | −59.2% | −72.6% | 0.87 | 44 |
+| baseline | 1000× (off) | −54.0% | −61.0% | 0.51 | 211 |
+| invariant | 1.5× | +77.3% | −24.1% | 0.12 | 194 |
+| invariant | 1000× (off) | +77.3% | −24.1% | 0.12 | 194 |
+
+  Cap OFF barely helps baseline; invariant **cap-ON==cap-OFF exactly** → cap is a
+  secondary amplifier, not a defect. Construction is the dominant channel;
+  async-vintage benign once exposure bounded.
+- **Decision: REJECT** — no engine defect; the M7 anomaly is genuine
+  construction-driven exposure behavior that disappears under the correct M8-bounded
+  reproduction. M7 stays REJECTED, M8 bounded construction stays ADOPTED — together
+  they fully account for the anomaly. **0 platform defects.** 597 passed, 2 skipped.
+
 ## Phase — Pairs Campaign update (2026-08-04)
 
 The 2026-07-30 Gatev toy blocker (12 names, 22 trades, no power) is RESOLVED: a

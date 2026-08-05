@@ -113,6 +113,22 @@ across 14 runs + a leverage investigation.
   universe-reducing campaigns (exchange/mktcap/survivorship/liquidity); default OFF so
   M1+M2+M4 unchanged. 0 platform defects.
 
+- **M9 (engine reproducibility forensics — REJECT, no defect):** (26) M7 Run B
+  reproduced **byte-identical** (−0.9585 return / −1.1587 DD / 387 trades) →
+  deterministic, stable config property. (27) **no leakage**: engine fills orders at
+  the NEXT bar's open, own-symbol guarded (signal@t→fill@t+1); and a −96% *loss* is
+  the opposite of a look-ahead signature (leakage inflates). (28) config-switch
+  isolation (fixed 5% universe): cap OFF barely helps baseline (−72.6%→−61% DD, still
+  −54%) and invariant **cap-ON==cap-OFF to every digit** → cap is a secondary
+  amplifier / downstream of construction over-leverage, not a defect; construction is
+  the dominant channel (−59%/−72.6% → +77%/−24%, vol 0.87→0.12). (29) composition
+  drift is an amplifier (~+36pp) not the root (frozen universe still −54%);
+  async-vintage present (14 start dates) but benign once exposure bounded. (30)
+  **decision REJECT** — no engine defect; anomaly is genuine construction behavior
+  that disappears under correct (M8-bounded) reproduction; no code changed. **DEFER**
+  point-in-time/survivorship-controlled universe (no PIT/delisting data, M6). 0
+  platform defects.
+
 - **M6 (universe fidelity audit, no code):** (11) the frozen panel is **prices+volume
   only** — one `ohlcv` table, no exchange/mktcap/shares/sector/delisting/CA metadata;
   `adjustment_factor`≡1.0, `vwap`/`trade_count` 100% NULL. (12) survivorship is

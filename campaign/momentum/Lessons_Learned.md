@@ -173,3 +173,23 @@ this cut OOS drawdown **−77.6%→−21.9%** (19→229 trades — bounded posit
 the leverage cap, so the book diversifies instead of cap-rejecting into a few bets).
 The right invariance response to a thin universe is a smaller footprint, not a
 bigger bet. Adopted **default OFF**; mandatory for future universe-reducing campaigns.
+
+## 8. Engine reproducibility forensics (M9 — REJECT, no defect)
+
+**L23 — a loss is not a leakage signature.** M7's anomaly was a −96% *loss*;
+look-ahead leakage *inflates* returns. Before hunting an engine data-leak, check the
+sign: a blow-up almost never comes from future information. Phase-2 confirmed clean
+T+1-open fills anyway, but the sign argument settled it first.
+
+**L24 — isolate channels with config switches, not engine edits.** The whole
+forensic isolation (cap ON/OFF, construction baseline/invariant, composition
+frozen) ran on `max_gross_leverage` + `invariant_construction` inputs and a fixed
+universe subset — zero frozen-surface code touched. `cap-ON==cap-OFF to every digit`
+under the invariant book proved the cap is a *downstream consequence* of
+construction over-leverage, not an independent defect. You can often decide
+"defect vs behavior" without modifying the engine at all.
+
+**L25 — reproduce byte-identical before diagnosing.** M9 first reproduced M7 Run B
+to every digit (−0.9585/−1.1587/387) — so the anomaly is a stable config property,
+not run noise. Only then did channel isolation mean anything. Diagnosing a
+non-reproducible number is diagnosing noise.
