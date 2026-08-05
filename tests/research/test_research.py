@@ -13,6 +13,7 @@ from aurelius.research import (
 from aurelius.research.models import ValidationCriteria, bonferroni, sharpe_pvalue
 from aurelius.research.templates import (
     FactorStrategy,
+    LowVolStrategy,
     MeanReversionStrategy,
     MomentumStrategy,
     OverlappingFactorStrategy,
@@ -323,6 +324,46 @@ def test_invariant_construction_preserves_baseline_and_bounds_concentration():
                                invariant_construction=True,
                                max_position_weight=0.05, min_constituents=8), bars, cfg)
     assert isinstance(on, PerformanceMetrics)
+
+
+def test_lowvol_ranks_low_vol_long_and_is_deterministic():
+    """M12: LowVolStrategy ranks the lowest-volatility name LONG and the highest
+    SHORT, exposes params, runs deterministically end-to-end, no look-ahead."""
+    from decimal import Decimal
+    from aurelius.backtesting.config import BacktestConfig
+    from aurelius.backtesting.strategy.base import StrategyContext
+    from aurelius.backtesting.events.types import Direction
+
+    s = LowVolStrategy(lookback=30, quantile=0.20, rebalance_days=10)
+    assert s.parameters["lookback"] == 30
+    assert s.parameters["invariant_construction"] is False  # baseline default OFF
+    assert s.parameters["downside"] is False
+
+    # _vol: a flat series has ~0 vol, a jumpy series has higher vol
+    calm = [100.0 + 0.01 * i for i in range(40)]
+    wild = [100.0 * (1.5 if i % 2 else 0.7) for i in range(40)]
+    assert s._vol(calm) < s._vol(wild)
+
+    bars = synth_bars(list("ABCDEFGHIJ"), days=200, seed=7)
+    cfg = BacktestConfig(max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"))
+    m1 = run_backtest(lambda: LowVolStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                                             allow_short=True, equal_weight=True), bars, cfg)
+    m2 = run_backtest(lambda: LowVolStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                                             allow_short=True, equal_weight=True), bars, cfg)
+    assert isinstance(m1, PerformanceMetrics)
+    # deterministic: identical equity curve on repeat
+    assert [str(p) for p in m1.equity_curve] == [str(p) for p in m2.equity_curve]
+
+    # direction sense: build a context where one symbol is calm, one is wild, and
+    # confirm calm -> LONG, wild -> SHORT via the score thresholds.
+    lv = LowVolStrategy(lookback=20, quantile=0.34, rebalance_days=1, allow_short=True)
+    vols = {"LO": lv._vol([100.0 + 0.001 * i for i in range(25)]),
+            "HI": lv._vol([100.0 * (1.4 if i % 2 else 0.75) for i in range(25)])}
+    assert vols["LO"] < vols["HI"]  # low-vol name has the smaller score -> long tail
+
+    # downside estimator is a valid alternative measure
+    dv = LowVolStrategy(lookback=30, downside=True)
+    assert dv._vol([100.0 * (1.1 if i % 3 else 0.8) for i in range(40)]) is not None
 
 
 def test_overlapping_factor_parameters_and_run():

@@ -499,3 +499,144 @@ class FactorStrategy(Strategy):
         else:
             strength = 1.0
         return [SignalEvent(bar.timestamp, bar.symbol, d, strategy_id=self.name, strength=strength)]
+
+
+def _daily_returns(closes: list[float]) -> list[float]:
+    return [closes[i] / closes[i - 1] - 1.0
+            for i in range(1, len(closes)) if closes[i - 1] != 0]
+
+
+class LowVolStrategy(Strategy):
+    """Low-volatility anomaly factor (M12): long the lowest-volatility names, short
+    the highest. NEW factor family — independent of momentum. Reuses the certified
+    construction *standards* (M1 equal-weight, M2 $5 screen, M7 liquidity framework,
+    M8 bounded invariant construction) but ranks on trailing volatility, not return.
+
+    Baseline volatility measure = trailing standard deviation of daily simple returns
+    over `lookback` bars (the academically standard total-volatility estimator used by
+    Baker-Haugen-Baker 1991, Blitz-van Vliet 2007, Frazzini-Pedersen 2014). Optional
+    `downside=True` uses semi-deviation (negative-return stdev) as a robustness
+    estimator. LOWER volatility ranks HIGHER → the low-vol leg is LONG.
+
+    Leak-safe: the cross-section at t is built from ctx.history (bars <= t). No skip
+    (momentum-specific). invariant_construction defaults OFF (baseline preserved) but
+    is the M8-mandated standard for any universe-reducing run.
+    """
+
+    name = "low_vol"
+
+    def __init__(
+        self,
+        lookback: int = 252,
+        quantile: float = 0.10,
+        rebalance_days: int = 21,
+        allow_short: bool = True,
+        equal_weight: bool = True,
+        min_price: float = 0.0,
+        downside: bool = False,
+        liquidity_filter: bool = False,
+        liquidity_metric: str = DEFAULT_METRIC,
+        liquidity_pct: float = 0.0,
+        liquidity_window: int = 21,
+        invariant_construction: bool = False,
+        max_position_weight: float = 0.10,
+        min_constituents: int = 10,
+    ) -> None:
+        self.lookback = lookback
+        self.quantile = quantile
+        self.rebalance_days = rebalance_days
+        self.allow_short = allow_short
+        self.equal_weight = equal_weight
+        self.min_price = min_price
+        self.downside = downside
+        self.liquidity_filter = liquidity_filter
+        self.liquidity_metric = liquidity_metric
+        self.liquidity_pct = liquidity_pct
+        self.liquidity_window = liquidity_window
+        self.invariant_construction = invariant_construction
+        self.max_position_weight = max_position_weight
+        self.min_constituents = min_constituents
+
+    @property
+    def parameters(self) -> dict:
+        return {
+            "lookback": self.lookback,
+            "quantile": self.quantile,
+            "rebalance_days": self.rebalance_days,
+            "allow_short": self.allow_short,
+            "equal_weight": self.equal_weight,
+            "min_price": self.min_price,
+            "downside": self.downside,
+            "liquidity_filter": self.liquidity_filter,
+            "liquidity_metric": self.liquidity_metric,
+            "liquidity_pct": self.liquidity_pct,
+            "liquidity_window": self.liquidity_window,
+            "invariant_construction": self.invariant_construction,
+            "max_position_weight": self.max_position_weight,
+            "min_constituents": self.min_constituents,
+        }
+
+    def _vol(self, closes: list[float]) -> float | None:
+        rets = _daily_returns(closes)
+        if self.downside:
+            neg = [r for r in rets if r < 0]
+            return statistics.pstdev(neg) if len(neg) >= 2 else None
+        return statistics.pstdev(rets) if len(rets) >= 2 else None
+
+    def on_bar(self, ctx: StrategyContext, bar: MarketEvent) -> list[SignalEvent]:
+        # Rebalance gate: act only every rebalance_days bars for this symbol.
+        if len(ctx.history(bar.symbol)) % self.rebalance_days != 0:
+            return []
+        scores: dict[str, float] = {}
+        need = self.lookback + 1
+        for s in ctx.symbols_with_data:
+            c = _closes(ctx, s, need)
+            if len(c) < need or c[0] == 0:
+                continue
+            if self.min_price > 0 and float(c[-1]) < self.min_price:
+                continue
+            v = self._vol(c)
+            if v is None:
+                continue
+            scores[s] = v  # trailing volatility; LOWER => long
+        # M7 liquidity screen (same guarded, look-ahead-free construction as FactorStrategy)
+        if self.liquidity_filter and self.liquidity_pct > 0 and scores:
+            fn, higher_liquid = LIQUIDITY_METRICS[self.liquidity_metric]
+            w = self.liquidity_window
+            liq: dict[str, float] = {}
+            for s in scores:
+                bars = ctx.history(s, w)
+                if len(bars) < w:
+                    continue
+                liq[s] = fn([float(b.close) for b in bars],
+                            [float(b.volume) for b in bars])
+            if liq:
+                survivors = _screen(liq, self.liquidity_pct, higher_liquid)
+                scores = {s: v for s, v in scores.items()
+                          if s not in liq or s in survivors}
+        if bar.symbol not in scores or len(scores) < 3:
+            return []
+        ranked = sorted(scores.values())
+        _n = len(ranked)
+        _count = max(1, int(self.quantile * _n))
+        lo = ranked[_count - 1]          # low-volatility threshold (long side)
+        hi = ranked[_n - _count]         # high-volatility threshold (short side)
+        val = scores[bar.symbol]
+        # LOW vol -> LONG, HIGH vol -> SHORT (opposite tail sense to momentum).
+        if val <= lo:
+            d = Direction.LONG
+        elif self.allow_short and val >= hi:
+            d = Direction.SHORT
+        else:
+            d = Direction.FLAT
+        if self.equal_weight and d != Direction.FLAT:
+            budget = 0.75 if self.allow_short else 1.0
+            if self.invariant_construction:
+                strength = invariant_weight(_count, budget,
+                                            self.max_position_weight,
+                                            self.min_constituents)
+            else:
+                strength = budget / _count
+        else:
+            strength = 1.0
+        return [SignalEvent(bar.timestamp, bar.symbol, d, strategy_id=self.name, strength=strength)]
