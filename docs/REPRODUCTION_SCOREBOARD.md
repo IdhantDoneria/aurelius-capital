@@ -121,6 +121,35 @@ baseline under a zero-cost config (config-only, no engine/strategy/stats change)
   standard: every reproduction reported on both bases. See
   `campaign/momentum/m5/M5_Fidelity_Report.md`.
 
+## Phase — Momentum M6 Investable-Universe Fidelity Audit (2026-08-05)
+
+Institutional data-availability audit of the frozen panel (`data/analytics.duckdb`,
+one `ohlcv` table). **No production code / methodology / filter / parameter changed;
+595 passed, 2 skipped — all baselines reproducible.** Every figure re-verified by an
+independent agent against the raw DB (zero drift). Full report:
+`campaign/momentum/m6/M6_Investable_Universe_Fidelity_Audit.md`.
+
+- Panel = **prices+volume only**: 2143 symbols (US 1016 · India `.NS` 1127),
+  2014–2026 daily. **Absent:** exchange, market cap, shares outstanding, sector,
+  delisting flag, corporate-action table. `adjustment_factor`≡1.0; `vwap` +
+  `trade_count` 100% NULL.
+- **Survivorship quantified:** only **9/2143 (0.4%)** names delist-like →
+  currently-listed snapshot → WML biased **upward** (HIGH), magnitude unquantifiable.
+- **Reproducible exactly:** price≥$5 (M2), sufficient history, equal-weight decile
+  (M1), 1-month skip (M4), US/India split, gross/net (M5).
+- **BLOCKED (metadata, not code):** market-cap/size deciles, common-share filter,
+  exact NYSE/AMEX/NASDAQ membership, turnover, survivorship correction, CA-adjustment
+  verification.
+- **IMPLEMENT PROXY (defensible):** ADV / median ADV / dollar-volume liquidity screen
+  (Amihud precedent). **Not** acceptable: current exchange↦historical, current
+  shares↦historical mktcap, any manufactured survivorship fix.
+- **Single high-leverage unblock = CRSP** (`EXCHCD`/`SHRCD`/`SHROUT`/`DLRET`/`CFACPR`
+  → converts 5 BLOCKED rows to IMPLEMENT). **M7 roadmap:** optional ADV/dollar-volume
+  universe filter (evidence-gated, default off) + formalized US/India partition; **no**
+  reconstruction of mktcap/exchange/survivorship (would be look-ahead fabrication).
+- Engineering defects: **0.** The reproduction gap is confirmed **data-fidelity**
+  (survivorship + missing metadata), costs already ruled out (M5).
+
 ## Phase — Pairs Campaign update (2026-08-04)
 
 The 2026-07-30 Gatev toy blocker (12 names, 22 trades, no power) is RESOLVED: a

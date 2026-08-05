@@ -108,3 +108,24 @@ gap is structural (survivorship, Cat C decay, leverage-cap, single-slice power).
 Measuring the wedge (M5) turned a plausible-sounding explanation into a ruled-out
 one. Caveat honestly: `SlippageModel`'s 5 bps zero-volume fallback isn't
 config-wired (engine-frozen), a negligible residual on the volume-populated panel.
+
+## 5. Investable-universe fidelity (M6 audit)
+
+**L16 — the panel is prices+volume only; every universe rule beyond price/volume
+is data-blocked.** `analytics.duckdb` has one table (`ohlcv`, 13 cols) with **no**
+exchange, market-cap, shares-outstanding, sector, delisting, or corporate-action
+metadata; `adjustment_factor` is uniformly 1.0 and `vwap`/`trade_count` are 100%
+NULL. So price ≥ $5 (M2), history, equal-weight decile are exactly reproducible;
+market-cap/size deciles, share-type (common-only), exact NYSE/AMEX/NASDAQ
+membership, turnover, and survivorship correction are all **BLOCKED** — not a code
+gap, a metadata gap. Independently re-verified against the raw DB (zero drift).
+
+**L17 — survivorship is now quantified, not just asserted.** Only **9 / 2,143
+(0.4%)** symbols end >30d before the panel's last date → a currently-listed
+snapshot; delisted losers (and their delisting returns) are absent, biasing WML
+**upward** by an amount that is unquantifiable *because* the corrective data is the
+missing data. One dataset — **CRSP** — unblocks five rows at once (`EXCHCD`,
+`SHRCD`, `SHROUT`→mktcap, `DLRET`→survivorship-free, `CFACPR`→CA verification).
+M7's only evidence-safe move is an ADV/dollar-volume liquidity proxy (Amihud
+precedent); reconstructing market cap/exchange/survivorship from *current* listings
+would be look-ahead fabrication, not fidelity.

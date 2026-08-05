@@ -84,6 +84,20 @@ across 14 runs + a leverage investigation.
   deterioration is Category D regime/noise.
 - Failure-registry addition: IS Sharpe collapse under skip (+0.322→−0.167) — Class
   D regime-dependence (IS continuation vs OOS reversal), not a defect.
+- **M6 (universe fidelity audit, no code):** (11) the frozen panel is **prices+volume
+  only** — one `ohlcv` table, no exchange/mktcap/shares/sector/delisting/CA metadata;
+  `adjustment_factor`≡1.0, `vwap`/`trade_count` 100% NULL. (12) survivorship is
+  measured: **9/2143 (0.4%)** names delist-like → currently-listed snapshot, WML
+  biased **upward**, magnitude unquantifiable (corrective data is the missing data).
+  (13) reproducible-exactly = price≥$5, history, equal-weight decile, skip, US/India
+  split; **BLOCKED** = size/mktcap deciles, common-share filter, exact
+  NYSE/AMEX/NASDAQ, turnover, survivorship, CA-adjustment verification. (14) **CRSP**
+  is the single high-leverage unblock (EXCHCD/SHRCD/SHROUT/DLRET/CFACPR → 5 BLOCKED
+  rows to IMPLEMENT). (15) M7's only evidence-safe build = ADV/dollar-volume liquidity
+  proxy (Amihud), defaulted off; mktcap/exchange/survivorship reconstruction from
+  current listings = look-ahead fabrication, forbidden. Independently re-verified,
+  zero number drift.
+
 - **M5 new KG facts:** (8) reproduction reports NET-of-cost, JT reports GROSS —
   now reported on both bases (config-only zero-cost run, no engine change). (9) the
   transaction-cost wedge is ~1.08 pp OOS return; gross OOS return is still NEGATIVE
