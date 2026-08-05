@@ -216,3 +216,26 @@ filter tightens). Cost drag was ~4pp — trivial vs an −81.5% gross. The edge 
 absent, not cost-killed: momentum on 2014–2026 price-only data (survivorship-inflated)
 does not survive deployment. **REJECT** — coherent with 0/14 significant + M5
 gross-negative across the whole campaign.
+
+## 10. Research termination (M11 — ARCHIVE)
+
+**L29 — archive on falsification, without sentiment.** The hypothesis made
+risk-bearing predictions (positive, significant, deployable); all failed. Supporting
+evidence was insignificant (US slice) or confounded (India long-only bull-beta +
+survivorship). A campaign that reaches an internally-consistent, defect-free REJECT
+should be **archived**, not endlessly re-run — CONTINUE requires a *specific*
+uncertainty with credible reversal evidence, and none exists here (the biggest,
+survivorship, points the *wrong way* — correcting it worsens momentum).
+
+**L30 — separate the signal from the platform when retiring.** ARCHIVE retires the
+*price-momentum signal on this dataset* only. The platform (0 defects, M9) and the
+adopted standards (M2 screen, M4 skip, M5 dual reporting, M8 bounded construction)
+survive and carry into every future factor campaign. A dead signal is not a dead
+program; the reusable infrastructure is the campaign's real yield.
+
+**L31 — the data ceiling ranks the roadmap.** With price+volume only (M6), the
+runnable next tests are price-only families (low-vol, residual momentum, mean
+reversion); the highest-value orthogonal winners (value, quality, profitability) are
+data-blocked. The single highest-leverage action is acquiring CRSP+Compustat, not
+another price-only campaign. Let data availability, not just expected value, order
+what you build next.

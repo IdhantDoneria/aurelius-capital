@@ -278,3 +278,26 @@ Institutional-memory deltas from the 14-run US+India pairs campaign
 7. **`MultiPairStrategy` = composition, not engine change** — N `PairsStrategy` in
    one backtest yields a true diversified equity curve (averaging N Sharpes would
    fake it).
+
+## Momentum campaign — CLOSED / ARCHIVE (2026-08-05, M11)
+
+Program-level node. Full detail: `campaign/momentum/Knowledge_Graph_Summary.md` +
+`campaign/momentum/Momentum_*.md`.
+
+1. **Hypothesis FALSIFIED** — "cross-sectional price momentum on 2014–2026 price-only
+   data is deployable alpha." Direct falsifiers: M5 gross OOS negative (−23.76%, no
+   alpha at zero cost), M10 continuous-deployment ruin (>100% DD) + negative
+   liquidity-filtered returns (−10/−23/−42%), 0/14 configs significant.
+2. **Internally consistent, 0 platform defects** across M1–M10 (M9 forensic audit:
+   deterministic, no leakage, cap/async amplifiers not defects).
+3. **Kept as infrastructure** (survive the archive): M2 $5 screen, M4 1-month skip,
+   M5 dual gross/net reporting, **M8 bounded equal-weight construction** (mandatory for
+   any universe-reducing campaign), M7 generic liquidity framework (default OFF).
+4. **Data ceiling is binding** (M6): price+volume only, survivorship-inflated. Single
+   highest-leverage action = acquire **CRSP + Compustat** (PIT membership, delisting
+   returns, fundamentals).
+5. **Next-alpha ranking** (`Momentum_Future_Roadmap.md`): runnable-now = low-vol >
+   residual-momentum > mean-reversion; post-data flagship = value > quality/
+   profitability; pairs already 0/14; alt-data strategic/blocked.
+6. **Decision: ARCHIVE.** Retire the signal, keep the platform. M12 = new alpha family
+   from the roadmap.

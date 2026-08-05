@@ -143,6 +143,21 @@ across 14 runs + a leverage investigation.
   disappears under realistic execution; not a platform defect (M9), not a retraction
   of M1–M9. PIT/survivorship DEFERRED but biases UP → strengthens REJECT. 597 passed.
 
+- **M11 (research termination — ARCHIVE):** (37) evidence M1–M10 is **internally
+  consistent** — the two apparent contradictions (India long-only p=0.026; US WML
+  +58.8%) resolve to confound (bull-beta+survivorship+long-only≠factor) and
+  evaluation-basis (insignificant slice vs continuous-deployment ruin). (38)
+  hypothesis "price momentum on 2014–2026 price-only data is deployable alpha" is
+  **falsified**: direct falsifiers = M5 gross OOS negative (no alpha even at zero
+  cost), M10 deployment ruin + negative liquidity-filtered returns, 0/14 significance.
+  (39) remaining uncertainty cannot reverse: Cat A resolved (~0), Cat B wrong-direction
+  (survivorship correction *worsens* momentum, ≲0.05), Cat C = different hypotheses.
+  (40) **decision ARCHIVE** — retire the price-momentum signal on this dataset; keep
+  the platform (0 defects) + standards (M2/M4/M5/M8). (41) roadmap: runnable-now =
+  low-vol > residual-momentum > mean-reversion; flagship post-CRSP/Compustat = value >
+  quality/profitability; pairs already 0/14; single highest-leverage action = acquire
+  CRSP+Compustat. Reproducibility re-verified (597 passed).
+
 - **M6 (universe fidelity audit, no code):** (11) the frozen panel is **prices+volume
   only** — one `ohlcv` table, no exchange/mktcap/shares/sector/delisting/CA metadata;
   `adjustment_factor`≡1.0, `vwap`/`trade_count` 100% NULL. (12) survivorship is

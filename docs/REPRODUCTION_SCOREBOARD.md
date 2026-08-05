@@ -276,6 +276,30 @@ scaling. No product code (analysis scripts only); 597 passed, 2 skipped. Report:
   PIT/survivorship DEFERRED (M6/M9 data) but biases performance upward → strengthens,
   never reverses, the REJECT.
 
+## Phase — Momentum M11 Research Termination & Alpha Retirement (2026-08-05) — ARCHIVE
+
+Termination/archival campaign (docs + statistical synthesis + reproducibility
+verification only; no code, no new runs; 597 passed, 2 skipped). Deliverables:
+`campaign/momentum/Momentum_Evidence_Summary.md`, `Momentum_Retirement_Decision.md`,
+`Momentum_Final_Postmortem.md`, `Momentum_Future_Roadmap.md`.
+
+- **Evidence synthesis (M1–M10):** internally consistent; two apparent contradictions
+  (India long-only p=0.026; US WML +58.8%) resolve to confound + evaluation-basis. 0
+  platform defects across the program.
+- **Falsification:** hypothesis "cross-sectional price momentum on 2014–2026 price-only
+  data is deployable alpha" is **FALSIFIED** — direct falsifiers: M5 gross OOS negative
+  (no alpha at zero cost), M10 deployment ruin + negative liquidity-filtered returns,
+  0/14 significance. Supporting evidence insignificant (US slice) or confounded (India).
+- **Uncertainty:** Cat A resolved (~0); Cat B wrong-direction (survivorship correction
+  *worsens* momentum, ≲0.05); Cat C = different alpha hypotheses. No credible reversal.
+- **Decision: ARCHIVE.** Retire the price-momentum signal on this dataset. Keep the
+  platform (0 defects) and adopted standards (M2 $5 screen, M4 skip, M5 dual reporting,
+  M8 bounded construction). Highest-leverage next action = acquire **CRSP + Compustat**;
+  runnable-now roadmap = low-vol > residual-momentum > mean-reversion.
+
+**Momentum program status: CLOSED (ARCHIVE). M12 = new alpha family, selected from the
+roadmap after M11 certification.**
+
 ## Phase — Pairs Campaign update (2026-08-04)
 
 The 2026-07-30 Gatev toy blocker (12 names, 22 trades, no power) is RESOLVED: a
