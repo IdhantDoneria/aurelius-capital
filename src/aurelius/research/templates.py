@@ -14,6 +14,11 @@ import statistics
 
 from aurelius.backtesting.events.types import Direction, MarketEvent, SignalEvent
 from aurelius.backtesting.strategy.base import Strategy, StrategyContext
+from aurelius.research.liquidity import (
+    DEFAULT_METRIC,
+    LIQUIDITY_METRICS,
+    screen as _screen,
+)
 
 
 def _closes(ctx: StrategyContext, symbol: str, n: int) -> list[float]:
@@ -362,6 +367,15 @@ class FactorStrategy(Strategy):
     formation return is measured from lookback+skip bars ago to skip bars ago;
     the most recent `skip` bars are excluded from ranking. Default 0 (off,
     contiguous formation→holding) for backward compatibility.
+
+    liquidity_filter (M7): the only M6-approved universe screen. When enabled,
+    at each rebalance the bottom `liquidity_pct` fraction of the cross-section by
+    `liquidity_metric` (computed over the trailing `liquidity_window` bars, bars
+    <= t → no look-ahead) is dropped BEFORE momentum ranking. Uses only close +
+    volume — no market cap, no shares, no exchange. Default OFF
+    (liquidity_filter=False) → the on_bar code path is byte-identical to M4, so
+    the certified baseline is unchanged when the feature is disabled. Metric
+    library + default-selection rationale live in `research/liquidity.py`.
     """
 
     name = "factor"
@@ -375,6 +389,10 @@ class FactorStrategy(Strategy):
         equal_weight: bool = False,
         min_price: float = 0.0,
         skip: int = 0,
+        liquidity_filter: bool = False,
+        liquidity_metric: str = DEFAULT_METRIC,
+        liquidity_pct: float = 0.0,
+        liquidity_window: int = 21,
     ) -> None:
         self.lookback = lookback
         self.quantile = quantile
@@ -383,6 +401,10 @@ class FactorStrategy(Strategy):
         self.equal_weight = equal_weight
         self.min_price = min_price
         self.skip = skip
+        self.liquidity_filter = liquidity_filter
+        self.liquidity_metric = liquidity_metric
+        self.liquidity_pct = liquidity_pct
+        self.liquidity_window = liquidity_window
 
     @property
     def parameters(self) -> dict:
@@ -394,6 +416,10 @@ class FactorStrategy(Strategy):
             "equal_weight": self.equal_weight,
             "min_price": self.min_price,
             "skip": self.skip,
+            "liquidity_filter": self.liquidity_filter,
+            "liquidity_metric": self.liquidity_metric,
+            "liquidity_pct": self.liquidity_pct,
+            "liquidity_window": self.liquidity_window,
         }
 
     def on_bar(self, ctx: StrategyContext, bar: MarketEvent) -> list[SignalEvent]:
@@ -414,6 +440,23 @@ class FactorStrategy(Strategy):
             # exactly lookback bars earlier. skip=0 → c[-1], identical to M2.
             end = c[-1 - self.skip]
             scores[s] = (end - c[0]) / c[0]
+        # M7 liquidity screen: drop the least-liquid tail of the cross-section
+        # before ranking. Guarded so disabled → byte-identical to M4 (no volume
+        # fetch, no branch). Look-ahead-free: trailing-window metrics only.
+        if self.liquidity_filter and self.liquidity_pct > 0 and scores:
+            fn, higher_liquid = LIQUIDITY_METRICS[self.liquidity_metric]
+            w = self.liquidity_window
+            liq: dict[str, float] = {}
+            for s in scores:
+                bars = ctx.history(s, w)
+                if len(bars) < w:
+                    continue
+                liq[s] = fn([float(b.close) for b in bars],
+                            [float(b.volume) for b in bars])
+            if liq:
+                survivors = _screen(liq, self.liquidity_pct, higher_liquid)
+                scores = {s: v for s, v in scores.items()
+                          if s not in liq or s in survivors}
         if bar.symbol not in scores or len(scores) < 3:
             return []
         ranked = sorted(scores.values())

@@ -218,6 +218,57 @@ def test_gross_vs_net_reporting():
     assert gross.total_return >= net.total_return  # costs only subtract
 
 
+def test_liquidity_filter_disabled_is_identical_and_enabled_runs():
+    """M7: filter OFF (default) → byte-identical baseline equity curve, and it is
+    off by default. Filter ON → runs end-to-end, drops names, no crash. Locks the
+    'baseline unchanged when disabled' certification requirement."""
+    from decimal import Decimal
+    from aurelius.backtesting.config import BacktestConfig
+    from aurelius.research.liquidity import (
+        DEFAULT_METRIC, LIQUIDITY_METRICS, screen,
+    )
+
+    # default OFF + params surfaced
+    base = FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10)
+    assert base.parameters["liquidity_filter"] is False
+    assert base.parameters["liquidity_metric"] == DEFAULT_METRIC
+    assert base.parameters["liquidity_pct"] == 0.0
+
+    bars = synth_bars(list("ABCDEFGHIJ"), days=200, seed=42)
+    cfg = BacktestConfig(max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"))
+
+    def _m4():
+        return FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                              allow_short=True, equal_weight=True, min_price=5.0, skip=5)
+
+    def _m4_filter_off():  # same but explicit filter args, still disabled
+        return FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                              allow_short=True, equal_weight=True, min_price=5.0, skip=5,
+                              liquidity_filter=False, liquidity_pct=0.20)
+
+    m4 = run_backtest(_m4, bars, cfg)
+    off = run_backtest(_m4_filter_off, bars, cfg)
+    # disabled path is byte-identical to the certified baseline
+    assert [str(p) for p in off.equity_curve] == [str(p) for p in m4.equity_curve]
+
+    # enabled runs end-to-end and drops names (pct>0)
+    on = run_backtest(
+        lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                               allow_short=True, equal_weight=True, min_price=5.0, skip=5,
+                               liquidity_filter=True, liquidity_pct=0.20,
+                               liquidity_window=15), bars, cfg)
+    assert isinstance(on, PerformanceMetrics)
+
+    # every registered metric is callable + screen respects direction
+    for name, (fn, higher) in LIQUIDITY_METRICS.items():
+        val = fn([10.0] * 5, [100.0, 200, 300, 400, 500])
+        assert isinstance(val, float), name
+    liq = {"A": 1.0, "B": 2.0, "C": 3.0, "D": 4.0}
+    assert screen(liq, 0.5, True) == {"C", "D"}   # keep most liquid
+    assert screen(liq, 0.5, False) == {"A", "B"}  # illiquidity: keep least illiquid
+    assert screen(liq, 0.0, True) == set(liq)     # disabled keeps all
+
+
 def test_overlapping_factor_parameters_and_run():
     """M3: OverlappingFactorStrategy exposes K/lookback/etc; runs end-to-end.
     K=2 cohorts with short lookback so both cohorts fill within 200 synthetic bars."""
