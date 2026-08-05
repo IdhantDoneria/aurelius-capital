@@ -1,0 +1,58 @@
+{
+  "universe": {
+    "n_symbols": 50,
+    "earliest": "2014-01-02",
+    "latest": "2017-06-27",
+    "distinct_start_dates": 14
+  },
+  "cells": [
+    {
+      "construction": "baseline",
+      "cap": "1.5",
+      "total_return": -0.5917,
+      "cagr": -0.536,
+      "sharpe": -0.4703,
+      "sortino": -0.5907,
+      "max_drawdown": -0.7263,
+      "volatility": 0.8674,
+      "num_trades": 44,
+      "annual_turnover": 4.1857
+    },
+    {
+      "construction": "baseline",
+      "cap": "1000",
+      "total_return": -0.5396,
+      "cagr": -0.3729,
+      "sharpe": -0.7393,
+      "sortino": -0.971,
+      "max_drawdown": -0.6104,
+      "volatility": 0.5141,
+      "num_trades": 211,
+      "annual_turnover": 9.3594
+    },
+    {
+      "construction": "invariant",
+      "cap": "1.5",
+      "total_return": 0.7733,
+      "cagr": 0.0466,
+      "sharpe": 0.0361,
+      "sortino": 0.0498,
+      "max_drawdown": -0.2413,
+      "volatility": 0.1228,
+      "num_trades": 194,
+      "annual_turnover": 0.4535
+    },
+    {
+      "construction": "invariant",
+      "cap": "1000",
+      "total_return": 0.7733,
+      "cagr": 0.0466,
+      "sharpe": 0.0361,
+      "sortino": 0.0498,
+      "max_drawdown": -0.2413,
+      "volatility": 0.1228,
+      "num_trades": 194,
+      "annual_turnover": 0.4535
+    }
+  ]
+}
