@@ -88,16 +88,28 @@ def main() -> None:
     print(f"[m10:{label}] {len(bars)} bars  {len({b.symbol for b in bars})} names  "
           f"cost {comm}/{spread}/{slip}bps  load {time.time()-t0:.1f}s", flush=True)
 
+    def sr(x, n=4):
+        # A book that breaches 100% drawdown drives equity <=0, so ratio metrics
+        # (sharpe/sortino/vol) can come back complex/degenerate. Keep the real part
+        # and flag it; total_return / max_drawdown are computed from the curve and
+        # stay real.
+        try:
+            return round(x, n)
+        except TypeError:
+            return round(complex(x).real, n)
+
     t1 = time.time()
     m = run_backtest(lambda: FactorStrategy(**params), bars, cfg)
+    degenerate = isinstance(m.sortino_ratio, complex) or isinstance(m.annualized_volatility, complex)
     rec = {"label": label, "params": params, "cost_bps": {"comm": comm, "spread": spread,
-           "slippage": slip}, "total_return": round(m.total_return, 4),
-           "cagr": round(m.cagr, 4), "sharpe": round(m.sharpe_ratio, 4),
-           "sortino": round(m.sortino_ratio, 4), "max_drawdown": round(m.max_drawdown, 4),
-           "volatility": round(m.annualized_volatility, 4), "num_trades": m.num_trades,
-           "annual_turnover": round(m.annual_turnover, 4),
-           "avg_holding_days": round(m.avg_holding_period_days, 2),
-           "win_rate": round(m.win_rate, 4), "runtime_s": round(time.time() - t1, 1)}
+           "slippage": slip}, "total_return": sr(m.total_return),
+           "cagr": sr(m.cagr), "sharpe": sr(m.sharpe_ratio),
+           "sortino": sr(m.sortino_ratio), "max_drawdown": sr(m.max_drawdown),
+           "volatility": sr(m.annualized_volatility), "num_trades": m.num_trades,
+           "annual_turnover": sr(m.annual_turnover),
+           "avg_holding_days": sr(m.avg_holding_period_days, 2),
+           "win_rate": sr(m.win_rate), "degenerate_ratios": degenerate,
+           "runtime_s": round(time.time() - t1, 1)}
     outfile.write_text(json.dumps(rec) + "\n")
     print(f"[m10:{label}] {json.dumps(rec)}", flush=True)
 
