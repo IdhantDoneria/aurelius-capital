@@ -84,6 +84,19 @@ across 14 runs + a leverage investigation.
   deterioration is Category D regime/noise.
 - Failure-registry addition: IS Sharpe collapse under skip (+0.322→−0.167) — Class
   D regime-dependence (IS continuation vs OOS reversal), not a defect.
+- **M7 (liquidity screen — REJECT):** (16) generic liquidity registry
+  (`liquidity.py`: median/mean $vol, ADV, Amihud) wired into `FactorStrategy`,
+  **default OFF**; disabled path byte-identical to M4 (Run A reproduces the M4
+  jsonl to every digit). (17) enabling the median-$vol screen (drop bottom 20%)
+  **raised OOS Sharpe 0.112→0.277 and cut p 0.413→0.295 but cratered OOS return
+  −24.8%→−95.9% and breached a >100% drawdown (−115.9%)** — a blow-up, not an
+  improvement. (18) mechanism: universe shrinkage → smaller decile `_count` →
+  larger equal-weight per-name strength → 1.5× leverage-cap concentration
+  fragility (same as L5/M3), **0 platform defects**. (19) KEEP is conjunctive;
+  Sharpe/p up but economic + integrity gates fail → **REJECT**, baseline stays
+  M1+M2+M4. (20) framework retained (disabled); fair re-test needs dollar-hold /
+  fixed-N sizing (the M3 unblock), else screening silently levers the book.
+
 - **M6 (universe fidelity audit, no code):** (11) the frozen panel is **prices+volume
   only** — one `ohlcv` table, no exchange/mktcap/shares/sector/delisting/CA metadata;
   `adjustment_factor`≡1.0, `vwap`/`trade_count` 100% NULL. (12) survivorship is

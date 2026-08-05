@@ -129,3 +129,22 @@ missing data. One dataset — **CRSP** — unblocks five rows at once (`EXCHCD`,
 M7's only evidence-safe move is an ADV/dollar-volume liquidity proxy (Amihud
 precedent); reconstructing market cap/exchange/survivorship from *current* listings
 would be look-ahead fabrication, not fidelity.
+
+## 6. Liquidity screen (M7 — REJECT)
+
+**L18 — a higher Sharpe can be a blow-up in disguise; judge return AND drawdown.**
+The M7 median-dollar-volume screen (drop bottom 20%) *raised* OOS Sharpe
+(+0.112→+0.277) and *lowered* adjusted p (0.413→0.295) while *cratering* OOS return
+(−24.8%→−95.9%) and breaching a **>100% drawdown (−115.9%)**. The ratio improved
+because the periodic-return distribution shifted, not because the book made money —
+it lost ~all capital. A conjunctive KEEP rule (defensible AND economically supported
+AND integrity-preserving) correctly REJECTs this; Sharpe/p alone would have wrongly
+KEPT it. Always read return + max-DD next to any Sharpe gain.
+
+**L19 — a universe screen concentrates the book on a decile-size sizer.** Dropping
+20% of names shrinks `n` → `_count=int(quantile·n)` shrinks → equal-weight strength
+`0.75/_count` rises → fewer, larger positions → the same 1.5× leverage-cap
+fragility (L5, M3) blows up OOS. The liquidity metric was fine; its *interaction*
+with NAV-% decile-size sizing was fatal. A fair test needs **dollar-hold / fixed-N
+sizing** (the M3 unblock) so screening the universe doesn't silently lever the book.
+Feature shipped **default OFF**, framework retained for that future engine.

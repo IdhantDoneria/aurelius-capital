@@ -150,6 +150,35 @@ independent agent against the raw DB (zero drift). Full report:
 - Engineering defects: **0.** The reproduction gap is confirmed **data-fidelity**
   (survivorship + missing metadata), costs already ruled out (M5).
 
+## Phase — Momentum M7 Liquidity Filter (2026-08-05) — REJECT
+
+Implemented the one M6-approved universe improvement: a generic liquidity screen
+from close+volume only (`src/aurelius/research/liquidity.py`, metric registry:
+median/mean dollar volume, ADV, Amihud; default = median dollar volume). Wired into
+`FactorStrategy`, **default OFF** → on_bar byte-identical to M4 when disabled.
+Two runs only (net, US OOS), pre-registered pct=0.20/window=21 (no sweep). Full
+report: `campaign/momentum/m7/M7_Liquidity_Filter_Report.md`. Records:
+`us_jt_m7_runA.jsonl` (baseline), `us_jt_m7_runB.jsonl` (+filter).
+
+| Metric | Run A (baseline) | Run B (+liquidity) |
+|---|---|---|
+| OOS Sharpe | +0.1124 | +0.2767 |
+| OOS Return | −24.84% | **−95.85%** |
+| OOS Max DD | −77.24% | **−115.87%** (blow-up) |
+| OOS Trades | 593 | 387 |
+| Adjusted p | 0.4134 | 0.2952 |
+
+- **Run A = committed M4 to every digit** → certified baseline unchanged, deterministic.
+- **Decision: REJECT.** The screen optically lifts Sharpe (+0.164) and p (−0.118)
+  but craters OOS return (−71 pp) and breaches a **>100% drawdown**. KEEP is
+  conjunctive (defensible AND economically supported AND integrity-preserving); the
+  economic + integrity gates fail. Feature left **default OFF**; baseline stays
+  **M1+M2+M4**.
+- Root cause: universe shrinkage → smaller decile count → larger equal-weight
+  per-name strength → 1.5× leverage-cap concentration blow-up (Category B, L5/M3).
+  **0 platform defects.** Fair re-test needs dollar-hold / fixed-N sizing (M3 unblock).
+- Framework **retained in code, disabled** — correct and reusable; 596 passed, 2 skipped.
+
 ## Phase — Pairs Campaign update (2026-08-04)
 
 The 2026-07-30 Gatev toy blocker (12 names, 22 trades, no power) is RESOLVED: a
