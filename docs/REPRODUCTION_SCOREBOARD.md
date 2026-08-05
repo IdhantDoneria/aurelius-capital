@@ -253,6 +253,29 @@ change, no code correction required.** Report:
   reproduction. M7 stays REJECTED, M8 bounded construction stays ADOPTED — together
   they fully account for the anomaly. **0 platform defects.** 597 passed, 2 skipped.
 
+## Phase — Momentum M10 Capacity & Liquidity Deployability Audit (2026-08-05) — REJECT
+
+Deployability audit of the corrected strategy (M4 + M8 invariant construction).
+Frozen signal/factor/construction/data/benchmark; varied only execution/liquidity/
+scaling. No product code (analysis scripts only); 597 passed, 2 skipped. Report:
+`campaign/momentum/m10/M10_Capacity_Liquidity_Audit_Report.md`. Records:
+`shards/*.jsonl`, `capacity_india.json`.
+
+- **P1 turnover** (cadence 21/28/42/84d): turnover 1.41→0.50, trades 1540→251, hold
+  94→150d — but **every full-universe config breaches 100% drawdown** (ruin;
+  full-sample continuous single-capital sim).
+- **P2 liquidity** (drop bottom 25/50/75% by median $vol + M8 construction):
+  risk-controlled (DD −61/−63/−69%) but **negative returns −10.3%/−23.4%/−42.3%**,
+  worsening with tighter filter.
+- **P3 capacity** (India ₹): ceiling ₹46cr (median decile name ≤10% ADV) collapses to
+  **₹0.41cr** on the illiquid decile tail — capacity vs alpha conflict.
+- **P4 cost** (gross→high): cost drag **~4pp**, trivial vs **−81.5% gross** → alpha
+  absent, not cost-killed (consistent with M5 gross-negative).
+- **Decision: REJECT** — alpha does not survive realistic execution; strategy not
+  deployable. Not a platform defect (M9: 0 defects), not a retraction of M1–M9.
+  PIT/survivorship DEFERRED (M6/M9 data) but biases performance upward → strengthens,
+  never reverses, the REJECT.
+
 ## Phase — Pairs Campaign update (2026-08-04)
 
 The 2026-07-30 Gatev toy blocker (12 names, 22 trades, no power) is RESOLVED: a

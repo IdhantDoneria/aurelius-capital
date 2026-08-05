@@ -129,6 +129,20 @@ across 14 runs + a leverage investigation.
   point-in-time/survivorship-controlled universe (no PIT/delisting data, M6). 0
   platform defects.
 
+- **M10 (deployability audit — REJECT, not deployable):** (31) corrected strategy
+  (M4+M8) run full-sample continuous (single capital pool 2014–2026) **breaches 100%
+  drawdown** at every turnover cadence (ret −83%/−184%/−19%/+24%, DD −115% to −216%)
+  and every cost scenario (−82% to −86%) → ruin; ratio metrics go complex once equity
+  ≤0. (32) turnover cadence cuts turnover 1.41→0.50 & trades 1540→251 but never cures
+  the >100% DD. (33) liquidity filtering (M8 bounds bind → risk-controlled, DD −61/
+  −69%) but returns **negative & worsening**: liq_25/50/75 = −10%/−23%/−42%. (34) cost
+  drag ~4pp trivial vs −81.5% gross → alpha absent, not cost-killed (echoes M5
+  gross-negative). (35) India ₹ capacity ceiling ₹46cr (median name ≤10% ADV) but
+  **₹0.41cr** on the illiquid decile tail — capacity vs alpha conflict (escaping the
+  tail needs a liquidity screen → negative return). (36) **decision REJECT** — alpha
+  disappears under realistic execution; not a platform defect (M9), not a retraction
+  of M1–M9. PIT/survivorship DEFERRED but biases UP → strengthens REJECT. 597 passed.
+
 - **M6 (universe fidelity audit, no code):** (11) the frozen panel is **prices+volume
   only** — one `ohlcv` table, no exchange/mktcap/shares/sector/delisting/CA metadata;
   `adjustment_factor`≡1.0, `vwap`/`trade_count` 100% NULL. (12) survivorship is

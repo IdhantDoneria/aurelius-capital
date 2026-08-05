@@ -193,3 +193,26 @@ construction over-leverage, not an independent defect. You can often decide
 to every digit (−0.9585/−1.1587/387) — so the anomaly is a stable config property,
 not run noise. Only then did channel isolation mean anything. Diagnosing a
 non-reproducible number is diagnosing noise.
+
+## 9. Deployability (M10 — REJECT, not deployable)
+
+**L26 — full-sample continuous ≠ IS/OOS-slice; deploy sim must use one capital
+pool.** The certified `investigate` split resets capital each slice (M4 OOS −24.84%);
+a single continuous 2014–2026 `run_backtest` on the same full universe **breaches
+100% drawdown** (equity crosses zero, −152% DD, −83% return). Deployment is
+continuous single-capital, so the full-sample path is the honest deployability sim —
+and it ruins. Pick the evaluation that matches the question.
+
+**L27 — complex ratio metrics = the book crossed zero.** `round(complex)` crashed a
+run because sortino = mean/√(negative downside variance) once equity ≤ 0. A degenerate
+(complex/NaN) Sharpe/Sortino/vol is not a bug to silence — it is a signal the equity
+curve went negative. Report only `total_return`/`max_drawdown` (curve-real) for such
+configs and flag them; don't cite the ratios.
+
+**L28 — capacity and alpha can be in direct conflict.** Equal-weighting a broad decile
+forces holding the illiquid tail, capping ₹ capacity at ~₹0.4cr; escaping it needs a
+liquidity screen, which (M10 Phase 2) turns the return negative (−10%→−42% as the
+filter tightens). Cost drag was ~4pp — trivial vs an −81.5% gross. The edge was
+absent, not cost-killed: momentum on 2014–2026 price-only data (survivorship-inflated)
+does not survive deployment. **REJECT** — coherent with 0/14 significant + M5
+gross-negative across the whole campaign.
