@@ -269,6 +269,62 @@ def test_liquidity_filter_disabled_is_identical_and_enabled_runs():
     assert screen(liq, 0.0, True) == set(liq)     # disabled keeps all
 
 
+def test_invariant_construction_preserves_baseline_and_bounds_concentration():
+    """M8: invariant construction is default OFF, byte-identical to baseline when
+    ON but bounds slack (full universe), and caps single-name weight / HHI under
+    universe shrink. Locks the invariance-framework certification requirements."""
+    from decimal import Decimal
+    from aurelius.backtesting.config import BacktestConfig
+    from aurelius.research.portfolio_construction import (
+        baseline_weight, invariant_weight, exposures,
+    )
+
+    # default OFF + params surfaced
+    base = FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10)
+    assert base.parameters["invariant_construction"] is False
+    assert base.parameters["max_position_weight"] == 0.10
+    assert base.parameters["min_constituents"] == 10
+
+    # weight function: baseline unbounded, invariant capped + floored, and equal
+    # to baseline while slack
+    B, WMAX, NMIN = 0.75, 0.10, 10
+    assert invariant_weight(100, B, WMAX, NMIN) == baseline_weight(100, B)   # slack
+    assert baseline_weight(5, B) == 0.15                                     # concentrates
+    assert invariant_weight(5, B, WMAX, NMIN) == B / NMIN                    # floor binds
+    assert invariant_weight(5, 1.0, 0.05, 1) == 0.05                         # cap binds
+    assert invariant_weight(5, B, WMAX, NMIN) < baseline_weight(5, B)        # bounded
+    # concentration (HHI) is bounded under shrink for invariant, not for baseline
+    hhi_base = exposures([(baseline_weight(5, B), 1)] * 5)["hhi"]
+    hhi_inv = exposures([(invariant_weight(5, B, WMAX, NMIN), 1)] * 5)["hhi"]
+    assert hhi_inv < hhi_base
+
+    bars = synth_bars(list("ABCDEFGHIJ"), days=200, seed=42)
+    cfg = BacktestConfig(max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"))
+
+    def _m4():
+        return FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                              allow_short=True, equal_weight=True, min_price=5.0, skip=5)
+
+    def _m4_inv_slack():  # invariant ON but bounds slack on this small synth set
+        return FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                              allow_short=True, equal_weight=True, min_price=5.0, skip=5,
+                              invariant_construction=True,
+                              max_position_weight=1.0, min_constituents=0)
+
+    m4 = run_backtest(_m4, bars, cfg)
+    inv = run_backtest(_m4_inv_slack, bars, cfg)
+    # with bounds slack, invariant construction reproduces the baseline curve
+    assert [str(p) for p in inv.equity_curve] == [str(p) for p in m4.equity_curve]
+
+    # binding bounds run end-to-end without crash
+    on = run_backtest(
+        lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
+                               allow_short=True, equal_weight=True, min_price=5.0, skip=5,
+                               invariant_construction=True,
+                               max_position_weight=0.05, min_constituents=8), bars, cfg)
+    assert isinstance(on, PerformanceMetrics)
+
+
 def test_overlapping_factor_parameters_and_run():
     """M3: OverlappingFactorStrategy exposes K/lookback/etc; runs end-to-end.
     K=2 cohorts with short lookback so both cohorts fill within 200 synthetic bars."""

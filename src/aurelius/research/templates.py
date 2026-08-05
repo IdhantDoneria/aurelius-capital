@@ -19,6 +19,7 @@ from aurelius.research.liquidity import (
     LIQUIDITY_METRICS,
     screen as _screen,
 )
+from aurelius.research.portfolio_construction import invariant_weight
 
 
 def _closes(ctx: StrategyContext, symbol: str, n: int) -> list[float]:
@@ -393,6 +394,9 @@ class FactorStrategy(Strategy):
         liquidity_metric: str = DEFAULT_METRIC,
         liquidity_pct: float = 0.0,
         liquidity_window: int = 21,
+        invariant_construction: bool = False,
+        max_position_weight: float = 0.10,
+        min_constituents: int = 10,
     ) -> None:
         self.lookback = lookback
         self.quantile = quantile
@@ -405,6 +409,9 @@ class FactorStrategy(Strategy):
         self.liquidity_metric = liquidity_metric
         self.liquidity_pct = liquidity_pct
         self.liquidity_window = liquidity_window
+        self.invariant_construction = invariant_construction
+        self.max_position_weight = max_position_weight
+        self.min_constituents = min_constituents
 
     @property
     def parameters(self) -> dict:
@@ -420,6 +427,9 @@ class FactorStrategy(Strategy):
             "liquidity_metric": self.liquidity_metric,
             "liquidity_pct": self.liquidity_pct,
             "liquidity_window": self.liquidity_window,
+            "invariant_construction": self.invariant_construction,
+            "max_position_weight": self.max_position_weight,
+            "min_constituents": self.min_constituents,
         }
 
     def on_bar(self, ctx: StrategyContext, bar: MarketEvent) -> list[SignalEvent]:
@@ -475,7 +485,17 @@ class FactorStrategy(Strategy):
         # gross_budget=1.5 split 50/50 long/short → 0.75/_count per leg;
         # long-only → 1.0/_count (fully invested). Requires max_position_pct=1.0.
         if self.equal_weight and d != Direction.FLAT:
-            strength = (0.75 if self.allow_short else 1.0) / _count
+            budget = 0.75 if self.allow_short else 1.0
+            # M8 invariant construction: bound single-name weight (cap + min-
+            # constituent floor) so a shrunk universe can't concentrate the book.
+            # Default OFF and, when ON, byte-identical to baseline while the bounds
+            # are slack (full universe) — see portfolio_construction.invariant_weight.
+            if self.invariant_construction:
+                strength = invariant_weight(_count, budget,
+                                            self.max_position_weight,
+                                            self.min_constituents)
+            else:
+                strength = budget / _count
         else:
             strength = 1.0
         return [SignalEvent(bar.timestamp, bar.symbol, d, strategy_id=self.name, strength=strength)]
