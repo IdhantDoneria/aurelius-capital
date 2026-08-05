@@ -1,0 +1,92 @@
+{
+  "universe_n": 1075,
+  "decile_count": 107,
+  "per_name_weight": 0.007009345794392523,
+  "participation_cap": 0.1,
+  "low_vol_long": {
+    "adv_median_inr": 775929505.514466,
+    "adv_p10_inr": 11389952.3346494,
+    "ceiling_median_inr": 11069927612.006382,
+    "ceiling_p10_inr": 162496653.3076648,
+    "curve": [
+      {
+        "size": "\u20b910L",
+        "adv_pct_median": 0.0,
+        "adv_pct_p10": 0.0006
+      },
+      {
+        "size": "\u20b950L",
+        "adv_pct_median": 0.0,
+        "adv_pct_p10": 0.0031
+      },
+      {
+        "size": "\u20b91cr",
+        "adv_pct_median": 0.0001,
+        "adv_pct_p10": 0.0062
+      },
+      {
+        "size": "\u20b95cr",
+        "adv_pct_median": 0.0005,
+        "adv_pct_p10": 0.0308
+      },
+      {
+        "size": "\u20b910cr",
+        "adv_pct_median": 0.0009,
+        "adv_pct_p10": 0.0615
+      },
+      {
+        "size": "\u20b950cr",
+        "adv_pct_median": 0.0045,
+        "adv_pct_p10": 0.3077
+      },
+      {
+        "size": "\u20b9100cr",
+        "adv_pct_median": 0.009,
+        "adv_pct_p10": 0.6154
+      }
+    ]
+  },
+  "high_vol_short": {
+    "adv_median_inr": 8466827.36176725,
+    "adv_p10_inr": 187770.0,
+    "ceiling_median_inr": 120793403.6945461,
+    "ceiling_p10_inr": 2678852.0,
+    "curve": [
+      {
+        "size": "\u20b910L",
+        "adv_pct_median": 0.0008,
+        "adv_pct_p10": 0.0373
+      },
+      {
+        "size": "\u20b950L",
+        "adv_pct_median": 0.0041,
+        "adv_pct_p10": 0.1866
+      },
+      {
+        "size": "\u20b91cr",
+        "adv_pct_median": 0.0083,
+        "adv_pct_p10": 0.3733
+      },
+      {
+        "size": "\u20b95cr",
+        "adv_pct_median": 0.0414,
+        "adv_pct_p10": 1.8665
+      },
+      {
+        "size": "\u20b910cr",
+        "adv_pct_median": 0.0828,
+        "adv_pct_p10": 3.7329
+      },
+      {
+        "size": "\u20b950cr",
+        "adv_pct_median": 0.4139,
+        "adv_pct_p10": 18.6647
+      },
+      {
+        "size": "\u20b9100cr",
+        "adv_pct_median": 0.8279,
+        "adv_pct_p10": 37.3294
+      }
+    ]
+  }
+}
