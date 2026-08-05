@@ -97,6 +97,22 @@ across 14 runs + a leverage investigation.
   M1+M2+M4. (20) framework retained (disabled); fair re-test needs dollar-hold /
   fixed-N sizing (the M3 unblock), else screening silently levers the book.
 
+- **M8 (portfolio invariance — ADOPT construction standard):** (21) incumbent
+  weight `budget/_count` (`_count=int(quantile·n)`) makes single-name concentration
+  `∝1/n` — max weight explodes **0.96%→75% (×78)**, HHI ×78, as the universe shrinks
+  785→15 (gross is already invariant; concentration is the controllable channel).
+  (22) bounded equal-weight `min(budget/max(count,n_min), w_max)` caps max weight at
+  **7.5% (×7.8)** and **de-levers gross (1.5→0.15)** below the n_min floor instead of
+  concentrating; **byte-identical to M4 for f≥0.25** (default OFF, w_max=0.10,
+  n_min=10). (23) end-to-end at 5% shrink, only construction varied: baseline OOS
+  −54%/−77.6% DD (19 trades, cap-rejected) vs invariant +20%/−21.9% DD (229 trades)
+  — **DD −77.6%→−21.9%**. (24) HONEST: M7's 20% blow-up was ABOVE the ~10% crossover
+  (max weight ~1.2% there) → NOT snapshot concentration but async-vintage/composition/
+  cap (engine, frozen); M8 owns the concentration channel only. (25) **decision:
+  ADOPT** bounded equal-weight as the standard construction for all future
+  universe-reducing campaigns (exchange/mktcap/survivorship/liquidity); default OFF so
+  M1+M2+M4 unchanged. 0 platform defects.
+
 - **M6 (universe fidelity audit, no code):** (11) the frozen panel is **prices+volume
   only** — one `ohlcv` table, no exchange/mktcap/shares/sector/delisting/CA metadata;
   `adjustment_factor`≡1.0, `vwap`/`trade_count` 100% NULL. (12) survivorship is

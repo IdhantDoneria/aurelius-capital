@@ -179,6 +179,48 @@ report: `campaign/momentum/m7/M7_Liquidity_Filter_Report.md`. Records:
   **0 platform defects.** Fair re-test needs dollar-hold / fixed-N sizing (M3 unblock).
 - Framework **retained in code, disabled** — correct and reusable; 596 passed, 2 skipped.
 
+## Phase — Momentum M8 Portfolio Invariance Framework (2026-08-05) — ADOPT
+
+Portfolio-construction-only campaign (objective = invariance, not performance).
+Diagnosed the M7 concentration channel: incumbent weight `budget/_count`
+(`_count=int(quantile·n)`) makes single-name concentration `∝1/n`. Implemented
+bounded equal-weight (`src/aurelius/research/portfolio_construction.py`:
+`min(budget/max(count,n_min), w_max)` — constant-gross + single-name cap +
+min-constituent floor), wired into `FactorStrategy` as `invariant_construction`,
+**default OFF** (w_max=0.10, n_min=10). Full report:
+`campaign/momentum/m8/M8_Portfolio_Invariance_Report.md`. Records:
+`invariance_probe.json`, `us_jt_m8_confirm.jsonl`.
+
+**Exposure probe (deterministic, all shrink levels):**
+
+| design | max single-name weight (785→15 names) | HHI range |
+|---|---|---|
+| baseline | 0.96% → **75%** (×78) | ×78 → 1.125 |
+| invariant | 0.96% → **7.5%** (×7.8) | bounded ≤0.079 |
+
+Baseline == invariant **exactly for f≥0.25** → certified baseline unchanged unless
+the universe is severely reduced. Below the n_min floor the invariant book
+de-levers gross (1.5→0.15) rather than concentrating.
+
+**End-to-end confirmation (5% shrink, 50 names, only construction varies):**
+
+| Metric | baseline | invariant |
+|---|---|---|
+| OOS Return | −54.06% | +20.17% |
+| OOS Max DD | **−77.63%** | **−21.88%** |
+| OOS Trades | 19 | 229 |
+
+- **Decision: ADOPT** bounded equal-weight as the standard portfolio-construction
+  framework for all future universe-reducing campaigns (exchange/market-cap/
+  survivorship/liquidity filters). Default OFF; mandatory when a campaign shrinks the
+  universe. Strategy baseline unchanged (M1+M2+M4) — M8 is a construction-layer
+  standard (as M5 was a reporting standard). 597 passed, 2 skipped.
+- **Honest scope:** M7's 20% blow-up was ABOVE the ~10% concentration crossover
+  (max weight ~1.2% there) → driven by async-vintage/composition/leverage-cap
+  (engine-level, frozen), not snapshot concentration. M8 bounds the concentration
+  channel it controls; the rest needs synchronous rebalance + dollar-hold sizing
+  (M3 unblock). 0 platform defects.
+
 ## Phase — Pairs Campaign update (2026-08-04)
 
 The 2026-07-30 Gatev toy blocker (12 names, 22 trades, no power) is RESOLVED: a

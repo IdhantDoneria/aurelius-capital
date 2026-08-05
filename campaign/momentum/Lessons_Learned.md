@@ -148,3 +148,28 @@ fragility (L5, M3) blows up OOS. The liquidity metric was fine; its *interaction
 with NAV-% decile-size sizing was fatal. A fair test needs **dollar-hold / fixed-N
 sizing** (the M3 unblock) so screening the universe doesn't silently lever the book.
 Feature shipped **default OFF**, framework retained for that future engine.
+
+## 7. Portfolio invariance (M8 — ADOPT construction standard)
+
+**L20 — measure the exposure map directly; don't backtest a construction property.**
+Whether exposures stay invariant under universe shrink is a deterministic property of
+the weight function, provable on ONE cross-section across shrink levels in seconds —
+not 20 × 23-min backtests. The probe showed baseline max single-name weight explodes
+**0.96%→75% (×78)** as the universe shrinks 785→15 while the invariant framework caps
+it at **7.5% (×7.8)**. Backtest only the ONE end-to-end confirmation that matters.
+
+**L21 — verify the failure channel before "fixing" it (L10 again).** M7's report
+blamed snapshot concentration for the −116% blow-up, but the probe shows concentration
+is negligible until the universe drops below ~10% (M7's cut was 20%, max weight ~1.2%
+there). So M7's blow-up was actually async-vintage + leg-composition + cap effects
+(engine-level, frozen) — a DIFFERENT channel. M8 honestly bounds the concentration
+channel it *can* control and documents the rest as engine-scope. Don't let a prior
+report's stated mechanism substitute for measuring it.
+
+**L22 — de-lever, don't concentrate, when the universe runs out.** The invariant
+rule `min(budget/max(count,n_min), w_max)` shrinks *gross* (1.5→0.15) below the
+minimum-constituent floor instead of piling into 1–2 names. End-to-end at 5% shrink
+this cut OOS drawdown **−77.6%→−21.9%** (19→229 trades — bounded positions fit under
+the leverage cap, so the book diversifies instead of cap-rejecting into a few bets).
+The right invariance response to a thin universe is a smaller footprint, not a
+bigger bet. Adopted **default OFF**; mandatory for future universe-reducing campaigns.
