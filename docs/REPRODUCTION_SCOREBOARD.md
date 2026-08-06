@@ -344,3 +344,21 @@ Cross_Market, Production_Strategy, Methodology_Fidelity, Executive_Summary).
   strategy; naming a config would be tuning. Recommend not funding further pairs
   engineering; gate any revisit behind P5 sizing + P3 rolling re-formation + a
   delisting-returns dataset.
+
+## M13 — Long-Only Low-Volatility campaign (2026-08-06)
+
+- Runs: **6** long-only (1 canonical full + 5 robustness cont) + 1 analytic capacity.
+  Only change vs certified M12 baseline: `allow_short=False`. Framework/engine/execution/
+  M8/data pipeline frozen.
+- Canonical: IS +46.12% (Sharpe 0.017) / OOS +36.19% (Sharpe 0.609, DD −7.4%);
+  continuous +172.98%, Sharpe 0.31, DD **−36.26% (no ruin)**, turnover 0.19, 783 trades.
+- Statistically significant (adj p < 0.05): **0 / 1** — adjusted p = 0.1182, verdict
+  reject. ~3× closer to the gate than M12's 0.366 but not significant.
+- Robustness: **4/5 live variants clean positive non-ruined**; liquidity filter improves;
+  lb_504 starved (data limit). No ruin anywhere — decisive contrast to M12's 0/8.
+- Capacity (India ₹, long leg only, budget 1.0): ceiling **₹12.19 cr p10** / ₹830 cr
+  median. No short-leg bottleneck — deployable.
+- Engineering defects: **0.** Short-leg ruin diagnosis from M12 confirmed by its absence.
+- Certification: **DEFER** — deployable, robust, promising, but statistically uncertified
+  and alpha-vs-beta undecomposable (no factor model, M6). Unblock = CRSP/Compustat +
+  longer OOS. Not a production strategy yet; not a rejected one either.

@@ -42,3 +42,24 @@
   **long-only, single-market** (momentum India long-only was the lone p<0.05).
   Prioritize long-only construction and the CRSP/Compustat data unblock over more
   L/S factor engineering.
+
+---
+
+## M13 addendum — Long-only low-vol (2026-08-06, DEFER)
+
+- **L10 — The M12 short-leg diagnosis was correct: kill the short, kill the ruin.**
+  Long-only (allow_short=False, else frozen) continuous DD −36% vs L/S −103%; no ruin
+  in any of 6 variants. Confirms L2/L5 — the short high-vol leg was the entire failure.
+  *Evidence:* `lowvol_longonly/shards/canonical.jsonl`.
+- **L11 — Deployable ≠ significant ≠ alpha.** Long-only is deployable (₹12 cr, no ruin)
+  and sign-robust (4/5), yet adjusted p = 0.118 fails the gate and the return is
+  beta-dominated. Three separate bars — clear each before ADOPT. DEFER is the honest
+  verdict when deployment passes but significance and alpha-attribution do not.
+- **L12 — A regime-concentrated OOS inflates OOS Sharpe but not the p-value.** IS Sharpe
+  0.017 vs OOS 0.609: the framework refuses to certify an edge living in the recent
+  third. Read IS and OOS *together*; a great OOS with a flat IS is non-stationarity, not
+  alpha (compare L3).
+- **L13 — Long-only equity factors are beta-confounded; alpha needs a factor model.**
+  8.3% CAGR trails passive equity; without CRSP/Compustat the low-vol premium can't be
+  separated from market beta. The M6 data unblock is the gate to *certifying* (not just
+  deploying) any long-only equity factor. Reinforces L9's priority ordering.

@@ -319,3 +319,26 @@ Program-level node. Full detail: `campaign/momentum/Knowledge_Graph_Summary.md` 
    actions: long-only low-vol, vol-scaled construction, **acquire CRSP + Compustat**
    (unblocks idio-vol/BAB, survivorship, fundamentals — program-wide binding constraint).
 6. **`LowVolStrategy` factor kept** as infrastructure for the long-only future test.
+
+## M13 — Long-Only Low-Volatility (2026-08-06) — DEFER
+
+1. **Removing the short leg removes the ruin — M12's diagnosis confirmed.** Long-only
+   low-vol (allow_short=False, else frozen vs M12) continuous DD −36.26% vs L/S −103.35%;
+   no ruin in any variant. The short high-vol leg was the whole problem.
+2. **Deployable but not significant.** Canonical adjusted p = 0.1182 (fails 5% gate,
+   ~3× closer than M12's 0.366); continuous Sharpe 0.31 / CAGR 8.3%; ₹12.19 cr capacity
+   (p10), turnover 0.19. Verdict **reject** on the gate, but the book is economically live.
+3. **Edge is regime-concentrated, not stationary.** IS Sharpe 0.017 (flat, carries the
+   full −36% DD) vs OOS Sharpe 0.609 (−7.4% DD, 2022–2026). The two-pass framework
+   won't certify an effect living entirely in the recent third → p = 0.118.
+4. **Robust in sign, modest in magnitude.** 4/5 live variants positive non-ruined
+   (lb_126, rb_63, downside, liq_50; liquidity filter *improves*); Sharpe clusters
+   ~0.27–0.31; lb_504 starved (0 trades, data-length limit, same as M12-R2).
+5. **Beta confound is the binding issue.** A long-only low-vol equity book is
+   beta-dominated; 8.3% CAGR is below passive US equity 2014–2026. Alpha cannot be
+   separated from market beta without a factor model (M6 ceiling) → **CRSP/Compustat is
+   the unblock**. Raw-return significance already fails; beta-adjusted could only be
+   stricter.
+6. **Certification DEFER, platform defects None.** Not ADOPT (fails gate, beta-confounded),
+   not REJECT (no defect, deployable, promising). Distinct from M12 REJECT: M12 was
+   structurally broken; M13 is viable but unproven. `LowVolStrategy` long-only path kept.
