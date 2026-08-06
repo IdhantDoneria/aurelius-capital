@@ -1,15 +1,12 @@
-"""Point-in-time leakage regression — proves audit finding P1.
+"""Point-in-time leakage regression — audit finding P1, and its Phase-1 fix.
 
-The research DuckDB store holds vendor-adjusted closes (Yahoo auto_adjust=True)
-with no known-as-of dimension and INSERT OR REPLACE semantics. When a split
-happens *after* date D, a re-fetch restates the close for D. A point-in-time
-query `cross_sectional(as_of=D)` then returns the restated (post-split) price —
-future corporate-action information leaking into the past.
+The legacy DuckDBStore holds vendor-adjusted closes (Yahoo auto_adjust=True) with
+INSERT OR REPLACE and no known-as-of dimension: a split after date D silently
+restates the close for D, leaking a future corporate action into the past.
 
-This test reproduces exactly that with the real DuckDBStore API. It is marked
-xfail(strict) because the store cannot yet answer "price as known on D". When
-Phase 1 (corp-action-aware, bitemporal store) lands, this must PASS — strict
-xfail turns an accidental pass into a failure, forcing the marker's removal.
+`test_legacy_path_leaks` pins that hazard so it can't be "fixed" in place without
+someone noticing (the legacy path stays for back-compat; PIT-correct reads move
+to PitPriceStore). `test_pit_store_is_leak_free` proves the fix.
 
 Run: pytest tests/market_data/test_pit_leakage.py -v
 """
@@ -19,46 +16,52 @@ from __future__ import annotations
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
-import pytest
-
 from aurelius.market_data.storage.duckdb_store import DuckDBStore
+from aurelius.market_data.storage.pit_store import PitPriceStore
 
 
-def _bar(sym: str, day: int, close: str) -> dict:
+def _bar(day: int, close: str) -> dict:
+    ts = datetime(2020, 1, day, tzinfo=timezone.utc)
+    c = Decimal(close)
     return {
-        "symbol": sym,
-        "timestamp": datetime(2020, 1, day, tzinfo=timezone.utc),
-        "frequency": "1d",
-        "open": Decimal(close),
-        "high": Decimal(close),
-        "low": Decimal(close),
-        "close": Decimal(close),
-        "volume": Decimal("1000"),
+        "symbol": "AAA", "timestamp": ts, "frequency": "1d",
+        "open": c, "high": c, "low": c, "close": c, "volume": Decimal("1000"),
     }
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="P1: research store is not bitemporal; as_of query sees post-split "
-    "restatement. Fixed by Phase 1 — remove this marker when it passes.",
-)
-def test_as_of_price_is_not_contaminated_by_a_later_split() -> None:
+def test_legacy_path_leaks() -> None:
+    """Documents the hazard: adjusted-in-place store restates the past."""
     store = DuckDBStore(":memory:")
     try:
-        # As known on 2020-01-02: AAA traded at 100.
-        store.write_bars([_bar("AAA", 2, "100")])
-        as_known_on_jan2 = store.cross_sectional(as_of=date(2020, 1, 2))
-        assert as_known_on_jan2[0]["close"] == Decimal("100")
+        store.write_bars([_bar(2, "100")])
+        assert store.cross_sectional(as_of=date(2020, 1, 2))[0]["close"] == Decimal("100")
+        # 2:1 split on 2020-01-10 → Yahoo restates the 01-02 close to 50 on re-fetch.
+        store.write_bars([_bar(2, "50"), _bar(10, "50")])
+        leaked = store.cross_sectional(as_of=date(2020, 1, 2))[0]["close"]
+        assert leaked == Decimal("50"), "legacy path unexpectedly PIT-safe — use PitPriceStore"
+    finally:
+        store.close()
 
-        # 2020-01-10: 2:1 split. Yahoo (auto_adjust) restates ALL prior closes
-        # to 50 on the next fetch. Re-ingest overwrites the 2020-01-02 row.
-        store.write_bars([_bar("AAA", 2, "50"), _bar("AAA", 10, "50")])
 
-        # A point-in-time query for 2020-01-02 must still reflect what was known
-        # THEN (100), not the post-split restatement (50). It currently returns 50.
-        as_of_jan2 = store.cross_sectional(as_of=date(2020, 1, 2))
-        assert as_of_jan2[0]["close"] == Decimal("100"), (
-            "PIT leak: as_of=2020-01-02 returned the post-split restated price"
-        )
+def test_pit_store_is_leak_free() -> None:
+    """The fix: raw prices + split events, adjusted on read with an as-of horizon."""
+    store = PitPriceStore(":memory:")
+    try:
+        # Immutable RAW price, ingested once — never restated.
+        store.write_raw_bars([_bar(2, "100")])
+        store.record_actions([
+            {"symbol": "AAA", "effective_date": date(2020, 1, 10),
+             "ratio": 2, "announced_date": date(2020, 1, 10)},
+        ])
+
+        # As-of 2020-01-02: the split (effective 01-10) is in the future → not applied.
+        assert store.close_as_of("AAA", date(2020, 1, 2)) == Decimal("100")
+
+        # As-of 2020-01-15: the 01-02 bar is back-adjusted by the 2:1 split → 50.
+        assert store.close_as_of("AAA", date(2020, 1, 15)) == Decimal("50")
+
+        # Knowledge-date guard: even at as_of 01-15, if we only knew up to 01-05,
+        # the split (announced 01-10) is unknown → no adjustment.
+        assert store.close_as_of("AAA", date(2020, 1, 15), knowledge_date=date(2020, 1, 5)) == Decimal("100")
     finally:
         store.close()
