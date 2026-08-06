@@ -32,6 +32,24 @@ Canonical source of truth. Updated 2026-08-03 (momentum campaign).
 - Engineering defects discovered: 0
 - Knowledge Graph: 52 nodes / 112 edges (from production campaign)
 
+## M12 — Low-Volatility campaign (2026-08-06)
+
+New alpha family (Haugen-Baker / Blitz-van Vliet total-volatility anomaly), long
+low-vol / short high-vol decile, price-only panel. **Certification: REJECT.**
+
+- Canonical investigate: OOS +20.89%, OOS Sharpe 0.176, **adjusted p = 0.366 → reject**.
+- Continuous full-sample: +84.98% return but **max DD −103.35% (ruin)**; short high-vol
+  leg blows up under NAV-proportional sizing + 1.5× gross cap (same mode as momentum).
+- Robustness/deploy variants: **0 / 8** clean-positive-non-ruined. Ruin persists across
+  quantile (q_20 −127%), estimator (downside −160%), and at zero cost (cost drag ~4pp,
+  not the killer). `lb_504` history-starved (0 trades). lb_126 / liq_50 cleanly negative.
+- Capacity (India ₹): long leg deployable (₹16 cr floor), **short leg bottleneck
+  ₹0.27 cr** → L/S undeployable; long-only indicated.
+- Engineering defects: **0** (engine sound per M9; ruin is genuine strategy behavior).
+- Strategy: **NONE** funded. Long-only low-vol + CRSP/Compustat unblock gate any revisit.
+- Artifacts: `campaign/lowvol/` (Final_Report, Registry, Lessons_Learned, Literature,
+  Implementation, capacity_india.json, shards/).
+
 ## Phase 9 — Verified blocker (the ONE evidence-driven recommendation)
 
 **Observed failure:** every reproduction fails to match published magnitude.

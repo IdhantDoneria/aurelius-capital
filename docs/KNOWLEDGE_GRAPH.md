@@ -301,3 +301,21 @@ Program-level node. Full detail: `campaign/momentum/Knowledge_Graph_Summary.md` 
    profitability; pairs already 0/14; alt-data strategic/blocked.
 6. **Decision: ARCHIVE.** Retire the signal, keep the platform. M12 = new alpha family
    from the roadmap.
+
+## M12 — Low-Volatility (2026-08-06) — REJECT
+
+1. **Low-vol L/S has no risk-adjusted edge here.** Canonical adjusted p = 0.366, OOS
+   Sharpe 0.176; 0/8 variants clean. Shape of the anomaly present, significance absent.
+2. **Third L/S equity family to die by short-leg ruin** (after momentum, pairs).
+   Continuous DD −103% at *zero* cost; NAV-proportional sizing under the 1.5× gross cap
+   compounds the short high-vol leg through zero equity. Genuine behavior, **no defect**
+   (M9). Positive OOS slice (+20.9%) coexists with continuous ruin because slices reset
+   capital.
+3. **High-vol names are illiquid micro-caps** → short-leg capacity floor ₹0.27 cr vs
+   long-leg ₹16 cr. Low-vol must be **long-biased** to deploy.
+4. **Cost is never the L/S killer; construction is** (~4pp gross-to-high vs −100%+ DD).
+5. **0 significant L/S equity factors on 2014–2026 Aurelius data** (momentum 0/14 L/S,
+   pairs 0/14, low-vol 0/8). Only survivor pattern = long-only single-market. Next-value
+   actions: long-only low-vol, vol-scaled construction, **acquire CRSP + Compustat**
+   (unblocks idio-vol/BAB, survivorship, fundamentals — program-wide binding constraint).
+6. **`LowVolStrategy` factor kept** as infrastructure for the long-only future test.
