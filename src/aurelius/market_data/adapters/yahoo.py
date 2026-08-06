@@ -10,8 +10,10 @@ this, a 2:1 split inflates the prior-day return by ~100%.
 """
 
 import asyncio
+import math
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import Any
 
 from aurelius.core.errors import MarketDataError
 from aurelius.core.logging import get_logger
@@ -98,3 +100,82 @@ class YahooFinanceAdapter(MarketDataAdapter):
 
         logger.info("yahoo_fetch_complete", symbol=symbol, bar_count=len(bars))
         return bars
+
+    async def fetch_raw_and_splits(
+        self, symbol: str, start: datetime, end: datetime, frequency: str = "1d"
+    ) -> tuple[list[dict], list[dict]]:
+        """Fetch UNADJUSTED bars + split events for the PIT store (auto_adjust=False).
+
+        Returns (raw_bars, actions) as dicts ready for
+        PitPriceStore.write_raw_bars / record_actions. Separate from fetch_ohlcv
+        (which stays adjusted for the legacy path) — this feeds the PIT store.
+        """
+        try:
+            import yfinance as yf
+        except ImportError as exc:
+            raise MarketDataError("yfinance not installed: pip install yfinance") from exc
+        interval = _FREQ_MAP.get(frequency)
+        if interval is None:
+            raise MarketDataError(f"Yahoo Finance does not support frequency={frequency!r}")
+        try:
+            df = await asyncio.to_thread(
+                yf.Ticker(symbol).history,
+                start=start.date(),
+                end=end.date(),
+                interval=interval,
+                auto_adjust=False,
+                actions=True,
+            )
+        except Exception as exc:
+            raise MarketDataError(f"Yahoo raw fetch failed for {symbol}: {exc}") from exc
+        return parse_raw_history(df, symbol, frequency)
+
+
+def parse_raw_history(df: Any, symbol: str, frequency: str = "1d") -> tuple[list[dict], list[dict]]:
+    """Split a yfinance history frame (auto_adjust=False, actions=True) into raw
+    bars + split actions. Pure — no I/O, unit-testable without network.
+
+    yfinance gives only the split's effective (ex-) date, not its announcement
+    date, so announced_date = effective_date. Conservative for daily PIT: a split
+    is treated as known on its ex-date. True announced dates need another source.
+    """
+    sym = symbol.upper()
+    bars: list[dict] = []
+    actions: list[dict] = []
+    if df is None or getattr(df, "empty", True):
+        return bars, actions
+
+    def _f(row: Any, col: str) -> float:
+        val = row.get(col)
+        if val is None:
+            return 0.0
+        f = float(val)
+        return 0.0 if math.isnan(f) else f
+
+    for ts, row in df.iterrows():
+        close = _f(row, "Close")
+        if close <= 0:  # skip NaN/blank rows
+            continue
+        ts_dt = ts.to_pydatetime()
+        if ts_dt.tzinfo is None:
+            ts_dt = ts_dt.replace(tzinfo=UTC)
+        bars.append({
+            "symbol": sym,
+            "timestamp": ts_dt,
+            "frequency": frequency,
+            "open": Decimal(str(round(_f(row, "Open"), 8))),
+            "high": Decimal(str(round(_f(row, "High"), 8))),
+            "low": Decimal(str(round(_f(row, "Low"), 8))),
+            "close": Decimal(str(round(close, 8))),
+            "volume": Decimal(str(int(_f(row, "Volume")))),
+            "source": "yahoo_finance",
+        })
+        ratio = _f(row, "Stock Splits")
+        if ratio > 0:
+            actions.append({
+                "symbol": sym,
+                "effective_date": ts_dt.date(),
+                "ratio": ratio,
+                "announced_date": ts_dt.date(),
+            })
+    return bars, actions
