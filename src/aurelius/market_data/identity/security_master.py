@@ -231,6 +231,29 @@ class SecurityMaster:
             ).fetchall()
         return {t: sid for t, sid in rows}
 
+    def live_as_of(self, as_of: date) -> list[dict]:
+        """All listings live on `as_of` (valid_from ≤ as_of < valid_to). The
+        survivorship-free universe primitive — a delisting closes the interval,
+        so a security dead by `as_of` is absent and one not yet listed is absent,
+        without any current-ticker list leaking in. Additive read (Phase 2)."""
+        with self._conn() as conn:
+            rows = conn.execute(
+                """SELECT DISTINCT security_id, ticker, exchange
+                   FROM security_identity_history
+                   WHERE valid_from <= ? AND ? < valid_to
+                   ORDER BY security_id""",
+                [as_of.isoformat(), as_of.isoformat()],
+            ).fetchall()
+        return [{"security_id": r[0], "ticker": r[1], "exchange": r[2]} for r in rows]
+
+    def all_securities(self) -> list[dict]:
+        """Every security ever registered (for exclusion accounting). Additive read."""
+        with self._conn() as conn:
+            rows = conn.execute(
+                "SELECT security_id, ticker, exchange, status FROM security_master ORDER BY security_id"
+            ).fetchall()
+        return [{"security_id": r[0], "ticker": r[1], "exchange": r[2], "status": r[3]} for r in rows]
+
     def lookup_by_ticker(self, ticker: str) -> list[str]:
         """All security_ids that have *ever* used this ticker (reuse → multiple)."""
         with self._conn() as conn:
