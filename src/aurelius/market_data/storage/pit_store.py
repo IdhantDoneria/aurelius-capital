@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 
@@ -157,3 +157,49 @@ class PitPriceStore:
         for (ratio,) in splits:
             factor /= Decimal(str(ratio))  # 2:1 split → pre-split prices ×0.5
         return raw_close * factor
+
+    def window_as_of(
+        self, symbol: str, as_of: date, lookback_days: int = 252,
+        knowledge_date: date | None = None,
+    ) -> list[dict]:
+        """PIT-adjusted daily bars in (as_of − lookback_days, as_of], each
+        back-adjusted into the as_of frame by the same split rule as close_as_of.
+
+        Returns [{date, close, volume}] oldest-first. close is split-adjusted;
+        volume is inverse-adjusted so dollar_volume (close×volume) is split-
+        invariant. Reuses the certified adjustment logic — no forked math.
+        """
+        knowledge_date = knowledge_date or as_of
+        start = as_of - timedelta(days=lookback_days)
+        with self._conn() as conn:
+            bars = conn.execute(
+                """
+                SELECT CAST(timestamp AS DATE), close, volume FROM raw_ohlcv
+                WHERE symbol = ? AND frequency = '1d'
+                  AND CAST(timestamp AS DATE) <= ? AND CAST(timestamp AS DATE) > ?
+                ORDER BY timestamp
+                """,
+                [symbol, as_of.isoformat(), start.isoformat()],
+            ).fetchall()
+            if not bars:
+                return []
+            splits = conn.execute(
+                """
+                SELECT effective_date, ratio FROM corporate_actions
+                WHERE symbol = ? AND kind = 'split'
+                  AND effective_date <= ? AND announced_date <= ?
+                """,
+                [symbol, as_of.isoformat(), knowledge_date.isoformat()],
+            ).fetchall()
+        out: list[dict] = []
+        for bar_date, raw_close, raw_vol in bars:
+            factor = Decimal(1)
+            for eff, ratio in splits:
+                if bar_date < eff:  # split effective after this bar, on/before as_of
+                    factor /= Decimal(str(ratio))
+            out.append({
+                "date": bar_date,
+                "close": Decimal(str(raw_close)) * factor,
+                "volume": Decimal(str(raw_vol)) / factor,
+            })
+        return out

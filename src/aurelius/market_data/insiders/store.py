@@ -150,6 +150,37 @@ class InsiderStore:
             ).fetchall()
         return [dict(zip(cols, r, strict=True)) for r in rows]
 
+    def signals_as_of(self, security_ids: list[str], query_time: date | datetime) -> dict[str, dict]:
+        """Batch PIT insider aggregates for many securities in ONE query — the
+        research/factor path. Same acceptance gate and amendment collapse as
+        transactions_as_of, widened by security_id, then aggregated to P/S counts,
+        buy/sell value, distinct buyers, and signed ownership change per security.
+        Securities with no known transactions are simply absent from the result."""
+        if not security_ids:
+            return {}
+        placeholders = ", ".join("?" * len(security_ids))
+        with self._conn() as conn:
+            rows = conn.execute(
+                f"""SELECT security_id,
+                        SUM(CASE WHEN transaction_code = 'P' THEN 1 ELSE 0 END) AS purchases,
+                        SUM(CASE WHEN transaction_code = 'S' THEN 1 ELSE 0 END) AS sales,
+                        SUM(CASE WHEN transaction_code = 'P' THEN COALESCE(value, 0) ELSE 0 END) AS buy_value,
+                        SUM(CASE WHEN transaction_code = 'S' THEN COALESCE(value, 0) ELSE 0 END) AS sell_value,
+                        COUNT(DISTINCT CASE WHEN transaction_code = 'P' THEN insider_name END) AS buyers,
+                        SUM(CASE WHEN transaction_code IN ('P','S') THEN COALESCE(shares, 0) ELSE 0 END) AS ownership_change
+                    FROM (
+                        SELECT *, ROW_NUMBER() OVER (
+                            PARTITION BY security_id, {_LOGICAL_KEY} ORDER BY acceptance_datetime DESC
+                        ) rn
+                        FROM insider_transactions
+                        WHERE security_id IN ({placeholders}) AND acceptance_datetime <= ?
+                    ) t WHERE rn = 1
+                    GROUP BY security_id""",
+                [*security_ids, _cutoff(query_time)],
+            ).fetchall()
+        keys = ("purchases", "sales", "buy_value", "sell_value", "buyers", "ownership_change")
+        return {r[0]: dict(zip(keys, r[1:], strict=True)) for r in rows}
+
     def insider_position_as_of(self, security_id: str, insider_name: str,
                                query_time: date | datetime) -> float | None:
         """Reported shares-owned-after for an insider's latest transaction known
