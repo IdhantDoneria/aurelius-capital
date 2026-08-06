@@ -1,0 +1,61 @@
+{
+  "portfolio": "M13 canonical long-only low-vol (unchanged)",
+  "n_obs": 2890,
+  "date_start": "2015-01-05",
+  "date_end": "2026-07-30",
+  "risk_free_annual": 0.05,
+  "raw_full_sample": {
+    "cagr": 0.098,
+    "sharpe": 0.7823,
+    "max_drawdown": -0.3626,
+    "total_return": 1.922,
+    "engine_total_return": 1.7298,
+    "engine_max_drawdown": -0.3626
+  },
+  "phase2_single_factor_market": {
+    "alpha_annual": 0.0443,
+    "alpha_annual_ci95": [
+      -0.0308,
+      0.1193
+    ],
+    "alpha_t": 1.157,
+    "beta": 0.0111,
+    "beta_ci95": [
+      0.0078,
+      0.0145
+    ],
+    "beta_t": 6.51,
+    "r2": 0.0145,
+    "n_obs": 2890,
+    "alpha_significant_5pct": false
+  },
+  "phase1_two_factor_market_momentum": {
+    "alpha_annual": 0.0455,
+    "alpha_t": 1.187,
+    "market_beta": 0.0116,
+    "market_t": 6.668,
+    "momentum_beta": 0.0012,
+    "momentum_t": 1.445,
+    "r2": 0.0152,
+    "alpha_significant_5pct": false
+  },
+  "phase3_rolling_beta": {
+    "window": 126,
+    "n": 2765,
+    "beta_min": 0.0006,
+    "beta_max": 0.7877,
+    "beta_mean": 0.491,
+    "beta_std": 0.2091
+  },
+  "phase5_residual_after_market": {
+    "cagr": 0.0365,
+    "sharpe": 0.3418,
+    "max_drawdown": -0.3703,
+    "total_return": 0.5079
+  },
+  "factors_unavailable": {
+    "size": "no shares-outstanding data -> no market cap (M6 price+volume panel)",
+    "value": "no book value / fundamentals (Compustat absent, M6)",
+    "sector": "no sector/industry classification metadata (M6)"
+  }
+}

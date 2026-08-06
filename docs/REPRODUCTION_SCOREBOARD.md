@@ -362,3 +362,22 @@ Cross_Market, Production_Strategy, Methodology_Fidelity, Executive_Summary).
 - Certification: **DEFER** — deployable, robust, promising, but statistically uncertified
   and alpha-vs-beta undecomposable (no factor model, M6). Unblock = CRSP/Compustat +
   longer OOS. Not a production strategy yet; not a rejected one either.
+
+## M14 — Factor Attribution & Beta Decomposition (2026-08-06)
+
+- Attribution only — M13 canonical book unchanged, regressed vs constructible factors.
+  2890 daily obs, 2015-01-05 → 2026-07-30. Engine/framework/execution/construction frozen.
+- Factors built: **2/4** — market (equal-weight proxy) + momentum (WML). Size, value,
+  sector, cap-weighted market **unavailable (M6)** — documented skips.
+- Single-factor market: α **+4.43%/yr** (t 1.16, CI [−3.08%,+11.93%], **insignificant**),
+  β 0.011, R² 0.0145. Two-factor +momentum: momentum β 0.001 (t 1.45), α +4.55%/yr, R² 0.015.
+- Rolling 126d β: mean **0.491** (0.001–0.788) — contradicts pooled β 0.011 → proxy
+  mis-specification (equal-weight, micro-cap-dominated; low-vol book excludes those names).
+- Residual after removing β·market: CAGR +3.65%, Sharpe 0.34, DD −37.03% — return does
+  **not** disappear (β≈0 removes ~nothing), but residual α is insignificant.
+- Statistically significant residual alpha: **0 / 1** (t 1.16 < 1.96).
+- Engineering defects: **0.** Regression sound; block is data.
+- Certification: **DEFER** — attribution incomplete, required data unavailable. Not ADOPT
+  (no significant residual α), not REJECT (β explains ~nothing). Unblock = CRSP
+  shares-outstanding (cap-weighted market + SMB) + Compustat (HML) + sector codes.
+  Verdict trend M12 REJECT → M13 DEFER → M14 DEFER stable.

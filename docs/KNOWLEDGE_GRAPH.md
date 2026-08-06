@@ -342,3 +342,26 @@ Program-level node. Full detail: `campaign/momentum/Knowledge_Graph_Summary.md` 
 6. **Certification DEFER, platform defects None.** Not ADOPT (fails gate, beta-confounded),
    not REJECT (no defect, deployable, promising). Distinct from M12 REJECT: M12 was
    structurally broken; M13 is viable but unproven. `LowVolStrategy` long-only path kept.
+
+## M14 — Factor Attribution & Beta Decomposition (2026-08-06) — DEFER
+
+Attribution of the M13 canonical long-only low-vol book (unchanged) against
+constructible factors. 2890 daily obs, 2015–2026. Platform defects: None.
+
+1. **Residual alpha is positive but insignificant.** Single-factor market model:
+   α = +4.43%/yr, t = 1.16, 95% CI [−3.08%, +11.93%] — straddles zero. Adding momentum
+   (β 0.001, t 1.45) changes nothing. Point estimate leans "there is a residual"; the
+   evidence does not clear the bar. → **not ADOPT.**
+2. **Full-sample market beta ≈ 0 (R² 1.5%) is a proxy artifact, not a finding.** The
+   equal-weight market proxy is dominated by high-vol micro-caps the low-vol book
+   excludes; covariance collapses on exactly the highest-leverage days → pooled β 0.011.
+   Rolling 126d β mean 0.49 (range 0–0.79) contradicts it. The book *does* carry market
+   exposure; the proxy just can't measure it. → **not REJECT** (nothing to remove).
+3. **Attribution cannot be completed with M6 data.** Size (needs shares outstanding),
+   value (needs fundamentals), sector (needs classification codes), and a cap-weighted
+   market (needs shares outstanding) are all unavailable. Only 2/4 factors buildable and
+   the one market factor is mis-specified. → **DEFER** (data-blocked).
+4. **M14 quantifies M13's deferral, does not overturn it.** Verdict trend M12 REJECT →
+   M13 DEFER → M14 DEFER is stable. Same binding unblock as M6/M13: **CRSP + Compustat**
+   (cap-weighted market + SMB/HML) is the gate to *certifying* any long-only equity
+   factor's alpha. Regression machinery sound; block is data, not code.

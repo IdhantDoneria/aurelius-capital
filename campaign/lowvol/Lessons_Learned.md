@@ -63,3 +63,18 @@
   8.3% CAGR trails passive equity; without CRSP/Compustat the low-vol premium can't be
   separated from market beta. The M6 data unblock is the gate to *certifying* (not just
   deploying) any long-only equity factor. Reinforces L9's priority ordering.
+
+## M14 addendum — factor attribution (2026-08-06)
+
+- **L14 — A mis-specified benchmark can fake a zero beta; rolling beta is the tell.**
+  Full-sample market β = 0.011 (R² 1.5%) looked like "no market exposure," but rolling
+  126d β averaged 0.49. An equal-weight proxy dominated by micro-caps the book excludes
+  collapses covariance on its highest-variance days → pooled β ≈ 0. Never trust a single
+  pooled beta against a proxy of unknown weighting; check rolling stability first.
+  *Evidence:* `lowvol_longonly/m14/attribution.json`.
+- **L15 — "Attribution incomplete" is a real DEFER, not an escape hatch.** The decision
+  rule's ADOPT (significant residual α) and REJECT (return vanishes under β) both assume
+  a *valid* benchmark. With size/value/cap-weighted-market unavailable (M6) and the one
+  proxy mis-specified, neither branch is reachable on evidence — α insignificant (t 1.16)
+  AND β explains ~nothing. That is data-blocked DEFER. Reinforces L13: alpha-vs-beta for
+  a long-only equity factor is un-decidable without CRSP/Compustat.
