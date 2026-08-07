@@ -1,4 +1,4 @@
-"""Deterministic metadata hashing (AIDP Phase 7).
+"""Deterministic metadata hashing (AIDP M7).
 
 Fingerprints are computed over *metadata* — versions, counts, feature lists,
 parameters — never raw datasets. Same logical inputs → same hash, forever, on any

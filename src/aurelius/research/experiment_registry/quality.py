@@ -1,4 +1,4 @@
-"""Experiment quality / completeness checks (AIDP Phase 7).
+"""Experiment quality / completeness checks (AIDP M7).
 
 Flags experiments that can't be trusted as a reproduction record: missing
 lineage, missing dataset versions, missing parameters, impossible timestamps.

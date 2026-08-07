@@ -1,4 +1,4 @@
-"""Structured execution event log (AIDP Phase 8).
+"""Structured execution event log (AIDP M8).
 
 Every important event is a typed, timestamped `Event` object (not a string), so the
 log is machine-readable — queryable by stage, serializable into the run manifest,

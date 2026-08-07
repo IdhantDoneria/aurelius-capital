@@ -1,4 +1,4 @@
-"""Point-in-Time Fundamental Data Engine (AIDP Phase 3)."""
+"""Point-in-Time Fundamental Data Engine (AIDP M3)."""
 
 from aurelius.market_data.fundamentals.edgar import fetch_company_facts, parse_company_facts
 from aurelius.market_data.fundamentals.engine import CONCEPTS, FundamentalsEngine

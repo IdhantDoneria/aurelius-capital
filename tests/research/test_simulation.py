@@ -1,8 +1,8 @@
-"""Portfolio Simulation Engine regression (AIDP Phase 11). All offline, deterministic.
+"""Portfolio Simulation Engine regression (AIDP M11). All offline, deterministic.
 
 Accounting, order generation, execution, rebalancing, the multi-period engine,
 performance analytics, exposures/risk, attribution, validation, serialization, and
-registry / Phase-9 integration.
+registry / M9 integration.
 """
 
 from __future__ import annotations

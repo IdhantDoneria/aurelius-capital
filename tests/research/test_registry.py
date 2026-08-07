@@ -1,4 +1,4 @@
-"""Research experiment registry regression (AIDP Phase 7). All offline.
+"""Research experiment registry regression (AIDP M7). All offline.
 
 Lifecycle, order-independent hashing, stable fingerprints, duplicate detection,
 reproduction, search, comparison, and a clean failure path.

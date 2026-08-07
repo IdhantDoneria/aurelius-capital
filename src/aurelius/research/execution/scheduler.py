@@ -1,4 +1,4 @@
-"""Local execution scheduler (AIDP Phase 8).
+"""Local execution scheduler (AIDP M8).
 
 Generates RunConfigurations from a base config and drives them through the runner.
 Single, batch, parameter sweep, walk-forward, and rolling-window sequences. No

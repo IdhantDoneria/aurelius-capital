@@ -1,4 +1,4 @@
-"""PIT research matrix regression (AIDP Phase 6). All offline.
+"""PIT research matrix regression (AIDP M6). All offline.
 
 Cross-source PIT isolation (fundamentals + insiders), survivorship-free universe,
 identity migration, reproducibility, and missing-data tolerance — all composed

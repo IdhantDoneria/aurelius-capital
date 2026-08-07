@@ -1,4 +1,4 @@
-"""Risk-parity solver (AIDP Phase 10).
+"""Risk-parity solver (AIDP M10).
 
 Equal risk contribution: choose w so RC_i = w_i·(Σw)_i is equal across assets. No
 closed form under long-only, so the standard multiplicative fixed-point iteration

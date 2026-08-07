@@ -1,4 +1,4 @@
-"""Solver interface (AIDP Phase 10).
+"""Solver interface (AIDP M10).
 
 Dependency-injection seam: the engine depends on this ABC, never on a concrete
 optimizer (scipy / cvxpy / analytic). A solver maps (expected returns, covariance,

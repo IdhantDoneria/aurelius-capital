@@ -1,4 +1,4 @@
-"""Validation report quality / completeness check (AIDP Phase 9).
+"""Validation report quality / completeness check (AIDP M9).
 
 Verifies a ValidationReport is well-formed and self-consistent before it's trusted
 as the deployment gate.

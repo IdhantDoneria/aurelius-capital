@@ -1,4 +1,4 @@
-"""Capacity & market-impact estimation (AIDP Phase 9).
+"""Capacity & market-impact estimation (AIDP M9).
 
 Square-root market-impact law: impact ≈ c · σ · sqrt(Q / ADV), the standard
 practitioner model (Almgren et al. 2005). All estimates carry explicit assumptions;

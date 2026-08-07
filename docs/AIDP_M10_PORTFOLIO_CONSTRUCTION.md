@@ -1,26 +1,26 @@
-# AIDP Phase 10 — Institutional Portfolio Construction & Optimization Engine
+# AIDP M10 — Institutional Portfolio Construction & Optimization Engine
 
 Transforms validated research signals into implementable portfolios. Alpha
 generation (the signal) is kept strictly separate from construction (sizing, risk,
-constraints, costs): a signal is *not* a portfolio. Additive; Phases 1–9 untouched.
+constraints, costs): a signal is *not* a portfolio. Additive; M1–M9 untouched.
 
 Module: `src/aurelius/research/portfolio/`.
 
 ```python
-sig = signals_from_matrix(research_matrix, "earnings_yield")      # Phase 6 → signal
+sig = signals_from_matrix(research_matrix, "earnings_yield")      # M6 → signal
 port = PortfolioEngine().construct(
     sig, universe, ConstraintSet(max_position_weight=0.05, long_only=True),
     Objective.MIN_VARIANCE, as_of, covariance=cov, prices=px, current_weights=held,
     cost_model=TransactionCostModel(), adv=adv)
 record_portfolio(registry, experiment, port, optimizer_name="min_variance",
-                 constraints=constraints)                          # Phase 7 lineage
+                 constraints=constraints)                          # M7 lineage
 ```
 
 ## Architecture
 
 Modular, dependency-injected, deterministic. The engine composes independent
 concerns; nothing rebuilds prices/fundamentals/universe/insider data — those come
-from the Phase 6 matrix and given inputs.
+from the M6 matrix and given inputs.
 
 | Module | Role |
 |---|---|
@@ -107,17 +107,17 @@ perform it.
 
 ## Integration
 
-- **Research Matrix (Phase 6)** — `signals_from_matrix(matrix, column)` extracts a
+- **Research Matrix (M6)** — `signals_from_matrix(matrix, column)` extracts a
   return-aligned signal (applying the registered direction: `lower` → negated).
-- **Execution Platform (Phase 8)** — a portfolio is constructed from a completed
+- **Execution Platform (M8)** — a portfolio is constructed from a completed
   `ResearchSession`'s context and recorded against its experiment.
-- **Experiment Registry (Phase 7)** — `record_portfolio` persists the portfolio
+- **Experiment Registry (M7)** — `record_portfolio` persists the portfolio
   config (optimizer, objective, constraints, cost model, rebalance rule) as
   experiment parameters plus key metrics (turnover, gross, expected risk, effective
   holdings) via the existing store (a full upsert — no schema change).
-- **Validation Framework (Phase 9)** — `validate_portfolio` checks turnover,
+- **Validation Framework (M9)** — `validate_portfolio` checks turnover,
   capacity/ADV participation, concentration, risk exposure, cost impact, and
-  constraint violations; the same turnover/capacity signals feed the Phase 9
+  constraint violations; the same turnover/capacity signals feed the M9
   deployment gate.
 
 ## Benchmarks (`scripts/benchmark_portfolio.py`, 10,000 securities, diagonal Σ)
@@ -152,7 +152,7 @@ skipped**, zero regressions.
   optimization** are interfaces/extension points. Bayesian shrinkage and Ledoit-Wolf
   covariance are implemented; BL and HRP return a documented fallback with a note.
 - **Sector/industry/country limits** need a classification map absent from the PIT
-  stack (same SecurityMaster extension noted in Phase 9).
+  stack (same SecurityMaster extension noted in M9).
 
 ## Future extensions
 

@@ -1,4 +1,4 @@
-"""ValidationReport + verdict engine (AIDP Phase 9).
+"""ValidationReport + verdict engine (AIDP M9).
 
 The verdict references concrete diagnostics (numbers, not slogans). Four outcomes:
 PASS, PASS_WITH_WARNINGS, REJECT, REQUIRES_REVIEW. A deterministic manifest hash

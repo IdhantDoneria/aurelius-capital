@@ -1,4 +1,4 @@
-"""Portfolio risk diagnostics (AIDP Phase 10).
+"""Portfolio risk diagnostics (AIDP M10).
 
 Return / risk / marginal-risk contributions, concentration, effective number of
 holdings, and the largest single-name risk contribution. Pure linear algebra over

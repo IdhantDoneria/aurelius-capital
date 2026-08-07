@@ -1,4 +1,4 @@
-"""Research matrix data types (AIDP Phase 6)."""
+"""Research matrix data types (AIDP M6)."""
 
 from __future__ import annotations
 

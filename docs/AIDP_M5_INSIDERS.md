@@ -1,8 +1,8 @@
-# AIDP Phase 5 — Point-in-Time Insider Transaction Engine
+# AIDP M5 — Point-in-Time Insider Transaction Engine
 
 Institutional insider-activity ledger from SEC Forms 3/4/5, gated so queries
 answer *"what insider ownership changes were publicly known as of date X?"* —
-never *"what happened historically?"*. Additive; Phases 1–4 untouched.
+never *"what happened historically?"*. Additive; M1–M4 untouched.
 
 Module: `src/aurelius/market_data/insiders/` · Store: `data/insiders.duckdb`.
 
@@ -46,7 +46,7 @@ created_at · updated_at. Indexes: `(security_id, acceptance_datetime)`,
   restatement wins **only once it was itself public**.
 - **Signed shares.** Acquired (`A`) positive, disposed (`D`) negative; `value`
   keeps the positive magnitude. Lets `ownership_change` sum directly.
-- **security_id nullable.** Filings are CIK-native; the Phase 2 link is optional
+- **security_id nullable.** Filings are CIK-native; the M2 link is optional
   and resolvable via SecurityMaster.
 
 ## PIT methodology / filing-delay handling

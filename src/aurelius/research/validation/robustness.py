@@ -1,4 +1,4 @@
-"""Robustness aggregation (AIDP Phase 9).
+"""Robustness aggregation (AIDP M9).
 
 Combines the temporal (walk-forward), data (missing-data), and parameter
 (sensitivity/stability) robustness probes into one summary the scorer consumes.

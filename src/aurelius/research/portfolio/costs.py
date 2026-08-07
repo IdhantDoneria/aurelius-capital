@@ -1,4 +1,4 @@
-"""Transaction cost model (AIDP Phase 10).
+"""Transaction cost model (AIDP M10).
 
 Commission + half-spread + slippage (fixed bps) plus a non-linear market-impact
 term following the square-root law: impact = k·√(order/ADV). All coefficients are

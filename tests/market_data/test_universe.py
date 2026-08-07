@@ -1,4 +1,4 @@
-"""PIT survivorship-free universe regression (AIDP Phase 4). Offline.
+"""PIT survivorship-free universe regression (AIDP M4). Offline.
 
 Scenarios: future-IPO invisibility, delisted-security preservation, ticker
 migration, merger exclusion, and future-delisting isolation.

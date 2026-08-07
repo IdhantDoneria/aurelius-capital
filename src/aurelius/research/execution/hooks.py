@@ -1,4 +1,4 @@
-"""Pluggable hook system (AIDP Phase 8).
+"""Pluggable hook system (AIDP M8).
 
 Named extension points fired around each pipeline stage. Plugins register
 callables `(session) -> None`; the platform stays closed for modification, open

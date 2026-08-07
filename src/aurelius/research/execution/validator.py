@@ -1,7 +1,7 @@
-"""Pre-execution validation (AIDP Phase 8).
+"""Pre-execution validation (AIDP M8).
 
 A run aborts *before any side effect* if its configuration is incomplete or
-inconsistent. Reuses Phase 6's feature registry and Phase 7's hashing — no new
+inconsistent. Reuses M6's feature registry and M7's hashing — no new
 validation logic duplicated.
 """
 
@@ -33,7 +33,7 @@ def validate(session) -> list[str]:
     if cfg.build_matrix and session.matrix_engine is None:
         issues.append("research_matrix_invalid: build_matrix set but no matrix_engine injected")
 
-    # features must be registered (Phase 6)
+    # features must be registered (M6)
     unknown = [f for f in cfg.features if f not in FEATURES]
     if unknown:
         issues.append(f"features_invalid: {unknown}")

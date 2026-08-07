@@ -1,5 +1,5 @@
 """Optimizer wiring: covariance & expected-return abstractions + the DI optimizer
-(AIDP Phase 10).
+(AIDP M10).
 
 The engine never hard-codes a solver, a covariance estimator, or an expected-return
 model — all three are injectable interfaces. Concrete, working implementations are

@@ -1,7 +1,7 @@
-"""Execution model (AIDP Phase 11).
+"""Execution model (AIDP M11).
 
 Dependency-injected: the engine depends on the ExecutionModel ABC, never a concrete
-one. `CostExecutionModel` fills at the mark price and books the Phase 10 transaction
+one. `CostExecutionModel` fills at the mark price and books the M10 transaction
 cost (commission + spread + slippage + √-law impact). Latency, partial fills, and
 intraday (VWAP/TWAP/POV) are documented extension points — the interface already
 carries `adv` and returns a `Fill` that a partial-fill model would subdivide.
@@ -22,7 +22,7 @@ class ExecutionModel(ABC):
 
 
 class CostExecutionModel(ExecutionModel):
-    """Full fill at `price`, cost from an injected Phase 10 TransactionCostModel."""
+    """Full fill at `price`, cost from an injected M10 TransactionCostModel."""
 
     name = "cost_model"
 

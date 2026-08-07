@@ -1,8 +1,8 @@
-"""Walk-forward / out-of-sample robustness over time (AIDP Phase 9).
+"""Walk-forward / out-of-sample robustness over time (AIDP M9).
 
 Splits the realized return series into contiguous temporal segments and measures
 metric consistency across them — never mixing future into past. True re-fitting
-walk-forward needs the Phase 8 executor (an evaluator); this module evaluates a
+walk-forward needs the M8 executor (an evaluator); this module evaluates a
 fixed track record's OOS stability and exposes the interface for re-fitting.
 """
 

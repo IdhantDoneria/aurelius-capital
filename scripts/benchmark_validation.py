@@ -1,4 +1,4 @@
-"""Benchmark the validation framework (AIDP Phase 9).
+"""Benchmark the validation framework (AIDP M9).
 
 Times the individual heavy stages (bootstrap, Monte Carlo) and the full
 ResearchValidator pass, reports peak memory, and demonstrates local parallel

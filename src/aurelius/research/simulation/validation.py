@@ -1,9 +1,9 @@
-"""Simulation validation (AIDP Phase 11).
+"""Simulation validation (AIDP M11).
 
 Two layers: (1) accounting/consistency checks native to the simulation — ledger
 reconciliation, portfolio value reconciliation, position accounting, leverage,
-NaN-free equity; (2) Phase 9 integration — `to_performance_metrics` adapts the
-realized equity curve + trades into a PerformanceMetrics so the Phase 9
+NaN-free equity; (2) M9 integration — `to_performance_metrics` adapts the
+realized equity curve + trades into a PerformanceMetrics so the M9
 ResearchValidator can render its deployment verdict on the *simulated* track record.
 """
 
@@ -49,7 +49,7 @@ def validate_simulation(result, *, allow_short: bool = False, max_leverage: floa
 
 
 def to_performance_metrics(result) -> PerformanceMetrics:
-    """Adapt a SimulationResult into a backtester PerformanceMetrics so Phase 9 can
+    """Adapt a SimulationResult into a backtester PerformanceMetrics so M9 can
     validate the simulated track record without rerunning anything."""
     eq = result.equity_curve
     base = datetime(2000, 1, 1, tzinfo=UTC)

@@ -1,4 +1,4 @@
-"""Multiple-testing corrections (AIDP Phase 9).
+"""Multiple-testing corrections (AIDP M9).
 
 When many strategy variants are tested, the best in-sample p-value is optimistic.
 Bonferroni and Holm control the family-wise error rate; Benjamini-Hochberg controls

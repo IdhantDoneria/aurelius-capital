@@ -1,4 +1,4 @@
-"""Research session state machine (AIDP Phase 8).
+"""Research session state machine (AIDP M8).
 
 Linear happy path with failure/cancel escapes from any active state. Every
 transition is validated against the allowed graph; the caller logs it. No

@@ -1,4 +1,4 @@
-"""Equal-weight solver (AIDP Phase 10). w_i = 1/N. Ignores μ and Σ by design."""
+"""Equal-weight solver (AIDP M10). w_i = 1/N. Ignores μ and Σ by design."""
 
 from __future__ import annotations
 

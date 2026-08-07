@@ -1,4 +1,4 @@
-"""Diagnostic flags (AIDP Phase 9).
+"""Diagnostic flags (AIDP M9).
 
 Turns the raw analysis summaries into named, severity-tagged findings that the
 verdict engine and the human reader can act on. Each flag references the concrete

@@ -1,9 +1,9 @@
-# AIDP Phase 3 — Point-in-Time Fundamental Data Engine
+# AIDP M3 — Point-in-Time Fundamental Data Engine
 
 Institutional PIT fundamentals from SEC EDGAR: every value reconstructable
 exactly as it was known on any historical date, no future filing leaking
 backwards. The input layer for value/quality/profitability/investment factor
-models. Fully additive — Phases 1 and 2 unchanged.
+models. Fully additive — M1 and M2 unchanged.
 
 Module: `src/aurelius/market_data/fundamentals/` · Store: `data/fundamentals.duckdb`.
 
@@ -37,7 +37,7 @@ denormalize and risk divergence. We keep three physical tables:
 Every table carries `created_at, updated_at, vendor, source_document, data_version`.
 
 ### `fundamental_facts` schema
-`cik` · `security_id` (Phase 2 link, nullable) · `taxonomy` · `concept` · `unit` ·
+`cik` · `security_id` (M2 link, nullable) · `taxonomy` · `concept` · `unit` ·
 `period_start` · `period_end` · `fiscal_year` · `fiscal_period` · `value` (float64) ·
 `form` · `accession` · `filing_date` · `frame` · vendor/source/version/timestamps.
 **PK** `(cik, concept, unit, period_end, accession)` — accession in the key is what
@@ -52,8 +52,8 @@ EDGAR companyfacts JSON
        → FundamentalsStore.write_facts()  (append-only)      ┐
        → FundamentalsStore.record_filings()                  ├─ data/fundamentals.duckdb
    FundamentalsEngine.*_as_of()  ← fact_as_of (PIT predicate) ┘
-       ├─ SecurityMaster.historical_identifier()  → PIT ticker   (Phase 2)
-       └─ PitPriceStore.close_as_of()             → PIT price    (Phase 1)
+       ├─ SecurityMaster.historical_identifier()  → PIT ticker   (M2)
+       └─ PitPriceStore.close_as_of()             → PIT price    (M1)
 ```
 
 ## Knowledge timeline & restatements
@@ -90,7 +90,7 @@ SEC User-Agent).
 
 `python scripts/backfill_fundamentals.py <CIK…> --user-agent "Name email"`.
 Idempotent, additive, logs each run. Facts land with `security_id=NULL`; link to
-Phase 2 later (CIK→security_id) — additive, no reingest. No existing table changed.
+M2 later (CIK→security_id) — additive, no reingest. No existing table changed.
 
 ## Benchmarks (`scripts/benchmark_fundamentals.py`, in-memory)
 3,000,000 facts (10,000 companies × 20y × 15 concepts):
@@ -121,5 +121,5 @@ construction.
 
 ## Future extensions
 CIK→security_id enrichment on the ledger · TTM/fiscal-calendar layer · EDGAR
-`submissions` for former-names/tickers feeding the Phase 2 identity-change API ·
+`submissions` for former-names/tickers feeding the M2 identity-change API ·
 segment/footnote XBRL · non-us-gaap taxonomies (IFRS for 20-F/6-K filers).

@@ -1,4 +1,4 @@
-# AIDP Phase 2 — Temporal Security Identity Layer
+# AIDP M2 — Temporal Security Identity Layer
 
 Institutional (CRSP/Compustat-style) security identity. Ticker stops being an
 identity and becomes a time-versioned *attribute*; the stable reference is
@@ -90,14 +90,14 @@ not N point calls.
 - **No automatic corporate-identity feed.** Renames/mergers/spin-offs are
   recorded via API, not auto-detected. *Why:* free sources don't publish a clean
   identity-change feed. *Unblock:* SEC EDGAR former-names + a vendor mapping
-  (CRSP/OpenFIGI) in Phase 3+.
+  (CRSP/OpenFIGI) in M3+.
 - **Backfill has no ISIN/CUSIP/FIGI** (price stores carry only tickers); ids fall
   back to `(ticker, exchange, first_date)`. Enrichment is a follow-up, additive.
 - **Engines not rekeyed to `security_id`.** Deliberate: rekeying `BarData`,
   `feature_values`, and every research query is a breaking change to 30+ derived
   DBs, and the spec mandates no breaking changes. The resolver + shim make ticker
   deterministically resolvable — the actual goal. A full rekey, if wanted, is its
-  own breaking phase. Remaining ticker-keyed spots are enumerated in the Phase 2
+  own breaking phase. Remaining ticker-keyed spots are enumerated in the M2
   commit's "remaining assumptions".
 - **ADR↔ordinary and parent↔spin-off linkage** are separate `security_id`s with
   no explicit relationship edge yet. *Unblock:* a `security_links` table (future).

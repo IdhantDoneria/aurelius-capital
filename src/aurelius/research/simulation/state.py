@@ -1,4 +1,4 @@
-"""Holdings, cash ledger, and portfolio accounting (AIDP Phase 11).
+"""Holdings, cash ledger, and portfolio accounting (AIDP M11).
 
 The only mutable state in the engine. Accounting is exact and double-entry-checked:
 every fill moves cash by −(qty·price)−cost and updates the position's average cost

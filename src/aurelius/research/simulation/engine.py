@@ -1,8 +1,8 @@
-"""Portfolio Simulation Engine (AIDP Phase 11).
+"""Portfolio Simulation Engine (AIDP M11).
 
 Evolves optimized portfolios into a multi-year investment history. It never reruns
 research: an injected `target_provider(date) -> {security_id: weight}` yields the
-already-optimized (Phase 10) portfolio, and a `price_provider(security_id, date)`
+already-optimized (M10) portfolio, and a `price_provider(security_id, date)`
 supplies PIT marks. Deterministic (no RNG), dependency-injected (execution model,
 rebalance policy, providers), and additive.
 """

@@ -1,4 +1,4 @@
-"""Bootstrap resampling of a return series (AIDP Phase 9).
+"""Bootstrap resampling of a return series (AIDP M9).
 
 Four schemes: IID, moving-block, circular-block, and stationary (Politis & Romano
 1994, geometric block lengths). Block methods preserve short-horizon

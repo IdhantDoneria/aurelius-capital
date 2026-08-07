@@ -1,7 +1,7 @@
-"""Risk / factor exposure (AIDP Phase 9).
+"""Risk / factor exposure (AIDP M9).
 
 Market beta + annualized alpha via OLS of strategy returns on a benchmark. Style
-tilts (size/value/quality/…) are read from the Phase 6 research matrix features of
+tilts (size/value/quality/…) are read from the M6 research matrix features of
 the held names when positions + matrix are supplied. Sector / industry / country /
 currency exposures need a classification map that the PIT stack does not yet carry —
 reported as insufficient_data with the unblocking requirement, never guessed.
@@ -33,7 +33,7 @@ def market_exposure(returns, benchmark_returns, *, periods: int = 252) -> dict:
 
 def style_exposure(positions, research_matrix, *, features=None) -> dict:
     """Weighted average of matrix feature values across held names — the portfolio's
-    style tilt. positions: {security_id: weight}. Needs the Phase 6 matrix."""
+    style tilt. positions: {security_id: weight}. Needs the M6 matrix."""
     if not positions or research_matrix is None:
         return {"insufficient_data": True, "reason": "need positions + research matrix"}
     frame = research_matrix.frame
@@ -65,7 +65,7 @@ def concentration(positions) -> dict:
 
 def unsupported_exposures() -> dict:
     """Sector/industry/country/currency need a classification map absent from the
-    PIT stack today (unblock: add GICS/country to SecurityMaster — Phase 2 extension)."""
+    PIT stack today (unblock: add GICS/country to SecurityMaster — M2 extension)."""
     # `supported: False` (not insufficient_data) — a permanent architecture gap, so it
     # must not count as an inconclusive-this-run analysis in the verdict.
     return {k: {"supported": False, "reason": "no classification map in SecurityMaster",

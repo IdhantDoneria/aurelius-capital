@@ -1,4 +1,4 @@
-"""SEC EDGAR Form 3/4/5 → insider transaction rows (AIDP Phase 5).
+"""SEC EDGAR Form 3/4/5 → insider transaction rows (AIDP M5).
 
 The parsers are pure: they take an already-parsed ownership document (dict, as
 produced from the filing XML by e.g. xmltodict) plus the filing-level metadata

@@ -1,4 +1,4 @@
-"""Overfitting analysis (AIDP Phase 9).
+"""Overfitting analysis (AIDP M9).
 
 Deflated & Probabilistic Sharpe Ratio (Bailey & López de Prado 2014), Probability
 of Backtest Overfitting via CSCV (Bailey et al. 2017), and White's Reality Check

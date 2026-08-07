@@ -1,4 +1,4 @@
-"""ResearchSession & immutable RunConfiguration (AIDP Phase 8).
+"""ResearchSession & immutable RunConfiguration (AIDP M8).
 
 A RunConfiguration is a frozen, fully-specified experiment definition (the only
 thing needed to execute a run). A ResearchSession owns one run's mutable execution

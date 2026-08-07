@@ -1,4 +1,4 @@
-"""ResearchRunner — the single orchestrator (AIDP Phase 8).
+"""ResearchRunner — the single orchestrator (AIDP M8).
 
 Every research experiment on Aurelius executes through this. No component calls the
 backtester directly; `make_backtest_executor` is the one bridge, injected as a

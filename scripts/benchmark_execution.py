@@ -1,4 +1,4 @@
-"""Benchmark the research execution platform (AIDP Phase 8).
+"""Benchmark the research execution platform (AIDP M8).
 
 Isolates platform overhead from strategy cost by using a trivial executor, then
 times: single-run overhead, batch throughput, artifact generation, event logging,

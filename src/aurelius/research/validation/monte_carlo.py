@@ -1,4 +1,4 @@
-"""Monte Carlo perturbation of a realized track record (AIDP Phase 9).
+"""Monte Carlo perturbation of a realized track record (AIDP M9).
 
 Stress the result by injecting the frictions and uncertainties a live deployment
 would face — return noise, per-period slippage, trade reordering, execution delay —

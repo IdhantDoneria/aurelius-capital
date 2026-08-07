@@ -1,4 +1,4 @@
-"""Parameter stability surfaces (AIDP Phase 9).
+"""Parameter stability surfaces (AIDP M9).
 
 Scan a parameter grid and score how *flat* the performance surface is: a broad
 plateau (neighbouring parameter values perform similarly) is far more trustworthy

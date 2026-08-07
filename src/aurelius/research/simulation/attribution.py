@@ -1,4 +1,4 @@
-"""Performance attribution (AIDP Phase 11).
+"""Performance attribution (AIDP M11).
 
 Security contribution = Σ_t w_{i,t-1}·r_{i,t} over the realized path. Cost / cash /
 turnover drags are booked against the initial capital. Sector contribution needs a

@@ -1,4 +1,4 @@
-"""Research Validation Framework regression (AIDP Phase 9). All offline, deterministic.
+"""Research Validation Framework regression (AIDP M9). All offline, deterministic.
 
 Bootstrap, permutation, walk-forward, sensitivity/stability, capacity, multiple
 testing, overfitting, verdict logic, artifacts, and registry + execution integration.
@@ -211,7 +211,7 @@ def test_registry_integration(registry, tmp_path):
     assert any("validation_report" in a["artifact_type"] for a in reloaded.artifacts)
 
 
-# 11. execution integration (Phase 8 → Phase 9) ──────────────────────────────────
+# 11. execution integration (M8 → M9) ──────────────────────────────────
 
 def test_execution_integration(registry, tmp_path):
     from aurelius.research.execution import ResearchRunner, RunConfiguration

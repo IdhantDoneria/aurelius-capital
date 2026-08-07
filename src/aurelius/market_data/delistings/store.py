@@ -1,12 +1,12 @@
-"""Delisting event store (AIDP Phase 4).
+"""Delisting event store (AIDP M4).
 
 Append-only ledger of delisting events — the audit trail of *why* and *when* a
-security stopped trading. Phase 2 already models *that* a listing ended (interval
+security stopped trading. M2 already models *that* a listing ended (interval
 valid_to + status); this adds the richer event detail (type, reason,
 last_trade_date) that the status flag can't hold, and can push the effective date
 into SecurityMaster so `universe_as_of` reflects it.
 
-Additive: new store (data/delistings.duckdb). No Phase 1-3 table changes.
+Additive: new store (data/delistings.duckdb). No M1–M3 table changes.
 """
 
 from __future__ import annotations
@@ -127,7 +127,7 @@ class DelistingStore:
     def apply_to_master(self, security_master) -> int:
         """Push each security's earliest delisting into SecurityMaster: set status
         and close the open identity interval at the effective date. Idempotent —
-        Phase 2 set_status only closes the still-open interval. This is how a
+        M2 set_status only closes the still-open interval. This is how a
         delisting removes a security from `universe_as_of` after its date."""
         applied = 0
         with self._conn() as conn:

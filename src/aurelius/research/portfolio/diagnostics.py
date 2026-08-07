@@ -1,4 +1,4 @@
-"""Portfolio diagnostics assembly (AIDP Phase 10).
+"""Portfolio diagnostics assembly (AIDP M10).
 
 Composes the risk engine with exposure/cost summaries into the diagnostics block
 carried on a Portfolio. Pure — no construction, no side effects.

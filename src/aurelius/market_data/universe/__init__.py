@@ -1,4 +1,4 @@
-"""Point-in-time universe engine (AIDP Phase 4)."""
+"""Point-in-time universe engine (AIDP M4)."""
 
 from aurelius.market_data.universe.engine import UniverseEngine, UniverseSnapshot
 

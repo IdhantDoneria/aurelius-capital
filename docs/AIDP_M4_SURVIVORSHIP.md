@@ -1,9 +1,9 @@
-# AIDP Phase 4 — PIT Universe + Delisting Metadata Engine
+# AIDP M4 — PIT Universe + Delisting Metadata Engine
 
 Reconstruct the investable universe as of any historical date, **survivorship-free**.
 `universe_as_of("2010-06-30")` returns the securities that existed and were
 investable then — including companies that have since disappeared — and excludes
-anything that listed later. Additive; Phases 1–3 unchanged.
+anything that listed later. Additive; M1–M3 unchanged.
 
 Modules: `src/aurelius/market_data/{delistings,universe}/`.
 
@@ -16,11 +16,11 @@ run must not leak future listings backward. Audit gap **S1**.
 
 ## Architecture — reuse, don't duplicate
 
-The spec's "security_listing_intervals" model **already exists** as Phase 2's
+The spec's "security_listing_intervals" model **already exists** as M2's
 `security_identity_history` (identical columns: `security_id, ticker, exchange,
 valid_from, valid_to, reason, source`), and `set_status(as_of=…)` already closes
 an interval on delist/merger. The spec explicitly forbids duplicate identity
-systems, so Phase 4 **composes over that table** instead of creating a second one.
+systems, so M4 **composes over that table** instead of creating a second one.
 
 ```
 DelistingStore (delisting_events, append-only)
@@ -32,7 +32,7 @@ UniverseEngine.universe_as_of(date)
 ```
 
 Only genuinely-new storage is `delisting_events` — the event detail (type/reason/
-last_trade_date) the Phase 2 status flag can't hold.
+last_trade_date) the M2 status flag can't hold.
 
 ## Schemas
 
@@ -44,7 +44,7 @@ Index `(security_id, effective_date)`. Types: MERGER, BANKRUPTCY, LIQUIDATION,
 VOLUNTARY_DELIST, EXCHANGE_DELIST, ACQUISITION, UNKNOWN (→ mapped to master
 status merged/delisted).
 
-### Listing intervals (reused — Phase 2 `security_identity_history`)
+### Listing intervals (reused — M2 `security_identity_history`)
 No new table. Examples: AAPL `1980-12-12 → open`; Lehman `… → 2008-09-15`;
 Twitter `2013-11-07 → 2022-11-08`.
 
@@ -95,7 +95,7 @@ SecurityMaster so universes reflect them. vendor/source stored per event.
 - **Effective-time, not bitemporal-known-time.** Intervals use effective dates;
   a delisting announced later than it was effective isn't separately time-tracked
   (universe uses the standard effective-date convention). *Unblock:* add a
-  known-date column to the identity history (Phase 2 change — deferred).
+  known-date column to the identity history (M2 change — deferred).
 - **Delisting data is only as complete as what's loaded.** No free source gives a
   clean full delisting feed; `delisting_events` is the interface, backfill is
   vendor-driven. Empty store → universe still correct for currently-open listings

@@ -1,4 +1,4 @@
-"""Permutation / randomization tests (AIDP Phase 9).
+"""Permutation / randomization tests (AIDP M9).
 
 Empirical p-values against a null of no genuine timing skill. Three nulls:
   - return: shuffle the return series (destroys ordering/autocorrelation).

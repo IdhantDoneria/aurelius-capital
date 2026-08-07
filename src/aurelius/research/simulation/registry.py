@@ -1,6 +1,6 @@
-"""Experiment-registry attachment (AIDP Phase 11).
+"""Experiment-registry attachment (AIDP M11).
 
-Attaches a SimulationResult to its Phase 7 experiment — full provenance, no rerun.
+Attaches a SimulationResult to its M7 experiment — full provenance, no rerun.
 Key realized metrics land in the registry; the full result is written as a JSON
 artifact and hash-recorded. Uses the existing store (full upsert), no schema change.
 """

@@ -1,4 +1,4 @@
-"""Order generation (AIDP Phase 11).
+"""Order generation (AIDP M11).
 
 Compare the target portfolio to current holdings and emit executable orders,
 honoring lot sizes, minimum trade notional (buffer band), and long-only. Cash-aware

@@ -1,11 +1,11 @@
-"""ResearchValidator — the final quality gate (AIDP Phase 9).
+"""ResearchValidator — the final quality gate (AIDP M9).
 
 Orchestrates every validator into one ValidationReport and wires the result back
 into the platform: the report becomes an experiment artifact and the registry
 records the validation score, verdict, and version. No strategy is deployable
 without passing here.
 
-Composition + dependency injection only — reuses Phase 6 (research matrix), Phase 7
+Composition + dependency injection only — reuses M6 (research matrix), M7
 (registry), and the certified PerformanceMetrics. Never re-runs a backtest itself
 (re-fitting probes take an injected `evaluator`). Never introduces look-ahead: every
 statistic is a function of the realized in-sample series.
@@ -233,7 +233,7 @@ class ResearchValidator:
 
 def _extract_pm(execution_result):
     if hasattr(execution_result, "report") and execution_result.report is not None:
-        return execution_result.report.metrics       # Phase 8 ResearchSession
+        return execution_result.report.metrics       # M8 ResearchSession
     if hasattr(execution_result, "metrics"):
         return execution_result.metrics               # BacktestReport
     if hasattr(execution_result, "daily_returns"):

@@ -1,4 +1,4 @@
-"""Institutional Research Validation & Diagnostics Framework (AIDP Phase 9).
+"""Institutional Research Validation & Diagnostics Framework (AIDP M9).
 
 The final quality gate between research execution and paper trading. Also re-exports
 the pre-existing lightweight validation helpers (`legacy`) so historical imports

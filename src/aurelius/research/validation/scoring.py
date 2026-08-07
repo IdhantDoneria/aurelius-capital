@@ -1,4 +1,4 @@
-"""Research scoring engine (AIDP Phase 9).
+"""Research scoring engine (AIDP M9).
 
 Seven component scores (0–100), each exposed separately, combined into a single
 Research Score via configurable, documented weights. Also produces a confidence

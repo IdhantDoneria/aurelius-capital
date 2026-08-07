@@ -1,9 +1,9 @@
-"""Exposure & risk timeline (AIDP Phase 11).
+"""Exposure & risk timeline (AIDP M11).
 
 Aggregate exposures over the run and build per-date risk snapshots (leverage,
 concentration, rolling volatility). Sector/country/factor exposures are computed
 when a classification map is injected; otherwise reported as unavailable (same
-SecurityMaster gap noted in Phases 9–10).
+SecurityMaster gap noted in M9–M10).
 """
 
 from __future__ import annotations

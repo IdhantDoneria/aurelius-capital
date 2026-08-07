@@ -1,4 +1,4 @@
-"""Institutional Research Execution Platform (AIDP Phase 8).
+"""Institutional Research Execution Platform (AIDP M8).
 
 The single orchestrator for every research experiment. Nothing calls the
 backtester directly; everything executes through ResearchRunner.

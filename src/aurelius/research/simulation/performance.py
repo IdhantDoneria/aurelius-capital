@@ -1,7 +1,7 @@
-"""Performance analytics from the realized equity curve (AIDP Phase 11).
+"""Performance analytics from the realized equity curve (AIDP M11).
 
 Pure numpy over the portfolio-value series produced by the simulation. Reuses the
-Phase 9 Sharpe definition; computes the rest (Sortino, Calmar, Omega, drawdowns,
+M9 Sharpe definition; computes the rest (Sortino, Calmar, Omega, drawdowns,
 trade stats) locally. No look-ahead — everything is a function of realized values.
 """
 

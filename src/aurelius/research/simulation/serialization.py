@@ -1,4 +1,4 @@
-"""Deterministic serialization (AIDP Phase 11).
+"""Deterministic serialization (AIDP M11).
 
 JSON (full result, metadata-preserving) and Parquet (equity curve + trades, the
 large series). Arrow is a documented future target. Round-trips without losing the

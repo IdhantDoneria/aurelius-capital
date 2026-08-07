@@ -1,4 +1,4 @@
-"""Feature registry (AIDP Phase 6).
+"""Feature registry (AIDP M6).
 
 Each feature maps to (source, field, direction). The engine computes one bundle
 per source per security (a price window, a factor-input dict, an insider signal)

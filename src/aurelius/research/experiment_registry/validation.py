@@ -1,4 +1,4 @@
-"""Duplicate-experiment detection (AIDP Phase 7).
+"""Duplicate-experiment detection (AIDP M7).
 
 Two experiments with the same fingerprint saw the same data, features, and
 parameters — one is a reproduction of the other. Rather than silently re-running,

@@ -1,4 +1,4 @@
-"""PIT insider transaction regression (AIDP Phase 5). All offline.
+"""PIT insider transaction regression (AIDP M5). All offline.
 
 Filing-delay isolation, Form 4 parsing, amendment handling, SecurityMaster
 identity mapping, and multi-insider cluster aggregation.

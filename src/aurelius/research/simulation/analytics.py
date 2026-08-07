@@ -1,4 +1,4 @@
-"""Report assembly (AIDP Phase 11). Builds the cost / turnover / capacity reports
+"""Report assembly (AIDP M11). Builds the cost / turnover / capacity reports
 from the recorded trades, rebalance events, and exposures."""
 
 from __future__ import annotations

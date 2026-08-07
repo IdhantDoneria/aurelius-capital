@@ -1,4 +1,4 @@
-"""Delisting event store (AIDP Phase 4)."""
+"""Delisting event store (AIDP M4)."""
 
 from aurelius.market_data.delistings.store import (
     DELISTING_TYPES,

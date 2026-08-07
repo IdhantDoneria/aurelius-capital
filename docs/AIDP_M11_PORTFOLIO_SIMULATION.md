@@ -1,10 +1,10 @@
-# AIDP Phase 11 — Institutional Multi-Period Portfolio Simulation Engine
+# AIDP M11 — Institutional Multi-Period Portfolio Simulation Engine
 
-Evolves optimized (Phase 10) portfolios into a realistic multi-year investment
+Evolves optimized (M10) portfolios into a realistic multi-year investment
 history: persistent holdings, exact cash accounting, transaction costs, configurable
 rebalancing, and institutional analytics. **This is not a backtester** — the alpha
 and portfolio engines already exist; this is a *portfolio evolution* engine. It
-never reruns research. Additive; Phases 1–10 untouched.
+never reruns research. Additive; M1–M10 untouched.
 
 Module: `src/aurelius/research/simulation/`.
 
@@ -14,8 +14,8 @@ eng = PortfolioSimulationEngine(
     execution_model=CostExecutionModel(TransactionCostModel()),        # DI
     policy=RebalancePolicy(explicit_dates=calendar_dates(timeline, "monthly")))
 result = eng.run(timeline, target_provider, price_provider, adv_provider=adv)   # no rerun
-validate_simulation(result)                       # accounting + Phase 9 gate
-attach_simulation(registry, experiment, result)   # Phase 7 provenance
+validate_simulation(result)                       # accounting + M9 gate
+attach_simulation(registry, experiment, result)   # M7 provenance
 ```
 
 ## Architecture
@@ -30,22 +30,22 @@ if appropriate") — each with real responsibility, no stubs.
 | `state` | `PortfolioState`, `CashLedger` — the only mutable accounting |
 | `orders` | target-vs-current → executable orders (lots, buffer band, long-only, cash-aware) |
 | `execution` | `ExecutionModel` ABC + cost-model / frictionless implementations (DI) |
-| `rebalancing` | reuses Phase 10 `RebalanceRule` + calendar-date generation |
+| `rebalancing` | reuses M10 `RebalanceRule` + calendar-date generation |
 | `engine` | `PortfolioSimulationEngine` — the evolution loop + report assembly |
-| `performance` | equity-curve metrics (reuses Phase 9 Sharpe) |
+| `performance` | equity-curve metrics (reuses M9 Sharpe) |
 | `exposure` | exposure report + per-date risk timeline |
 | `attribution` | security/sector contribution, cost/cash/turnover drag |
 | `analytics` | cost / turnover / capacity report builders |
-| `validation` | accounting reconciliation + Phase 9 adapter (`to_performance_metrics`) |
+| `validation` | accounting reconciliation + M9 adapter (`to_performance_metrics`) |
 | `serialization` | deterministic JSON + Parquet export |
-| `registry` | attach result to the Phase 7 experiment (no rerun) |
+| `registry` | attach result to the M7 experiment (no rerun) |
 | `diagnostics` | trade/rebalance/cost/cash logs + warnings |
 | `__init__` | exports |
 
 ### Data flow
 
 ```
-target_provider(date) ─┐   (Phase 10 optimized portfolio, precomputed — never reruns research)
+target_provider(date) ─┐   (M10 optimized portfolio, precomputed — never reruns research)
 price_provider(id,date)─┼─► PortfolioSimulationEngine.run
 adv_provider(id,date) ─┘        │
                                 ├─ mark holdings (PIT prices)
@@ -62,9 +62,9 @@ adv_provider(id,date) ─┘        │
 
 `engine` → {state, orders, execution, rebalancing, performance, exposure,
 attribution, analytics, models}. `validation`/`registry`/`serialization`/
-`diagnostics` consume a `SimulationResult`. Reuses Phase 10 (`RebalanceRule`,
-`TransactionCostModel`) and Phase 9 (`significance.sharpe`, `PerformanceMetrics`,
-`ResearchValidator`). No Phase is modified.
+`diagnostics` consume a `SimulationResult`. Reuses M10 (`RebalanceRule`,
+`TransactionCostModel`) and M9 (`significance.sharpe`, `PerformanceMetrics`,
+`ResearchValidator`). No prior milestone is modified.
 
 ## Simulation engine
 
@@ -90,7 +90,7 @@ reconciliation).
 
 ## Rebalancing engine
 
-Reuses the Phase 10 `RebalanceRule` (calendar daily/weekly/monthly/quarterly/annual,
+Reuses the M10 `RebalanceRule` (calendar daily/weekly/monthly/quarterly/annual,
 threshold drift, volatility-triggered, hybrid) via `RebalancePolicy`, plus
 `calendar_dates(timeline, freq)` to derive rebalance dates. Supports rebalance
 tolerance (drift threshold), minimum trade notional (buffer band), minimum position
@@ -99,14 +99,14 @@ change, and a cash buffer.
 ## Execution model
 
 Dependency-injected `ExecutionModel`. `CostExecutionModel` fills at the mark and
-books the Phase 10 transaction cost (commission + spread + slippage + √-law impact,
+books the M10 transaction cost (commission + spread + slippage + √-law impact,
 ADV-aware); `FrictionlessExecutionModel` is the zero-cost baseline. Latency, partial
 fills, and intraday (VWAP/TWAP/POV) are documented extension points — the interface
 carries `adv` and returns a `Fill` a partial-fill model would subdivide.
 
 ## Performance analytics
 
-From the realized equity curve: total return, CAGR, volatility, Sharpe (Phase 9
+From the realized equity curve: total return, CAGR, volatility, Sharpe (M9
 definition), Sortino, Calmar, Omega, max/avg drawdown, time-underwater, recovery,
 hit rate, profit factor, gain/loss ratio, annualized turnover, avg holding period,
 realized costs + cost drag. Plus exposures (gross/net/long/short/cash), a per-date
@@ -119,14 +119,14 @@ risk timeline (rolling vol, leverage, HHI, effective holdings), and attribution
 consistency (material-overdraft only), portfolio value positivity, leverage,
 position accounting (long-only), turnover/cost/capacity/concentration. `
 to_performance_metrics` adapts the simulated equity curve + trades into a
-`PerformanceMetrics`, so the **Phase 9 `ResearchValidator`** renders its full
+`PerformanceMetrics`, so the **M9 `ResearchValidator`** renders its full
 deployment verdict on the *simulated* track record without rerunning anything.
 
 ## Experiment registry
 
 `attach_simulation` writes the full `SimulationResult` as a hashed JSON artifact and
 records realized metrics (SimCAGR, SimSharpe, SimMaxDrawdown, SimAnnualizedTurnover,
-SimTotalCost, SimFinalValue) + a verdict note on the Phase 7 experiment — full
+SimTotalCost, SimFinalValue) + a verdict note on the M7 experiment — full
 provenance, no rerun, via the existing store (no schema change).
 
 ## Performance / benchmarks
@@ -150,8 +150,7 @@ recorded snapshots/trades.
 ## Design decisions
 
 - **Providers, not engines.** Targets/prices/ADV are injected callables so the
-  simulation is decoupled from *how* portfolios are produced — it never reruns Phase
-  8/10. A `PitPriceStore.close_as_of` adapter is the natural production `price_provider`.
+  simulation is decoupled from *how* portfolios are produced — it never reruns M8/M10. A `PitPriceStore.close_as_of` adapter is the natural production `price_provider`.
 - **Average-cost accounting** (not FIFO lots) — standard for institutional
   book-level P&L; lot-level/tax accounting is a documented extension.
 - **Cash-relative overdraft tolerance** — a fully-invested (gross=1) target dips
@@ -163,7 +162,7 @@ recorded snapshots/trades.
 - **Average-cost, single-currency, no margin/borrow/financing** — booked cleanly;
   multi-currency, margin, borrow costs, and tax-aware lots are extension points.
 - **Sector/country exposures & Brinson attribution** need a classification map absent
-  from the PIT stack (same SecurityMaster gap as Phases 9–10) — reported
+  from the PIT stack (same SecurityMaster gap as M9–M10) — reported
   `insufficient_data`.
 - **Parquet export needs `pyarrow`** (not installed in the current venv); JSON export
   is always available. The Parquet test skips when no engine is present.

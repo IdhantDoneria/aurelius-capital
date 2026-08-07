@@ -1,8 +1,8 @@
-"""Insider research accessor (AIDP Phase 5).
+"""Insider research accessor (AIDP M5).
 
 Point-in-time insider signals composed over InsiderStore.transactions_as_of, so
 every figure reflects only filings public by the query date. Optionally resolves
-a ticker to a security_id through SecurityMaster (Phase 2) so identity changes
+a ticker to a security_id through SecurityMaster (M2) so identity changes
 don't break historical lookups.
 
 Signal focus: open-market purchases (code P) and sales (code S) — the

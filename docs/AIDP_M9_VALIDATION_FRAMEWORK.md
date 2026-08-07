@@ -1,10 +1,10 @@
-# AIDP Phase 9 — Institutional Research Validation & Diagnostics Framework
+# AIDP M9 — Institutional Research Validation & Diagnostics Framework
 
 The final quality gate between research execution and paper trading. It does not
 merely compute statistics — it renders a verdict on whether a result is
 statistically significant, economically meaningful, robust, capacity-viable,
 reproducible, and *not* overfit. No strategy is deployable without passing here.
-Additive; Phases 1–8 untouched.
+Additive; M1–M8 untouched.
 
 Module: `src/aurelius/research/validation/` (package). The pre-existing
 lightweight `research/validation.py` was moved to `validation/legacy.py` and is
@@ -27,7 +27,7 @@ engine composes; nothing re-implements a prior engine, and the framework never
 re-runs a backtest itself (re-fitting probes take an injected `evaluator`).
 
 - **Core API** — `ResearchValidator.validate(experiment, execution_result,
-  research_matrix)` → `ValidationReport`. `execution_result` may be a Phase 8
+  research_matrix)` → `ValidationReport`. `execution_result` may be a M8
   `ResearchSession`, a `BacktestReport`, or a raw `PerformanceMetrics`.
 - **Inputs are realized in-sample series only** — every statistic is a function of
   the produced returns/trades. No future information enters validation.
@@ -48,7 +48,7 @@ re-runs a backtest itself (re-fitting probes take an injected `evaluator`).
 | `robustness` | aggregates the temporal/data/parameter probes |
 | `capacity` | ADV utilisation, √-law market impact, implementation shortfall, capacity ceiling |
 | `turnover` | turnover / holding-period profile |
-| `factor_exposure` | market beta/alpha, style tilt (from the Phase 6 matrix), concentration |
+| `factor_exposure` | market beta/alpha, style tilt (from the M6 matrix), concentration |
 | `diagnostics` | severity-tagged flags referencing the raising number |
 | `scoring` | 7 component scores + weighted research score + contribution decomposition |
 | `report` | `ValidationReport` + verdict engine + manifest hash |
@@ -125,11 +125,11 @@ per-run miss.
 ## Integration
 
 - **Execution Platform** — validate a completed `ResearchSession` directly.
-- **Research Matrix** — style/tilt exposures read from the Phase 6 matrix frame.
+- **Research Matrix** — style/tilt exposures read from the M6 matrix frame.
 - **Experiment Registry** — the report becomes experiment artifacts
   (`validation_report.json`, `validation_visuals.json`, `plot_validation.py`,
   hashed), and the registry records `ValidationScore`, `DeflatedSharpe`, the verdict
-  (in notes), and the validation version — via the existing store, no Phase 7
+  (in notes), and the validation version — via the existing store, no M7
   schema change.
 
 ## Benchmarks (`scripts/benchmark_validation.py`, 1000 returns, 2000 resamples)
@@ -159,13 +159,13 @@ failure recovery · scoring. Full suite: **154 passed, 2 skipped**, zero regress
 
 - **PBO / Reality Check / SPA need a multi-configuration returns matrix.** With a
   single track record they are skipped-with-reason. Unblock: pass `returns_matrix`
-  (per-config OOS returns from a Phase 8 parameter sweep). SPA (Hansen 2005) is a
+  (per-config OOS returns from a M8 parameter sweep). SPA (Hansen 2005) is a
   documented extension point on top of the implemented Reality Check.
 - **CSCV PBO** is implemented; its combinatorial cost is `C(S, S/2)` (S=10 → 252
   combos) — fine here, but S is capped for tractability.
 - **Sector/industry/country/currency exposures** require a classification map absent
   from the PIT stack. Unblock: add GICS sector/industry + country/currency to
-  SecurityMaster (a Phase 2 extension).
+  SecurityMaster (a M2 extension).
 - **DSR variance substitution** when only one track record is available (flagged in
   the report), per the note above.
 - **Re-fitting robustness** (parameter perturbation, feature removal, stability

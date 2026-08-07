@@ -1,4 +1,4 @@
-"""Temporal Security Identity Layer (AIDP Phase 2)."""
+"""Temporal Security Identity Layer (AIDP M2)."""
 
 from aurelius.market_data.identity.security_master import (
     Security,

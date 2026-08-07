@@ -1,4 +1,4 @@
-"""Fundamentals quality checks (AIDP Phase 3).
+"""Fundamentals quality checks (AIDP M3).
 
 Runs over the fact ledger and returns a machine-readable report. Detects the
 failure modes that corrupt factor inputs: negative shares, duplicate filings,

@@ -1,4 +1,4 @@
-"""Portfolio Construction & Optimization regression (AIDP Phase 10). All offline.
+"""Portfolio Construction & Optimization regression (AIDP M10). All offline.
 
 Equal-weight, constraints (position/turnover/long-only/leverage/liquidity), cost
 model, risk contributions, optimizer DI, determinism, and registry / execution /

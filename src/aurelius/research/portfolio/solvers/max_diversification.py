@@ -1,4 +1,4 @@
-"""Maximum-diversification solver (AIDP Phase 10).
+"""Maximum-diversification solver (AIDP M10).
 
 Maximize the diversification ratio DR(w) = (wᵀσ) / √(wᵀΣw). The long-only optimum
 satisfies w ∝ Σ⁻¹σ; we take that direction and let the constraint engine enforce

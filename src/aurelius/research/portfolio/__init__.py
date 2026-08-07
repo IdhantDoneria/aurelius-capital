@@ -1,4 +1,4 @@
-"""Institutional Portfolio Construction & Optimization Engine (AIDP Phase 10).
+"""Institutional Portfolio Construction & Optimization Engine (AIDP M10).
 
 Transforms validated research signals into implementable portfolios. Alpha
 generation (the signal) stays strictly separate from construction (sizing, risk,

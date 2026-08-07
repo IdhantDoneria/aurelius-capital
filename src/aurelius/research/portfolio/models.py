@@ -1,4 +1,4 @@
-"""Portfolio data models (AIDP Phase 10)."""
+"""Portfolio data models (AIDP M10)."""
 
 from __future__ import annotations
 

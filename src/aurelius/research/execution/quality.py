@@ -1,4 +1,4 @@
-"""Execution quality / completeness checks (AIDP Phase 8).
+"""Execution quality / completeness checks (AIDP M8).
 
 Verifies a finished session is a trustworthy, reproducible record: reached a
 terminal state, produced metrics + the full artifact set with stored hashes, and

@@ -1,4 +1,4 @@
-"""parse_raw_history + PIT store round-trip — Phase 1 wiring, no network.
+"""parse_raw_history + PIT store round-trip — M1 wiring, no network.
 
 Feeds a synthetic yfinance-shaped frame (auto_adjust=False, actions=True) through
 the parser into PitPriceStore and asserts the as-of price is PIT-correct across a

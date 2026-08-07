@@ -1,4 +1,4 @@
-"""Benchmark the research matrix at scale (AIDP Phase 6).
+"""Benchmark the research matrix at scale (AIDP M6).
 
 Seeds a synthetic universe of N securities with prices + fundamentals + insiders,
 then times a full feature_matrix_as_of build and a cached retrieval, and reports

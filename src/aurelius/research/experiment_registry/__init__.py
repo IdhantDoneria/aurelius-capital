@@ -1,4 +1,4 @@
-"""Research Experiment Registry & Lineage System (AIDP Phase 7)."""
+"""Research Experiment Registry & Lineage System (AIDP M7)."""
 
 from aurelius.research.experiment_registry.engine import ExperimentRegistry
 from aurelius.research.experiment_registry.models import Experiment

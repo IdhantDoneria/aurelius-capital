@@ -1,8 +1,8 @@
-# AIDP Phase 7 — Research Experiment Registry & Lineage System
+# AIDP M7 — Research Experiment Registry & Lineage System
 
 The authoritative source of truth for every research experiment. Any run recorded
 today can be reproduced years later from stored metadata alone — no raw datasets,
-no manually-named output folders. Additive; Phases 1–6 APIs untouched.
+no manually-named output folders. Additive; M1–M6 APIs untouched.
 
 Module: `src/aurelius/research/experiment_registry/` · Store:
 `data/research_registry.duckdb`.
@@ -33,7 +33,7 @@ Eight small files, one responsibility each:
 
 Native DuckDB, deterministic, lightweight — **no MLflow / W&B / external tracker**.
 It reuses the platform's own conventions (the append-only-row-count version signal
-from Phase 6, the DuckDB store pattern from Phases 1–6) rather than importing a
+from M6, the DuckDB store pattern from M1–M6) rather than importing a
 framework.
 
 ### Relationship to the existing `research/store.py`
@@ -67,7 +67,7 @@ constraint and the only thing that scales). The seven versions:
 | `insiders_version` | `insider_transactions` row count |
 | `universe_version` | `security_identity_history` row count (drives the universe) |
 | `securitymaster_version` | `security_master` row count |
-| `feature_registry_version` | content hash of the Phase 6 `FEATURES` registry |
+| `feature_registry_version` | content hash of the M6 `FEATURES` registry |
 | `research_matrix_version` | **derived** — hash of the six above |
 
 The research matrix has no independent state (it's a deterministic view over the
@@ -126,7 +126,7 @@ it back into `start_experiment` yields the identical fingerprint (tested). Becau
 dataset versions are append-only counts and the git commit is pinned, "reproduce"
 means: check out `git_commit`, replay the stores to the recorded versions, request
 the recorded features + parameters — and you are guaranteed the same inputs the
-original run saw, with no look-ahead (the PIT gates live in Phases 1–6).
+original run saw, with no look-ahead (the PIT gates live in M1–M6).
 
 ## Schema (6 tables, `data/research_registry.duckdb`)
 
@@ -160,7 +160,7 @@ skipped** (87 market_data + 9 registry), zero regressions.
 - **`reproduce` returns a definition, it does not re-execute.** Re-running is the
   caller's job (check out the commit, replay stores, call `start_experiment` with
   the returned config). Auto-replay would couple the registry to the backtest
-  runner — deferred to Phase 8.
+  runner — deferred to M8.
 - **`random_seed` is recorded, not enforced.** The registry stores the seed; the
   strategy code must actually seed its RNG with it.
 - **Artifact hashes are supplied by the caller.** The registry stores
@@ -175,6 +175,6 @@ skipped** (87 market_data + 9 registry), zero regressions.
   experiment re-executes from its stored definition end-to-end.
 - **Content checksums** if a mutable data source is added.
 - **Artifact store integration** — compute + verify `artifact_hash` against a
-  parquet/object store (the Phase 6 feature-store persistence path).
+  parquet/object store (the M6 feature-store persistence path).
 - **Lineage graph** — link experiments to the parent experiment they were derived
   from for full research provenance.

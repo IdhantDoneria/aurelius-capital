@@ -1,4 +1,4 @@
-"""Statistical significance primitives (AIDP Phase 9).
+"""Statistical significance primitives (AIDP M9).
 
 Pure, deterministic functions over a return series. No look-ahead: everything is a
 function of the realized in-sample returns only. Student-t p-values use a

@@ -1,4 +1,4 @@
-"""Benchmark the portfolio simulation engine (AIDP Phase 11).
+"""Benchmark the portfolio simulation engine (AIDP M11).
 
 Simulates a multi-year daily timeline with monthly rebalancing across increasing
 universe sizes and reports runtime, throughput (security-days/s), and peak memory.

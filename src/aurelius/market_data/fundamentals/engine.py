@@ -1,8 +1,8 @@
-"""Point-in-time fundamentals engine (AIDP Phase 3).
+"""Point-in-time fundamentals engine (AIDP M3).
 
 Composes the three PIT layers:
-  SecurityMaster (Phase 2)  → the ticker a security traded under on a date
-  PitPriceStore  (Phase 1)  → the price known as of that date
+  SecurityMaster (M2)  → the ticker a security traded under on a date
+  PitPriceStore  (M1)  → the price known as of that date
   FundamentalsStore         → the filed fundamental known as of that date
 
 Everything routes through fact_as_of, so no future filing can influence an
@@ -65,7 +65,7 @@ class FundamentalsEngine:
     def book_value_as_of(self, cik: str, as_of: date, *, knowledge_date: date | None = None) -> float | None:
         return self.fundamental_as_of(cik, "equity", as_of, knowledge_date=knowledge_date)
 
-    # ── price-integrated (Phase 1 + 2) ──────────────────────────────────────────
+    # ── price-integrated (M1 + 2) ──────────────────────────────────────────
 
     def _pit_ticker(self, security_id: str | None, ticker: str | None, as_of: date) -> str | None:
         if ticker is not None:

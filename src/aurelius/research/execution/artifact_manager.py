@@ -1,4 +1,4 @@
-"""Artifact manager (AIDP Phase 8).
+"""Artifact manager (AIDP M8).
 
 Writes the canonical run artifacts, hashes each file, verifies integrity by
 re-reading, and returns a manifest {filename: {location, hash}} that the pipeline

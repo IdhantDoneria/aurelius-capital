@@ -1,4 +1,4 @@
-"""SEC EDGAR companyfacts → fact ledger (AIDP Phase 3).
+"""SEC EDGAR companyfacts → fact ledger (AIDP M3).
 
 parse_company_facts is pure (no I/O) — unit-testable against a synthetic
 companyfacts document. fetch_company_facts does the network call (SEC requires a

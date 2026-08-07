@@ -12,7 +12,7 @@ then close the genuinely-missing pieces. This doc = the audit + the roadmap.
 |---|---|
 | Raw → normalize → validate → warehouse | `market_data/{adapters,pipeline,storage}` |
 | Typed access layer (research reads store, never a provider) | `market_data.storage.DuckDBStore` + `infrastructure/database/repositories` |
-| Catalog: versioning, lineage, quality (6 checks), governance, monitor | `catalog/` (Phase 22) |
+| Catalog: versioning, lineage, quality (6 checks), governance, monitor | `catalog/` (M22) |
 | Validation: 12 categories | `validation/`, `market_data/pipeline` |
 | Feature store + factor library | `features/library`, `features/store.py` |
 | Reproducibility (result → dataset version) | `catalog` content-hash versioning |
@@ -43,24 +43,24 @@ not bitemporal.** Fixing that is the whole ballgame — it's the only 🔴.
 
 Ordered by dependency + severity. Each ships with ONE runnable check.
 
-1. **Phase 1 — PIT-correct, corp-action-aware price store** (fixes P1, P2, C1).
+1. **M1 — PIT-correct, corp-action-aware price store** (fixes P1, P2, C1).
    Store raw prices + a `corporate_actions` event table; derive adjustment
    factors on read; add a known-as-of guard so `as_of` queries can't see later
    restatements. Additive (new tables/API) — does not break the existing `ohlcv`
    readers. *Check:* `tests/market_data/test_pit_leakage.py` (ships now, xfail →
    must pass at end of phase).
-2. **Phase 2 — Identifier master + identity history** (I1). Temporal
+2. **M2 — Identifier master + identity history** (I1). Temporal
    `security_aliases (id, ticker, valid_from, valid_to)`; research store keys on
    internal id; ticker→id resolver is date-aware. *Check:* resolve a reused
    ticker to the correct entity at two different dates.
-3. **Phase 3 — EDGAR fundamentals + shares outstanding + PIT market-cap** (F1).
+3. **M3 — EDGAR fundamentals + shares outstanding + PIT market-cap** (F1).
    EDGAR connector (free) → populate `fundamental`; market-cap = PIT shares ×
    PIT price. *Check:* market-cap as-of a pre-restatement date ignores later
    share-count revisions.
-4. **Phase 4 — Delisting + survivorship-free universe** (S1). `delistings`
+4. **M4 — Delisting + survivorship-free universe** (S1). `delistings`
    table; PIT universe constructor includes then-live, now-dead names. *Check:*
    universe as-of 2015 contains a since-delisted symbol.
-5. **Phase 5 — Insider transactions (EDGAR Form 4)** — spec item, free source.
+5. **M5 — Insider transactions (EDGAR Form 4)** — spec item, free source.
    *Check:* filing_date ≠ transaction_date respected (no look-ahead).
 
 ## Known limitations / Skipped (per CLAUDE.md)

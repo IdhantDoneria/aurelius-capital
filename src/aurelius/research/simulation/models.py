@@ -1,4 +1,4 @@
-"""Simulation domain models (AIDP Phase 11).
+"""Simulation domain models (AIDP M11).
 
 Immutable dataclasses. Mutable accounting lives only inside PortfolioState during
 the run; everything surfaced to the caller (snapshots, reports, results) is frozen

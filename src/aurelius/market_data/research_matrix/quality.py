@@ -1,4 +1,4 @@
-"""Research matrix quality checks (AIDP Phase 6).
+"""Research matrix quality checks (AIDP M6).
 
 Structural integrity only — PIT correctness is enforced upstream by each source's
 `*_as_of` gate, so there's nothing to re-verify here. Missing features are legal

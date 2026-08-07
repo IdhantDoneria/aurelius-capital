@@ -1,4 +1,4 @@
-"""Execution pipeline (AIDP Phase 8).
+"""Execution pipeline (AIDP M8).
 
 The fixed 10-step flow, driven as state-machine stages with hooks, per-stage timing,
 cooperative cancellation, and failure recovery. No shortcuts: every run walks the

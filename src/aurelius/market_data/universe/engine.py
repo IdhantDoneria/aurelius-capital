@@ -1,4 +1,4 @@
-"""Point-in-time universe engine (AIDP Phase 4).
+"""Point-in-time universe engine (AIDP M4).
 
 Reconstructs the investable universe as of any historical date, survivorship-free.
 A security qualifies on `date` iff it had a live listing interval covering that
@@ -8,7 +8,7 @@ interval, so:
   - a company that IPO'd after `date` is absent (no future leakage),
   - a company alive on `date` but gone today is present (survivorship-free).
 
-No new interval table: the listing-interval model already IS Phase 2's
+No new interval table: the listing-interval model already IS M2's
 security_identity_history (same columns), and the spec forbids duplicate identity
 systems. This engine composes over it.
 """

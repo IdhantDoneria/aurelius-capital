@@ -1,9 +1,9 @@
-# AIDP Phase 8 — Institutional Research Execution Platform
+# AIDP M8 — Institutional Research Execution Platform
 
-The single orchestrator for every research experiment on Aurelius. After Phase 8,
+The single orchestrator for every research experiment on Aurelius. After M8,
 **no component calls the backtester directly** — everything runs through
 `ResearchRunner`, which drives a `ResearchSession` through a fixed, logged,
-reproducible pipeline. Additive; Phases 1–7 APIs untouched.
+reproducible pipeline. Additive; M1–M7 APIs untouched.
 
 Module: `src/aurelius/research/execution/`.
 
@@ -68,7 +68,7 @@ absorbing.
 
 1. **Registry start** (`runner.run`) — `start_experiment`, lineage auto-captured.
 2. **Validation** (`VALIDATING`) — abort before any side effect if invalid.
-3. **Matrix generation** (`BUILDING_MATRIX`) — Phase 6 `feature_matrix_as_of`
+3. **Matrix generation** (`BUILDING_MATRIX`) — M6 `feature_matrix_as_of`
    (skipped if `build_matrix=False`); consistency-checked against the registry.
 4. **Strategy init** + 5. **Backtest execution** + 6. **Portfolio stats**
    (`RUNNING`) — the injected executor runs `BacktestEngine`, producing the report.
@@ -83,7 +83,7 @@ and preceded by a cancellation check.
 ## Validation pipeline
 
 Aborts before execution if any fail: strategy (executor callable), universe shape,
-research-matrix availability, features registered (Phase 6), dataset versions
+research-matrix availability, features registered (M6), dataset versions
 present, feature registry present, registry available, parameters hashable, random
 seed present. Advanced `consistency_check` compares built-matrix metadata to the
 registry experiment (non-fatal warnings).
@@ -164,7 +164,7 @@ designed interface boundary.
 | scheduler sweep | ~38 runs/s |
 
 Orchestration overhead is negligible next to a real strategy backtest (seconds to
-minutes). The single-run cost is dominated by the Phase 7 registry write and the
+minutes). The single-run cost is dominated by the M7 registry write and the
 per-run git subprocess in lineage capture.
 
 ## Test results (`tests/research/test_execution.py`, 14, all offline)
@@ -178,15 +178,15 @@ run through the platform. Full suite: **141 passed, 2 skipped**, zero regression
 
 - **No distributed execution.** Scheduler is local + synchronous; configs are the
   intended parallelism unit. Unblocked by a worker backend that consumes
-  `RunConfiguration`s — deferred to Phase 9.
+  `RunConfiguration`s — deferred to M9.
 - **Git checkout not implemented** (by spec). `replay` reports the commit and
   injects the executor; it does not restore the working tree.
 - **Cancellation is cooperative** — it takes effect at stage boundaries (or when a
   paused session is resumed), not by interrupting a running backtest mid-stage.
-- **Registry has no dedicated `cancelled` status** (Phase 7); cancellation is
+- **Registry has no dedicated `cancelled` status** (M7); cancellation is
   recorded as `status="cancelled"` written via the store, with `error="CANCELLED"`.
 - **Matrix consistency check is best-effort** — it warns, doesn't block, because
-  the Phase 6 matrix `data_versions` shape differs from the registry's 7-field set.
+  the M6 matrix `data_versions` shape differs from the registry's 7-field set.
 
 ## Future distributed execution
 

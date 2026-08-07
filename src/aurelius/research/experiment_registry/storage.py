@@ -1,4 +1,4 @@
-"""DuckDB-backed experiment registry storage (AIDP Phase 7).
+"""DuckDB-backed experiment registry storage (AIDP M7).
 
 Six tables (data/research_registry.duckdb). The `experiments` row holds metadata +
 lineage + run identity; the satellite tables hold the variable-length parts
@@ -7,7 +7,7 @@ tracking framework.
 
 Additive columns beyond the spec's list — `fingerprint`, `parameter_hash`,
 `duplicate_of`, `error` — are the run-identity/failure fields the registry needs;
-they don't alter any Phase 1-6 schema.
+they don't alter any M1–M6 schema.
 """
 
 from __future__ import annotations

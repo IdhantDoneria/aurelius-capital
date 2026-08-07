@@ -1,4 +1,4 @@
-"""Benchmark the insider ledger at scale (AIDP Phase 5).
+"""Benchmark the insider ledger at scale (AIDP M5).
 
 Seeds N insider rows across many securities, then times:
   - bulk ingest throughput

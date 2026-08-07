@@ -1,7 +1,7 @@
-"""Parameter / feature / data sensitivity (AIDP Phase 9).
+"""Parameter / feature / data sensitivity (AIDP M9).
 
 Parameter-perturbation and feature-removal require *re-running* the strategy, so
-they take an injected `evaluator(overrides) -> return_series` (the Phase 8 executor,
+they take an injected `evaluator(overrides) -> return_series` (the M8 executor,
 wrapped). When no evaluator is supplied they report `insufficient_data` rather than
 faking a result. Missing-data stress operates on the realized series directly.
 """

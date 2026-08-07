@@ -1,6 +1,6 @@
-"""Institutional Multi-Period Portfolio Simulation Engine (AIDP Phase 11).
+"""Institutional Multi-Period Portfolio Simulation Engine (AIDP M11).
 
-Evolves optimized (Phase 10) portfolios into a multi-year investment history:
+Evolves optimized (M10) portfolios into a multi-year investment history:
 persistent holdings, exact cash accounting, transaction costs, rebalancing, and
 institutional analytics. Never reruns research — the alpha/portfolio engines are
 injected as providers.

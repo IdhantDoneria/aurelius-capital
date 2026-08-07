@@ -1,4 +1,4 @@
-"""Temporal Security Identity Layer — regression scenarios (AIDP Phase 2).
+"""Temporal Security Identity Layer — regression scenarios (AIDP M2).
 
 Covers the corporate-identity events that break ticker-based research:
 rename, ticker reuse, exchange migration, dual listing, ADR, delist, relist,

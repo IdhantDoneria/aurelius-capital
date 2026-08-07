@@ -1,8 +1,8 @@
-"""Metric engine (AIDP Phase 8).
+"""Metric engine (AIDP M8).
 
 Does NOT re-derive what the backtester already computed. It takes the certified
 `PerformanceMetrics` (Sharpe/Sortino/Calmar/CAGR/vol/drawdown/turnover/win-rate/
-profit-factor from Phase-earlier `PerformanceCalculator`) and *extends* it with the
+profit-factor from an earlier milestone `PerformanceCalculator`) and *extends* it with the
 institutional metrics that layer needs — distribution shape, tail behaviour,
 benchmark-relative alpha/beta/IR, trade statistics. Pure functions over the
 already-produced return/trade series.

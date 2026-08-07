@@ -1,4 +1,4 @@
-"""Turnover & holding-period diagnostics (AIDP Phase 9).
+"""Turnover & holding-period diagnostics (AIDP M9).
 
 Extracts trading-intensity statistics from the certified PerformanceMetrics /
 round-trips — does not recompute what the backtester already produced.

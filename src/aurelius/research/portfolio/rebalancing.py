@@ -1,4 +1,4 @@
-"""Rebalancing rules (AIDP Phase 10).
+"""Rebalancing rules (AIDP M10).
 
 Decide *when* to rebalance: calendar, weight-drift threshold, volatility-triggered,
 or a hybrid. Pure decision functions over the current vs target weights and dates —

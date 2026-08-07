@@ -1,4 +1,4 @@
-"""Point-in-time leakage regression — audit finding P1, and its Phase-1 fix.
+"""Point-in-time leakage regression — audit finding P1, and its M1 fix.
 
 The legacy DuckDBStore holds vendor-adjusted closes (Yahoo auto_adjust=True) with
 INSERT OR REPLACE and no known-as-of dimension: a split after date D silently

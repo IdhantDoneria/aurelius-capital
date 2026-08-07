@@ -1,4 +1,4 @@
-"""PIT fundamentals regression scenarios (AIDP Phase 3). All offline.
+"""PIT fundamentals regression scenarios (AIDP M3). All offline.
 
 Covers the filing-timeline hazards that leak future information into factor
 models: delayed filings, amendments/restatements, duplicates, chronology, plus
@@ -130,7 +130,7 @@ def test_series_as_of_takes_latest_restatement(store: FundamentalsStore) -> None
     assert [r["value"] for r in s] == [365725e6, 338000e6]  # 2019 uses the amendment
 
 
-# ── tri-phase PIT market cap (Phase 1 + 2 + 3) ──────────────────────────────────
+# ── tri-phase PIT market cap (M1 + 2 + 3) ──────────────────────────────────
 
 def _bar(ticker, day, close):
     c = Decimal(str(close))

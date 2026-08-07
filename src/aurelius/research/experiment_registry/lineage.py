@@ -1,4 +1,4 @@
-"""Automatic lineage capture (AIDP Phase 7).
+"""Automatic lineage capture (AIDP M7).
 
 Everything reproducible-but-invisible is captured with no manual entry: the git
 commit/branch that produced the run, the interpreter and OS it ran on, and the
@@ -88,5 +88,5 @@ def versions_from_stores(*, prices=None, fundamentals=None, insiders=None,
 def _count(store, table: str):
     if store is None:
         return None
-    with store._conn() as conn:  # noqa: SLF001 — read-only sibling access, matches Phase 4/6
+    with store._conn() as conn:  # noqa: SLF001 — read-only sibling access, matches M4/M6
         return conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]

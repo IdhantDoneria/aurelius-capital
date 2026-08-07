@@ -1,4 +1,4 @@
-"""Experiment model (AIDP Phase 7)."""
+"""Experiment model (AIDP M7)."""
 
 from __future__ import annotations
 

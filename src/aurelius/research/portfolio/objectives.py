@@ -1,4 +1,4 @@
-"""Optimization objectives (AIDP Phase 10).
+"""Optimization objectives (AIDP M10).
 
 Each objective is a named contract with an explicit mathematical definition,
 assumptions, and limitations — nothing hidden. The engine maps an Objective to a

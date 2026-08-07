@@ -1,4 +1,4 @@
-"""Constraint engine (AIDP Phase 10).
+"""Constraint engine (AIDP M10).
 
 Constraints are declarative (an immutable ConstraintSet); enforcement projects a
 raw weight vector into the feasible set. Without a QP solver (no cvxpy dependency)

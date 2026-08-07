@@ -1,6 +1,6 @@
-"""Rebalance scheduling for the simulation (AIDP Phase 11).
+"""Rebalance scheduling for the simulation (AIDP M11).
 
-Reuses the Phase 10 RebalanceRule (calendar / threshold / volatility / hybrid) —
+Reuses the M10 RebalanceRule (calendar / threshold / volatility / hybrid) —
 no duplicate policy logic — and adds calendar-date generation over a timeline. The
 engine calls `due()` per date.
 """
@@ -37,7 +37,7 @@ def calendar_dates(timeline: list[date], frequency: str = "monthly") -> set[date
 
 
 class RebalancePolicy:
-    """Wraps a Phase 10 RebalanceRule; `due` decides at a given date."""
+    """Wraps a M10 RebalanceRule; `due` decides at a given date."""
 
     def __init__(self, rule: RebalanceRule | None = None, *, explicit_dates: set | None = None) -> None:
         self.rule = rule

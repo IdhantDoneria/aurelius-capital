@@ -1,4 +1,4 @@
-"""Benchmark the experiment registry at scale (AIDP Phase 7).
+"""Benchmark the experiment registry at scale (AIDP M7).
 
 Seeds N experiments (lineage capture off — no 100k git subprocesses), then times
 insert throughput, single-experiment lookup, search, and comparison.

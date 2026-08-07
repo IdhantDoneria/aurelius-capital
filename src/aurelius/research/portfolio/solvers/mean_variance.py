@@ -1,4 +1,4 @@
-"""Mean-variance family solvers (AIDP Phase 10).
+"""Mean-variance family solvers (AIDP M10).
 
 Closed-form analytic optima (no scipy/cvxpy): Max-Sharpe (tangency), Min-Variance,
 and Tracking-Error. All use the pseudo-inverse of Σ for robustness. Long/short

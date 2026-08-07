@@ -1,4 +1,4 @@
-"""Experiment registry engine — authoritative source of truth (AIDP Phase 7).
+"""Experiment registry engine — authoritative source of truth (AIDP M7).
 
 The public API. start → finish/fail bracket a run; every experiment is stamped
 with automatic lineage and an immutable metadata fingerprint, so any run can be

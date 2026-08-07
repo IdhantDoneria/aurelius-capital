@@ -1,4 +1,4 @@
-"""Diagnostic log assembly (AIDP Phase 11). Structured logs derived from a
+"""Diagnostic log assembly (AIDP M11). Structured logs derived from a
 SimulationResult — trade / cash / rebalance / cost logs + warnings."""
 
 from __future__ import annotations

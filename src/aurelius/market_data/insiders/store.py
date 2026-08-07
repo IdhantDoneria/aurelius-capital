@@ -1,4 +1,4 @@
-"""Point-in-time insider transaction store (AIDP Phase 5).
+"""Point-in-time insider transaction store (AIDP M5).
 
 Append-only ledger of SEC Form 3/4/5 insider activity. Every row carries three
 timestamps; research queries are gated by **acceptance_datetime** (when the
@@ -9,7 +9,7 @@ Amendments (Form 4/A) are appended as new rows (new accession → new
 transaction_id); `transactions_as_of` collapses to the latest accepted version
 per logical transaction, so restatements win without overwriting history.
 
-Additive: new store (data/insiders.duckdb). Phase 1-4 tables untouched.
+Additive: new store (data/insiders.duckdb). M1–M4 tables untouched.
 """
 
 from __future__ import annotations

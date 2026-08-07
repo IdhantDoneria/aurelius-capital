@@ -1,8 +1,8 @@
-# AIDP Phase 6 — Point-in-Time Research Matrix Engine
+# AIDP M6 — Point-in-Time Research Matrix Engine
 
 One PIT-safe accessor over the five certified engines. Give it a date; get back a
 reproducible, survivorship-free research snapshot keyed by `security_id`, every
-field gated so `knowledge_date ≤ as_of`. Additive; Phases 1–5 logic untouched.
+field gated so `knowledge_date ≤ as_of`. Additive; M1–M5 logic untouched.
 
 Module: `src/aurelius/market_data/research_matrix/` (`engine.py`, `schema.py`,
 `feature_registry.py`, `quality.py`).
@@ -127,7 +127,7 @@ Full `tests/market_data`: **87 passed, 2 skipped** (was 81; +6), zero regression
 - **`cik_map` is a required input for fundamental features.** SEC filings are
   CIK-native and `SecurityMaster` stores no CIK, so security_id→CIK cannot be
   resolved internally. Unblocked by a CIK column/enrichment pass on
-  `SecurityMaster` (additive, Phase 2 extension) — then `cik_map` becomes optional.
+  `SecurityMaster` (additive, M2 extension) — then `cik_map` becomes optional.
 - **`returns` = trailing-window total return; `volatility` = daily-return pstdev**
   over the price window (default 252 calendar-day lookback). Not annualized, no
   factor-model residualization — these are inputs, not finished factors.

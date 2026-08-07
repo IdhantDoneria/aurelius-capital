@@ -1,8 +1,8 @@
-"""Point-in-Time Research Matrix Engine (AIDP Phase 6).
+"""Point-in-Time Research Matrix Engine (AIDP M6).
 
 One PIT-safe accessor over the five certified engines. Given a date it returns a
-survivorship-free universe (Phase 4) keyed by security_id, each row filled with
-price (Phase 1), fundamental (Phase 3), and insider (Phase 5) features — every
+survivorship-free universe (M4) keyed by security_id, each row filled with
+price (M1), fundamental (M3), and insider (M5) features — every
 field gated so knowledge_date ≤ as_of. Composition only: no data table, no new
 PIT logic, no ticker join the sub-engines don't already own.
 
@@ -36,10 +36,10 @@ _FUND_INPUTS = ("equity", "assets", "revenue", "net_income", "operating_cash_flo
 class ResearchMatrixEngine:
     def __init__(self, *, universe, fundamentals, insiders, prices,
                  cik_map: dict[str, str] | None = None) -> None:
-        self._universe = universe        # UniverseEngine (Phase 4)
-        self._fundamentals = fundamentals  # FundamentalsEngine (Phase 3)
-        self._insiders = insiders        # InsiderEngine (Phase 5)
-        self._prices = prices            # PitPriceStore (Phase 1)
+        self._universe = universe        # UniverseEngine (M4)
+        self._fundamentals = fundamentals  # FundamentalsEngine (M3)
+        self._insiders = insiders        # InsiderEngine (M5)
+        self._prices = prices            # PitPriceStore (M1)
         self._cik_map = cik_map or {}
         self._cache: dict[tuple, ResearchMatrix] = {}
 
@@ -47,7 +47,7 @@ class ResearchMatrixEngine:
 
     def feature_matrix_as_of(self, as_of: date, universe: list[dict] | None = None,
                              features: list[str] | None = None) -> ResearchMatrix:
-        """PIT research snapshot on `as_of`. `universe` defaults to the Phase 4
+        """PIT research snapshot on `as_of`. `universe` defaults to the M4
         survivorship-free universe; `features` defaults to the whole registry."""
         feats = list(features or FEATURES.keys())
         unknown = [f for f in feats if f not in FEATURES]
@@ -188,5 +188,5 @@ class ResearchMatrixEngine:
 
     @staticmethod
     def _count(store, table: str) -> int:
-        with store._conn() as conn:  # noqa: SLF001 — read-only sibling access, matches Phase 4
+        with store._conn() as conn:  # noqa: SLF001 — read-only sibling access, matches M4
             return conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]

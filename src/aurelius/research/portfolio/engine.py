@@ -1,9 +1,9 @@
-"""PortfolioEngine — validated signals → implementable portfolios (AIDP Phase 10).
+"""PortfolioEngine — validated signals → implementable portfolios (AIDP M10).
 
 Strictly separates alpha (the input signal) from construction (sizing, risk,
 constraints, costs). Strategy-agnostic, optimizer-agnostic (DI), deterministic, and
-reproducible through the Phase 7 registry. Never rebuilds prices/fundamentals/
-universe/insider data — it consumes the Phase 6 research matrix and given inputs.
+reproducible through the M7 registry. Never rebuilds prices/fundamentals/
+universe/insider data — it consumes the M6 research matrix and given inputs.
 """
 
 from __future__ import annotations
@@ -158,7 +158,7 @@ def _diagonal_solve(mu, var, obj: Objective, bench, te_budget: float) -> np.ndar
 # ── integration helpers ─────────────────────────────────────────────────────────
 
 def signals_from_matrix(matrix, column: str, *, universe=None) -> dict:
-    """Extract a return-aligned signal from a Phase 6 ResearchMatrix column. Applies
+    """Extract a return-aligned signal from a M6 ResearchMatrix column. Applies
     the registered direction ('lower' → negate) so the signal points toward higher
     expected return. Never rebuilds any upstream data."""
     frame = matrix.frame
@@ -177,7 +177,7 @@ def signals_from_matrix(matrix, column: str, *, universe=None) -> dict:
 
 def record_portfolio(registry, experiment, portfolio: Portfolio, *, optimizer_name: str,
                      constraints: ConstraintSet, cost_model=None, rebalance=None) -> None:
-    """Capture the portfolio config + key metrics in the Phase 7 registry (via the
+    """Capture the portfolio config + key metrics in the M7 registry (via the
     existing store — no schema change)."""
     if registry is None or experiment is None:
         return

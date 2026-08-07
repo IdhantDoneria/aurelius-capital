@@ -1,8 +1,8 @@
-"""Portfolio validation (AIDP Phase 10).
+"""Portfolio validation (AIDP M10).
 
 Checks an implementable portfolio against its constraints and practicality gates —
 turnover, capacity/ADV participation, concentration, risk exposure, cost impact,
-and hard constraint violations. Composes with the Phase 9 framework (a portfolio's
+and hard constraint violations. Composes with the M9 framework (a portfolio's
 turnover/capacity feed the same deployment gate) but stands alone.
 """
 

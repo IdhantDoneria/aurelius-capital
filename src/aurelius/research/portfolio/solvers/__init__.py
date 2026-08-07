@@ -1,4 +1,4 @@
-"""Portfolio solvers (AIDP Phase 10) — dependency-injected optimizer implementations."""
+"""Portfolio solvers (AIDP M10) — dependency-injected optimizer implementations."""
 
 from aurelius.research.portfolio.solvers.base import Solver
 from aurelius.research.portfolio.solvers.equal_weight import EqualWeightSolver

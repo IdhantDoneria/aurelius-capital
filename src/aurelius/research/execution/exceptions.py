@@ -1,4 +1,4 @@
-"""Execution platform exceptions (AIDP Phase 8)."""
+"""Execution platform exceptions (AIDP M8)."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Research Execution Platform regression (AIDP Phase 8). All offline.
+"""Research Execution Platform regression (AIDP M8). All offline.
 
 Single/batch/sweep execution, failure recovery, state transitions, event logging,
 artifact generation, registry + research-matrix integration, resume, cancel,

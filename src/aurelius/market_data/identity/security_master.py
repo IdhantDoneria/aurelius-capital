@@ -1,4 +1,4 @@
-"""Temporal Security Identity Layer (AIDP Phase 2).
+"""Temporal Security Identity Layer (AIDP M2).
 
 CRSP/Compustat-style identity: a security is an immutable entity with a stable
 surrogate `security_id`. Ticker is a mutable *attribute*, versioned over time in
@@ -11,7 +11,7 @@ ticker exists for presentation and for as-of resolution back to a security_id.
 
 Additive: this is a new store. Legacy price/feature/backtest paths still key on
 ticker; they resolve through here (see resolve_universe / resolve_as_of) without
-being rewritten. See docs/AIDP_PHASE2_IDENTITY.md.
+being rewritten. See docs/AIDP_M2_IDENTITY.md.
 """
 
 from __future__ import annotations
@@ -235,7 +235,7 @@ class SecurityMaster:
         """All listings live on `as_of` (valid_from ≤ as_of < valid_to). The
         survivorship-free universe primitive — a delisting closes the interval,
         so a security dead by `as_of` is absent and one not yet listed is absent,
-        without any current-ticker list leaking in. Additive read (Phase 2)."""
+        without any current-ticker list leaking in. Additive read (M2)."""
         with self._conn() as conn:
             rows = conn.execute(
                 """SELECT DISTINCT security_id, ticker, exchange

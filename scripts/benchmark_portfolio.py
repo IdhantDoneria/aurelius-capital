@@ -1,4 +1,4 @@
-"""Benchmark the portfolio engine at scale (AIDP Phase 10).
+"""Benchmark the portfolio engine at scale (AIDP M10).
 
 Times construction across objectives on a large universe. Covariance for N=10,000 is
 kept diagonal (a dense N×N sample covariance is 800 MB and O(N³) to invert — not a

@@ -1,4 +1,4 @@
-"""Visualization data + plotting code (AIDP Phase 9).
+"""Visualization data + plotting code (AIDP M9).
 
 The platform has no image stack, so per the spec this emits the *underlying data*
 for every chart plus a standalone matplotlib script that renders them. Deterministic

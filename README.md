@@ -4,6 +4,17 @@ Institutional-grade quantitative research and trading platform. Python 3.11+,
 FastAPI, PostgreSQL (OLTP), DuckDB (analytical store), Redis (cache). Covers
 the full research lifecycle from literature ingestion to paper trading.
 
+> **Milestone convention.** Engineering milestones use one number line: `M1, M2,
+> … M11`, continuing `M12+`. Never "Phase". The authoritative history is
+> [`docs/AURELIUS_MILESTONE_INDEX.md`](docs/AURELIUS_MILESTONE_INDEX.md); see also
+> [`AURELIUS_ROADMAP.md`](docs/AURELIUS_ROADMAP.md),
+> [`AURELIUS_ARCHITECTURE.md`](docs/AURELIUS_ARCHITECTURE.md), and
+> [`AURELIUS_ENGINEERING_PRINCIPLES.md`](docs/AURELIUS_ENGINEERING_PRINCIPLES.md).
+> The component diagram below reflects an **older platform-track numbering** whose
+> "Phase N" labels predate the canonical M-line and use different numbers; it is
+> preserved as historical pending a reconciliation milestone (see the index's
+> *Remaining inconsistencies*).
+
 ---
 
 ## Architecture

@@ -1,4 +1,4 @@
-"""Point-in-Time Insider Transaction Engine (AIDP Phase 5)."""
+"""Point-in-Time Insider Transaction Engine (AIDP M5)."""
 
 from aurelius.market_data.insiders.edgar import (
     fetch_submissions,

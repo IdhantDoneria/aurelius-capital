@@ -1,4 +1,4 @@
-"""Point-in-time fundamentals store (AIDP Phase 3).
+"""Point-in-time fundamentals store (AIDP M3).
 
 An append-only XBRL *fact ledger*. Every fact carries the date it became known
 (`filing_date` = EDGAR `filed`) and never overwrites a prior fact for the same
@@ -9,7 +9,7 @@ This single ledger subsumes the spec's facts / shares_outstanding /
 fundamental_values / restatements / filing_history tables — they are all queries
 over it. `filings` holds filing-level metadata; `ingestion_log` records runs.
 
-Additive: new store (data/fundamentals.duckdb). Nothing in Phase 1/2 changes.
+Additive: new store (data/fundamentals.duckdb). Nothing in M1/M2 changes.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ logger = get_logger(__name__)
 _CREATE = """
 CREATE TABLE IF NOT EXISTS fundamental_facts (
     cik             VARCHAR   NOT NULL,
-    security_id     VARCHAR,                 -- Phase 2 link (may be NULL until mapped)
+    security_id     VARCHAR,                 -- M2 link (may be NULL until mapped)
     taxonomy        VARCHAR,                 -- us-gaap | dei | ...
     concept         VARCHAR   NOT NULL,      -- e.g. StockholdersEquity
     unit            VARCHAR   NOT NULL,      -- USD | shares | USD/shares

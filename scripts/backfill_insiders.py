@@ -1,4 +1,4 @@
-"""Backfill insider transactions from SEC EDGAR Forms 3/4/5 (AIDP Phase 5).
+"""Backfill insider transactions from SEC EDGAR Forms 3/4/5 (AIDP M5).
 
 CIK-based, incremental, logged. For each CIK: read the submission index, pick
 Form 3/4/5 filings newer than what's already stored (incremental), fetch each

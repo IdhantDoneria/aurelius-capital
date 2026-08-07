@@ -1,4 +1,4 @@
-"""Point-in-Time Research Matrix Engine (AIDP Phase 6)."""
+"""Point-in-Time Research Matrix Engine (AIDP M6)."""
 
 from aurelius.market_data.research_matrix.engine import ResearchMatrixEngine
 from aurelius.market_data.research_matrix.feature_registry import FEATURES, SOURCES
