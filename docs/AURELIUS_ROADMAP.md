@@ -73,9 +73,15 @@ holdings, exact cash accounting, transaction costs, rebalancing, attribution.
 *Delivered by M11.*
 
 ### Risk Engine
-Pre-trade and portfolio-level risk gating (limits, stress, exposure). *Partially
-present in the legacy platform track; to be consolidated under the canonical number
-line in a future milestone.*
+Pre-trade and portfolio-level risk gating (limits, stress, exposure). *Present in the
+legacy Platform Track (historically "Phase 7"); to be adopted into the canonical
+M-line when a future milestone rebuilds it. See
+[`AURELIUS_LEGACY_TRACK_AUDIT.md`](AURELIUS_LEGACY_TRACK_AUDIT.md).*
+
+> **Two tracks, by name not number.** The Platform-Track application capabilities
+> (Risk Engine, Paper Trading, AI Assistant, Knowledge Graph, Research Director /
+> Intelligence / Laboratory, Data-Intelligence Catalog) are referred to **by name**
+> here, independent of their historical "Phase N" labels, per the legacy-track audit.
 
 ### Paper Trading
 Bridge from simulated history to a live paper broker with state reconciliation and

@@ -191,3 +191,8 @@ a future governance milestone to reconcile the two tracks under one authoritativ
 number line. Affected areas: `src/aurelius/{risk,construction,paper,assistant,
 knowledge,intelligence,catalog,…}`, `src/aurelius/research/{models,templates}.py`,
 `research/validation/legacy.py`, and their tests.
+
+The full cataloguing, classification, and resolution recommendation for this legacy
+Platform Track is in **[`AURELIUS_LEGACY_TRACK_AUDIT.md`](AURELIUS_LEGACY_TRACK_AUDIT.md)**
+(recommended resolution: freeze legacy "Phase N" as historical, track capabilities by
+name, adopt into the M-line only as a future milestone rebuilds each capability).
