@@ -177,7 +177,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
   portfolio, reconciliation, drift, risk, session, monitoring, validation,
   serialization, diagnostics, registry).
 - **Dependencies:** M7 (registry), M9 (validation), M10 (cost), M11 (accounting).
-- **Commit:** `<filled at commit>`.
+- **Commit:** `1813176`.
 - **Status:** CERTIFIED.
 - **Documentation:** `AURELIUS_M12_PAPER_TRADING.md`.
 - **Tests:** `tests/research/test_paper_trading.py` (50).

@@ -203,7 +203,7 @@ risk checks. Each is additive on the existing seams.
 
 ## Commit hash
 
-`<filled at commit>` (branch `aidp/audit-and-pit-gaps`).
+`1813176` (branch `aidp/audit-and-pit-gaps`).
 
 ## Recommendation for next milestone
 
