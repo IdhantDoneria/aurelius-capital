@@ -175,7 +175,7 @@ ML risk models (a new `CovarianceEstimator` / `FactorModel` implementation).
 
 ## Commit hash
 
-`<filled at commit>` (branch `aidp/audit-and-pit-gaps`).
+`1a7b77b` (branch `aidp/audit-and-pit-gaps`).
 
 ## Recommendation for next milestone
 

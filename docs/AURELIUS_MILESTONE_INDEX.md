@@ -195,7 +195,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
   engine, monitoring, validation, serialization, diagnostics, registry).
 - **Dependencies:** M9 (validation), M10 (covariance/risk-contrib), M11
   (drawdown/exposure), M12 (paper-trading state).
-- **Commit:** `<filled at commit>`.
+- **Commit:** `1a7b77b`.
 - **Status:** CERTIFIED.
 - **Documentation:** `AURELIUS_M13_RISK_ENGINE.md`.
 - **Tests:** `tests/research/test_risk.py` (74).
