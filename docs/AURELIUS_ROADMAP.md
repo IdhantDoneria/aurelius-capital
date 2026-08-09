@@ -24,11 +24,11 @@ milestones over time.
         ↓
   Portfolio Simulation                   [M11]
         ↓
-  Risk Engine                            [proposed M13 / legacy platform track]
+  Risk Engine                            [M13 — canonical; legacy platform track frozen]
         ↓
   Paper Trading                          [M12]
         ↓
-  Execution (live)                       [future]
+  Execution (live)                       [proposed M14]
         ↓
   Production Infrastructure              [future]
 ```
@@ -73,10 +73,12 @@ holdings, exact cash accounting, transaction costs, rebalancing, attribution.
 *Delivered by M11.*
 
 ### Risk Engine
-Pre-trade and portfolio-level risk gating (limits, stress, exposure). *Present in the
-legacy Platform Track (historically "Phase 7"); to be adopted into the canonical
-M-line when a future milestone rebuilds it. See
-[`AURELIUS_LEGACY_TRACK_AUDIT.md`](AURELIUS_LEGACY_TRACK_AUDIT.md).*
+Pre-trade and portfolio-level risk gating: limits, exposure, concentration, VaR/ES,
+stress, factor risk, drawdown halt, liquidity/capacity, deployment gating. *Delivered
+by M13, consolidating the legacy Platform-Track risk engine (historically "Phase 7",
+frozen and untouched — see
+[`AURELIUS_LEGACY_TRACK_AUDIT.md`](AURELIUS_LEGACY_TRACK_AUDIT.md)). Plugs into the
+M12 pre-trade gate by injection.*
 
 > **Two tracks, by name not number.** The Platform-Track application capabilities
 > (Risk Engine, Paper Trading, AI Assistant, Knowledge Graph, Research Director /

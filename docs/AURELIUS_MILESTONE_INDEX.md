@@ -182,19 +182,37 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 - **Documentation:** `AURELIUS_M12_PAPER_TRADING.md`.
 - **Tests:** `tests/research/test_paper_trading.py` (50).
 - **Benchmark:** reconcile/drift/order-gen < 8.5 ms at 10k; sync O(N)/tick, 25.6 MB.
-- **Successor:** M13 (proposed: Risk Engine consolidation).
+- **Successor:** M13.
+
+## M13 — Institutional Risk Engine Consolidation
+
+- **Purpose:** canonical risk layer — limits, exposure, concentration, VaR/ES,
+  stress, factor risk, drawdown halt, liquidity/capacity, deployment gating.
+  Consolidates and supersedes the legacy Platform-Track risk engine (frozen,
+  untouched). Plugs into the M12 pre-trade gate by injection.
+- **Deliverables:** `research/risk/` (18 modules: models, limits, exposure,
+  concentration, covariance, factor, var, stress, drawdown, liquidity, capacity,
+  engine, monitoring, validation, serialization, diagnostics, registry).
+- **Dependencies:** M9 (validation), M10 (covariance/risk-contrib), M11
+  (drawdown/exposure), M12 (paper-trading state).
+- **Commit:** `<filled at commit>`.
+- **Status:** CERTIFIED.
+- **Documentation:** `AURELIUS_M13_RISK_ENGINE.md`.
+- **Tests:** `tests/research/test_risk.py` (74).
+- **Benchmark:** 10k securities assess 85.7 ms, 20.5 MB (no dense N×N); VaR/stress
+  sub-3 ms.
+- **Successor:** M14 (proposed: Live Execution & OMS/EMS).
 
 ---
 
-## Planned milestones (M13+)
+## Planned milestones (M14+)
 
 Future work continues the sequence — never restarts. See `AURELIUS_ROADMAP.md` for
 the capability view.
 
-- **M13 (proposed)** — Risk Engine consolidation (VaR, stress, drawdown halt,
-  exposure limits) — rebuild the legacy Platform-Track risk capability into the
-  canonical M-line.
-- **M14+** — live execution, production infrastructure.
+- **M14 (proposed)** — Live Execution & Order Management (broker adapters, smart
+  routing, VWAP/TWAP/POV child orders) with the M13 gate enforced pre-route.
+- **M15+** — production infrastructure, monitoring, deployment.
 
 ## Remaining inconsistencies
 
