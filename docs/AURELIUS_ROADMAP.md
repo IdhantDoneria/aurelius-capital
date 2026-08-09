@@ -24,9 +24,9 @@ milestones over time.
         ↓
   Portfolio Simulation                   [M11]
         ↓
-  Risk Engine                            [planned / legacy platform track]
+  Risk Engine                            [proposed M13 / legacy platform track]
         ↓
-  Paper Trading                          [proposed M12]
+  Paper Trading                          [M12]
         ↓
   Execution (live)                       [future]
         ↓
@@ -85,7 +85,9 @@ M-line when a future milestone rebuilds it. See
 
 ### Paper Trading
 Bridge from simulated history to a live paper broker with state reconciliation and
-drift monitoring. *Proposed M12.*
+drift monitoring. Broker abstraction (offline Mock/Simulated + real-adapter
+interfaces), internal↔external reconciliation, drift alerts, deployment readiness.
+Reuses the M11 accounting core. *Delivered by M12.*
 
 ### Execution (live) & Production Infrastructure
 Broker/FIX connectivity, smart order routing, multi-asset accounting, deployment,

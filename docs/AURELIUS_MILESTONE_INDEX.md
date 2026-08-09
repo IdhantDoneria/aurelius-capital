@@ -166,17 +166,35 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 - **Documentation:** `AIDP_M11_PORTFOLIO_SIMULATION.md`.
 - **Tests:** `tests/research/test_simulation.py` (46).
 - **Benchmark:** 100–10k securities × 2y monthly, linear ~160–190k security-days/s.
-- **Successor:** M12 (proposed: Paper-Trading Bridge & Live-State Reconciliation).
+- **Successor:** M12.
+
+## M12 — Paper Trading Bridge & Live-State Reconciliation
+
+- **Purpose:** persistent live-state loop against an external (paper) broker —
+  internal↔external reconciliation, drift monitoring, deployment readiness. Reuses
+  the M11 accounting core; not a live trading system (offline, deterministic).
+- **Deliverables:** `research/paper_trading/` (14 modules: models, broker, adapter,
+  portfolio, reconciliation, drift, risk, session, monitoring, validation,
+  serialization, diagnostics, registry).
+- **Dependencies:** M7 (registry), M9 (validation), M10 (cost), M11 (accounting).
+- **Commit:** `<filled at commit>`.
+- **Status:** CERTIFIED.
+- **Documentation:** `AURELIUS_M12_PAPER_TRADING.md`.
+- **Tests:** `tests/research/test_paper_trading.py` (50).
+- **Benchmark:** reconcile/drift/order-gen < 8.5 ms at 10k; sync O(N)/tick, 25.6 MB.
+- **Successor:** M13 (proposed: Risk Engine consolidation).
 
 ---
 
-## Planned milestones (M12+)
+## Planned milestones (M13+)
 
 Future work continues the sequence — never restarts. See `AURELIUS_ROADMAP.md` for
 the capability view.
 
-- **M12 (proposed)** — Paper-Trading Bridge & Live-State Reconciliation.
-- **M13+** — Risk engine consolidation, live execution, production infrastructure.
+- **M13 (proposed)** — Risk Engine consolidation (VaR, stress, drawdown halt,
+  exposure limits) — rebuild the legacy Platform-Track risk capability into the
+  canonical M-line.
+- **M14+** — live execution, production infrastructure.
 
 ## Remaining inconsistencies
 
