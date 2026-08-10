@@ -247,7 +247,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
   Holds one reused M15 `PostTradeEngine` **per currency** — does not fork M11 accounting.
 - **Deliverables:** `research/fx/` (21 modules).
 - **Dependencies:** M11 (accounting), M13 (risk idea), M14 (fills), M15 (post-trade engine).
-- **Commit:** `__M16_COMMIT__`.
+- **Commit:** `b029345`.
 - **Status:** CERTIFIED.
 - **Documentation:** `AURELIUS_M16_MULTI_CURRENCY.md`.
 - **Tests:** `tests/research/test_fx.py` (140).
