@@ -1,6 +1,6 @@
 # AIDP M18 — Institutional Valuation & Market-Data Infrastructure
 
-**Commit:** `__M18_COMMIT__`
+**Commit:** `0d910ae`
 
 ## What this is
 

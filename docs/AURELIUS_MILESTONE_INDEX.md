@@ -287,7 +287,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
   (model/version/fingerprints) and arbitrage diagnostics. Fills the M17 provider seams.
 - **Deliverables:** `research/valuation/` (24 modules).
 - **Dependencies:** M16 (FX providers), M17 (instrument model). Feeds M13 (risk authority).
-- **Commit:** `__M18_COMMIT__`.
+- **Commit:** `0d910ae`.
 - **Status:** CERTIFIED.
 - **Documentation:** `AURELIUS_M18_VALUATION.md`.
 - **Tests:** `tests/research/test_valuation.py` (171).
