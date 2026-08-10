@@ -45,6 +45,8 @@ class CashType(str, Enum):
     INTEREST = "interest"
     DIVIDEND = "dividend"
     CORPORATE_ACTION = "corporate_action"
+    MARGIN = "margin"                     # M17: variation / settlement margin flows
+    PREMIUM = "premium"                   # M17: option premium exchange
 
 
 # ── events (append-only log entries) ─────────────────────────────────────────
