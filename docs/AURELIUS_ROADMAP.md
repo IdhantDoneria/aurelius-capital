@@ -115,8 +115,24 @@ cross-currency corporate actions, and currency-aware reconciliation/reporting/ta
 Holds one reused M15 post-trade engine **per currency** — no fork of M11 accounting;
 single-currency behaviour is unchanged. *Delivered by M16.*
 
+### Multi-Asset & Derivatives Accounting
+General instrument framework — equity, future, option, forward, swap, bond — layered
+additively over the post-trade stack. One `InstrumentBook` wraps the reused M15 engine as the
+single cash/equity book of record and adds a derivative overlay: contract-aware positions,
+margin, collateral, mark-to-market, expiry/exercise/assignment, with dependency-injected
+pricing/Greeks/yield. Equities stay byte-identical to M15. *Delivered by M17.*
+
+### Institutional Valuation & Market-Data Infrastructure
+One canonical, deterministic, point-in-time valuation architecture for every asset class:
+immutable provenance-stamped market-data snapshots (never fetches live data), production
+Black-Scholes/Black-76/binomial-American pricing, yield curves + discounting + vol surfaces,
+bond & swap analytics, cross-currency valuation reusing the M16 FX book, model governance
+(model/version/fingerprints) and arbitrage diagnostics. Supplies price/NPV/Greeks/yield/DV01/
+FX exposure to M10–M17 and fills the M17 provider seams; M13 remains the risk authority.
+*Delivered by M18.*
+
 ### Execution (live) & Production Infrastructure
-Broker/FIX connectivity, live rate/broker feeds, multi-asset/derivatives accounting,
+Broker/FIX connectivity, live rate/broker feeds, production market-data adapters,
 regulatory & client reporting, deployment, monitoring. *Future.*
 
 ## Principle

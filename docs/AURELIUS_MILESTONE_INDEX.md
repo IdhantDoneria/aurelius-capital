@@ -254,7 +254,46 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 - **Benchmark:** valuation/reconcile linear (reconcile 0.37 s over 1.05M events), FX
   conversion sub-ms; backward-compatible with M15 (single-currency book matches
   fingerprint).
-- **Successor:** M17 (proposed).
+- **Successor:** M17.
+
+---
+
+## M17 — Multi-Asset & Derivatives Accounting
+
+- **Purpose:** general instrument framework (equity, future, option, forward, swap, bond)
+  layered additively over M11–M16. One `InstrumentBook` wraps the reused M15
+  `PostTradeEngine` as the single cash/equity book of record and adds a derivative overlay —
+  contract-aware positions, margin, collateral, mark-to-market, expiry/exercise/assignment —
+  with dependency-injected pricing/Greeks/yield. Equities delegate straight to M15
+  (byte-identical).
+- **Deliverables:** `research/instruments/` (24 modules).
+- **Dependencies:** M11 (accounting), M13 (risk), M14 (execution), M15 (settlement), M16 (FX).
+- **Commit:** `22b4c38` (feature), `38e501b` (hash record).
+- **Status:** CERTIFIED.
+- **Documentation:** `AURELIUS_M17_MULTI_ASSET.md`.
+- **Tests:** `tests/research/test_instruments.py` (123).
+- **Benchmark:** 1.08M lifecycle events in 4.4 s; equity-only book matches M15 fingerprint.
+- **Successor:** M18.
+
+---
+
+## M18 — Institutional Valuation & Market-Data Infrastructure
+
+- **Purpose:** one canonical, deterministic, point-in-time valuation architecture supplying
+  price / NPV / Greeks / yield / duration / DV01 / FX exposure to M10–M17. Immutable,
+  provenance-stamped `MarketDataSnapshot` (never fetches live data); production
+  Black-Scholes / Black-76 / binomial-American pricing; yield curves + discounting +
+  vol surfaces; bond & swap analytics; cross-currency valuation via M16; model governance
+  (model/version/fingerprints) and arbitrage diagnostics. Fills the M17 provider seams.
+- **Deliverables:** `research/valuation/` (24 modules).
+- **Dependencies:** M16 (FX providers), M17 (instrument model). Feeds M13 (risk authority).
+- **Commit:** `__M18_COMMIT__`.
+- **Status:** CERTIFIED.
+- **Documentation:** `AURELIUS_M18_VALUATION.md`.
+- **Tests:** `tests/research/test_valuation.py` (171).
+- **Benchmark:** 100k-instrument portfolio valuation in ~20 s (~5k/s); single valuation
+  ~100 µs; analytic Greeks match finite differences; fully additive (zero M1–M17 regressions).
+- **Successor:** M19 (proposed).
 
 ---
 
