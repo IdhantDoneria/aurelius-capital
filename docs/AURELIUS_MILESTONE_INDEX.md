@@ -201,18 +201,70 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 - **Tests:** `tests/research/test_risk.py` (74).
 - **Benchmark:** 10k securities assess 85.7 ms, 20.5 MB (no dense N×N); VaR/stress
   sub-3 ms.
-- **Successor:** M14 (proposed: Live Execution & OMS/EMS).
+- **Successor:** M14.
 
 ---
 
-## Planned milestones (M14+)
+## M14 — Execution Management System & Order Management System
+
+- **Purpose:** transform approved portfolio decisions into controlled, auditable,
+  replayable execution — OMS state machine, EMS orchestration, execution algorithms
+  (Immediate/TWAP/VWAP/POV), broker abstraction, routing, pre-trade validation, and
+  post-trade execution analytics. Reuses M10 costs, M11 accounting, M12 state, M13 gate.
+- **Deliverables:** `research/execution/ems/` (20 modules).
+- **Dependencies:** M10 (costs), M11 (accounting), M12 (broker/state), M13 (risk gate).
+- **Commit:** `961cbfc`.
+- **Status:** CERTIFIED.
+- **Documentation:** `AURELIUS_M14_EXECUTION_SYSTEM.md`.
+- **Tests:** `tests/research/test_execution_ems.py` (122).
+- **Successor:** M15.
+
+---
+
+## M15 — Trade Lifecycle & Post-Trade Operations
+
+- **Purpose:** close Execution → Settlement → Accounting → Reporting — trade lifecycle,
+  T+N settlement, settlement-aware cash ledger, position ledger, corporate actions,
+  reconciliation, tax-lot interfaces, post-trade reporting, deterministic event log.
+  Reuses M11 accounting (single book of record), consumes M14 fills/reports.
+- **Deliverables:** `research/post_trade/` (18 modules).
+- **Dependencies:** M11 (accounting), M12 (broker reconciliation), M14 (fills/reports).
+- **Commit:** `7b5073e`.
+- **Status:** CERTIFIED.
+- **Documentation:** `AURELIUS_M15_POST_TRADE_OPERATIONS.md`.
+- **Tests:** `tests/research/test_post_trade.py` (83).
+- **Benchmark:** ~10k trades/s, reconcile 0.09 s over 1.36M events.
+- **Successor:** M16.
+
+---
+
+## M16 — Multi-Currency & FX Portfolio Book
+
+- **Purpose:** remove the single-currency assumption from the post-trade stack — trading/
+  settlement/base currencies, DI FX rate providers, explicit auditable conversions,
+  multi-currency cash & settlement, base valuation, FX exposure/P&L/risk/stress,
+  cross-currency corporate actions, currency-aware reconciliation/reporting/tax/registry.
+  Holds one reused M15 `PostTradeEngine` **per currency** — does not fork M11 accounting.
+- **Deliverables:** `research/fx/` (21 modules).
+- **Dependencies:** M11 (accounting), M13 (risk idea), M14 (fills), M15 (post-trade engine).
+- **Commit:** `__M16_COMMIT__`.
+- **Status:** CERTIFIED.
+- **Documentation:** `AURELIUS_M16_MULTI_CURRENCY.md`.
+- **Tests:** `tests/research/test_fx.py` (140).
+- **Benchmark:** valuation/reconcile linear (reconcile 0.37 s over 1.05M events), FX
+  conversion sub-ms; backward-compatible with M15 (single-currency book matches
+  fingerprint).
+- **Successor:** M17 (proposed).
+
+---
+
+## Planned milestones (M17+)
 
 Future work continues the sequence — never restarts. See `AURELIUS_ROADMAP.md` for
 the capability view.
 
-- **M14 (proposed)** — Live Execution & Order Management (broker adapters, smart
-  routing, VWAP/TWAP/POV child orders) with the M13 gate enforced pre-route.
-- **M15+** — production infrastructure, monitoring, deployment.
+- **M17+** — multi-asset/derivatives accounting, live rate/broker feeds, regulatory &
+  client reporting, production infrastructure, monitoring, deployment.
 
 ## Remaining inconsistencies
 

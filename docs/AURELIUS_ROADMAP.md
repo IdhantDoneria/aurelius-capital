@@ -28,7 +28,11 @@ milestones over time.
         ↓
   Paper Trading                          [M12]
         ↓
-  Execution (live)                       [proposed M14]
+  Execution Management (EMS/OMS)         [M14]
+        ↓
+  Trade Lifecycle & Post-Trade Ops       [M15]
+        ↓
+  Multi-Currency & FX Book               [M16]
         ↓
   Production Infrastructure              [future]
 ```
@@ -91,9 +95,29 @@ drift monitoring. Broker abstraction (offline Mock/Simulated + real-adapter
 interfaces), internal↔external reconciliation, drift alerts, deployment readiness.
 Reuses the M11 accounting core. *Delivered by M12.*
 
+### Execution Management (EMS/OMS)
+Turns approved decisions into controlled, auditable, replayable execution: OMS state
+machine, EMS orchestration, execution algorithms (Immediate/TWAP/VWAP/POV), broker
+abstraction, routing, pre-trade validation, post-trade execution analytics. Reuses M10
+costs, M11 accounting, M12 state, and enforces the M13 gate pre-route. *Delivered by M14.*
+
+### Trade Lifecycle & Post-Trade Operations
+Closes Execution → Settlement → Accounting → Reporting: trade lifecycle, T+N settlement,
+settlement-aware cash ledger, position ledger, corporate actions, reconciliation, tax-lot
+interfaces, post-trade reporting, deterministic event log. Reuses the M11 accounting core
+as the single book of record. *Delivered by M15.*
+
+### Multi-Currency & FX Book
+Removes the single-currency assumption from the post-trade stack: trading/settlement/base
+currencies, dependency-injected FX rate providers, explicit auditable conversions,
+multi-currency cash & settlement, base-currency valuation, FX exposure/P&L/risk/stress,
+cross-currency corporate actions, and currency-aware reconciliation/reporting/tax/registry.
+Holds one reused M15 post-trade engine **per currency** — no fork of M11 accounting;
+single-currency behaviour is unchanged. *Delivered by M16.*
+
 ### Execution (live) & Production Infrastructure
-Broker/FIX connectivity, smart order routing, multi-asset accounting, deployment,
-monitoring. *Future.*
+Broker/FIX connectivity, live rate/broker feeds, multi-asset/derivatives accounting,
+regulatory & client reporting, deployment, monitoring. *Future.*
 
 ## Principle
 
