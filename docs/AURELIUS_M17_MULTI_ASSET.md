@@ -1,5 +1,7 @@
 # AIDP M17 — Multi-Asset & Derivatives Accounting Engine
 
+**Commit:** `22b4c38`
+
 ## What this is
 
 A general, instrument-agnostic framework for institutional accounting and lifecycle
