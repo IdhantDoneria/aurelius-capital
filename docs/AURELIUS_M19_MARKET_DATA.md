@@ -1,6 +1,6 @@
 # AIDP M19 — Institutional Market Data, Curve Calibration & Volatility Surface Engine
 
-**Commit:** `<pending>`
+**Commit:** `1db2035`
 
 ## What this is
 
@@ -21,7 +21,7 @@ risk engine. It addresses **all six** M18 deferred items.
 
 ### Package
 
-`src/aurelius/research/market_data/` — 24 modules.
+`src/aurelius/research/market_data/` — 23 modules.
 
 ## 1. Architecture
 

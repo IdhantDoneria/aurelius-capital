@@ -307,10 +307,10 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
   curves, SABR + SVI volatility-surface calibration with arbitrage diagnostics, and production
   adapter contracts (Bloomberg/Refinitiv/exchange/broker — translation only, offline). Addresses
   all six M18 deferred items.
-- **Deliverables:** `research/market_data/` (24 modules).
+- **Deliverables:** `research/market_data/` (23 modules).
 - **Dependencies:** M16 (FX providers, reused), M18 (curves/surfaces/snapshot, produced for).
   Feeds M13 (risk authority), M17 (vol/curve providers), M18 valuation.
-- **Commit:** `<pending>`.
+- **Commit:** `1db2035`.
 - **Status:** CERTIFIED.
 - **Documentation:** `AURELIUS_M19_MARKET_DATA.md`.
 - **Tests:** `tests/research/test_market_data.py` (206).
