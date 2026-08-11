@@ -40,6 +40,8 @@ milestones over time.
         ↓
   Market-Data & Calibration Infra        [M19 — feeds M18]
         ↓
+  Market-Data Operations & Replay        [M20 — sources → PIT snapshot → M18]
+        ↓
   Production Infrastructure              [future]
 ```
 
@@ -148,8 +150,20 @@ valuation is unchanged; FX reuses the M16 provider. Production feeds (Bloomberg/
 exchange/broker) ship as translation contracts only — offline by mandate. Fills all six M18
 deferred seams. *Delivered by M19.*
 
+### Market-Data Operations & Replay
+The operational lifecycle *above* M19: a source-adapter runtime with a capability model, an
+immutable feed-message model, explicit ordering/sequence policies, deterministic multi-source
+arbitration and cross-source reconciliation, a replay engine, historical point-in-time
+reconstruction (the exact state knowable at a knowledge boundary), a snapshot lifecycle + local
+store with integrity verification, incremental ingestion proven equal to full rebuild, operational
+quality/health/coverage monitoring, a fault-injecting streaming simulator, and offline
+production-vendor contract boundaries. Reconstruction is a pure function of the admissible message
+set, so replay equals direct reconstruction and incremental equals full rebuild; it materializes the
+M18 `MarketDataSnapshot` unchanged. No paid market-data connectivity is claimed or required.
+*Delivered by M20.*
+
 ### Execution (live) & Production Infrastructure
-Broker/FIX connectivity, live rate/broker feeds implementing the M19 production adapter
+Broker/FIX connectivity, live rate/broker feeds implementing the M19/M20 production adapter
 contracts, regulatory & client reporting, deployment, monitoring. *Future.*
 
 ## Principle

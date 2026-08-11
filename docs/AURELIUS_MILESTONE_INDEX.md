@@ -317,17 +317,47 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 - **Benchmark:** ~27k observations/s normalization (linear scaling to 1M); curve bootstrap ~20 ms,
   SVI surface calibration ~370 ms, credit bootstrap ~19 ms; calibration reprices inputs to
   < 1e-7. Fully additive (zero M1–M18 regressions; full suite 1707 passed, 3 pre-existing skips).
-- **Successor:** M20 (proposed).
+- **Successor:** M20.
 
 ---
 
-## Planned milestones (M20+)
+## M20 — Live Market-Data, Replay & Production Data-Construction Layer
+
+- **Purpose:** the operational layer *above* M19 and feeding M18. Turns *sources* into a robust,
+  deterministic data lifecycle around the M19/M18 snapshot: source-adapter runtime with a
+  capability model, an immutable feed-message model, explicit ordering/sequence policies,
+  multi-source arbitration + cross-source reconciliation, a deterministic replay engine, historical
+  point-in-time reconstruction (rebuild the exact state knowable at a knowledge boundary), a
+  snapshot lifecycle + local store with integrity verification, incremental ingestion proven equal
+  to full rebuild, operational data-quality/health/coverage monitoring, a fault-injecting streaming
+  simulator, and offline production-vendor contract boundaries. **No paid market-data connectivity
+  claimed or required.**
+- **Deliverables:** `research/market_data_ops/` (16 modules);
+  `scripts/benchmark_m20_market_data_ops.py`.
+- **Dependencies:** M19 (normalization, quality, revisions, PIT builder, calibration — reused
+  unchanged), M18 (`MarketDataSnapshot` produced, consumed by valuation unchanged), M16 (FX
+  provider, injected). Feeds M18 valuation → M17 → M13.
+- **Commit:** `M20_COMMIT_HASH`.
+- **Status:** CERTIFIED.
+- **Documentation:** `AURELIUS_M20_MARKET_DATA_OPERATIONS.md`.
+- **Tests:** `tests/research/test_market_data_operations.py` (154).
+- **Benchmark:** ingestion ~21k messages/s (dedup); ordering + arbitration linear passes;
+  reconstruction dominated by M19 normalization (~1.05 s at ~12k msgs, ~130 s at ~1.2M);
+  replay-emit cheap; incremental (50 batches) matches one-shot state fingerprint. Peak ~1.5 GB at
+  ~1.2M messages in-process. Replay == direct reconstruction; incremental == full rebuild.
+  Fully additive (zero M1–M19 regressions; full suite 1861 passed, 3 pre-existing skips).
+- **Successor:** M21 (proposed).
+
+---
+
+## Planned milestones (M21+)
 
 Future work continues the sequence — never restarts. See `AURELIUS_ROADMAP.md` for
 the capability view.
 
-- **M20+** — live market-data & curve-construction (production feeds behind the M19 adapter
-  contracts), regulatory & client reporting, production infrastructure, monitoring, deployment.
+- **M21+** — live vendor transport implementing the M20 production adapter contracts (Bloomberg/
+  Refinitiv/exchange behind the same boundary), regulatory & client reporting, production
+  infrastructure, monitoring and deployment.
 
 ## Remaining inconsistencies
 
