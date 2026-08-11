@@ -156,13 +156,15 @@ class SequenceManager:
             prev = k if prev is None else max(prev, k)
 
     def _diagnose_stale(self, msgs, events) -> None:
+        # "stale" = the datum is *for* a date well before the boundary, however recently it
+        # arrived — so the observation date is the right axis, not knowledge date.
         if self.stale_boundary is None:
             return
         for m in msgs:
-            kd = m.knowledge_date
-            if kd is not None and kd < self.stale_boundary:
+            od = m.observation_date
+            if od is not None and od < self.stale_boundary:
                 events.append(OrderingEvent(OrderingCode.STALE, m.raw_fingerprint(), m.source,
-                                            f"knowledge_date {kd} < boundary {self.stale_boundary}"))
+                                            f"observation_date {od} < boundary {self.stale_boundary}"))
 
     def _canonical_sort(self, msgs) -> list[SourceMessage]:
         return sorted(msgs, key=_order_key)
