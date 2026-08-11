@@ -332,7 +332,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
   to full rebuild, operational data-quality/health/coverage monitoring, a fault-injecting streaming
   simulator, and offline production-vendor contract boundaries. **No paid market-data connectivity
   claimed or required.**
-- **Deliverables:** `research/market_data_ops/` (16 modules);
+- **Deliverables:** `research/market_data_ops/` (15 modules);
   `scripts/benchmark_m20_market_data_ops.py`.
 - **Dependencies:** M19 (normalization, quality, revisions, PIT builder, calibration — reused
   unchanged), M18 (`MarketDataSnapshot` produced, consumed by valuation unchanged), M16 (FX

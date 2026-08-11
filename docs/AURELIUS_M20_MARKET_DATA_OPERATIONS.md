@@ -6,7 +6,7 @@ snapshot: adapter runtime, feed messages, ordering, arbitration, replay, histori
 reconstruction, snapshot lifecycle & store, incremental ingestion, operational monitoring, a
 fault-injecting streaming simulator, and offline production-vendor contract boundaries.
 
-**Package:** `src/aurelius/research/market_data_ops/` (16 modules, all additive).
+**Package:** `src/aurelius/research/market_data_ops/` (15 modules, all additive).
 **Tests:** `tests/research/test_market_data_operations.py` (154).
 **Commit:** see the milestone index.
 
