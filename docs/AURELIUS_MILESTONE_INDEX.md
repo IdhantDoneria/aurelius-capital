@@ -350,12 +350,27 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 
 ---
 
-## Planned milestones (M21+)
+## M21 — Open Market Data Provider Integration & Free Data Expansion Layer
+
+- **Purpose:** Eight free/public-data source adapters (OpenBB, Fincept, Yahoo Finance,
+  SEC/EDGAR, FRED, India NSE/BSE, Qlib, FinanceToolkit) integrated via the M20 SourceAdapter
+  boundary. All outputs become M19 CanonicalObservations / M18 MarketDataSnapshots. Includes
+  FundamentalRatioEngine analytics layer and Lean export compatibility.
+- **Dependencies:** M18, M19, M20.
+- **Commit:** TBD (current HEAD — see git log).
+- **Status:** CERTIFIED.
+- **Documentation:** `AURELIUS_M21_OPEN_DATA_PROVIDERS.md`.
+- **Tests:** 81 deterministic offline tests; 1942 total suite passing (0 regressions).
+- **Benchmark:** 100k observations < 4s; 1M observations < 33s.
+
+---
+
+## Planned milestones (M22+)
 
 Future work continues the sequence — never restarts. See `AURELIUS_ROADMAP.md` for
 the capability view.
 
-- **M21+** — live vendor transport implementing the M20 production adapter contracts (Bloomberg/
+- **M22+** — live vendor transport implementing the M20 production adapter contracts (Bloomberg/
   Refinitiv/exchange behind the same boundary), regulatory & client reporting, production
   infrastructure, monitoring and deployment.
 

@@ -69,6 +69,7 @@ testpaths = ["tests"]
 markers = [
     "unit: fast tests, no I/O",
     "integration: requires running Docker stack",
+    "slow: benchmarks and long-running tests (excluded from default CI run)",
 ]
 addopts = "-v --tb=short"
 
