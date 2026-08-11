@@ -337,7 +337,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 - **Dependencies:** M19 (normalization, quality, revisions, PIT builder, calibration — reused
   unchanged), M18 (`MarketDataSnapshot` produced, consumed by valuation unchanged), M16 (FX
   provider, injected). Feeds M18 valuation → M17 → M13.
-- **Commit:** `M20_COMMIT_HASH`.
+- **Commit:** `f8d48fd` (implementation) … `7fefd8e` (docs/benchmark).
 - **Status:** CERTIFIED.
 - **Documentation:** `AURELIUS_M20_MARKET_DATA_OPERATIONS.md`.
 - **Tests:** `tests/research/test_market_data_operations.py` (154).
