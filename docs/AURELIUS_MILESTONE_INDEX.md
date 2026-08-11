@@ -293,17 +293,41 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 - **Tests:** `tests/research/test_valuation.py` (171).
 - **Benchmark:** 100k-instrument portfolio valuation in ~20 s (~5k/s); single valuation
   ~100 µs; analytic Greeks match finite differences; fully additive (zero M1–M17 regressions).
-- **Successor:** M19 (proposed).
+- **Successor:** M19.
 
 ---
 
-## Planned milestones (M17+)
+## M19 — Institutional Market Data, Curve Calibration & Volatility Surface Engine
+
+- **Purpose:** the market-data infrastructure *underneath* M18. Turns raw market sources into the
+  immutable, PIT-validated `MarketDataSnapshot` M18 consumes: canonical typed observations
+  (never bare floats), PIT-aware identifier mapping, business-day calendars, bitemporal
+  revision/fixing stores, an auditable normalization pipeline, a no-silent-repair quality engine,
+  multi-instrument curve bootstrapping (deposits/OIS/FRAs/futures/swaps), OIS/multi-curve, credit
+  curves, SABR + SVI volatility-surface calibration with arbitrage diagnostics, and production
+  adapter contracts (Bloomberg/Refinitiv/exchange/broker — translation only, offline). Addresses
+  all six M18 deferred items.
+- **Deliverables:** `research/market_data/` (24 modules).
+- **Dependencies:** M16 (FX providers, reused), M18 (curves/surfaces/snapshot, produced for).
+  Feeds M13 (risk authority), M17 (vol/curve providers), M18 valuation.
+- **Commit:** `<pending>`.
+- **Status:** CERTIFIED.
+- **Documentation:** `AURELIUS_M19_MARKET_DATA.md`.
+- **Tests:** `tests/research/test_market_data.py` (206).
+- **Benchmark:** ~27k observations/s normalization (linear scaling to 1M); curve bootstrap ~20 ms,
+  SVI surface calibration ~370 ms, credit bootstrap ~19 ms; calibration reprices inputs to
+  < 1e-7. Fully additive (zero M1–M18 regressions; full suite 1707 passed, 3 pre-existing skips).
+- **Successor:** M20 (proposed).
+
+---
+
+## Planned milestones (M20+)
 
 Future work continues the sequence — never restarts. See `AURELIUS_ROADMAP.md` for
 the capability view.
 
-- **M17+** — multi-asset/derivatives accounting, live rate/broker feeds, regulatory &
-  client reporting, production infrastructure, monitoring, deployment.
+- **M20+** — live market-data & curve-construction (production feeds behind the M19 adapter
+  contracts), regulatory & client reporting, production infrastructure, monitoring, deployment.
 
 ## Remaining inconsistencies
 

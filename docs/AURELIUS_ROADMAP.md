@@ -34,6 +34,12 @@ milestones over time.
         ↓
   Multi-Currency & FX Book               [M16]
         ↓
+  Multi-Asset & Derivatives Accounting   [M17]
+        ↓
+  Institutional Valuation                [M18]
+        ↓
+  Market-Data & Calibration Infra        [M19 — feeds M18]
+        ↓
   Production Infrastructure              [future]
 ```
 
@@ -131,9 +137,20 @@ bond & swap analytics, cross-currency valuation reusing the M16 FX book, model g
 FX exposure to M10–M17 and fills the M17 provider seams; M13 remains the risk authority.
 *Delivered by M18.*
 
+### Market-Data & Calibration Infrastructure
+The layer beneath valuation: canonical, typed, PIT-tagged market observations (never bare
+floats), PIT-aware identifier mapping, business-day calendars, bitemporal revision/fixing stores,
+an auditable normalization pipeline and a fail-closed data-quality engine. On top of it,
+deterministic calibration: multi-instrument curve bootstrapping (deposits/OIS/FRAs/futures/
+swaps), OIS/multi-curve, credit curves, and SABR/SVI volatility-surface calibration with
+arbitrage diagnostics. Everything materializes the M18 `MarketDataSnapshot`/curves/surfaces, so
+valuation is unchanged; FX reuses the M16 provider. Production feeds (Bloomberg/Refinitiv/
+exchange/broker) ship as translation contracts only — offline by mandate. Fills all six M18
+deferred seams. *Delivered by M19.*
+
 ### Execution (live) & Production Infrastructure
-Broker/FIX connectivity, live rate/broker feeds, production market-data adapters,
-regulatory & client reporting, deployment, monitoring. *Future.*
+Broker/FIX connectivity, live rate/broker feeds implementing the M19 production adapter
+contracts, regulatory & client reporting, deployment, monitoring. *Future.*
 
 ## Principle
 
