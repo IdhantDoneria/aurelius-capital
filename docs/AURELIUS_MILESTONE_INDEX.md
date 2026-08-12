@@ -365,12 +365,42 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 
 ---
 
-## Planned milestones (M22+)
+---
+
+## M22 — Research-to-Execution Strategy Deployment Layer
+
+- **Purpose:** Formal, versioned contract between validated research and the existing Aurelius
+  execution and paper-trading infrastructure. Provides `StrategySpecification` (immutable,
+  versioned), `StrategyRuntime.evaluate()` (deterministic pipeline: M10 → M13 → M14),
+  `ReadinessValidator` (deployment gate), `ConsistencyChecker` (research/deployment drift),
+  `DeploymentManifest` (reproducibility fingerprint), `StrategyRegistry` (lifecycle state machine).
+  Does NOT implement a new backtesting engine, execution engine, risk engine, portfolio engine,
+  or market-data pipeline. All downstream work delegates to M9–M21.
+- **Deliverables:** `research/strategy_deployment/` (7 modules: models, registry, runtime,
+  readiness, consistency, __init__).
+- **Dependencies:** M7 (experiment lineage conventions), M9 (validation verdicts), M10
+  (PortfolioEngine), M13 (RiskEngine), M14 (EMS OrderRequest / intents_from_target), M18
+  (MarketDataSnapshot).
+- **Commit:** TBD (current HEAD).
+- **Status:** CERTIFIED.
+- **Documentation:** `AURELIUS_M22_STRATEGY_DEPLOYMENT.md`.
+- **Tests:** `tests/research/test_strategy_deployment.py` (88 tests).
+- **Benchmark:** single evaluation < 10 ms on 5-security universe; deterministic replay verified.
+- **Current state:** IMPLEMENTED, TESTED. Zero M1–M21 regressions (2030 passed, 3 pre-existing skips).
+- **Successor:** M23 (Continuous Paper Trading & Forward Simulation Runtime).
+
+---
+
+## Planned milestones (M23+)
 
 Future work continues the sequence — never restarts. See `AURELIUS_ROADMAP.md` for
 the capability view.
 
-- **M22+** — live vendor transport implementing the M20 production adapter contracts (Bloomberg/
+- **M23** — Continuous Paper Trading & Forward Simulation Runtime: a `PaperTradingLoop` that
+  calls `StrategyRuntime.evaluate()` on each new `MarketDataSnapshot` from M20's live feed,
+  persistent strategy state across evaluation cycles, automatic M12 session management,
+  rebalance scheduling, live drift monitoring, and multi-strategy portfolio support.
+- **M24+** — live vendor transport implementing the M20 production adapter contracts (Bloomberg/
   Refinitiv/exchange behind the same boundary), regulatory & client reporting, production
   infrastructure, monitoring and deployment.
 
