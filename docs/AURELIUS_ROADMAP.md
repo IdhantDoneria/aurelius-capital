@@ -176,6 +176,16 @@ set, so replay equals direct reconstruction and incremental equals full rebuild;
 M18 `MarketDataSnapshot` unchanged. No paid market-data connectivity is claimed or required.
 *Delivered by M20.*
 
+### Forward Paper-Trading Validation & Diagnostics (M24)
+Observational-only diagnostic layer above M23. Consumes M23 `ForwardPerformanceRecord` + M22
+`StrategySpecification` + optional M9 `ValidationReport` + caller-supplied backtest results.
+Produces `ForwardValidationArtifact` (immutable, blake2b fingerprinted) and
+`ForwardValidationReport`. Eight diagnostic modules: data, signal, execution, portfolio, risk,
+drift, backtest comparison, lineage. Determines ValidationStatus / OperationalStatus /
+EconomicStatus / SampleAdequacy. PIT violation detection. Bootstrap CI (offline, stdlib only).
+Thin M11 attribution adapter. 117 tests, all offline. M24 never promotes, retires, or modifies
+any strategy. *Delivered by M24.*
+
 ### Execution (live) & Production Infrastructure
 Broker/FIX connectivity, live rate/broker feeds implementing the M19/M20 production adapter
 contracts, regulatory & client reporting, deployment, monitoring. *Future.*

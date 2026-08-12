@@ -413,16 +413,50 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 - **Documentation:** `AURELIUS_M23_PAPER_TRADING.md`.
 - **Certification:** restart test, duplicate-event test, determinism test — all passing.
 - **Current state:** IMPLEMENTED, TESTED. Zero regressions (2166 passed, 3 pre-existing skips).
-- **Successor:** M24 (live vendor transport / production infrastructure).
+- **Successor:** M24 (Forward Paper-Trading Validation & Diagnostics Framework).
 
 ---
 
-## Planned milestones (M24+)
+## M24 — Forward Paper-Trading Validation & Diagnostics Framework
+
+- **Commit:** `feat: M24 forward validation and diagnostics`
+- **Delivered:** 2026-08-12
+- **Package:** `src/aurelius/research/forward_validation/`
+- **Modules:** `engine.py`, `models.py`, `statistics.py`, `drift.py`, `data_diagnostics.py`,
+  `signal_diagnostics.py`, `execution_diagnostics.py`, `portfolio_diagnostics.py`,
+  `risk_diagnostics.py`, `comparison.py`, `attribution.py`, `lineage.py`, `report.py`,
+  `errors.py`, `__init__.py`
+- **What it does:**
+  - Consumes M23 `ForwardPerformanceRecord` + M22 `StrategySpecification` + optional M9
+    `ValidationReport` + caller-supplied backtest results.
+  - Produces `ForwardValidationArtifact` (immutable, blake2b fingerprinted) and
+    `ForwardValidationReport` (human + machine readable).
+  - Eight diagnostic categories: data, signal, execution, portfolio, risk, drift, backtest
+    comparison, lineage — each producing `DiagnosticRecord` objects (INFO/WARNING/ERROR/CRITICAL).
+  - Determines `ValidationStatus`, `OperationalStatus`, `EconomicStatus`, `SampleAdequacy`.
+  - `classify_discrepancies` produces `DiscrepancyCategory` list; always includes
+    INSUFFICIENT_SAMPLE when n < 63.
+  - Statistical engine: annualized metrics, rolling sharpe/volatility, bootstrap CI (offline, stdlib).
+  - PIT violation detection: CRITICAL if signal_date > snapshot_date.
+  - Thin M11 attribution adapter; no second P&L engine.
+- **Constraints:**
+  - Observational only — M24 does NOT promote, retire, or modify any strategy.
+  - No capital allocation changes, no automated decisions.
+  - No external data providers (no Bloomberg, Yahoo, FRED, SEC, NSE, BSE, etc.).
+  - No live-money execution, no second backtesting/risk/paper-trading engine.
+- **Tests:** `tests/research/test_forward_validation.py` — 117 tests, all offline, all passing.
+- **Documentation:** `AURELIUS_M24_FORWARD_VALIDATION.md`.
+- **Current state:** IMPLEMENTED, TESTED. Zero regressions (2283 passed, 3 pre-existing skips).
+- **Successor:** M25 (to be determined — M24 does not begin M25).
+
+---
+
+## Planned milestones (M25+)
 
 Future work continues the sequence — never restarts. See `AURELIUS_ROADMAP.md` for
 the capability view.
 
-- **M24+** — live vendor transport implementing the M20 production adapter contracts (Bloomberg/
+- **M25+** — live vendor transport implementing the M20 production adapter contracts (Bloomberg/
   Refinitiv/exchange behind the same boundary), regulatory & client reporting, production
   infrastructure, monitoring and deployment.
 
