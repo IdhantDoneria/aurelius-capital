@@ -103,6 +103,20 @@ drift monitoring. Broker abstraction (offline Mock/Simulated + real-adapter
 interfaces), internal↔external reconciliation, drift alerts, deployment readiness.
 Reuses the M11 accounting core. *Delivered by M12.*
 
+### Strategy Deployment & Continuous Paper Trading Runtime
+Connects validated research artifacts to the execution and paper-trading stack.
+Provides an immutable `StrategySpecification` contract, a lifecycle state machine
+(DRAFT → VALIDATED → DEPLOYABLE → PAPER → RETIRED), readiness validation, and the
+`StrategyRuntime` orchestrator that runs the full M10→M13→M14 evaluation pipeline
+for any registered strategy. *Delivered by M22.*
+
+The continuous runtime (`PaperTradingLoop`) drives M22 evaluation against M12 paper
+execution on a stream of market snapshots, with rebalance scheduling, multi-strategy
+support, persistent `StrategyRuntimeState`, JSON checkpoint/restart, and forward
+performance recording (NAV series, Sharpe, drawdown, fill rate). Fail-closed:
+risk rejection → empty orders; evaluation error → error result, not crash.
+*Delivered by M23.*
+
 ### Execution Management (EMS/OMS)
 Turns approved decisions into controlled, auditable, replayable execution: OMS state
 machine, EMS orchestration, execution algorithms (Immediate/TWAP/VWAP/POV), broker

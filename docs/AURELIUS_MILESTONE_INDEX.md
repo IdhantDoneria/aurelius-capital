@@ -391,15 +391,37 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 
 ---
 
-## Planned milestones (M23+)
+## M23 — Continuous Paper Trading & Forward Simulation Runtime
+
+- **Predecessor:** M22 (Strategy Deployment Layer, commit `a1cb836`).
+- **New modules:** `paper_trading/loop.py`, `paper_trading/scheduler.py`,
+  `paper_trading/runtime_state.py`, `paper_trading/cycle.py`, `paper_trading/checkpoint.py`.
+- **Modified modules:** `paper_trading/__init__.py` (M23 exports added with deferred imports
+  to avoid circular dependency through `execution.ems.models`).
+- **Key capabilities:**
+  - `PaperTradingLoop` — continuous orchestrator; calls M22 `StrategyRuntime.evaluate()` then
+    M12 `PaperTradingSession.step()` for each active strategy on every new snapshot.
+  - `RebalanceScheduler` — daily/weekly/monthly/quarterly/event-driven scheduling.
+  - `StrategyRuntimeState` — mutable operational state (pause/resume) separate from M22 lifecycle.
+  - `CycleRecord` + `ForwardPerformanceRecord` — immutable audit trail + NAV series + Sharpe/MDD.
+  - JSON checkpoint/restart: full portfolio state, broker state, session state, fill IDs.
+  - Cost-model bridge: `slippage_bps` → `SimulatedBroker`; `check_cost_compatibility()` utility.
+  - Multi-strategy support: isolated portfolios, brokers, sessions per strategy.
+  - Fail-closed: risk rejection → empty targets; evaluation error → error result, not crash.
+  - Idempotent: duplicate snapshot fingerprints skipped; restart-safe.
+- **Tests:** `tests/research/test_paper_trading_runtime.py` — 136 tests, all offline, all passing.
+- **Documentation:** `AURELIUS_M23_PAPER_TRADING.md`.
+- **Certification:** restart test, duplicate-event test, determinism test — all passing.
+- **Current state:** IMPLEMENTED, TESTED. Zero regressions (2166 passed, 3 pre-existing skips).
+- **Successor:** M24 (live vendor transport / production infrastructure).
+
+---
+
+## Planned milestones (M24+)
 
 Future work continues the sequence — never restarts. See `AURELIUS_ROADMAP.md` for
 the capability view.
 
-- **M23** — Continuous Paper Trading & Forward Simulation Runtime: a `PaperTradingLoop` that
-  calls `StrategyRuntime.evaluate()` on each new `MarketDataSnapshot` from M20's live feed,
-  persistent strategy state across evaluation cycles, automatic M12 session management,
-  rebalance scheduling, live drift monitoring, and multi-strategy portfolio support.
 - **M24+** — live vendor transport implementing the M20 production adapter contracts (Bloomberg/
   Refinitiv/exchange behind the same boundary), regulatory & client reporting, production
   infrastructure, monitoring and deployment.
