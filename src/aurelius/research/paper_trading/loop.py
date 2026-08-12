@@ -198,8 +198,8 @@ class PaperTradingLoop:
         if state not in active:
             is_experimental_ok = (
                 self._config.permit_experimental
-                and str(spec.strategy_type) in (StrategyType.EXPERIMENTAL_PAPER,
-                                                 StrategyType.EXPERIMENTAL_PAPER.value)
+                and spec.strategy_type in (StrategyType.EXPERIMENTAL_PAPER,
+                                            StrategyType.EXPERIMENTAL_PAPER.value)
                 and state == StrategyState.VALIDATED
             )
             if not is_experimental_ok:
@@ -310,7 +310,16 @@ class PaperTradingLoop:
             return _skip(strategy_id, as_of, "strategy_removed_from_registry")
 
         if reg_state not in _active_states():
-            return _skip(strategy_id, as_of, f"lifecycle_{reg_state.value}")
+            from aurelius.research.strategy_deployment.models import StrategyState, StrategyType
+            spec_check = self._registry.spec(strategy_id)
+            is_experimental_ok = (
+                self._config.permit_experimental
+                and spec_check.strategy_type in (StrategyType.EXPERIMENTAL_PAPER,
+                                                  StrategyType.EXPERIMENTAL_PAPER.value)
+                and reg_state == StrategyState.VALIDATED
+            )
+            if not is_experimental_ok:
+                return _skip(strategy_id, as_of, f"lifecycle_{reg_state.value}")
 
         # Operational pause
         if rs.status == "paused":

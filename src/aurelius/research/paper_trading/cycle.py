@@ -156,6 +156,19 @@ class ForwardPerformanceRecord:
         self.strategy_fingerprint = strategy_fingerprint
         self.cycles: list[CycleRecord] = list(cycles)
 
+    @property
+    def n_cycles(self) -> int:
+        return len(self.cycles)
+
+    def fingerprint(self) -> str:
+        from aurelius.research.strategy_deployment.models import _fp
+        return _fp({
+            "strategy_id": self.strategy_id,
+            "strategy_version": self.strategy_version,
+            "n_cycles": len(self.cycles),
+            "cycle_ids": [c.cycle_id for c in self.cycles],
+        })
+
     def nav_series(self) -> list[tuple[date, float]]:
         return [(r.as_of, r.nav) for r in self.cycles]
 
