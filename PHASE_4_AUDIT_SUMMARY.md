@@ -209,7 +209,7 @@ Phase 4's institutional backtesting engine is **production-ready**. It correctly
 
 ## Comparison to Hedge Fund Standards
 
-| Practice | Aurelius Phase 4 | Hedge Fund | Gap |
+| Practice | Mentisrex Phase 4 | Hedge Fund | Gap |
 |----------|-----------------|-----------|-----|
 | No look-ahead | ✅ Enforced | ✅ Required | NONE |
 | Realistic execution costs | ✅ Yes (spread, slippage, commission) | ✅ Required | NONE |

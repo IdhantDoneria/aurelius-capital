@@ -1,8 +1,8 @@
-# Aurelius M22 — Strategy Deployment Layer
+# Mentisrex M22 — Strategy Deployment Layer
 
 ## 1. Objective
 
-M22 establishes the formal, versioned contract between validated research and the existing Aurelius execution and paper-trading infrastructure (M9–M21). It is a **seam**, not a replacement for any downstream system.
+M22 establishes the formal, versioned contract between validated research and the existing Mentisrex execution and paper-trading infrastructure (M9–M21). It is a **seam**, not a replacement for any downstream system.
 
 ```
 Research Artifact (M7/M8/M9)
@@ -38,7 +38,7 @@ M22 does **not** implement:
 
 ## 2. Architecture
 
-**Module:** `src/aurelius/research/strategy_deployment/`
+**Module:** `src/mentisrex/research/strategy_deployment/`
 
 | File | Purpose |
 |---|---|

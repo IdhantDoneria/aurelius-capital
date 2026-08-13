@@ -1,7 +1,7 @@
 """Unit tests for CitationGraph."""
 
-from aurelius.corpus.citation import CitationGraph
-from aurelius.corpus.models import CitationEdgeType
+from mentisrex.corpus.citation import CitationGraph
+from mentisrex.corpus.models import CitationEdgeType
 
 
 def test_citation_lineage_tracking() -> None:

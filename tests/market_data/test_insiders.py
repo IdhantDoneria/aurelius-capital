@@ -10,8 +10,8 @@ from datetime import date, datetime
 
 import pytest
 
-from aurelius.market_data.identity import Security, SecurityMaster, make_security_id
-from aurelius.market_data.insiders import (
+from mentisrex.market_data.identity import Security, SecurityMaster, make_security_id
+from mentisrex.market_data.insiders import (
     InsiderEngine,
     InsiderStore,
     parse_form4,

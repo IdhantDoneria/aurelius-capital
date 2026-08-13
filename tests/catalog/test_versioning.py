@@ -3,9 +3,9 @@
 import pytest
 import duckdb
 
-from aurelius.catalog.models import DatasetRecord
-from aurelius.catalog.store import CatalogStore
-from aurelius.catalog.versioning import VersionManager
+from mentisrex.catalog.models import DatasetRecord
+from mentisrex.catalog.store import CatalogStore
+from mentisrex.catalog.versioning import VersionManager
 
 
 @pytest.fixture

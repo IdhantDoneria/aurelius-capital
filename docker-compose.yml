@@ -1,13 +1,13 @@
-name: aurelius-capital
+name: mentisrex-capital
 
 services:
   # ── PostgreSQL ──────────────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
-    container_name: aurelius-postgres
+    container_name: mentisrex-postgres
     environment:
-      POSTGRES_DB: aurelius_dev
-      POSTGRES_USER: aurelius
+      POSTGRES_DB: mentisrex_dev
+      POSTGRES_USER: mentisrex
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-dev_password}
     ports:
       - "5432:5432"
@@ -15,7 +15,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U aurelius -d aurelius_dev"]
+      test: ["CMD-SHELL", "pg_isready -U mentisrex -d mentisrex_dev"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,7 +25,7 @@ services:
   # ── Redis ───────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: aurelius-redis
+    container_name: mentisrex-redis
     command: >
       redis-server
       --save 60 1
@@ -49,7 +49,7 @@ services:
       context: .
       dockerfile: docker/app/Dockerfile
       target: runtime
-    container_name: aurelius-app
+    container_name: mentisrex-app
     env_file:
       - .env.development
     environment:

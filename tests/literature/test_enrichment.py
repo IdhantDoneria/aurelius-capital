@@ -5,8 +5,8 @@ from datetime import UTC, date, datetime
 
 import pytest
 
-from aurelius.literature.enrichment import _extract_json, _str_list, enrich
-from aurelius.literature.models import Paper, paper_id
+from mentisrex.literature.enrichment import _extract_json, _str_list, enrich
+from mentisrex.literature.models import Paper, paper_id
 
 
 def _paper() -> Paper:

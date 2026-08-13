@@ -14,24 +14,24 @@ from datetime import date
 
 import pytest
 
-from aurelius.research.market_data.analytics.fundamentals import (
+from mentisrex.research.market_data.analytics.fundamentals import (
     FundamentalObservation,
     FundamentalRatioEngine,
 )
-from aurelius.research.market_data.export.lean import LeanExporter
-from aurelius.research.market_data.normalization import Normalizer
-from aurelius.research.market_data.pit import MarketDataSnapshotBuilder
-from aurelius.research.market_data.providers import ALL_PROVIDERS, ProviderMetadata, default_m21_registry
-from aurelius.research.market_data.providers.financetoolkit import FinanceToolkitSourceAdapter
-from aurelius.research.market_data.providers.fincept import FinceptSourceAdapter
-from aurelius.research.market_data.providers.fred import FREDSourceAdapter
-from aurelius.research.market_data.providers.india import IndiaSourceAdapter
-from aurelius.research.market_data.providers.openbb import OpenBBSourceAdapter
-from aurelius.research.market_data.providers.qlib import QlibExporter, QlibSourceAdapter
-from aurelius.research.market_data.providers.sec import SECSourceAdapter
-from aurelius.research.market_data.providers.yahoo import YahooFinanceSourceAdapter
-from aurelius.research.market_data_ops.adapters import MessageLogAdapter
-from aurelius.research.market_data_ops.messages import MessageType, SourceMessage
+from mentisrex.research.market_data.export.lean import LeanExporter
+from mentisrex.research.market_data.normalization import Normalizer
+from mentisrex.research.market_data.pit import MarketDataSnapshotBuilder
+from mentisrex.research.market_data.providers import ALL_PROVIDERS, ProviderMetadata, default_m21_registry
+from mentisrex.research.market_data.providers.financetoolkit import FinanceToolkitSourceAdapter
+from mentisrex.research.market_data.providers.fincept import FinceptSourceAdapter
+from mentisrex.research.market_data.providers.fred import FREDSourceAdapter
+from mentisrex.research.market_data.providers.india import IndiaSourceAdapter
+from mentisrex.research.market_data.providers.openbb import OpenBBSourceAdapter
+from mentisrex.research.market_data.providers.qlib import QlibExporter, QlibSourceAdapter
+from mentisrex.research.market_data.providers.sec import SECSourceAdapter
+from mentisrex.research.market_data.providers.yahoo import YahooFinanceSourceAdapter
+from mentisrex.research.market_data_ops.adapters import MessageLogAdapter
+from mentisrex.research.market_data_ops.messages import MessageType, SourceMessage
 
 AS_OF = date(2024, 6, 30)
 FUTURE = date(2025, 1, 1)
@@ -222,7 +222,7 @@ class TestYahooAdapter:
         assert len(msgs) == 0
 
     def test_id_map_resolution(self):
-        from aurelius.research.market_data.identifiers import IdType, IdentifierMap
+        from mentisrex.research.market_data.identifiers import IdType, IdentifierMap
         id_map = IdentifierMap()
         id_map.add(IdType.TICKER, "MSFT", "sec_msft_001")
         adapter = YahooFinanceSourceAdapter(id_map=id_map)
@@ -440,7 +440,7 @@ class TestIndiaAdapter:
         assert msgs[0].payload.get("isin") == "INE002A01018"
 
     def test_id_map_isin_resolution(self):
-        from aurelius.research.market_data.identifiers import IdType, IdentifierMap
+        from mentisrex.research.market_data.identifiers import IdType, IdentifierMap
         id_map = IdentifierMap()
         id_map.add(IdType.ISIN, "INE002A01018", "reliance_internal")
         adapter = IndiaSourceAdapter(id_map=id_map)
@@ -492,7 +492,7 @@ class TestQlibAdapter:
 
 class TestQlibExporter:
     def _observations(self):
-        from aurelius.research.market_data.models import CanonicalObservation, ObservationType, Unit
+        from mentisrex.research.market_data.models import CanonicalObservation, ObservationType, Unit
         obs = []
         for i in range(3):
             d = date(2024, 1, 2 + i)
@@ -626,7 +626,7 @@ class TestFundamentalRatioEngine:
 
 class TestLeanExporter:
     def _observations(self):
-        from aurelius.research.market_data.models import CanonicalObservation, ObservationType, Unit
+        from mentisrex.research.market_data.models import CanonicalObservation, ObservationType, Unit
         obs = []
         for i in range(5):
             d = date(2024, 1, 2 + i)
@@ -729,7 +729,7 @@ class TestFullPipeline:
         assert snap.as_of == AS_OF
 
     def test_fred_pit_reconstruction_via_revision_store(self):
-        from aurelius.research.market_data.revisions import RevisionStore
+        from mentisrex.research.market_data.revisions import RevisionStore
         fred = FREDSourceAdapter()
         obs = [
             {"realtime_start": "2024-04-30", "date": "2024-01-01", "value": "27357.0"},

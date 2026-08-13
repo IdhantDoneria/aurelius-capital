@@ -12,17 +12,17 @@ from datetime import date, timedelta
 
 import pytest
 
-import aurelius.research.paper_trading as pt
-from aurelius.research.paper_trading.broker import MockBroker, SimulatedBroker
-from aurelius.research.paper_trading.models import (
+import mentisrex.research.paper_trading as pt
+from mentisrex.research.paper_trading.broker import MockBroker, SimulatedBroker
+from mentisrex.research.paper_trading.models import (
     BrokerAccount,
     BrokerFill,
     BrokerPosition,
     OrderRequest,
     OrderStatus,
 )
-from aurelius.research.paper_trading.reconciliation import ReconciliationConfig, reconcile
-from aurelius.research.simulation.state import PortfolioState
+from mentisrex.research.paper_trading.reconciliation import ReconciliationConfig, reconcile
+from mentisrex.research.simulation.state import PortfolioState
 
 PRICES = {"A": 100.0, "B": 50.0, "C": 25.0}
 LIM = pt.RiskLimits(max_name_weight=0.5, max_gross_leverage=1.05)
@@ -48,7 +48,7 @@ def _state_with(holdings, cash):
     """holdings: {sid: (shares, cost_basis, price)}."""
     st = PortfolioState(0.0)
     st.ledger.cash = cash
-    from aurelius.research.simulation.models import Holding
+    from mentisrex.research.simulation.models import Holding
     for sid, (sh, cb, pr) in holdings.items():
         st.holdings[sid] = Holding(sid, sh, cb, pr)
     return st
@@ -119,7 +119,7 @@ def test_simulated_broker_rejects_every_n():
 
 
 def test_adapter_stubs_raise():
-    from aurelius.research.paper_trading.adapter import AlpacaAdapter, FIXAdapter
+    from mentisrex.research.paper_trading.adapter import AlpacaAdapter, FIXAdapter
     with pytest.raises(NotImplementedError):
         AlpacaAdapter().connect()
     with pytest.raises(NotImplementedError):
@@ -332,7 +332,7 @@ def test_monitoring_counts_syncs():
 
 def test_serialization_roundtrip_stable():
     import json
-    from aurelius.research.paper_trading import serialization
+    from mentisrex.research.paper_trading import serialization
     s = _session(MockBroker(initial_cash=1_000_000.0))
     s.run(_timeline(), _tp, _pp)
     a = serialization.to_json(s)
@@ -342,7 +342,7 @@ def test_serialization_roundtrip_stable():
 
 
 def test_serialization_save(tmp_path):
-    from aurelius.research.paper_trading import serialization
+    from mentisrex.research.paper_trading import serialization
     s = _session(MockBroker(initial_cash=1_000_000.0))
     s.run(_timeline(3), _tp, _pp)
     p = serialization.save_json(s, str(tmp_path / "sess.json"))
@@ -414,7 +414,7 @@ def test_state_consistency_clean():
 
 
 def test_deployment_readiness_requires_both():
-    from aurelius.research.paper_trading.models import StateConsistencyReport
+    from mentisrex.research.paper_trading.models import StateConsistencyReport
     good = StateConsistencyReport(True, True, True, 0.0, [])
     assert pt.deployment_readiness("PASS", 80.0, good).ready
     assert not pt.deployment_readiness("REJECT", 80.0, good).ready
@@ -431,7 +431,7 @@ def test_validate_session_without_m9():
 
 
 def test_validate_session_with_m9():
-    from aurelius.research.validation import ResearchValidator, ValidationConfig
+    from mentisrex.research.validation import ResearchValidator, ValidationConfig
     # a longer run so M9 has >3 observations with variation
     prices = {"A": 100.0}
     seq = {}

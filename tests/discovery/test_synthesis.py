@@ -2,7 +2,7 @@
 
 import pytest
 
-from aurelius.discovery.synthesis import KnowledgeSynthesizer
+from mentisrex.discovery.synthesis import KnowledgeSynthesizer
 
 
 @pytest.mark.unit

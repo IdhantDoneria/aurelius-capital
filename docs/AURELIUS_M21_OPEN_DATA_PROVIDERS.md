@@ -1,7 +1,7 @@
 # M21 — Open Market Data Provider Integration & Free Data Expansion Layer
 
 **Status:** CERTIFIED  
-**Commit range:** see `AURELIUS_MILESTONE_INDEX.md`  
+**Commit range:** see `MENTISREX_MILESTONE_INDEX.md`  
 **Tests:** 81 deterministic offline tests (0 failures, 0 network calls)  
 **Benchmarks:** 100k obs < 4s; 1M obs < 33s (both within targets)
 
@@ -177,7 +177,7 @@ data.gov.in updates irregularly.
 |-------|-------|
 | Classes | `QlibSourceAdapter`, `QlibExporter` |
 | License | MIT (Qlib format; no Qlib library required) |
-| Coverage | Aurelius datasets in Qlib-compatible format |
+| Coverage | Mentisrex datasets in Qlib-compatible format |
 | Datasets | OHLCV export/import, factor datasets, label datasets |
 | Capabilities | HISTORICAL, BARS |
 
@@ -231,7 +231,7 @@ preserved in `FundamentalObservation.inputs` for audit.
 
 ## Lean Export Layer (`export/lean/`)
 
-`LeanExporter` exports Aurelius outputs to QuantConnect Lean-compatible structures:
+`LeanExporter` exports Mentisrex outputs to QuantConnect Lean-compatible structures:
 
 - `export_ohlcv(observations, output_dir)` — daily equity zip files (10000ths-of-dollar format)
 - `export_universe(universe_by_date, output_path)` — universe membership CSV
@@ -247,7 +247,7 @@ No Lean runtime dependency. Pure filesystem output.
 `default_m21_registry()` extends the M20 operational registry with all 8 M21 providers:
 
 ```python
-from aurelius.research.market_data.providers import default_m21_registry, ALL_PROVIDERS
+from mentisrex.research.market_data.providers import default_m21_registry, ALL_PROVIDERS
 r = default_m21_registry()
 ```
 

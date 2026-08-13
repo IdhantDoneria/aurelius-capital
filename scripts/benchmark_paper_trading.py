@@ -10,7 +10,7 @@ import time
 import tracemalloc
 from datetime import date, timedelta
 
-from aurelius.research.paper_trading import (
+from mentisrex.research.paper_trading import (
     MockBroker,
     PaperTradingSession,
     PreTradeRiskGate,
@@ -19,7 +19,7 @@ from aurelius.research.paper_trading import (
     compute_drift,
     reconcile,
 )
-from aurelius.research.simulation.orders import SizingConfig, generate_orders
+from mentisrex.research.simulation.orders import SizingConfig, generate_orders
 
 
 def _universe(n):

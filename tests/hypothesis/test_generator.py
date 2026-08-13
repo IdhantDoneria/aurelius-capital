@@ -5,8 +5,8 @@ from datetime import UTC, date, datetime
 
 import pytest
 
-from aurelius.hypothesis.generator import _extract_json_array, _str_list, generate
-from aurelius.literature.models import Paper, paper_id
+from mentisrex.hypothesis.generator import _extract_json_array, _str_list, generate
+from mentisrex.literature.models import Paper, paper_id
 
 
 def _paper(enriched: bool = True) -> Paper:

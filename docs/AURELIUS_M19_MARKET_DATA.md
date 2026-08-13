@@ -21,7 +21,7 @@ risk engine. It addresses **all six** M18 deferred items.
 
 ### Package
 
-`src/aurelius/research/market_data/` — 23 modules.
+`src/mentisrex/research/market_data/` — 23 modules.
 
 ## 1. Architecture
 

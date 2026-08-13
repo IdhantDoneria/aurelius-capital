@@ -1,6 +1,6 @@
 # Future Alpha Roadmap (post-momentum)
 
-**Aurelius Capital — Momentum Campaign, Phase-6 (M11)**
+**Mentisrex Capital — Momentum Campaign, Phase-6 (M11)**
 **Date:** 2026-08-05. Ranking + justification only — **nothing implemented**. M12
 selects from this after M11 certification.
 

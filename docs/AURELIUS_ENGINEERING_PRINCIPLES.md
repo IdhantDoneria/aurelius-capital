@@ -1,4 +1,4 @@
-# Aurelius Research Platform — Engineering Principles
+# Mentisrex Research Platform — Engineering Principles
 
 The rules every milestone (M12 onward) must obey. These are inherited, not
 negotiated. A milestone is not complete until it satisfies all of them. They encode

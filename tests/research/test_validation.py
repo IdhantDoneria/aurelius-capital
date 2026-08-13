@@ -11,9 +11,9 @@ from datetime import UTC, datetime, timedelta
 import numpy as np
 import pytest
 
-from aurelius.backtesting.analytics.performance import EquityPoint, PerformanceMetrics, RoundTrip
-from aurelius.research.validation import ResearchValidator, ValidationConfig, check
-from aurelius.research.validation import (
+from mentisrex.backtesting.analytics.performance import EquityPoint, PerformanceMetrics, RoundTrip
+from mentisrex.research.validation import ResearchValidator, ValidationConfig, check
+from mentisrex.research.validation import (
     bootstrap,
     capacity as cap_mod,
     multiple_testing,
@@ -22,8 +22,8 @@ from aurelius.research.validation import (
     scoring,
     walkforward,
 )
-from aurelius.research.validation.significance import sharpe, significance
-from aurelius.research.experiment_registry import ExperimentRegistry, RegistryStore, lineage
+from mentisrex.research.validation.significance import sharpe, significance
+from mentisrex.research.experiment_registry import ExperimentRegistry, RegistryStore, lineage
 
 
 def _series(drift, vol, n=750, seed=1):
@@ -115,7 +115,7 @@ def test_walkforward_splits():
 # 4. parameter sensitivity / stability ────────────────────────────────────────────
 
 def test_parameter_sensitivity():
-    from aurelius.research.validation import sensitivity, stability
+    from mentisrex.research.validation import sensitivity, stability
     # evaluator: Sharpe peaks near lookback=20, flat plateau around it
     def evaluator(overrides):
         v = overrides.get("lookback", 20)
@@ -214,7 +214,7 @@ def test_registry_integration(registry, tmp_path):
 # 11. execution integration (M8 → M9) ──────────────────────────────────
 
 def test_execution_integration(registry, tmp_path):
-    from aurelius.research.execution import ResearchRunner, RunConfiguration
+    from mentisrex.research.execution import ResearchRunner, RunConfiguration
 
     class _Report:
         metrics = _pm()

@@ -1,6 +1,6 @@
 # Research Knowledge Graph — Phase 15
 
-Institutional memory for the Aurelius Capital research platform. Every paper, hypothesis, feature, experiment, and validation result is a node. Every relationship between them is an edge. Researchers query the graph; the graph accumulates knowledge.
+Institutional memory for the Mentisrex Capital research platform. Every paper, hypothesis, feature, experiment, and validation result is a node. Every relationship between them is an edge. Researchers query the graph; the graph accumulates knowledge.
 
 ---
 
@@ -314,7 +314,7 @@ Program-level node. Full detail: `campaign/momentum/Knowledge_Graph_Summary.md` 
 3. **High-vol names are illiquid micro-caps** → short-leg capacity floor ₹0.27 cr vs
    long-leg ₹16 cr. Low-vol must be **long-biased** to deploy.
 4. **Cost is never the L/S killer; construction is** (~4pp gross-to-high vs −100%+ DD).
-5. **0 significant L/S equity factors on 2014–2026 Aurelius data** (momentum 0/14 L/S,
+5. **0 significant L/S equity factors on 2014–2026 Mentisrex data** (momentum 0/14 L/S,
    pairs 0/14, low-vol 0/8). Only survivor pattern = long-only single-market. Next-value
    actions: long-only low-vol, vol-scaled construction, **acquire CRSP + Compustat**
    (unblocks idio-vol/BAB, survivorship, fundamentals — program-wide binding constraint).

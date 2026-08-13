@@ -12,8 +12,8 @@ from __future__ import annotations
 import sys
 import time
 
-from aurelius.research.experiment_registry import ExperimentRegistry, RegistryStore
-from aurelius.research.experiment_registry import lineage
+from mentisrex.research.experiment_registry import ExperimentRegistry, RegistryStore
+from mentisrex.research.experiment_registry import lineage
 
 
 def run(n: int = 100_000) -> None:

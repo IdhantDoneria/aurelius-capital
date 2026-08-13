@@ -11,7 +11,7 @@ from datetime import date
 
 import pytest
 
-from aurelius.market_data.identity import Security, SecurityMaster, make_security_id
+from mentisrex.market_data.identity import Security, SecurityMaster, make_security_id
 
 
 @pytest.fixture

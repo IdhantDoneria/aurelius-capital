@@ -1,6 +1,6 @@
 """Unit tests for QuantTaxonomy."""
 
-from aurelius.corpus.taxonomy import QuantTaxonomy
+from mentisrex.corpus.taxonomy import QuantTaxonomy
 
 
 def test_taxonomy_domains_exist() -> None:

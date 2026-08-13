@@ -140,13 +140,13 @@ Default conservative:
 
 ```bash
 # Find all Strategy implementations
-grep -r "class.*Strategy" src/aurelius
+grep -r "class.*Strategy" src/mentisrex
 
 # Find test examples
 find tests/backtesting -name "*.py" -exec grep "class.*Strategy" {} \;
 
 # Check what strategies already exist
-ls src/aurelius/backtesting/strategy/
+ls src/mentisrex/backtesting/strategy/
 ```
 
 ---

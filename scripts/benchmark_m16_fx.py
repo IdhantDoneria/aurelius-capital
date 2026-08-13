@@ -14,9 +14,9 @@ import tracemalloc
 from datetime import date
 from itertools import product
 
-from aurelius.research import fx
-from aurelius.research.fx import serialization
-from aurelius.research.post_trade import SettlementConfig
+from mentisrex.research import fx
+from mentisrex.research.fx import serialization
+from mentisrex.research.post_trade import SettlementConfig
 
 T0 = date(2026, 1, 5)
 _LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

@@ -17,7 +17,7 @@ P&L and event fingerprint are byte-identical to pre-M17.
 
 ### Package
 
-`src/aurelius/research/instruments/` — 24 modules (see below).
+`src/mentisrex/research/instruments/` — 24 modules (see below).
 
 ## Architecture
 

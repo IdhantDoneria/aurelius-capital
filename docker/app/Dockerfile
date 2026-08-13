@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 FROM python:3.12-slim AS runtime
 
 # Non-root user — never run as root in production
-RUN groupadd -r aurelius && useradd -r -g aurelius -d /app -s /bin/bash aurelius
+RUN groupadd -r mentisrex && useradd -r -g mentisrex -d /app -s /bin/bash mentisrex
 
 WORKDIR /app
 
@@ -37,12 +37,12 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy application source
 COPY src/ src/
 
-RUN chown -R aurelius:aurelius /app
-USER aurelius
+RUN chown -R mentisrex:mentisrex /app
+USER mentisrex
 
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8000/health/live || exit 1
 
-CMD ["uvicorn", "aurelius.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "mentisrex.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -15,13 +15,13 @@ Properties:
 
 from __future__ import annotations
 
-from aurelius.research.strategy_deployment.models import (
+from mentisrex.research.strategy_deployment.models import (
     FeatureSet,
     SignalRecord,
     SignalSet,
     StrategySpecification,
 )
-from aurelius.research.strategy_deployment.runtime import StrategyLogic
+from mentisrex.research.strategy_deployment.runtime import StrategyLogic
 
 
 class EqualWeightMomentumLogic(StrategyLogic):

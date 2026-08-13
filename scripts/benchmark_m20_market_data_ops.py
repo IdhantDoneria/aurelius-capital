@@ -12,7 +12,7 @@ import time
 import tracemalloc
 from datetime import date
 
-from aurelius.research import market_data_ops as ops
+from mentisrex.research import market_data_ops as ops
 
 
 def _stream(n_secs: int, days: int, *, seed: int = 0):

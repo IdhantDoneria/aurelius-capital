@@ -1,6 +1,6 @@
 # Canonical Reproductions — Pairs Trading Campaign
 
-**Aurelius Capital — Workstream B**
+**Mentisrex Capital — Workstream B**
 **Date:** 2026-08-04
 **Source:** every figure traces to `campaign/pairs/runs/{us,india}.jsonl`. Frozen
 platform, no tuning, one OOS split per config.
@@ -13,7 +13,7 @@ diversified book (`MultiPairStrategy`), 2-SD entry / 0.5-SD exit, 126d spread
 window; IS/OOS 70/30 chronological split. Selection screened to the 300 most-liquid
 complete-history names per market (Gatev-consistent liquidity filter).
 
-| Metric | Gatev (published, top-20) | Aurelius US | Aurelius India |
+| Metric | Gatev (published, top-20) | Mentisrex US | Mentisrex India |
 |---|---|---|---|
 | Excess return | **≈ +11%/yr**, low beta | −5.74% (OOS, ~3.8y) | +8.72% (OOS) |
 | Sharpe | high | **−1.076** | **−0.425** |

@@ -13,8 +13,8 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from aurelius.market_data.adapters.base import RawBar
-from aurelius.market_data.pipeline.ingestion import IngestionPipeline, IngestionReport
+from mentisrex.market_data.adapters.base import RawBar
+from mentisrex.market_data.pipeline.ingestion import IngestionPipeline, IngestionReport
 
 _SOURCE_ID = uuid4()
 _SYMBOL_ID = UUID("00000000-0000-0000-0000-000000000001")
@@ -93,7 +93,7 @@ async def test_valid_bars_inserted():
     pipeline, _, mock_session = _make_pipeline()
     mock_session.execute.return_value = _mock_symbol_result()
 
-    with patch("aurelius.market_data.pipeline.ingestion.OHLCVRepository") as mock_repo_class:
+    with patch("mentisrex.market_data.pipeline.ingestion.OHLCVRepository") as mock_repo_class:
         mock_repo = AsyncMock()
         mock_repo_class.return_value = mock_repo
         mock_repo.bulk_insert.return_value = 1
@@ -114,7 +114,7 @@ async def test_invalid_ohlc_bar_rejected():
 
     bad_bar = _raw_bar(high=Decimal("180.00"), low=Decimal("190.00"))  # high < low
 
-    with patch("aurelius.market_data.pipeline.ingestion.OHLCVRepository") as mock_repo_class:
+    with patch("mentisrex.market_data.pipeline.ingestion.OHLCVRepository") as mock_repo_class:
         mock_repo = AsyncMock()
         mock_repo_class.return_value = mock_repo
         mock_repo.bulk_insert.return_value = 0
@@ -132,7 +132,7 @@ async def test_db_error_on_batch_continues():
     pipeline, _, mock_session = _make_pipeline()
     mock_session.execute.return_value = _mock_symbol_result()
 
-    with patch("aurelius.market_data.pipeline.ingestion.OHLCVRepository") as mock_repo_class:
+    with patch("mentisrex.market_data.pipeline.ingestion.OHLCVRepository") as mock_repo_class:
         mock_repo = AsyncMock()
         mock_repo_class.return_value = mock_repo
         mock_repo.bulk_insert.side_effect = RuntimeError("DB connection lost")
@@ -165,7 +165,7 @@ async def test_normalizer_called_uppercase():
     # Pass lowercase symbol
     bar = _raw_bar(symbol="aapl")
 
-    with patch("aurelius.market_data.pipeline.ingestion.OHLCVRepository") as mock_repo_class:
+    with patch("mentisrex.market_data.pipeline.ingestion.OHLCVRepository") as mock_repo_class:
         mock_repo = AsyncMock()
         mock_repo_class.return_value = mock_repo
         mock_repo.bulk_insert.return_value = 1
@@ -187,7 +187,7 @@ async def test_gap_warning_logged():
         _raw_bar(timestamp=datetime(2024, 1, 20, tzinfo=UTC)),  # 18-day gap
     ]
 
-    with patch("aurelius.market_data.pipeline.ingestion.OHLCVRepository") as mock_repo_class:
+    with patch("mentisrex.market_data.pipeline.ingestion.OHLCVRepository") as mock_repo_class:
         mock_repo = AsyncMock()
         mock_repo_class.return_value = mock_repo
         mock_repo.bulk_insert.return_value = 2
@@ -217,7 +217,7 @@ async def test_gaps_attributed_per_symbol_not_across_symbols():
         _raw_bar(symbol="AAPL", timestamp=datetime(2024, 1, 20, tzinfo=UTC)),  # 18-day gap
     ]
 
-    with patch("aurelius.market_data.pipeline.ingestion.OHLCVRepository") as mock_repo_class:
+    with patch("mentisrex.market_data.pipeline.ingestion.OHLCVRepository") as mock_repo_class:
         mock_repo = AsyncMock()
         mock_repo_class.return_value = mock_repo
         mock_repo.bulk_insert.return_value = len(bars)
@@ -242,7 +242,7 @@ async def test_multiple_symbols_each_gap_reported_once():
         _raw_bar(symbol="MSFT", timestamp=datetime(2024, 1, 25, tzinfo=UTC)),
     ]
 
-    with patch("aurelius.market_data.pipeline.ingestion.OHLCVRepository") as mock_repo_class:
+    with patch("mentisrex.market_data.pipeline.ingestion.OHLCVRepository") as mock_repo_class:
         mock_repo = AsyncMock()
         mock_repo_class.return_value = mock_repo
         mock_repo.bulk_insert.return_value = len(bars)

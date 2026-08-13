@@ -1,10 +1,10 @@
-# Aurelius Capital — Research Operating System (ROS)
+# Mentisrex Capital — Research Operating System (ROS)
 
 **Owner:** Head of Quantitative Research Operations.
 **Status:** Operating manual. Governs how every researcher works. Stable for years; edit only by decision-log entry (§6).
 **Scope:** the *process*. The methodology it enforces lives in [`RESEARCH_PROGRAM.md`](RESEARCH_PROGRAM.md), the alpha map in [`ALPHA_TAXONOMY.md`](ALPHA_TAXONOMY.md), the idea queue in [`HYPOTHESIS_BACKLOG.md`](HYPOTHESIS_BACKLOG.md), the platform trust boundary in [`ACCEPTANCE_TEST.md`](ACCEPTANCE_TEST.md). This document does not restate them — it wires them into a repeatable operation.
 
-**Design rule of the ROS itself:** two systems of record already exist — the **git repo** (human-readable artifacts) and **`./data/research.duckdb`** via `aurelius.research.store.ResearchStore` (queryable hypotheses + experiments + verdicts). The ROS binds them by ID. It does **not** introduce a third store. Where a stage has no DB table (papers, reviews, decisions), the git file *is* the record.
+**Design rule of the ROS itself:** two systems of record already exist — the **git repo** (human-readable artifacts) and **`./data/research.duckdb`** via `mentisrex.research.store.ResearchStore` (queryable hypotheses + experiments + verdicts). The ROS binds them by ID. It does **not** introduce a third store. Where a stage has no DB table (papers, reviews, decisions), the git file *is* the record.
 
 ---
 
@@ -60,7 +60,7 @@ research/
 
 Rules:
 - **Dirs are lazy.** They do not pre-exist; `mkdir -p` on first artifact. No empty `.gitkeep` scaffolding.
-- **Features and datasets are not duplicated into git.** Features are *code* — `aurelius.features` library + the feature registry; a hypothesis references them by name in `features_used`. Datasets are *fingerprints* — `dataset_fingerprint(symbols, first, last, n_rows)` from `research.models`; `research/datasets/<fingerprint>.md` is a one-page manifest, not the data. The bytes live in the data store.
+- **Features and datasets are not duplicated into git.** Features are *code* — `mentisrex.features` library + the feature registry; a hypothesis references them by name in `features_used`. Datasets are *fingerprints* — `dataset_fingerprint(symbols, first, last, n_rows)` from `research.models`; `research/datasets/<fingerprint>.md` is a one-page manifest, not the data. The bytes live in the data store.
 - **PDFs are never committed** (licensing + repo bloat). `source.txt` carries DOI/URL/local path.
 
 ### 1.3 Database structure (already built — do not rebuild)
@@ -129,7 +129,7 @@ created_at:
 status: implemented
 ---
 ## Question              # exact hypothesis under test
-## Strategy & template   # class from aurelius.research.templates (or new); strategy_version
+## Strategy & template   # class from mentisrex.research.templates (or new); strategy_version
 ## Parameters            # -> experiments.params. Grid to be swept (declare BEFORE running)
 ## Features              # -> experiments.features_used
 ## Dataset               # -> experiments.dataset_version = dataset_fingerprint(...); the manifest path

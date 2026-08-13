@@ -13,10 +13,10 @@ from datetime import date
 
 import pytest
 
-from aurelius.research import fx
-from aurelius.research.fx import conversion as conv
-from aurelius.research.post_trade import PostTradeEngine, SettlementConfig
-from aurelius.research.post_trade import fingerprint as pt_fingerprint
+from mentisrex.research import fx
+from mentisrex.research.fx import conversion as conv
+from mentisrex.research.post_trade import PostTradeEngine, SettlementConfig
+from mentisrex.research.post_trade import fingerprint as pt_fingerprint
 
 D0 = date(2026, 1, 5)          # Monday
 D1 = date(2026, 1, 6)
@@ -366,7 +366,7 @@ def test_base_book_always_exists():
 def test_currency_balances_independent():
     b = book(initial={"USD": 500_000.0, "EUR": 200_000.0})
     bals = fx.settlement_by_currency(b)  # just ensure book set up
-    from aurelius.research.fx.multi_currency_cash import currency_balances
+    from mentisrex.research.fx.multi_currency_cash import currency_balances
     cb = currency_balances(b)
     assert cb["USD"].economic == pytest.approx(500_000)
     assert cb["EUR"].economic == pytest.approx(200_000)
@@ -376,14 +376,14 @@ def test_currency_balances_independent():
 def test_multi_currency_cash_base_total():
     b = book(initial={"USD": 500_000.0, "EUR": 200_000.0})
     mc = fx.MultiCurrencyBook  # noqa: F841
-    m = __import__("aurelius.research.fx.multi_currency_cash", fromlist=["multi_currency_cash"])
+    m = __import__("mentisrex.research.fx.multi_currency_cash", fromlist=["multi_currency_cash"])
     res = m.multi_currency_cash(b, as_of=D0)
     assert res.total_base_economic == pytest.approx(500_000 + 200_000 * 1.10)
 
 
 def test_cash_not_collapsed():
     b = book(initial={"USD": 500_000.0, "EUR": 200_000.0})
-    m = __import__("aurelius.research.fx.multi_currency_cash", fromlist=["currency_balances"])
+    m = __import__("mentisrex.research.fx.multi_currency_cash", fromlist=["currency_balances"])
     cb = m.currency_balances(b)
     assert set(cb) == {"USD", "EUR"}
 
@@ -599,7 +599,7 @@ def test_fund_settlement_inflow_noop():
 def test_dividend_in_security_currency():
     b = book(initial={"USD": 1_000_000.0, "EUR": 100_000.0})
     b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR", trade_date=D0)
-    from aurelius.research.post_trade import DividendEvent
+    from mentisrex.research.post_trade import DividendEvent
     fx.apply_corporate_action(b, DividendEvent("D1", "SAP", amount_per_share=2.0, ex_date=D0))
     # dividend lands in EUR book
     assert b.books["EUR"].accounting.cash == pytest.approx(100_000 - 5000 + 200)
@@ -608,7 +608,7 @@ def test_dividend_in_security_currency():
 def test_dividend_converted_to_base():
     b = book(initial={"USD": 1_000_000.0, "EUR": 100_000.0})
     b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR", trade_date=D0)
-    from aurelius.research.post_trade import DividendEvent
+    from mentisrex.research.post_trade import DividendEvent
     n0 = len(b.conversions)
     fx.apply_corporate_action(b, DividendEvent("D1", "SAP", amount_per_share=2.0, ex_date=D0),
                               receive_currency="USD")
@@ -618,7 +618,7 @@ def test_dividend_converted_to_base():
 def test_split_multi_currency():
     b = book(initial={"EUR": 100_000.0})
     b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR", trade_date=D0)
-    from aurelius.research.post_trade import SplitEvent
+    from mentisrex.research.post_trade import SplitEvent
     fx.apply_corporate_action(b, SplitEvent("S1", "SAP", ratio=2.0, ex_date=D0))
     assert b.books["EUR"].accounting.shares("SAP") == 200
 
@@ -656,7 +656,7 @@ def test_reconcile_clean():
 
 
 def test_reconcile_detects_bad_conversion():
-    from aurelius.research.fx.models import ConversionDirection, FXConversion
+    from mentisrex.research.fx.models import ConversionDirection, FXConversion
     b = book()
     b.conversions.append(FXConversion("BAD", "EUR", "USD", 100, 999, 1.10,
                                       ConversionDirection.DIRECT, D0, "static"))
@@ -665,7 +665,7 @@ def test_reconcile_detects_bad_conversion():
 
 
 def test_reconcile_detects_bad_rate():
-    from aurelius.research.fx.models import ConversionDirection, FXConversion
+    from mentisrex.research.fx.models import ConversionDirection, FXConversion
     b = book()
     b.conversions.append(FXConversion("BAD", "EUR", "USD", 100, -110, -1.10,
                                       ConversionDirection.DIRECT, D0, "static"))
@@ -674,7 +674,7 @@ def test_reconcile_detects_bad_rate():
 
 
 def test_reconcile_broker_positions():
-    from aurelius.research.paper_trading.models import BrokerAccount, BrokerPosition
+    from mentisrex.research.paper_trading.models import BrokerAccount, BrokerPosition
     b = book(initial={"EUR": 100_000.0})
     b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR", trade_date=D0)
     acct = BrokerAccount(account_id="x", cash=b.books["EUR"].accounting.cash,
@@ -817,7 +817,7 @@ def test_portfolio_report_with_pnl():
 # ─────────────────────────── serialization ─────────────────────────────────
 
 def test_serialization_round_trip_conversions():
-    from aurelius.research.fx import serialization
+    from mentisrex.research.fx import serialization
     b = book()
     b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR",
                 funding_currency="USD", trade_date=D0)
@@ -827,13 +827,13 @@ def test_serialization_round_trip_conversions():
 
 
 def test_serialization_json_stable():
-    from aurelius.research.fx import serialization
+    from mentisrex.research.fx import serialization
     b = book(initial={"USD": 1_000_000.0, "EUR": 100_000.0})
     assert serialization.to_json(b, as_of=D0) == serialization.to_json(b, as_of=D0)
 
 
 def test_serialization_preserves_currencies():
-    from aurelius.research.fx import serialization
+    from mentisrex.research.fx import serialization
     b = book(initial={"USD": 1_000_000.0, "EUR": 100_000.0})
     d = serialization.to_dict(b, as_of=D0)
     assert set(d["currencies"]) == {"USD", "EUR"}
@@ -866,7 +866,7 @@ def test_validate_book_clean():
 
 
 def test_validate_book_detects_bad_conversion():
-    from aurelius.research.fx.models import ConversionDirection, FXConversion
+    from mentisrex.research.fx.models import ConversionDirection, FXConversion
     b = book()
     b.conversions.append(FXConversion("BAD", "EUR", "USD", 100, 999, 1.10,
                                       ConversionDirection.DIRECT, D0, "static"))
@@ -951,7 +951,7 @@ def test_invariant_convert_round_trip():
 
 def test_invariant_cash_sum_equals_base():
     b = book(initial={"USD": 500_000.0, "EUR": 200_000.0, "GBP": 100_000.0})
-    m = __import__("aurelius.research.fx.multi_currency_cash", fromlist=["currency_balances"])
+    m = __import__("mentisrex.research.fx.multi_currency_cash", fromlist=["currency_balances"])
     cb = m.currency_balances(b)
     manual = sum(bal.economic * b.base_rate(c, D0) for c, bal in cb.items())
     assert fx.valuation(b, as_of=D0).cash_base == pytest.approx(manual)

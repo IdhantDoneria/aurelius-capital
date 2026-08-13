@@ -6,7 +6,7 @@ ownership XML, parse, append. Needs network + xmltodict + a descriptive SEC
 User-Agent ("Name email") per SEC fair-access policy.
 
 Usage:
-    python scripts/backfill_insiders.py 320193 --user-agent "Aurelius you@example.com"
+    python scripts/backfill_insiders.py 320193 --user-agent "Mentisrex you@example.com"
     python scripts/backfill_insiders.py --cik-file ciks.txt --user-agent "..." --since 2020-01-01
 """
 
@@ -20,7 +20,7 @@ from pathlib import Path
 
 import httpx
 
-from aurelius.market_data.insiders import (
+from mentisrex.market_data.insiders import (
     InsiderStore,
     fetch_submissions,
     parse_form3,

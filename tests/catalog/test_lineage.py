@@ -2,8 +2,8 @@
 
 import pytest
 
-from aurelius.catalog.lineage import LineageTracker
-from aurelius.catalog.store import CatalogStore
+from mentisrex.catalog.lineage import LineageTracker
+from mentisrex.catalog.store import CatalogStore
 
 
 @pytest.fixture

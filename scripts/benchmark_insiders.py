@@ -14,7 +14,7 @@ import sys
 import time
 from datetime import date, datetime, timedelta
 
-from aurelius.market_data.insiders import InsiderStore
+from mentisrex.market_data.insiders import InsiderStore
 
 
 def run(n: int = 1_000_000, securities: int = 10_000) -> None:

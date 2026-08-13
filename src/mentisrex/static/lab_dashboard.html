@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mentisrex — Research Laboratory</title>
+<style>
+  :root{
+    --bg:#0d1117; --surface:#161b22; --surface2:#1c2330; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#388bfd;
+    --ok:#3fb950; --skip:#d29922; --fail:#f85149;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  header{padding:16px 24px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:16px;background:var(--surface)}
+  header h1{font-size:18px;margin:0;font-weight:600}
+  header .sub{color:var(--muted);font-size:12px}
+  header .right{margin-left:auto;display:flex;gap:8px}
+  button{background:var(--surface2);color:var(--text);border:1px solid var(--border);
+    padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px}
+  button.run{background:var(--ok);color:#04260f;border:0;font-weight:600}
+  button:hover{opacity:.9}
+  button:disabled{opacity:.5;cursor:wait}
+  main{padding:24px;max-width:1400px;margin:0 auto}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px}
+  .card h2{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 10px}
+  .kpi{font-size:26px;font-weight:700}
+  .kpi small{font-size:12px;color:var(--muted);font-weight:400}
+  .kpi.deg{color:var(--skip)}
+  .section{margin-top:24px}
+  .section h2{font-size:15px;margin:0 0 12px}
+  .pipeline{display:flex;flex-wrap:wrap;gap:8px}
+  .step{flex:1;min-width:150px;background:var(--surface);border:1px solid var(--border);
+    border-radius:8px;padding:10px 12px;position:relative;overflow:hidden}
+  .step::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--muted)}
+  .step.ok::before{background:var(--ok)} .step.skipped::before{background:var(--skip)}
+  .step.failed::before{background:var(--fail)}
+  .step .n{font-size:11px;color:var(--muted)}
+  .step .name{font-weight:600;font-size:13px;margin:2px 0}
+  .step .meta{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .step .reason{font-size:11px;color:var(--skip);margin-top:4px}
+  .step .err{font-size:11px;color:var(--fail);margin-top:4px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border)}
+  th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase}
+  .badge{padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700}
+  .b-ok{background:var(--ok);color:#04260f} .b-skip{background:var(--skip);color:#3d2c04}
+  .b-fail{background:var(--fail);color:#fff}
+  .muted{color:var(--muted)}
+  .cols{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  #err{color:var(--fail);padding:12px 0}
+  .loading{color:var(--muted);padding:40px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <h1>Autonomous Research Laboratory</h1>
+  <span class="sub" id="ts">—</span>
+  <div class="right">
+    <button onclick="load()">Refresh</button>
+    <button class="run" id="runBtn" onclick="runCycle()">▶ Run cycle</button>
+  </div>
+</header>
+<main>
+  <div id="err"></div>
+  <div id="content"><div class="loading">Loading laboratory state…</div></div>
+</main>
+<script>
+const esc = s => String(s??"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const j = async p => (await fetch(p)).json();
+const STEP_ORDER = ["discover_literature","update_literature","generate_hypotheses",
+  "compare_knowledge_graph","remove_duplicates","prioritize","create_experiment_specs",
+  "execute_experiments","statistical_validation","store_results","update_knowledge_graph",
+  "recommendations","reports"];
+
+function monCards(m){
+  const h = m.system_health||{};
+  const deg = h.status==="degraded";
+  const cards = [
+    ["System health", h.status||"—", (h.issues||[]).join(", ")||"all clear", deg],
+    ["Hypotheses", m.research_throughput?.hypotheses_total ?? 0, "in backlog store", false],
+    ["Experiments", m.experiment_throughput?.experiments_recorded ?? 0,
+      (m.experiment_throughput?.per_week ?? 0)+" / week", false],
+    ["KG nodes", m.knowledge_growth?.nodes_total ?? 0, "knowledge graph", false],
+    ["Queue backlog", m.queue_health?.backlog_size ?? 0, "actionable", false],
+    ["Budget pressure", m.resource_utilization?.budget_pressure ?? "—",
+      m.resource_utilization?.backlog_runtime_min+"m load", (m.resource_utilization?.budget_pressure>1)],
+    ["Job failure rate", Math.round((m.research_failures?.job_failure_rate||0)*100)+"%", "recent cycles", (m.research_failures?.job_failure_rate>0.2)],
+    ["Paper FP rate", h.validation_false_positive_rate==null?"—":Math.round(h.validation_false_positive_rate*100)+"%", "validation misses", false],
+  ];
+  return `<div class="grid">${cards.map(([t,v,s,d])=>`
+    <div class="card"><h2>${t}</h2><div class="kpi ${d?'deg':''}">${esc(v)}
+      <small>${esc(s)}</small></div></div>`).join("")}</div>`;
+}
+
+function pipeline(steps){
+  if(!steps) return `<div class="card muted">No cycle has run yet. Click “Run cycle”.</div>`;
+  return `<div class="pipeline">${STEP_ORDER.map((name,i)=>{
+    const s = steps[name]||{status:"pending"};
+    const sm = s.summary?Object.entries(s.summary).slice(0,2).map(([k,v])=>`${k}=${JSON.stringify(v)}`).join(" · "):"";
+    return `<div class="step ${s.status}">
+      <div class="n">${String(i+1).padStart(2,"0")}</div>
+      <div class="name">${esc(name.replace(/_/g," "))}</div>
+      <div class="meta">${esc(s.status)}${sm?" · "+esc(sm):""}</div>
+      ${s.reason?`<div class="reason">${esc(s.reason)}</div>`:""}
+      ${s.error?`<div class="err">${esc(s.error)}</div>`:""}
+    </div>`;
+  }).join("")}</div>`;
+}
+
+function cyclesTable(rows){
+  if(!rows||!rows.length) return `<div class="card muted">No cycles recorded.</div>`;
+  return `<div class="card"><table>
+    <thead><tr><th>Cycle</th><th>When</th><th>OK</th><th>Skipped</th><th>Failed</th></tr></thead>
+    <tbody>${rows.map(c=>`<tr>
+      <td class="muted">${esc(c.cycle_id)}</td>
+      <td class="muted">${esc((c.ts||"").replace("T"," ").slice(0,19))}</td>
+      <td><span class="badge b-ok">${c.ok??0}</span></td>
+      <td><span class="badge b-skip">${c.skipped??0}</span></td>
+      <td>${c.failed?`<span class="badge b-fail">${c.failed}</span>`:'0'}</td>
+    </tr>`).join("")}</tbody></table></div>`;
+}
+
+async function runCycle(){
+  const btn=document.getElementById("runBtn");
+  btn.disabled=true; btn.textContent="Running…";
+  try{ await fetch("/lab/run",{method:"POST"}); await load(); }
+  catch(e){ document.getElementById("err").textContent="Run failed: "+e.message; }
+  finally{ btn.disabled=false; btn.textContent="▶ Run cycle"; }
+}
+
+async function load(){
+  const err=document.getElementById("err"); err.textContent="";
+  try{
+    const [status, monitor, cycles] = await Promise.all(
+      [j("/lab/status"), j("/lab/monitor"), j("/lab/cycles?n=10")]);
+    document.getElementById("ts").textContent = "updated "+new Date().toLocaleString();
+    const cfg = status.configured||{};
+    const cfgLine = ["paper_source","bars_provider","llm"].map(k=>
+      `${k}: ${cfg[k]?'<span style="color:var(--ok)">wired</span>':'<span style="color:var(--skip)">not wired</span>'}`).join(" &nbsp;·&nbsp; ");
+    document.getElementById("content").innerHTML = `
+      ${monCards(monitor)}
+      <div class="section"><h2>Cycle pipeline
+        <span class="muted" style="font-size:12px;font-weight:400">— ${cfgLine}</span></h2>
+        ${pipeline(status.last_cycle?.steps)}</div>
+      <div class="cols" style="margin-top:24px">
+        <div><h2 style="font-size:15px">Recent cycles</h2>${cyclesTable(cycles)}</div>
+        <div><h2 style="font-size:15px">Recommendations pending</h2>
+          <div class="card muted">See <a href="/intel/dashboard/view" style="color:var(--accent)">Intelligence dashboard</a> for full recommendations & reports.</div></div>
+      </div>`;
+  }catch(e){ err.textContent="Failed to load: "+e.message; }
+}
+load();
+</script>
+</body>
+</html>

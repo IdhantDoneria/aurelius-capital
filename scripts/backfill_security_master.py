@@ -20,7 +20,7 @@ from datetime import date
 
 import duckdb
 
-from aurelius.market_data.identity import Security, SecurityMaster, make_security_id
+from mentisrex.market_data.identity import Security, SecurityMaster, make_security_id
 
 
 def backfill(source_db: str, table: str, identity_db: str, exchange: str) -> int:

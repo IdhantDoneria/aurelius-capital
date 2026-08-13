@@ -18,10 +18,10 @@ from datetime import UTC, datetime, timedelta
 
 import numpy as np
 
-from aurelius.backtesting.analytics.performance import EquityPoint, PerformanceMetrics, RoundTrip
-from aurelius.research.validation import ResearchValidator, ValidationConfig
-from aurelius.research.validation import bootstrap, monte_carlo
-from aurelius.research.validation.significance import sharpe
+from mentisrex.backtesting.analytics.performance import EquityPoint, PerformanceMetrics, RoundTrip
+from mentisrex.research.validation import ResearchValidator, ValidationConfig
+from mentisrex.research.validation import bootstrap, monte_carlo
+from mentisrex.research.validation.significance import sharpe
 
 
 def _pm(n, seed=1):

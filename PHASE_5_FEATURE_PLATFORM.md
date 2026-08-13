@@ -1,6 +1,6 @@
 # Phase 5 — Institutional Feature Engineering Platform
 
-**Status:** 139/139 tests pass (126 prior + 13 new). Ruff clean. Package: `src/aurelius/features/`.
+**Status:** 139/139 tests pass (126 prior + 13 new). Ruff clean. Package: `src/mentisrex/features/`.
 
 A reusable feature ecosystem: features are defined once, documented, versioned,
 and reused across every model and backtest — never recomputed inline in a strategy.

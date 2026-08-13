@@ -34,7 +34,7 @@ jobs:
       # yet mypy --strict clean. Report types but don't block the build on that
       # pre-existing debt. Flip to blocking once the debt is paid.
       - name: Mypy type check (advisory)
-        run: mypy src/aurelius
+        run: mypy src/mentisrex
         continue-on-error: true
 
   unit-tests:
@@ -49,7 +49,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      # Editable so coverage's src/aurelius path matches the imported package
+      # Editable so coverage's src/mentisrex path matches the imported package
       # (a plain install runs from site-packages and coverage records 0%).
       - name: Install dependencies
         run: pip install -e ".[dev]"
@@ -58,7 +58,7 @@ jobs:
       # runs in its own job). `tests/unit/ -m unit` selected nothing — no test
       # carries the `unit` marker — so coverage was 0. This runs the real suite.
       - name: Run unit tests
-        run: pytest tests/ -m "not integration" --cov=src/aurelius --cov-report=xml -v
+        run: pytest tests/ -m "not integration" --cov=src/mentisrex --cov-report=xml -v
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
@@ -75,13 +75,13 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_DB: aurelius_test
-          POSTGRES_USER: aurelius
+          POSTGRES_DB: mentisrex_test
+          POSTGRES_USER: mentisrex
           POSTGRES_PASSWORD: test_password
         ports:
           - 5433:5432
         options: >-
-          --health-cmd "pg_isready -U aurelius -d aurelius_test"
+          --health-cmd "pg_isready -U mentisrex -d mentisrex_test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -100,8 +100,8 @@ jobs:
       ENVIRONMENT: testing
       DATABASE_HOST: localhost
       DATABASE_PORT: 5433
-      DATABASE_NAME: aurelius_test
-      DATABASE_USER: aurelius
+      DATABASE_NAME: mentisrex_test
+      DATABASE_USER: mentisrex
       DATABASE_PASSWORD: test_password
       REDIS_HOST: localhost
       REDIS_PORT: 6380
@@ -132,18 +132,18 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -f docker/app/Dockerfile -t aurelius-capital:ci .
+        run: docker build -f docker/app/Dockerfile -t mentisrex-capital:ci .
 
       - name: Verify image runs
         run: |
           docker run --rm -d \
-            --name aurelius-ci-test \
+            --name mentisrex-ci-test \
             -e ENVIRONMENT=testing \
             -e SECRET_KEY=ci-test-key-long-enough \
             -e DATABASE_HOST=localhost \
             -e DATABASE_PASSWORD=x \
             -e DATABASE_USER=x \
             -p 8001:8000 \
-            aurelius-capital:ci || true
+            mentisrex-capital:ci || true
           sleep 5
-          docker rm -f aurelius-ci-test 2>/dev/null || true
+          docker rm -f mentisrex-ci-test 2>/dev/null || true

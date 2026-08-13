@@ -70,7 +70,7 @@ enforcement point:
 
 ## 5. Dataset catalog (objective 5)
 
-Already implemented: `src/aurelius/catalog/` — `DatasetRecord` (name, provider,
+Already implemented: `src/mentisrex/catalog/` — `DatasetRecord` (name, provider,
 coverage, date range, symbols, rows, file hashes, import date, validation status,
 quality score, version), plus lineage, versioning/snapshots, governance,
 monitoring, quality engine, REST api. 89 catalog/market_data tests pass. **No

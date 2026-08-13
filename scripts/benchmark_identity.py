@@ -13,7 +13,7 @@ import sys
 import time
 from datetime import date
 
-from aurelius.market_data.identity import Security, SecurityMaster, make_security_id
+from mentisrex.market_data.identity import Security, SecurityMaster, make_security_id
 
 
 def run(n: int = 100_000) -> None:

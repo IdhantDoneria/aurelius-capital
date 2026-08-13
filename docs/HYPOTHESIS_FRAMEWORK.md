@@ -1,6 +1,6 @@
 # Hypothesis Generation Framework
 
-**Phase 12 — Aurelius Capital**
+**Phase 12 — Mentisrex Capital**
 
 Converts enriched research papers into structured, testable quantitative hypotheses. Output is a prioritized research queue consumed by human researchers and (eventually) the Experiment Framework. Does not run backtests, generate signals, or access market data.
 
@@ -198,7 +198,7 @@ CREATE TABLE hypothesis_versions (
 ## Folder Structure
 
 ```
-src/aurelius/hypothesis/
+src/mentisrex/hypothesis/
 ├── __init__.py             # Public API
 ├── models.py               # HypothesisRecord dataclass
 ├── store.py                # HypothesisStore (DuckDB)

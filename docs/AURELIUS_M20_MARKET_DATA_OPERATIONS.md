@@ -6,7 +6,7 @@ snapshot: adapter runtime, feed messages, ordering, arbitration, replay, histori
 reconstruction, snapshot lifecycle & store, incremental ingestion, operational monitoring, a
 fault-injecting streaming simulator, and offline production-vendor contract boundaries.
 
-**Package:** `src/aurelius/research/market_data_ops/` (15 modules, all additive).
+**Package:** `src/mentisrex/research/market_data_ops/` (15 modules, all additive).
 **Tests:** `tests/research/test_market_data_operations.py` (154).
 **Commit:** see the milestone index.
 
@@ -19,7 +19,7 @@ fault-injecting streaming simulator, and offline production-vendor contract boun
 
 ## 1. Objective
 
-Make Aurelius structurally ready for an institutional data provider while proving the entire
+Make Mentisrex structurally ready for an institutional data provider while proving the entire
 internal data lifecycle today with free/local/fixture data. The defining property:
 
 > Reconstruct a historically correct, provenance-complete, immutable market state from the
@@ -223,7 +223,7 @@ here means a dependency/credential does not exist in this offline platform — n
 
 Restated for governance: M20 authenticates against no proprietary service, claims no live
 connectivity, makes paid data no prerequisite, fabricates no vendor response, and uses no network in
-tests. Data strategy is existing Aurelius datasets → free/local → deterministic synthetic fixtures →
+tests. Data strategy is existing Mentisrex datasets → free/local → deterministic synthetic fixtures →
 recorded vendor-shaped fixtures for contract testing.
 
 ## 19. Operational runbook

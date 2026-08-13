@@ -10,8 +10,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from aurelius.core.errors import CacheError
-from aurelius.infrastructure.cache.redis import CacheManager
+from mentisrex.core.errors import CacheError
+from mentisrex.infrastructure.cache.redis import CacheManager
 
 
 def _settings(url: str = "redis://localhost:6380/0") -> MagicMock:
@@ -43,7 +43,7 @@ def test_require_client_raises_before_init():
 @pytest.mark.unit
 def test_init_creates_client():
     mgr = CacheManager(_settings())
-    with patch("aurelius.infrastructure.cache.redis.aioredis.from_url") as mock_from_url:
+    with patch("mentisrex.infrastructure.cache.redis.aioredis.from_url") as mock_from_url:
         mock_from_url.return_value = AsyncMock()
         mgr.init()
         mock_from_url.assert_called_once()

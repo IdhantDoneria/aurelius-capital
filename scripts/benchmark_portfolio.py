@@ -16,7 +16,7 @@ import tracemalloc
 
 import numpy as np
 
-from aurelius.research.portfolio import ConstraintSet, Objective, PortfolioEngine, TransactionCostModel
+from mentisrex.research.portfolio import ConstraintSet, Objective, PortfolioEngine, TransactionCostModel
 
 
 def run(n: int = 10_000) -> None:

@@ -12,8 +12,8 @@ from decimal import Decimal
 
 import pandas as pd
 
-from aurelius.market_data.adapters.yahoo import parse_raw_history
-from aurelius.market_data.storage.pit_store import PitPriceStore
+from mentisrex.market_data.adapters.yahoo import parse_raw_history
+from mentisrex.market_data.storage.pit_store import PitPriceStore
 
 
 def _frame() -> pd.DataFrame:

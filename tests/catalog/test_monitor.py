@@ -2,9 +2,9 @@
 
 import pytest
 
-from aurelius.catalog.models import DatasetRecord, QualityReport
-from aurelius.catalog.monitor import HealthMonitor
-from aurelius.catalog.store import CatalogStore
+from mentisrex.catalog.models import DatasetRecord, QualityReport
+from mentisrex.catalog.monitor import HealthMonitor
+from mentisrex.catalog.store import CatalogStore
 
 
 @pytest.fixture

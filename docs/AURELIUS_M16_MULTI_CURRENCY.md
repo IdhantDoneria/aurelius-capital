@@ -14,7 +14,7 @@ accounting and post-trade infrastructure.
 
 ### Package
 
-`src/aurelius/research/fx/` — import as `from aurelius.research import fx`.
+`src/mentisrex/research/fx/` — import as `from mentisrex.research import fx`.
 
 ## Architecture
 

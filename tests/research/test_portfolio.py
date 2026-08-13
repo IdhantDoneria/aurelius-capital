@@ -13,8 +13,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from aurelius.market_data.research_matrix.schema import ResearchMatrix
-from aurelius.research.portfolio import (
+from mentisrex.market_data.research_matrix.schema import ResearchMatrix
+from mentisrex.research.portfolio import (
     ConstraintSet,
     Objective,
     Optimizer,
@@ -24,9 +24,9 @@ from aurelius.research.portfolio import (
     signals_from_matrix,
     validate_portfolio,
 )
-from aurelius.research.portfolio.risk import risk_diagnostics
-from aurelius.research.portfolio.solvers.base import Solver
-from aurelius.research.experiment_registry import ExperimentRegistry, RegistryStore, lineage
+from mentisrex.research.portfolio.risk import risk_diagnostics
+from mentisrex.research.portfolio.solvers.base import Solver
+from mentisrex.research.experiment_registry import ExperimentRegistry, RegistryStore, lineage
 
 N = 20
 IDS = [f"S{i:03d}" for i in range(N)]
@@ -183,8 +183,8 @@ def test_registry_integration(engine):
 # 12. execution platform integration ───────────────────────────────────────────────
 
 def test_execution_integration():
-    from aurelius.research.execution import ResearchRunner, RunConfiguration
-    from aurelius.backtesting.analytics.performance import PerformanceMetrics, EquityPoint
+    from mentisrex.research.execution import ResearchRunner, RunConfiguration
+    from mentisrex.backtesting.analytics.performance import PerformanceMetrics, EquityPoint
 
     reg = ExperimentRegistry(store=RegistryStore(":memory:"))
     try:

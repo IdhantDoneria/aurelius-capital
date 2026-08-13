@@ -37,7 +37,7 @@
 
 ## Cross-campaign
 
-- **L9 — 0 significant L/S equity factors on 2014–2026 Aurelius data.** Momentum
+- **L9 — 0 significant L/S equity factors on 2014–2026 Mentisrex data.** Momentum
   (0/14 as L/S), pairs (0/14), low-vol (0/8). The consistent survivor pattern is
   **long-only, single-market** (momentum India long-only was the lone p<0.05).
   Prioritize long-only construction and the CRSP/Compustat data unblock over more

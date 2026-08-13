@@ -3,9 +3,9 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from aurelius.corpus.models import VersionType
-from aurelius.corpus.store import CorpusStore
-from aurelius.main import create_app
+from mentisrex.corpus.models import VersionType
+from mentisrex.corpus.store import CorpusStore
+from mentisrex.main import create_app
 
 
 @pytest.fixture

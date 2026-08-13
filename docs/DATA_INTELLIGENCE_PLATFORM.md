@@ -13,7 +13,7 @@ The Data Intelligence Platform treats every dataset used by the research organiz
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                  Data Intelligence Platform                      │
-│                   src/aurelius/catalog/                          │
+│                   src/mentisrex/catalog/                          │
 ├──────────────┬──────────────┬──────────────┬────────────────────┤
 │  CatalogStore│ QualityEngine│LineageTracker│  VersionManager    │
 │  (DuckDB)    │  (6 checks)  │ (edge graph) │  (content hash)    │
@@ -37,7 +37,7 @@ The Data Intelligence Platform treats every dataset used by the research organiz
 ## Module Structure
 
 ```
-src/aurelius/catalog/
+src/mentisrex/catalog/
 ├── __init__.py       — public exports
 ├── models.py         — Pydantic models (DatasetRecord, DataVersion, LineageEdge, QualityReport, GovernanceRecord, DatasetHealth)
 ├── store.py          — DuckDB persistence layer (CatalogStore)
@@ -138,7 +138,7 @@ Searchable registry of every dataset. All research systems register their datase
 
 **Key operations:**
 ```python
-from aurelius.catalog import CatalogStore, DatasetRecord
+from mentisrex.catalog import CatalogStore, DatasetRecord
 
 store = CatalogStore()
 store.register(DatasetRecord(
@@ -174,7 +174,7 @@ Records provenance edges between datasets, features, experiments, strategies, an
 
 **Usage:**
 ```python
-from aurelius.catalog import LineageTracker, CatalogStore
+from mentisrex.catalog import LineageTracker, CatalogStore
 
 tracker = LineageTracker(CatalogStore())
 
@@ -210,7 +210,7 @@ Validates any DuckDB-backed table across 6 dimensions. Saves reports and updates
 
 **Usage:**
 ```python
-from aurelius.catalog import QualityEngine, CatalogStore
+from mentisrex.catalog import QualityEngine, CatalogStore
 
 engine = QualityEngine(CatalogStore())
 report = engine.run(
@@ -233,7 +233,7 @@ Snapshots dataset state: row count, schema, coverage dates, and SHA-256 content 
 **Reproducibility protocol:** Before each experiment, call `VersionManager.snapshot()`. Store the version ID in the experiment record. To reproduce, call `find_by_hash()` with the stored hash to locate the exact version.
 
 ```python
-from aurelius.catalog import VersionManager, CatalogStore
+from mentisrex.catalog import VersionManager, CatalogStore
 
 vm = VersionManager(CatalogStore())
 v = vm.snapshot(
@@ -256,7 +256,7 @@ version = vm.find_by_hash("ohlcv_daily_us_equity", stored_hash)
 Immutable audit log for every dataset event.
 
 ```python
-from aurelius.catalog import GovernanceManager, CatalogStore
+from mentisrex.catalog import GovernanceManager, CatalogStore
 
 gov = GovernanceManager(CatalogStore())
 
@@ -277,7 +277,7 @@ gov.deprecate("ohlcv_v1", actor="admin", reason="Adjusted prices supersede raw",
 Fleet-level health aggregation across all registered datasets.
 
 ```python
-from aurelius.catalog import HealthMonitor, CatalogStore
+from mentisrex.catalog import HealthMonitor, CatalogStore
 
 monitor = HealthMonitor(CatalogStore())
 report = monitor.generate_report()

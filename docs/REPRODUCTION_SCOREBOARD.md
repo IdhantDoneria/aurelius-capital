@@ -171,7 +171,7 @@ independent agent against the raw DB (zero drift). Full report:
 ## Phase — Momentum M7 Liquidity Filter (2026-08-05) — REJECT
 
 Implemented the one M6-approved universe improvement: a generic liquidity screen
-from close+volume only (`src/aurelius/research/liquidity.py`, metric registry:
+from close+volume only (`src/mentisrex/research/liquidity.py`, metric registry:
 median/mean dollar volume, ADV, Amihud; default = median dollar volume). Wired into
 `FactorStrategy`, **default OFF** → on_bar byte-identical to M4 when disabled.
 Two runs only (net, US OOS), pre-registered pct=0.20/window=21 (no sweep). Full
@@ -202,7 +202,7 @@ report: `campaign/momentum/m7/M7_Liquidity_Filter_Report.md`. Records:
 Portfolio-construction-only campaign (objective = invariance, not performance).
 Diagnosed the M7 concentration channel: incumbent weight `budget/_count`
 (`_count=int(quantile·n)`) makes single-name concentration `∝1/n`. Implemented
-bounded equal-weight (`src/aurelius/research/portfolio_construction.py`:
+bounded equal-weight (`src/mentisrex/research/portfolio_construction.py`:
 `min(budget/max(count,n_min), w_max)` — constant-gross + single-name cap +
 min-constituent floor), wired into `FactorStrategy` as `invariant_construction`,
 **default OFF** (w_max=0.10, n_min=10). Full report:

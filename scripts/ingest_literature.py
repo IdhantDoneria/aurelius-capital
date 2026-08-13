@@ -20,8 +20,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from aurelius.literature.extractors import SOURCES, get_extractor
-from aurelius.literature.store import LiteratureStore
+from mentisrex.literature.extractors import SOURCES, get_extractor
+from mentisrex.literature.store import LiteratureStore
 
 
 def main() -> None:
@@ -68,7 +68,7 @@ def main() -> None:
             if store.exists(paper.source, paper.source_id):
                 continue  # skip existing — preserves enrichment data
             if llm:
-                from aurelius.literature.enrichment import enrich
+                from mentisrex.literature.enrichment import enrich
                 paper = enrich(paper, llm)
             store.upsert(paper)
             new += 1

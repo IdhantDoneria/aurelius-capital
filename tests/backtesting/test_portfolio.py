@@ -4,8 +4,8 @@ from decimal import Decimal
 
 import pytest
 
-from aurelius.backtesting.portfolio.position import Position
-from aurelius.backtesting.portfolio.state import PortfolioState
+from mentisrex.backtesting.portfolio.position import Position
+from mentisrex.backtesting.portfolio.state import PortfolioState
 
 # ── Position ──────────────────────────────────────────────────────────────────
 

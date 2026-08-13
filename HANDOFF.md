@@ -1,4 +1,4 @@
-# Aurelius Capital — Session Handoff
+# Mentisrex Capital — Session Handoff
 
 > **SUPERSEDED:** This document reflects Phase 4 (2026-07-25). For current status see `docs/ACCEPTANCE_TEST.md` and the certification report below.
 
@@ -19,10 +19,10 @@ Platform is complete through the research pipeline:
 
 ## What This Project Is
 
-Institutional-grade quantitative research and trading platform. Python, FastAPI, PostgreSQL, DuckDB. Located at `/Users/idhantdoneria/aurelius-capital`.
+Institutional-grade quantitative research and trading platform. Python, FastAPI, PostgreSQL, DuckDB. Located at `/Users/idhantdoneria/mentisrex-capital`.
 
 Run tests: `.venv/bin/pytest -q`  
-Run app: `.venv/bin/uvicorn aurelius.main:app --reload`
+Run app: `.venv/bin/uvicorn mentisrex.main:app --reload`
 
 ---
 
@@ -30,9 +30,9 @@ Run app: `.venv/bin/uvicorn aurelius.main:app --reload`
 
 ### Phase 1 — Core Infrastructure
 - FastAPI skeleton, structlog, Pydantic settings
-- `src/aurelius/infrastructure/config/settings.py` — all config including Alpaca keys, DuckDB path
-- `src/aurelius/core/errors.py`, `logging.py`
-- `src/aurelius/presentation/api/routes/health.py`
+- `src/mentisrex/infrastructure/config/settings.py` — all config including Alpaca keys, DuckDB path
+- `src/mentisrex/core/errors.py`, `logging.py`
+- `src/mentisrex/presentation/api/routes/health.py`
 
 ### Phase 2 — Database Layer (PostgreSQL)
 - SQLAlchemy async models: `market.py`, `trading.py`, `fundamental.py`, `reference.py`, `research.py`
@@ -41,49 +41,49 @@ Run app: `.venv/bin/uvicorn aurelius.main:app --reload`
 - Validators: `OHLCVBatchValidator`, `TradeValidator` with quality scoring (0–100)
 
 ### Phase 3 — Market Data Pipeline
-- **Adapters** (`src/aurelius/market_data/adapters/`)
+- **Adapters** (`src/mentisrex/market_data/adapters/`)
   - `base.py` — `RawBar` frozen dataclass (Decimal prices), `MarketDataAdapter` ABC
   - `yahoo.py` — `YahooFinanceAdapter`: wraps `yf.download` in `asyncio.to_thread`, handles MultiIndex columns, UTC conversion
   - `alpaca.py` — `AlpacaAdapter`: raw httpx REST (no SDK), paginated, 3-attempt retry, 60s sleep on 429; WebSocket streaming via `websockets.connect()`; `from_settings()` classmethod
   - `csv_loader.py` — `CSVLoader`: case-insensitive column aliases, 6 timestamp format parsers, logs up to 5 parse errors per file
-- **Pipeline** (`src/aurelius/market_data/pipeline/`)
+- **Pipeline** (`src/mentisrex/market_data/pipeline/`)
   - `normalizer.py` — `normalize_bar()`, `detect_gaps()` (threshold 5 days), `compute_spike()` (20% threshold)
   - `ingestion.py` — `IngestionPipeline`: normalize → bulk resolve symbols → gap detect → validate → quality score → bulk insert in 5000-row chunks. `IngestionReport` dataclass with `acceptance_rate` property.
-- **Storage** (`src/aurelius/market_data/storage/duckdb_store.py`)
+- **Storage** (`src/mentisrex/market_data/storage/duckdb_store.py`)
   - `DuckDBStore`: `:memory:` uses persistent connection; file path opens/closes per query
   - Schema: `PRIMARY KEY (symbol, timestamp, frequency)`
   - Methods: `insert_bars()`, `query_bars()`, `rolling_mean()`, `cross_sectional()`, `quality_summary()`, `export_parquet()`
-- **Service** (`src/aurelius/market_data/service.py`)
+- **Service** (`src/mentisrex/market_data/service.py`)
   - `IngestionService`: `asyncio.Semaphore(concurrency=5)` for concurrent symbol fetches, optional DuckDB sync
 
 ### Phase 4 — Event-Driven Backtesting Engine
-- **Config** (`src/aurelius/backtesting/config.py`)
+- **Config** (`src/mentisrex/backtesting/config.py`)
   - `BacktestConfig`: initial_capital=1M, commission=10bps, spread=5bps half-spread, slippage k=10bps, max_fill_pct_adv=20%, max_position_pct=10%, max_gross_leverage=1.5x, max_drawdown_halt=20%, risk_free_rate=5%, trading_days=252
-- **Events** (`src/aurelius/backtesting/events/`)
+- **Events** (`src/mentisrex/backtesting/events/`)
   - `base.py` — `EventQueue`: `heapq` with `(timestamp, EVENT_TYPE, seq, event)` tuples for total deterministic ordering
   - `types.py` — Priorities: Fill=1, Market=2, Signal=3, Order=4. `FillEvent.signed_cash_delta()`, `SignalEvent.direction` (LONG/SHORT/FLAT), `OrderEvent` with optional limit_price/stop_price
-- **Data Feed** (`src/aurelius/backtesting/data/feed.py`)
+- **Data Feed** (`src/mentisrex/backtesting/data/feed.py`)
   - `BarData` frozen dataclass; `InMemoryDataFeed` (sorts on init); `DuckDBDataFeed` (streaming cursor)
-- **Portfolio** (`src/aurelius/backtesting/portfolio/`)
+- **Portfolio** (`src/mentisrex/backtesting/portfolio/`)
   - `position.py` — weighted avg cost basis, long/short/cover logic, realized/unrealized PnL
   - `state.py` — cash, positions dict, `_peak_value` tracking, `drawdown` property, `gross_leverage`, `snapshot()`
   - `manager.py` — `apply_fill()`, `size_order()` (target_value = NAV × max_position_pct × signal_strength)
-- **OMS** (`src/aurelius/backtesting/oms/`)
+- **OMS** (`src/mentisrex/backtesting/oms/`)
   - `order.py` — `Order` with `apply_partial_fill()` (weighted avg fill price), `from_event()` classmethod
   - `manager.py` — `OrderManager`: submit, track lifecycle, `apply_fill()`
-- **Risk Engine** (`src/aurelius/backtesting/risk/engine.py`)
+- **Risk Engine** (`src/mentisrex/backtesting/risk/engine.py`)
   - Checks (in order): permanent halt flag → drawdown > max_drawdown_halt (sets halt permanently) → projected position size > 2× limit → projected leverage > limit
   - `RiskCheckResult(passed, reason)`, `reset()` to unhalt
-- **Execution** (`src/aurelius/backtesting/execution/`)
+- **Execution** (`src/mentisrex/backtesting/execution/`)
   - `models.py` — `CommissionModel(rate)`, `SpreadModel(half_spread_bps)`, `SlippageModel` (Almgren-Chriss sqrt impact: `bps = k × sqrt(Q/ADV)`)
   - `simulator.py` — `ExecutionSimulator.try_fill()`: base price at open → spread adjustment → 20% ADV partial fill cap → slippage impact → FillEvent. LIMIT buy fills if `bar.low <= limit_price` at `min(bar.open, limit_price)`. STOP sell fills if `bar.low <= stop_price`.
-- **Strategy** (`src/aurelius/backtesting/strategy/base.py`)
+- **Strategy** (`src/mentisrex/backtesting/strategy/base.py`)
   - `StrategyContext`: `history(symbol, lookback)`, `close_series()`, read-only `portfolio`, `now`
   - `Strategy` ABC: `on_bar()` → `list[SignalEvent]`, optional `on_start()`, `on_end()`
-- **Analytics** (`src/aurelius/backtesting/analytics/`)
+- **Analytics** (`src/mentisrex/backtesting/analytics/`)
   - `performance.py` — `PerformanceCalculator.compute()`: CAGR, Sharpe, Sortino, max drawdown, Calmar, volatility, win rate, profit factor, avg holding period, turnover. FIFO round-trip matching. Returns `PerformanceMetrics` with `equity_curve` and `drawdown_series`.
   - `report.py` — `BacktestReport`: `summary()` text table, `to_dict()` JSON-serializable, `to_json()`
-- **Engine** (`src/aurelius/backtesting/engine.py`)
+- **Engine** (`src/mentisrex/backtesting/engine.py`)
   - `BacktestEngine.run()`: per-bar loop → fill pending orders at bar open → push MarketEvent → drain queue → record equity
   - Next-bar execution: signals on bar T close fill at bar T+1 open (no look-ahead)
   - Partial fill remainder creates new OrderEvent carried to next bar
@@ -106,7 +106,7 @@ Run app: `.venv/bin/uvicorn aurelius.main:app --reload`
 ## Next Phases (Not Started)
 
 ### Phase 5 — Strategy Library
-Implement concrete strategies in `src/aurelius/backtesting/strategy/`:
+Implement concrete strategies in `src/mentisrex/backtesting/strategy/`:
 - `sma_crossover.py` — already tested via inline class in `test_engine.py`
 - `momentum.py` — 12-1 month momentum, rebalance monthly
 - `mean_reversion.py` — z-score based pairs or single-name
@@ -114,7 +114,7 @@ Implement concrete strategies in `src/aurelius/backtesting/strategy/`:
 - Factor models, ML model wrappers
 
 ### Phase 6 — FastAPI Research Endpoints
-Extend `src/aurelius/presentation/api/routes/`:
+Extend `src/mentisrex/presentation/api/routes/`:
 - `POST /backtests` — run backtest, return report JSON
 - `GET /backtests/{id}` — retrieve stored report
 - `GET /market-data/{symbol}` — query OHLCV from DuckDB/Postgres
@@ -154,12 +154,12 @@ Total: 126 passed
 
 | Component | Path |
 |---|---|
-| Backtest entry point | `src/aurelius/backtesting/engine.py` |
-| Strategy base class | `src/aurelius/backtesting/strategy/base.py` |
-| Backtest config | `src/aurelius/backtesting/config.py` |
-| Market data adapters | `src/aurelius/market_data/adapters/` |
-| DuckDB store | `src/aurelius/market_data/storage/duckdb_store.py` |
-| Ingestion pipeline | `src/aurelius/market_data/pipeline/ingestion.py` |
-| DB models | `src/aurelius/infrastructure/database/models/` |
-| Settings | `src/aurelius/infrastructure/config/settings.py` |
-| FastAPI app | `src/aurelius/main.py` |
+| Backtest entry point | `src/mentisrex/backtesting/engine.py` |
+| Strategy base class | `src/mentisrex/backtesting/strategy/base.py` |
+| Backtest config | `src/mentisrex/backtesting/config.py` |
+| Market data adapters | `src/mentisrex/market_data/adapters/` |
+| DuckDB store | `src/mentisrex/market_data/storage/duckdb_store.py` |
+| Ingestion pipeline | `src/mentisrex/market_data/pipeline/ingestion.py` |
+| DB models | `src/mentisrex/infrastructure/database/models/` |
+| Settings | `src/mentisrex/infrastructure/config/settings.py` |
+| FastAPI app | `src/mentisrex/main.py` |

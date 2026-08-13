@@ -11,9 +11,9 @@ from decimal import Decimal
 
 import pytest
 
-from aurelius.backtesting.config import BacktestConfig
-from aurelius.market_data.storage.duckdb_store import DuckDBStore
-from aurelius.market_data.storage.isolation import (
+from mentisrex.backtesting.config import BacktestConfig
+from mentisrex.market_data.storage.duckdb_store import DuckDBStore
+from mentisrex.market_data.storage.isolation import (
     MIN_VALIDATED_BARS,
     PRODUCTION_DB,
     TOY_DB,
@@ -21,9 +21,9 @@ from aurelius.market_data.storage.isolation import (
     assert_not_production,
     validated_universe_filter,
 )
-from aurelius.research.runner import synth_bars
-from aurelius.research.templates import FactorStrategy
-from aurelius.research.validation import run_backtest, train_test
+from mentisrex.research.runner import synth_bars
+from mentisrex.research.templates import FactorStrategy
+from mentisrex.research.validation import run_backtest, train_test
 
 # ── G1 ──────────────────────────────────────────────────────────────────────
 

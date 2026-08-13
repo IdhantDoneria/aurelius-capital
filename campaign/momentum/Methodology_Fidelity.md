@@ -1,18 +1,18 @@
 # Momentum Methodology Fidelity
 
-**Aurelius Capital — Momentum Research Campaign**
+**Mentisrex Capital — Momentum Research Campaign**
 **Agent:** Literature Intelligence + Methodology Fidelity
 **Date:** 2026-07-31
 **Companion to:** `Literature_Map.md`
 
 Cross-compares the canonical momentum papers against each other, then against
-what Aurelius's `FactorStrategy` (`src/aurelius/research/templates.py:164`) plus
+what Mentisrex's `FactorStrategy` (`src/mentisrex/research/templates.py:164`) plus
 `scripts/run_jt_us_reproduction.py` actually implement. Read-only audit — nothing
 is implemented here; gaps are *identified* only.
 
 ---
 
-## 1. What Aurelius actually does (ground truth from code)
+## 1. What Mentisrex actually does (ground truth from code)
 
 `FactorStrategy` (cross-sectional momentum):
 - **Signal:** per-symbol trailing simple return `(close[t] − close[t−lookback]) / close[t−lookback]`.
@@ -31,7 +31,7 @@ So: 126-bar (~6mo) formation, 10% tails, ~21-bar (~monthly) rebalance, long-shor
 
 ## 2. Cross-paper comparison
 
-| Dimension | JT-1993 | JT-2001 | Carhart-1997 (PR1YR) | MOP-2012 TSMOM | AMP-2013 | **Aurelius FactorStrategy** |
+| Dimension | JT-1993 | JT-2001 | Carhart-1997 (PR1YR) | MOP-2012 TSMOM | AMP-2013 | **Mentisrex FactorStrategy** |
 |---|---|---|---|---|---|---|
 | Universe screen | NYSE+AMEX | +Nasdaq; drop <$5 & tiny | US stocks | 58 futures | intl equities+assets | US or India equity; `validated_universe_filter` (history only) — **no price/size screen** |
 | Formation | 3–12 mo (focus 6) | 6 mo | 11 mo | 12 mo | 12 mo | 126 bars ≈ 6 mo |
@@ -51,7 +51,7 @@ So: 126-bar (~6mo) formation, 10% tails, ~21-bar (~monthly) rebalance, long-shor
 (6–12 mo), a **1-period skip** to dodge short-term reversal/microstructure, monthly
 rebalance, and **overlapping cohorts** for statistical power. They diverge mainly on
 *weighting* (JT decile-EW → Carhart 30/30-EW → AMP rank-weight → MOP inverse-vol) and
-*universe* (single-country equity → global multi-asset). Aurelius matches the formation
+*universe* (single-country equity → global multi-asset). Mentisrex matches the formation
 horizon and long-short spirit but departs on three structural axes: **no skip**, **no
 overlapping cohorts**, and **binary equal exposure** instead of decile/rank/vol weighting.
 The per-symbol modulo rebalance gate is also subtly different from a portfolio calendar —
@@ -61,48 +61,48 @@ symbols entering the panel at different times rebalance on staggered clocks.
 
 ## 3. Prioritized fidelity roadmap
 
-Ranked by likely impact on results. Each: papers / Aurelius / impact / code-or-config.
+Ranked by likely impact on results. Each: papers / Mentisrex / impact / code-or-config.
 
 ### P1 — Missing skip period *(HIGH impact)*
 - **Papers:** JT-2001, Carhart, AMP all skip 1 month (JT-1993 offers a 1-week variant that *raised* returns 1.31→1.49%/mo).
-- **Aurelius:** skip = 0. Formation window ends at the same bar the position is taken.
+- **Mentisrex:** skip = 0. Formation window ends at the same bar the position is taken.
 - **Impact:** overstates short-horizon reversal/microstructure contamination — inflates or destabilizes the signal, exactly the effect the skip exists to remove. Directionally biases the reproduction away from JT's clean estimate.
 - **Fix:** **Code.** `FactorStrategy` scores `c[-1]` vs `c[0]`; needs a `skip` param so the score window ends `skip` bars before *t* (`c[-1-skip]`). Small, localized change.
 
 ### P2 — Non-overlapping vs overlapping portfolios *(HIGH impact on inference)*
 - **Papers:** overlapping cohorts (hold K vintages, roll 1/K per month) — central to JT's statistical power.
-- **Aurelius:** single position per symbol, refreshed on the modulo gate; no cohort layering.
+- **Mentisrex:** single position per symbol, refreshed on the modulo gate; no cohort layering.
 - **Impact:** fewer effective observations → wider CIs, noisier Sharpe/t-stats; also changes turnover profile. Doesn't bias the *mean* much but weakens significance — matters for the adj p-value verdict.
 - **Fix:** **Code.** Overlapping cohorts are a portfolio-construction change (engine/runner), not a one-line signal tweak. Larger.
 
 ### P3 — Weighting scheme *(MEDIUM-HIGH)*
 - **Papers:** decile-EW (JT), 30/30-EW (Carhart), rank-weight (AMP), inverse-vol (MOP/Daniel-Moskowitz for crash control).
-- **Aurelius:** binary equal exposure per selected name (sizing left to engine).
+- **Mentisrex:** binary equal exposure per selected name (sizing left to engine).
 - **Impact:** binary top/bottom-quantile EW is a fair match to JT decile-EW **if** quantile≈0.1 (it is, in the repro) — so low fidelity gap vs JT specifically. Gap is large only vs AMP (rank) / MOP (vol) styles, and vol-weighting materially changes crash exposure.
 - **Fix:** **Config** to match JT (already ~decile via `quantile=0.1`). **Code** to add rank- or vol-weighting for AMP/MOP fidelity.
 
 ### P4 — Liquidity / price / size screens *(MEDIUM)*
 - **Papers:** JT-2001 drops <$5 and smallest-cap; standard hygiene against microstructure-driven pseudo-alpha.
-- **Aurelius:** only a history-adequacy filter; penny stocks and illiquid India names can dominate the tails.
+- **Mentisrex:** only a history-adequacy filter; penny stocks and illiquid India names can dominate the tails.
 - **Impact:** unscreened tails likely **inflate** raw momentum via illiquid names that are untradeable net of real cost — optimistic bias.
 - **Fix:** **Config-ish → Code.** Price (<$5) screen is easy (close available). Size screen **BLOCKED: no market cap**. A volume/turnover screen is a code addition using available volume.
 
 ### P5 — Survivorship *(MEDIUM, structural)*
 - **Papers:** Carhart insists on survivor-free samples.
-- **Aurelius:** 2014-26 panel = currently-listed names, no delisting returns.
+- **Mentisrex:** 2014-26 panel = currently-listed names, no delisting returns.
 - **Impact:** upward bias in momentum profits (dead losers pruned). Systematic, not fixable in-strategy.
 - **Fix:** **Neither code nor config** — a **data** gap. Needs point-in-time membership + delisting returns. Flag on every result until then.
 
 ### P6 — Rebalance-clock semantics *(LOW-MEDIUM)*
 - **Papers:** single portfolio-level monthly calendar.
-- **Aurelius:** per-symbol `len(history) % rebalance_days` — symbols with different start dates rebalance on staggered clocks; cross-section isn't refreshed synchronously.
+- **Mentisrex:** per-symbol `len(history) % rebalance_days` — symbols with different start dates rebalance on staggered clocks; cross-section isn't refreshed synchronously.
 - **Impact:** minor timing smear in the cross-section; usually second-order, but can desync the long/short legs.
 - **Fix:** **Code.** Switch the gate to a shared calendar (bar-date modulo) rather than per-symbol history length.
 
 ### P7 — Gross vs net reporting parity *(LOW)*
 - **Papers:** headline gross.
-- **Aurelius:** net (10+10 bps). Actually *stricter* than the papers.
-- **Impact:** Aurelius numbers will sit **below** published gross figures — a reporting-comparability issue, not an error. When comparing to JT's 1.31%/mo, compare gross-to-gross.
+- **Mentisrex:** net (10+10 bps). Actually *stricter* than the papers.
+- **Impact:** Mentisrex numbers will sit **below** published gross figures — a reporting-comparability issue, not an error. When comparing to JT's 1.31%/mo, compare gross-to-gross.
 - **Fix:** **Config.** Optionally report a gross variant (zero-cost engine config) alongside net for apples-to-apples literature comparison.
 
 **Not applicable to cross-sectional fidelity** (would be new strategies, not fidelity fixes):

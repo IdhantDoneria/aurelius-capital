@@ -1,6 +1,6 @@
 # M2 Methodology Report — JT Universe Construction (Price Screen)
 
-**Aurelius Capital — Methodology Fidelity Campaign**
+**Mentisrex Capital — Methodology Fidelity Campaign**
 **Date:** 2026-08-04
 **Baseline:** M1 (`campaign/momentum/m1/us_jt_m1.jsonl`)
 **Source:** `campaign/momentum/m2/us_jt_m2.jsonl`
@@ -172,7 +172,7 @@ price-screened US decile earns +0.098 Sharpe (p 0.424)."
 
 **M2 is the new baseline.** `equal_weight=True, min_price=5.0` with
 `max_position_pct=Decimal("1.0")` is the methodologically correct configuration
-for any future JT-style momentum research on the Aurelius platform.
+for any future JT-style momentum research on the Mentisrex platform.
 
 ---
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The **Autonomous Alpha Discovery Engine** (`src/aurelius/discovery/`) is an AI-driven, continuous research discovery subsystem that proposes novel, testable trading hypotheses using institutional knowledge across all platform repositories rather than relying solely on external papers.
+The **Autonomous Alpha Discovery Engine** (`src/mentisrex/discovery/`) is an AI-driven, continuous research discovery subsystem that proposes novel, testable trading hypotheses using institutional knowledge across all platform repositories rather than relying solely on external papers.
 
 ---
 

@@ -14,13 +14,13 @@ from datetime import date, datetime, timedelta
 
 import pytest
 
-import aurelius.research.fx as m16fx
-import aurelius.research.instruments as ins
-from aurelius.research import market_data as md
-from aurelius.research import market_data_ops as ops
-from aurelius.research.market_data.sabr import sabr_vol
-from aurelius.research.valuation.engine import PortfolioValuationEngine, ValuationEngine
-from aurelius.research.valuation.models import ValuationConfiguration
+import mentisrex.research.fx as m16fx
+import mentisrex.research.instruments as ins
+from mentisrex.research import market_data as md
+from mentisrex.research import market_data_ops as ops
+from mentisrex.research.market_data.sabr import sabr_vol
+from mentisrex.research.valuation.engine import PortfolioValuationEngine, ValuationEngine
+from mentisrex.research.valuation.models import ValuationConfiguration
 
 REF = date(2024, 6, 3)
 

@@ -1,6 +1,6 @@
 # M1 Methodology Report — Equal-Weight Within Gross Leverage Budget
 
-**Aurelius Capital — Methodology Fidelity Campaign**
+**Mentisrex Capital — Methodology Fidelity Campaign**
 **Date:** 2026-08-04
 **Source:** `campaign/momentum/m1/us_jt_m1.jsonl` vs
 `campaign/momentum/runs/us.jsonl` (label: JT_6-1-6_decile). Frozen engine,

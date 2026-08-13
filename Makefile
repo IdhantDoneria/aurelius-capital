@@ -1,7 +1,7 @@
 .PHONY: help install lint fmt typecheck test test-unit test-integration up down logs clean
 
 help:
-	@echo "Aurelius Capital — development commands"
+	@echo "Mentisrex Capital — development commands"
 	@echo ""
 	@echo "  install          Install dependencies"
 	@echo "  lint             Run ruff linter"
@@ -26,7 +26,7 @@ fmt:
 	ruff check --fix src/ tests/
 
 typecheck:
-	mypy src/aurelius
+	mypy src/mentisrex
 
 test-unit:
 	pytest tests/unit/ -v --tb=short

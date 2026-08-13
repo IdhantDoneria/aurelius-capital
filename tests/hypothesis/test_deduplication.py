@@ -2,7 +2,7 @@
 
 import pytest
 
-from aurelius.hypothesis.deduplication import DuplicateStatus, _jaccard, _tokens, check_duplicates
+from mentisrex.hypothesis.deduplication import DuplicateStatus, _jaccard, _tokens, check_duplicates
 
 
 @pytest.mark.unit
@@ -42,7 +42,7 @@ def test_unique_hypothesis():
     existing = [("id1", "IF value signal high THEN bonds outperform OVER 3_months")]
     from datetime import UTC, datetime
 
-    from aurelius.hypothesis.models import HypothesisRecord
+    from mentisrex.hypothesis.models import HypothesisRecord
 
     now = datetime.now(UTC)
     h = HypothesisRecord(
@@ -81,7 +81,7 @@ def test_near_duplicate_detection():
     existing = [("id1", stmt)]
     from datetime import UTC, datetime
 
-    from aurelius.hypothesis.models import HypothesisRecord
+    from mentisrex.hypothesis.models import HypothesisRecord
 
     now = datetime.now(UTC)
     h = HypothesisRecord(
@@ -121,7 +121,7 @@ def test_exact_duplicate_detection():
     existing = [("id1", stmt)]
     from datetime import UTC, datetime
 
-    from aurelius.hypothesis.models import HypothesisRecord
+    from mentisrex.hypothesis.models import HypothesisRecord
 
     now = datetime.now(UTC)
     h = HypothesisRecord(
@@ -155,7 +155,7 @@ def test_exact_duplicate_detection():
 def test_empty_existing_is_unique():
     from datetime import UTC, datetime
 
-    from aurelius.hypothesis.models import HypothesisRecord
+    from mentisrex.hypothesis.models import HypothesisRecord
 
     now = datetime.now(UTC)
     h = HypothesisRecord(

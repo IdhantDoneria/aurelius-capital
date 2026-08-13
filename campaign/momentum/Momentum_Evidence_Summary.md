@@ -1,6 +1,6 @@
 # Momentum Evidence Summary (M1–M10)
 
-**Aurelius Capital — Momentum Campaign, Phase-1 synthesis (M11)**
+**Mentisrex Capital — Momentum Campaign, Phase-1 synthesis (M11)**
 **Date:** 2026-08-05. Archival — no code, no new runs. Reproducibility re-verified
 (M9 byte-identical; 597 passed, 2 skipped).
 

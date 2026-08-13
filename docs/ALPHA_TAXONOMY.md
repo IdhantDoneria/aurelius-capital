@@ -1,4 +1,4 @@
-# Aurelius Capital — Alpha Taxonomy, Hypothesis Factory & Research Scorecard
+# Mentisrex Capital — Alpha Taxonomy, Hypothesis Factory & Research Scorecard
 
 Companion to `RESEARCH_PROGRAM.md` (which defines the org, governance, lifecycle, promotion/retirement, knowledge management, and continuous improvement). This document is the **catalog of where alpha comes from**, the **assembly line every idea travels**, and the **numeric scorecard every experiment receives**.
 

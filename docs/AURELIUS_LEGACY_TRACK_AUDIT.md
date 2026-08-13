@@ -1,4 +1,4 @@
-# Aurelius — Legacy Track Reconciliation Audit
+# Mentisrex — Legacy Track Reconciliation Audit
 
 **Type:** Governance & architecture audit (read-only). No source, API, interface,
 test, or behaviour changes. Documentation only.
@@ -13,18 +13,18 @@ unchanged: 213 passed, 3 skipped, 0 regressions.
 The repository contains **two distinct milestone numbering systems**, born from two
 distinct engineering efforts on the same codebase:
 
-- **Platform Track ("Phase N").** The original Aurelius build — a full research-OS
+- **Platform Track ("Phase N").** The original Mentisrex build — a full research-OS
   and trading platform delivered as development milestones "Phase 1 … Phase 27"
   (risk, construction, paper trading, AI assistant, knowledge graph, research
   director, intelligence, laboratory, data-intelligence catalog, …). This track is
   **feature-frozen** per its own acceptance audit (`docs/ACCEPTANCE_TEST.md`) and
-  remains live in `src/aurelius/{risk,construction,paper,assistant,validation,
+  remains live in `src/mentisrex/{risk,construction,paper,assistant,validation,
   knowledge,director,intelligence,lab,catalog,…}`.
 
 - **Canonical AIDP Track ("Mn").** The `aidp/audit-and-pit-gaps` effort that rebuilt
   the **data and research core** to institutional point-in-time standards —
   M1 (market data) → M11 (portfolio simulation). This is the authoritative
-  milestone line going forward (`AURELIUS_MILESTONE_INDEX.md`).
+  milestone line going forward (`MENTISREX_MILESTONE_INDEX.md`).
 
 The two tracks **share low Phase/M numbers that mean different things** (Platform
 "Phase 7" = Risk Engine; AIDP "M7" = Experiment Registry). They are not in conflict
@@ -42,7 +42,7 @@ rebuilds it** (exactly as M1–M11 rebuilt the data/research core).
 ## 2. Historical timeline
 
 ```
-   original Aurelius platform build ("Platform Track", Phase 1 … Phase 27)
+   original Mentisrex platform build ("Platform Track", Phase 1 … Phase 27)
    ─────────────────────────────────────────────────────────────────────►
    P1-2  base / market data
    P3-4  backtesting engine + strategy contract + PerformanceCalculator
@@ -163,7 +163,7 @@ Classification summary:
 
 1. **Freeze** the Platform-Track "Phase N" strings as historical (no edits, no
    renames). They are an accurate record of when those modules were built.
-2. **Name, don't number, capabilities.** In `AURELIUS_ROADMAP.md`, the Platform-Track
+2. **Name, don't number, capabilities.** In `MENTISREX_ROADMAP.md`, the Platform-Track
    capabilities are already listed by name (Risk Engine, Paper Trading, …). Refer to
    them that way — never by their legacy Phase number — in all new writing.
 3. **Adopt into the canonical line only on rebuild.** When a future M-milestone

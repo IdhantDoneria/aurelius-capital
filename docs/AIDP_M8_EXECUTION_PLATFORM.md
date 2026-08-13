@@ -1,11 +1,11 @@
 # AIDP M8 — Institutional Research Execution Platform
 
-The single orchestrator for every research experiment on Aurelius. After M8,
+The single orchestrator for every research experiment on Mentisrex. After M8,
 **no component calls the backtester directly** — everything runs through
 `ResearchRunner`, which drives a `ResearchSession` through a fixed, logged,
 reproducible pipeline. Additive; M1–M7 APIs untouched.
 
-Module: `src/aurelius/research/execution/`.
+Module: `src/mentisrex/research/execution/`.
 
 ```python
 runner = ResearchRunner(registry=registry, matrix_engine=matrix)   # DI

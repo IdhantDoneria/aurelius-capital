@@ -21,7 +21,7 @@ never be confused with a validated deployable strategy.
 
 from __future__ import annotations
 
-from aurelius.research.strategy_deployment.models import StrategyType, make_spec
+from mentisrex.research.strategy_deployment.models import StrategyType, make_spec
 
 # ── identifiers ───────────────────────────────────────────────────────────────
 STRATEGY_ID = "ew-momentum-exp"
@@ -98,5 +98,5 @@ SPEC = make_spec(
     allowed_instruments=["equity"],
     capital_assumption=STARTING_CAPITAL,
     model_version="1.0.0",
-    dependency_versions={"aurelius_milestone": "M24"},
+    dependency_versions={"mentisrex_milestone": "M24"},
 )

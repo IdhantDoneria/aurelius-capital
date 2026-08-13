@@ -14,15 +14,15 @@ broker.
 
 ### Package location
 
-The package lives at `src/aurelius/research/execution/ems/`.
+The package lives at `src/mentisrex/research/execution/ems/`.
 
-M8 (Research Execution Platform) already owns `src/aurelius/research/execution/*.py`
+M8 (Research Execution Platform) already owns `src/mentisrex/research/execution/*.py`
 (its `runner.py`, `scheduler.py`, `session.py`, …). To stay strictly additive and
 never clobber certified M8 code, M14 nests one level down as `execution.ems`. Import
 as:
 
 ```python
-from aurelius.research.execution import ems
+from mentisrex.research.execution import ems
 ```
 
 ## Pipeline

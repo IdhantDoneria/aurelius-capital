@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from aurelius.backtesting.analytics.performance import EquityPoint, PerformanceCalculator
+from mentisrex.backtesting.analytics.performance import EquityPoint, PerformanceCalculator
 
 
 def _curve(values: list[float], start_day: int = 1) -> list[EquityPoint]:

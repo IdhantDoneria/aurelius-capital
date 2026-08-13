@@ -1,6 +1,6 @@
 # M7 — Institutional Liquidity Filter Implementation
 
-**Aurelius Capital — Methodology Fidelity Campaign**
+**Mentisrex Capital — Methodology Fidelity Campaign**
 **Date:** 2026-08-05
 **Baseline:** M1+M2+M4 (net), M5 dual reporting, M6 audit binding.
 **Type:** implement the ONE M6-approved universe improvement (liquidity screen from
@@ -13,7 +13,7 @@ close+volume only) + two-run experiment + KEEP/REJECT.
 ## 1. Implementation report
 
 ### Generic framework (not hard-coded)
-`src/aurelius/research/liquidity.py` — a `name → (metric_fn, higher_is_more_liquid)`
+`src/mentisrex/research/liquidity.py` — a `name → (metric_fn, higher_is_more_liquid)`
 registry, so the strategy screens on ANY approved metric:
 
 | Metric | Direction | Notes |

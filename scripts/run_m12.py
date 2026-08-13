@@ -23,12 +23,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import duckdb
 
-from aurelius.backtesting.data.feed import BarData
-from aurelius.market_data.storage.isolation import validated_universe_filter
-from aurelius.research.runner import ResearchRunner, research_config
-from aurelius.research.store import ResearchStore
-from aurelius.research.templates import LowVolStrategy
-from aurelius.research.validation import run_backtest
+from mentisrex.backtesting.data.feed import BarData
+from mentisrex.market_data.storage.isolation import validated_universe_filter
+from mentisrex.research.runner import ResearchRunner, research_config
+from mentisrex.research.store import ResearchStore
+from mentisrex.research.templates import LowVolStrategy
+from mentisrex.research.validation import run_backtest
 
 STORE_DB = "./data/analytics.duckdb"
 US_PRED = "frequency='1d' AND symbol NOT LIKE '%.%'"

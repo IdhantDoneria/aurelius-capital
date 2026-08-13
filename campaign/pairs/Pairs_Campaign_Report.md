@@ -1,8 +1,8 @@
 # Pairs Trading Research Campaign — Master Report
 
-**Aurelius Capital, Quantitative Research Division. 2026-08-04.**
+**Mentisrex Capital, Quantitative Research Division. 2026-08-04.**
 Frozen platform, no tuning, no architecture change. Answers: under what conditions
-does statistical arbitrage through pairs trading exist, how faithfully can Aurelius
+does statistical arbitrage through pairs trading exist, how faithfully can Mentisrex
 reproduce the literature, and what strategy is justified. All figures trace to
 `campaign/pairs/runs/*.jsonl`.
 
@@ -39,7 +39,7 @@ reproduce the literature, and what strategy is justified. All figures trace to
    both markets, insignificant. A stable, well-powered null (591–4833 OOS trades),
    not an unlucky draw.
 2. **The edge decayed — Class D.** Gatev's ~11%/yr (1962–2002) is gone by the modern
-   era; this is Do & Faff's documented decay, confirmed empirically on Aurelius data.
+   era; this is Do & Faff's documented decay, confirmed empirically on Mentisrex data.
 3. **Diversification inverts under the frozen sizing — Class B.** top40 is the worst
    config in both markets. Fixed 5%/leg × 40 pairs × 2 = 400% nominal gross vs a
    1.5× cap → truncation breaks dollar-neutrality → directional −60% drawdown. Gatev's

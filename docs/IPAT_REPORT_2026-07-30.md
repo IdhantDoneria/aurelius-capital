@@ -1,7 +1,7 @@
 # Institutional Paper Acceptance Test (IPAT) — Report
 
 **Run date:** 2026-07-30
-**Platform:** Aurelius Capital research OS (`aurelius-capital/`)
+**Platform:** Mentisrex Capital research OS (`mentisrex-capital/`)
 **Papers processed:** 2 (the two executable on current data)
 **Chief Research Officer verdict:** see [Final Decision](#final-decision)
 

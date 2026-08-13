@@ -1,4 +1,4 @@
-# Aurelius Capital — 500-Hypothesis Research Backlog
+# Mentisrex Capital — 500-Hypothesis Research Backlog
 
 The map of where to dig first. 500 structured research ideas across the 15 taxonomy categories (`ALPHA_TAXONOMY.md`). **These are ideas to test, not strategies** — none has been validated; each must travel the Hypothesis Factory and clear every gate before capital.
 

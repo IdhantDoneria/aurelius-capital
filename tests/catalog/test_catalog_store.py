@@ -2,8 +2,8 @@
 
 import pytest
 
-from aurelius.catalog.models import DatasetRecord
-from aurelius.catalog.store import CatalogStore
+from mentisrex.catalog.models import DatasetRecord
+from mentisrex.catalog.store import CatalogStore
 
 
 @pytest.fixture

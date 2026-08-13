@@ -3,9 +3,9 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from aurelius.discovery.engine import AlphaDiscoveryEngine
-from aurelius.hypothesis.store import HypothesisStore
-from aurelius.main import create_app
+from mentisrex.discovery.engine import AlphaDiscoveryEngine
+from mentisrex.hypothesis.store import HypothesisStore
+from mentisrex.main import create_app
 
 
 @pytest.mark.integration

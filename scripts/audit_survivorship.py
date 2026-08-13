@@ -21,9 +21,9 @@ import argparse
 import sys
 from datetime import date
 
-from aurelius.market_data.delistings import DelistingEvent, DelistingStore
-from aurelius.market_data.identity import Security, SecurityMaster, make_security_id
-from aurelius.market_data.universe import UniverseEngine
+from mentisrex.market_data.delistings import DelistingEvent, DelistingStore
+from mentisrex.market_data.identity import Security, SecurityMaster, make_security_id
+from mentisrex.market_data.universe import UniverseEngine
 
 
 def _seed_demo(sm: SecurityMaster, dl: DelistingStore) -> None:

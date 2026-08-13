@@ -1,5 +1,5 @@
 # Phase 4 Production Readiness Review
-## Aurelius Capital Institutional Backtesting Engine
+## Mentisrex Capital Institutional Backtesting Engine
 
 **Date:** 2026-07-25  
 **Reviewer:** Senior Quant Engineering Lead  

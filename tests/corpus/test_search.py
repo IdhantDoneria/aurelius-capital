@@ -1,8 +1,8 @@
 """Unit tests for CorpusSearchEngine."""
 
-from aurelius.corpus.classifier import CorpusClassifier
-from aurelius.corpus.models import CorpusDocument
-from aurelius.corpus.search import CorpusSearchEngine
+from mentisrex.corpus.classifier import CorpusClassifier
+from mentisrex.corpus.models import CorpusDocument
+from mentisrex.corpus.search import CorpusSearchEngine
 
 
 def test_search_relevance() -> None:

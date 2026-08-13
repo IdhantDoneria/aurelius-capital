@@ -1,4 +1,4 @@
-# JT 1993 — Reference Institutional Reproduction (Aurelius Capital)
+# JT 1993 — Reference Institutional Reproduction (Mentisrex Capital)
 
 **Date:** 2026-07-31
 **Status:** first fully valid run on the corrected harness + validated dataset.

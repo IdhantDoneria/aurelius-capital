@@ -2,8 +2,8 @@
 
 import pytest
 
-from aurelius.discovery.generator import AlphaHypothesisGenerator
-from aurelius.discovery.synthesis import KnowledgeSynthesizer
+from mentisrex.discovery.generator import AlphaHypothesisGenerator
+from mentisrex.discovery.synthesis import KnowledgeSynthesizer
 
 
 @pytest.mark.unit

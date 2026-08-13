@@ -5,7 +5,7 @@ exactly as it was known on any historical date, no future filing leaking
 backwards. The input layer for value/quality/profitability/investment factor
 models. Fully additive — M1 and M2 unchanged.
 
-Module: `src/aurelius/market_data/fundamentals/` · Store: `data/fundamentals.duckdb`.
+Module: `src/mentisrex/market_data/fundamentals/` · Store: `data/fundamentals.duckdb`.
 
 ## Core idea: an append-only fact ledger
 

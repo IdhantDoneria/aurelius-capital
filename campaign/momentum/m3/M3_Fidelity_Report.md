@@ -1,6 +1,6 @@
 # M3 Methodology Report — Overlapping K-Cohort Portfolio
 
-**Aurelius Capital — Methodology Fidelity Campaign**
+**Mentisrex Capital — Methodology Fidelity Campaign**
 **Date:** 2026-08-04
 **Baseline:** M2 (`campaign/momentum/m2/us_jt_m2.jsonl`)
 **Source:** `campaign/momentum/m3/us_jt_m3.jsonl`
@@ -18,7 +18,7 @@
 | Turnover model | Bulk replacement every 21 bars | 1/K of book updated per period (intended) |
 | JT justification | — | JT-1993 §II.A: K overlapping portfolios, each held K months |
 
-**Implementation:** `OverlappingFactorStrategy` in `src/aurelius/research/templates.py`.
+**Implementation:** `OverlappingFactorStrategy` in `src/mentisrex/research/templates.py`.
 - Global clock via `ctx.now` tracking; `_trading_day` counter shared across symbol calls.
 - `_build_cross_section` called once per period (cached; O(n_symbols) not O(n_symbols²)).
 - Net signal per symbol = majority vote across K cohorts × equal-weight budget.
@@ -46,7 +46,7 @@
 
 ### 3a. Trade count explosion (+612%) — dominant effect
 
-M3 produced 4781 OOS trades vs M2's 672 (7.1× increase). This is the primary driver of M3's underperformance. Root cause: **Aurelius engine targets NAV-proportional positions**.
+M3 produced 4781 OOS trades vs M2's 672 (7.1× increase). This is the primary driver of M3's underperformance. Root cause: **Mentisrex engine targets NAV-proportional positions**.
 
 The engine computes:
 ```
@@ -105,7 +105,7 @@ correctly — the `OverlappingFactorStrategy` correctly cycles through cohorts, 
 cross-sections, and nets votes. The SIGNAL generation is faithful to JT.
 
 **But**: the POSITION MANAGEMENT is not faithful to JT. JT holds dollar positions between
-cohort updates; Aurelius holds NAV-percentage positions and rebalances proportionally on
+cohort updates; Mentisrex holds NAV-percentage positions and rebalances proportionally on
 every signal. This engine-level difference cannot be fixed without modifying the engine
 (frozen). It causes 7× excess turnover, which consumes the signal improvement.
 
@@ -150,7 +150,7 @@ increased return noise from adjustment trades.
 2. **IS Sharpe collapsed**: +0.322 → −0.760 (−1.082). Commission drag during IS training overwhelms any signal.
 3. **p-value worse**: 0.424 → 0.495. Statistical evidence weakened, not strengthened.
 4. **Trade count 7× higher**: 672 → 4781. Commission drag from NAV-rebalancing artifact consumes signal improvement.
-5. **Root cause is engine-level**: The gap between JT's dollar-hold and Aurelius's NAV-% targeting cannot be bridged in the strategy layer without modifying the engine (frozen).
+5. **Root cause is engine-level**: The gap between JT's dollar-hold and Mentisrex's NAV-% targeting cannot be bridged in the strategy layer without modifying the engine (frozen).
 
 ### What M3 revealed (positive findings)
 

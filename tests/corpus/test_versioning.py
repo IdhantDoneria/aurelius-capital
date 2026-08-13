@@ -1,7 +1,7 @@
 """Unit tests for VersionManager."""
 
-from aurelius.corpus.models import CorpusDocument, VersionType
-from aurelius.corpus.versioning import VersionManager
+from mentisrex.corpus.models import CorpusDocument, VersionType
+from mentisrex.corpus.versioning import VersionManager
 
 
 def test_version_workflow() -> None:

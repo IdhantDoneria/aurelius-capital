@@ -13,7 +13,7 @@ risk checks, or portfolio accounting.
 
 ### Package
 
-`src/aurelius/research/post_trade/` — import as `from aurelius.research import post_trade`.
+`src/mentisrex/research/post_trade/` — import as `from mentisrex.research import post_trade`.
 
 ## Event flow
 

@@ -9,7 +9,7 @@ from decimal import Decimal
 
 import pytest
 
-from aurelius.domain.entities.market import (
+from mentisrex.domain.entities.market import (
     OHLCV,
     AssetClass,
     DataFrequency,

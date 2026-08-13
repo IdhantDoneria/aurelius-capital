@@ -1,4 +1,4 @@
-# Aurelius Capital
+# Mentisrex Capital
 
 Institutional-grade quantitative research and trading platform. Python 3.11+,
 FastAPI, PostgreSQL (OLTP), DuckDB (analytical store), Redis (cache). Covers
@@ -6,10 +6,10 @@ the full research lifecycle from literature ingestion to paper trading.
 
 > **Milestone convention.** Engineering milestones use one number line: `M1, M2,
 > … M11`, continuing `M12+`. Never "Phase". The authoritative history is
-> [`docs/AURELIUS_MILESTONE_INDEX.md`](docs/AURELIUS_MILESTONE_INDEX.md); see also
-> [`AURELIUS_ROADMAP.md`](docs/AURELIUS_ROADMAP.md),
-> [`AURELIUS_ARCHITECTURE.md`](docs/AURELIUS_ARCHITECTURE.md), and
-> [`AURELIUS_ENGINEERING_PRINCIPLES.md`](docs/AURELIUS_ENGINEERING_PRINCIPLES.md).
+> [`docs/MENTISREX_MILESTONE_INDEX.md`](docs/MENTISREX_MILESTONE_INDEX.md); see also
+> [`MENTISREX_ROADMAP.md`](docs/MENTISREX_ROADMAP.md),
+> [`MENTISREX_ARCHITECTURE.md`](docs/MENTISREX_ARCHITECTURE.md), and
+> [`MENTISREX_ENGINEERING_PRINCIPLES.md`](docs/MENTISREX_ENGINEERING_PRINCIPLES.md).
 > The component diagram below reflects an **older platform-track numbering** whose
 > "Phase N" labels predate the canonical M-line and use different numbers; it is
 > preserved as historical pending a reconciliation milestone (see the index's
@@ -56,20 +56,20 @@ Infrastructure
 
 | Package | Role |
 |---|---|
-| `aurelius.backtesting` | Event-driven engine: T+1 fills, cost model (Almgren-Chriss), OMS, risk gate, analytics |
-| `aurelius.features` | Feature registry + pipeline + DuckDB store (price, vol, technical, statistical) |
-| `aurelius.research` | Experiment lifecycle: hypothesis → backtest → validation → verdict → store |
-| `aurelius.literature` | Literature intelligence: fetch, parse, LLM-enrich, store papers |
-| `aurelius.hypothesis` | Hypothesis generation from papers, quality filter, dedup, DuckDB store |
-| `aurelius.risk` | Production risk engine: VaR, stress, drawdown, liquidity checks |
-| `aurelius.construction` | Portfolio builder: signal aggregation, optimizers, exposure limits |
-| `aurelius.paper` | Paper trading: supervised wall-clock loop, crash recovery, journal |
-| `aurelius.assistant` | AI research assistant: paper parsing, code review, bias detection |
-| `aurelius.market_data` | Ingestion adapters (Alpaca, Yahoo, CSV) + DuckDB analytical store |
-| `aurelius.infrastructure` | PostgreSQL models, repositories, migrations, Redis cache, config |
-| `aurelius.presentation` | FastAPI routes, health/metrics endpoints, request logging middleware |
-| `aurelius.core` | Shared errors and structured logging |
-| `aurelius.domain` | Pure domain entities (OHLCV, Symbol, TimeRange) and repository interfaces |
+| `mentisrex.backtesting` | Event-driven engine: T+1 fills, cost model (Almgren-Chriss), OMS, risk gate, analytics |
+| `mentisrex.features` | Feature registry + pipeline + DuckDB store (price, vol, technical, statistical) |
+| `mentisrex.research` | Experiment lifecycle: hypothesis → backtest → validation → verdict → store |
+| `mentisrex.literature` | Literature intelligence: fetch, parse, LLM-enrich, store papers |
+| `mentisrex.hypothesis` | Hypothesis generation from papers, quality filter, dedup, DuckDB store |
+| `mentisrex.risk` | Production risk engine: VaR, stress, drawdown, liquidity checks |
+| `mentisrex.construction` | Portfolio builder: signal aggregation, optimizers, exposure limits |
+| `mentisrex.paper` | Paper trading: supervised wall-clock loop, crash recovery, journal |
+| `mentisrex.assistant` | AI research assistant: paper parsing, code review, bias detection |
+| `mentisrex.market_data` | Ingestion adapters (Alpaca, Yahoo, CSV) + DuckDB analytical store |
+| `mentisrex.infrastructure` | PostgreSQL models, repositories, migrations, Redis cache, config |
+| `mentisrex.presentation` | FastAPI routes, health/metrics endpoints, request logging middleware |
+| `mentisrex.core` | Shared errors and structured logging |
+| `mentisrex.domain` | Pure domain entities (OHLCV, Symbol, TimeRange) and repository interfaces |
 
 ---
 
@@ -77,7 +77,7 @@ Infrastructure
 
 ```bash
 # 1. Clone and create virtual environment
-git clone <repo> aurelius-capital && cd aurelius-capital
+git clone <repo> mentisrex-capital && cd mentisrex-capital
 python -m venv .venv && source .venv/bin/activate
 
 # 2. Install (editable)
@@ -94,7 +94,7 @@ docker compose up -d postgres redis
 alembic upgrade head
 
 # 6. Run the API server
-uvicorn aurelius.main:app --reload
+uvicorn mentisrex.main:app --reload
 
 # 7. Run all tests
 pytest -q
@@ -132,8 +132,8 @@ python scripts/acceptance_validation.py
 ## Project Structure
 
 ```
-aurelius-capital/
-├── src/aurelius/           # All source code (editable install)
+mentisrex-capital/
+├── src/mentisrex/           # All source code (editable install)
 │   ├── backtesting/        # Event-driven backtesting engine
 │   ├── features/           # Feature engineering platform + registry
 │   ├── research/           # Experiment tracking: runner, store, models
@@ -175,7 +175,7 @@ See `docs/RESEARCH_OS.md` for the full research workflow — templates, lifecycl
 Key design rules:
 - All prices and quantities use `Decimal` (no float drift).
 - Backtesting enforces strict T+1 execution (no look-ahead).
-- `aurelius.assistant` is structurally forbidden from importing any execution path.
+- `mentisrex.assistant` is structurally forbidden from importing any execution path.
 - Every experiment is pinned to a `dataset_fingerprint`; reruns of dead ideas are auto-blocked by `ResearchStore.find_duplicate`.
 
 ---

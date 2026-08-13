@@ -4,7 +4,7 @@ One PIT-safe accessor over the five certified engines. Give it a date; get back 
 reproducible, survivorship-free research snapshot keyed by `security_id`, every
 field gated so `knowledge_date ≤ as_of`. Additive; M1–M5 logic untouched.
 
-Module: `src/aurelius/market_data/research_matrix/` (`engine.py`, `schema.py`,
+Module: `src/mentisrex/market_data/research_matrix/` (`engine.py`, `schema.py`,
 `feature_registry.py`, `quality.py`).
 
 ```python

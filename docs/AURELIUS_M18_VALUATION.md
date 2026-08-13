@@ -15,7 +15,7 @@ production-quality implementations.
 
 ### Package
 
-`src/aurelius/research/valuation/` — 24 modules.
+`src/mentisrex/research/valuation/` — 24 modules.
 
 ## Core architectural rule
 

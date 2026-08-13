@@ -4,8 +4,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from aurelius.hypothesis.models import HypothesisRecord
-from aurelius.hypothesis.store import HypothesisStore
+from mentisrex.hypothesis.models import HypothesisRecord
+from mentisrex.hypothesis.store import HypothesisStore
 
 
 def _record(

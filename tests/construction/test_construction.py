@@ -7,8 +7,8 @@ from decimal import Decimal
 
 import numpy as np
 
-from aurelius.backtesting.portfolio.state import PortfolioState
-from aurelius.construction import (
+from mentisrex.backtesting.portfolio.state import PortfolioState
+from mentisrex.construction import (
     ExposureLimits,
     Method,
     PortfolioBuilder,
@@ -187,7 +187,7 @@ def test_builder_produces_screened_orders():
 
 
 def test_builder_risk_engine_rejects_when_halted():
-    from aurelius.risk import RiskEngine
+    from mentisrex.risk import RiskEngine
 
     syms = ["S0", "S1", "S2"]
     state = _state()
@@ -205,6 +205,6 @@ def test_builder_risk_engine_rejects_when_halted():
 
 
 def test_demo_self_check():
-    from aurelius.construction import demo
+    from mentisrex.construction import demo
 
     demo()

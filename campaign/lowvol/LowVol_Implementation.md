@@ -4,7 +4,7 @@
 
 ## 1. What was built
 
-`LowVolStrategy` in `src/aurelius/research/templates.py` — a NEW strategy class
+`LowVolStrategy` in `src/mentisrex/research/templates.py` — a NEW strategy class
 (ALLOWED: new factor implementation). It reuses the certified construction *standards*
 via the shared modules but never modifies certified code:
 - M1 equal-weight leg budget, M2 `$5` price screen,

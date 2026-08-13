@@ -11,16 +11,16 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from aurelius.backtesting.analytics.performance import EquityPoint, PerformanceMetrics, RoundTrip
-from aurelius.research.execution import (
+from mentisrex.backtesting.analytics.performance import EquityPoint, PerformanceMetrics, RoundTrip
+from mentisrex.research.execution import (
     ResearchRunner,
     RunConfiguration,
     State,
     check,
     make_backtest_executor,
 )
-from aurelius.research.execution.artifact_manager import _ARTIFACTS
-from aurelius.research.experiment_registry import ExperimentRegistry, RegistryStore, lineage
+from mentisrex.research.execution.artifact_manager import _ARTIFACTS
+from mentisrex.research.experiment_registry import ExperimentRegistry, RegistryStore, lineage
 
 
 def _dv():
@@ -232,9 +232,9 @@ def test_hook_execution(runner, tmp_path):
 # 14. backward compatibility — a REAL backtest through the platform ─────────────────
 
 def test_real_backtest_through_platform(runner, tmp_path):
-    from aurelius.backtesting.data import InMemoryDataFeed
-    from aurelius.research.runner import research_config, synth_bars
-    from aurelius.research.templates import MeanReversionStrategy
+    from mentisrex.backtesting.data import InMemoryDataFeed
+    from mentisrex.research.runner import research_config, synth_bars
+    from mentisrex.research.templates import MeanReversionStrategy
 
     bars = synth_bars(["AAA", "BBB"], days=120, seed=3)
     executor = make_backtest_executor(MeanReversionStrategy(lookback=20),

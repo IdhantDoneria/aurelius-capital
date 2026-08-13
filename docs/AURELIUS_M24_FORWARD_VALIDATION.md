@@ -1,4 +1,4 @@
-# AURELIUS M24 — Forward Paper-Trading Validation & Diagnostics Framework
+# MENTISREX M24 — Forward Paper-Trading Validation & Diagnostics Framework
 
 ## Purpose
 
@@ -23,7 +23,7 @@ All diagnostic work is read-only. The only output is the validation artifact + r
 ## Package location
 
 ```
-src/aurelius/research/forward_validation/
+src/mentisrex/research/forward_validation/
     __init__.py            — public exports
     errors.py              — exception hierarchy
     models.py              — immutable domain models + enumerations
@@ -136,7 +136,7 @@ All stored as plain string `.value` (Python 3.12-compatible; `str, Enum` `.value
 - `detect_snapshot_ordering`: ERROR if snapshots arrive out of order
 
 ### Attribution (`attribution.py`)
-Thin adapter over `aurelius.research.simulation.attribution`. Does NOT re-implement P&L logic.
+Thin adapter over `mentisrex.research.simulation.attribution`. Does NOT re-implement P&L logic.
 
 ### Lineage (`lineage.py`)
 `LineageChain` — links research artifact → validation artifact → strategy version → deployment
@@ -264,7 +264,7 @@ Test classes:
 - Rolling metrics not computed when `len(daily_rets) < rolling_window` (by design)
 - Bootstrap CI uses stdlib `random` (no numpy) — suitable for offline diagnostic use, not publication-grade
 - Backtest comparison requires caller-supplied backtest metrics dict; M24 does not re-run backtests
-- Attribution requires M11 `aurelius.research.simulation.attribution`; if unavailable, `forward_attribution` returns `analyzed=False`
+- Attribution requires M11 `mentisrex.research.simulation.attribution`; if unavailable, `forward_attribution` returns `analyzed=False`
 - No annualized statistics claimed for INSUFFICIENT/PRELIMINARY samples (`ann.reliable = False`)
 - Corporate action replay through checkpoint not serialized (M15 limitation)
 - Partial-fill simulation uses SimulatedBroker fill_ratio without real ADV data

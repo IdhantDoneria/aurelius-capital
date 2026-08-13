@@ -5,11 +5,11 @@ from decimal import Decimal
 
 import pytest
 
-from aurelius.backtesting.config import BacktestConfig
-from aurelius.backtesting.data.feed import BarData
-from aurelius.backtesting.events.types import OrderEvent, OrderType, Side
-from aurelius.backtesting.execution.models import CommissionModel, SlippageModel, SpreadModel
-from aurelius.backtesting.execution.simulator import ExecutionSimulator
+from mentisrex.backtesting.config import BacktestConfig
+from mentisrex.backtesting.data.feed import BarData
+from mentisrex.backtesting.events.types import OrderEvent, OrderType, Side
+from mentisrex.backtesting.execution.models import CommissionModel, SlippageModel, SpreadModel
+from mentisrex.backtesting.execution.simulator import ExecutionSimulator
 
 
 def _bar(

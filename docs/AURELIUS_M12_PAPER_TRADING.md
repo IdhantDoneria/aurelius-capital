@@ -1,7 +1,7 @@
 # M12 — Paper Trading Bridge & Live-State Reconciliation
 
 **Milestone:** M12
-**Capability:** Paper Trading (see `AURELIUS_ROADMAP.md`)
+**Capability:** Paper Trading (see `MENTISREX_ROADMAP.md`)
 **Depends on:** M7 (registry), M9 (validation), M10 (cost model), M11 (accounting core)
 **Status:** DRAFT → CERTIFIED
 **Branch:** `aidp/audit-and-pit-gaps`
@@ -209,7 +209,7 @@ risk checks. Each is additive on the existing seams.
 
 **M13 — Risk Engine consolidation.** M12 ships a *pre-trade* gate
 (`PreTradeRiskGate`) only; the legacy Platform-Track "Risk Engine" (VaR, stress,
-drawdown halt, exposure limits — see `AURELIUS_LEGACY_TRACK_AUDIT.md`) is the
+drawdown halt, exposure limits — see `MENTISREX_LEGACY_TRACK_AUDIT.md`) is the
 natural next capability to rebuild into the canonical M-line, sitting between
 portfolio construction/simulation and paper/live execution. It is the last major
 gate before live deployment.

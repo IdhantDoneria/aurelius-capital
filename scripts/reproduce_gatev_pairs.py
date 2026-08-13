@@ -29,11 +29,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from aurelius.backtesting.data.feed import BarData
-from aurelius.market_data.storage.duckdb_store import DuckDBStore
-from aurelius.research.runner import ResearchRunner, research_config
-from aurelius.research.store import ResearchStore
-from aurelius.research.templates import PairsStrategy
+from mentisrex.backtesting.data.feed import BarData
+from mentisrex.market_data.storage.duckdb_store import DuckDBStore
+from mentisrex.research.runner import ResearchRunner, research_config
+from mentisrex.research.store import ResearchStore
+from mentisrex.research.templates import PairsStrategy
 
 STORE_DB = "./data/analytics.duckdb"
 

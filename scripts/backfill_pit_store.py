@@ -16,8 +16,8 @@ import asyncio
 from datetime import UTC, datetime
 from pathlib import Path
 
-from aurelius.market_data.adapters.yahoo import YahooFinanceAdapter
-from aurelius.market_data.storage.pit_store import PitPriceStore
+from mentisrex.market_data.adapters.yahoo import YahooFinanceAdapter
+from mentisrex.market_data.storage.pit_store import PitPriceStore
 
 
 async def _run(symbols: list[str], start: datetime, end: datetime, db_path: str) -> None:

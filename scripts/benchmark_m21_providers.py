@@ -10,10 +10,10 @@ import time
 import tracemalloc
 from datetime import date, timedelta
 
-from aurelius.research.market_data.providers.openbb import OpenBBSourceAdapter
-from aurelius.research.market_data.providers.yahoo import YahooFinanceSourceAdapter
-from aurelius.research.market_data.providers.fred import FREDSourceAdapter
-from aurelius.research.market_data.providers.sec import SECSourceAdapter
+from mentisrex.research.market_data.providers.openbb import OpenBBSourceAdapter
+from mentisrex.research.market_data.providers.yahoo import YahooFinanceSourceAdapter
+from mentisrex.research.market_data.providers.fred import FREDSourceAdapter
+from mentisrex.research.market_data.providers.sec import SECSourceAdapter
 
 
 def _equity_records(n: int) -> list[dict]:

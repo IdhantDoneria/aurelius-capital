@@ -6,7 +6,7 @@ statistically significant, economically meaningful, robust, capacity-viable,
 reproducible, and *not* overfit. No strategy is deployable without passing here.
 Additive; M1–M8 untouched.
 
-Module: `src/aurelius/research/validation/` (package). The pre-existing
+Module: `src/mentisrex/research/validation/` (package). The pre-existing
 lightweight `research/validation.py` was moved to `validation/legacy.py` and is
 re-exported from the package, so every historical import keeps working — this is
 an extension, not a redesign.

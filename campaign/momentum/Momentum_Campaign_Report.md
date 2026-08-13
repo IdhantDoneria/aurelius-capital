@@ -1,8 +1,8 @@
 # Momentum Research Campaign — Master Report
 
-**Aurelius Capital, Quantitative Research Division. 2026-08-03.**
+**Mentisrex Capital, Quantitative Research Division. 2026-08-03.**
 Frozen platform, no tuning, no architecture change. Answers: under what conditions
-does momentum exist, how faithfully can Aurelius reproduce the literature, and
+does momentum exist, how faithfully can Mentisrex reproduce the literature, and
 what strategy is justified. All figures trace to `campaign/momentum/runs/*.jsonl`.
 
 ## Workstream status

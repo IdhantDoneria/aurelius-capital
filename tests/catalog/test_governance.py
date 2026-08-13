@@ -2,9 +2,9 @@
 
 import pytest
 
-from aurelius.catalog.governance import GovernanceManager
-from aurelius.catalog.models import DatasetRecord
-from aurelius.catalog.store import CatalogStore
+from mentisrex.catalog.governance import GovernanceManager
+from mentisrex.catalog.models import DatasetRecord
+from mentisrex.catalog.store import CatalogStore
 
 
 @pytest.fixture

@@ -14,10 +14,10 @@ import time
 import tracemalloc
 from datetime import date
 
-from aurelius.research import instruments as ins
-from aurelius.research import valuation as val
-from aurelius.research.valuation import bonds as vbonds
-from aurelius.research.valuation import swaps as vswaps
+from mentisrex.research import instruments as ins
+from mentisrex.research import valuation as val
+from mentisrex.research.valuation import bonds as vbonds
+from mentisrex.research.valuation import swaps as vswaps
 
 AS_OF = date(2026, 1, 5)
 EXPIRY = date(2027, 1, 5)
@@ -44,7 +44,7 @@ def build_positions(n_each: int, n_under: int) -> list:
 
 
 def _future_with_underlying(fid: str, under: str):
-    from aurelius.research.instruments.models import CashConvention, Instrument, InstrumentType
+    from mentisrex.research.instruments.models import CashConvention, Instrument, InstrumentType
     return Instrument(fid, InstrumentType.FUTURE, contract_size=1, expiry=EXPIRY,
                       cash_convention=CashConvention.MARGINED, underlying=under)
 

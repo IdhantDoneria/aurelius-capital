@@ -1,4 +1,4 @@
-# AURELIUS M23 — Continuous Paper Trading & Forward Simulation Runtime
+# MENTISREX M23 — Continuous Paper Trading & Forward Simulation Runtime
 
 **Status:** Implemented and certified  
 **Milestone:** M23  
@@ -9,7 +9,7 @@
 
 ## 1. Purpose
 
-M23 adds a **continuous, persistent, auditable paper-trading runtime** to the Aurelius platform. It orchestrates M22 strategy evaluation against M12 paper execution, maintaining live portfolio state across multiple snapshots and multiple strategies, with full checkpoint/restart support and forward performance recording.
+M23 adds a **continuous, persistent, auditable paper-trading runtime** to the Mentisrex platform. It orchestrates M22 strategy evaluation against M12 paper execution, maintaining live portfolio state across multiple snapshots and multiple strategies, with full checkpoint/restart support and forward performance recording.
 
 M23 does **not** implement any of the following — they remain in their respective milestones:
 - Strategy evaluation logic (M22 `StrategyRuntime`)
@@ -66,7 +66,7 @@ M23 does **not** implement any of the following — they remain in their respect
 | `paper_trading/cycle.py` | `CycleRecord`, `ForwardPerformanceRecord`, `PerformanceMetrics` |
 | `paper_trading/checkpoint.py` | JSON-based checkpoint save/load |
 
-All are exported from `aurelius.research.paper_trading` and importable from their submodules directly.
+All are exported from `mentisrex.research.paper_trading` and importable from their submodules directly.
 
 ---
 
@@ -90,7 +90,7 @@ First evaluation (no `last_eval_date`) is always due.
 ## 5. Clock injection
 
 ```python
-from aurelius.research.paper_trading import Clock, FixedClock
+from mentisrex.research.paper_trading import Clock, FixedClock
 
 # Tests and replay
 clock = FixedClock(datetime(2024, 1, 2, 9, 30, 0))
@@ -108,7 +108,7 @@ loop = PaperTradingLoop(runtime=..., registry=..., clock=clock)
 ### Setup
 
 ```python
-from aurelius.research.paper_trading.loop import PaperTradingLoop, LoopConfig
+from mentisrex.research.paper_trading.loop import PaperTradingLoop, LoopConfig
 
 config = LoopConfig(
     initial_capital=1_000_000.0,
@@ -204,7 +204,7 @@ M22 `transaction_cost_assumption` is mapped to M12 execution parameters:
 | other keys | logged as `unmapped_keys` |
 
 ```python
-from aurelius.research.paper_trading.loop import check_cost_compatibility
+from mentisrex.research.paper_trading.loop import check_cost_compatibility
 
 result = check_cost_compatibility(spec)
 if not result.compatible:
@@ -223,8 +223,8 @@ loop.add_strategy("s", logic, broker=my_broker)
 ## 11. Checkpoint / restart
 
 ```python
-from aurelius.research.paper_trading.checkpoint import save_checkpoint, load_checkpoint
-from aurelius.research.paper_trading.checkpoint import _restore_checkpoint
+from mentisrex.research.paper_trading.checkpoint import save_checkpoint, load_checkpoint
+from mentisrex.research.paper_trading.checkpoint import _restore_checkpoint
 
 # Save
 save_checkpoint("/tmp/loop_state.json", loop)

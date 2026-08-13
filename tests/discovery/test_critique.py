@@ -2,10 +2,10 @@
 
 import pytest
 
-from aurelius.discovery.critique import SelfCritiqueEngine
-from aurelius.discovery.generator import AlphaHypothesisGenerator
-from aurelius.discovery.scorer import NoveltyScorer
-from aurelius.discovery.synthesis import KnowledgeSynthesizer
+from mentisrex.discovery.critique import SelfCritiqueEngine
+from mentisrex.discovery.generator import AlphaHypothesisGenerator
+from mentisrex.discovery.scorer import NoveltyScorer
+from mentisrex.discovery.synthesis import KnowledgeSynthesizer
 
 
 @pytest.mark.unit

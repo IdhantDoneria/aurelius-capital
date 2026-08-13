@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from aurelius.backtesting.portfolio.state import PortfolioState
-from aurelius.risk import (
+from mentisrex.backtesting.portfolio.state import PortfolioState
+from mentisrex.risk import (
     OrderContext,
     PortfolioRiskMonitor,
     RiskDecision,
@@ -200,6 +200,6 @@ def test_stress_liquidity_horizon():
 
 
 def test_demo_self_check():
-    from aurelius.risk import demo
+    from mentisrex.risk import demo
 
     demo()

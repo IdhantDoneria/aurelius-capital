@@ -12,7 +12,7 @@ from decimal import Decimal
 
 import pytest
 
-from aurelius.backtesting.data.feed import BarData, DuckDBDataFeed, InMemoryDataFeed
+from mentisrex.backtesting.data.feed import BarData, DuckDBDataFeed, InMemoryDataFeed
 
 # ── InMemoryDataFeed edge cases ───────────────────────────────────────────────
 

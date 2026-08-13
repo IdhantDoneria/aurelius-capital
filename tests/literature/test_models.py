@@ -4,7 +4,7 @@ from datetime import UTC, date, datetime
 
 import pytest
 
-from aurelius.literature.models import Paper, paper_id
+from mentisrex.literature.models import Paper, paper_id
 
 
 @pytest.mark.unit

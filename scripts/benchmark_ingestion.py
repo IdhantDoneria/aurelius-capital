@@ -60,7 +60,7 @@ def _synthetic_bars(symbols: int, days: int) -> list[dict]:
 
 
 def benchmark() -> None:
-    from aurelius.market_data.storage.duckdb_store import DuckDBStore
+    from mentisrex.market_data.storage.duckdb_store import DuckDBStore
 
     print("INGESTION BENCHMARK (real DuckDBStore.write_bars path)\n")
     print(f"{'scale':>16} {'rows':>10} {'sec':>7} {'rows/sec':>10} {'MB':>7} {'bytes/row':>10}")
@@ -104,9 +104,9 @@ def benchmark() -> None:
 
 def check_coverage() -> None:
     """Assert every required validation category fires at its real enforcement point."""
-    from aurelius.infrastructure.database.validation.market import OHLCVBatchValidator
-    from aurelius.market_data.adapters.csv_loader import CSVLoader
-    from aurelius.market_data.pipeline.normalizer import detect_gaps, compute_spike
+    from mentisrex.infrastructure.database.validation.market import OHLCVBatchValidator
+    from mentisrex.market_data.adapters.csv_loader import CSVLoader
+    from mentisrex.market_data.pipeline.normalizer import detect_gaps, compute_spike
 
     v = OHLCVBatchValidator()
 

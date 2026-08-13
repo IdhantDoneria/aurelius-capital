@@ -19,14 +19,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import duckdb
 
-from aurelius.director.director import ResearchDirector
-from aurelius.hypothesis.deduplication import DuplicateStatus, check_duplicates
-from aurelius.hypothesis.generator import generate
-from aurelius.hypothesis.quality import check_quality
-from aurelius.hypothesis.store import HypothesisStore
-from aurelius.knowledge.api import _get_kg
-from aurelius.literature.models import Paper
-from aurelius.research.store import ResearchStore
+from mentisrex.director.director import ResearchDirector
+from mentisrex.hypothesis.deduplication import DuplicateStatus, check_duplicates
+from mentisrex.hypothesis.generator import generate
+from mentisrex.hypothesis.quality import check_quality
+from mentisrex.hypothesis.store import HypothesisStore
+from mentisrex.knowledge.api import _get_kg
+from mentisrex.literature.models import Paper
+from mentisrex.research.store import ResearchStore
 
 CORPUS_DB = "./data/corpus.duckdb"
 

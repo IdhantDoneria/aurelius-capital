@@ -1,4 +1,4 @@
-# Aurelius Research Platform — Capability Roadmap
+# Mentisrex Research Platform — Capability Roadmap
 
 This roadmap describes the platform as **permanent capabilities**, independent of
 milestone numbers. Milestones (`M1, M2, …`) *implement* capabilities; capabilities
@@ -89,7 +89,7 @@ Pre-trade and portfolio-level risk gating: limits, exposure, concentration, VaR/
 stress, factor risk, drawdown halt, liquidity/capacity, deployment gating. *Delivered
 by M13, consolidating the legacy Platform-Track risk engine (historically "Phase 7",
 frozen and untouched — see
-[`AURELIUS_LEGACY_TRACK_AUDIT.md`](AURELIUS_LEGACY_TRACK_AUDIT.md)). Plugs into the
+[`MENTISREX_LEGACY_TRACK_AUDIT.md`](MENTISREX_LEGACY_TRACK_AUDIT.md)). Plugs into the
 M12 pre-trade gate by injection.*
 
 > **Two tracks, by name not number.** The Platform-Track application capabilities
@@ -194,5 +194,5 @@ contracts, regulatory & client reporting, deployment, monitoring. *Future.*
 
 > Milestones are how we ship. Capabilities are what we own. The number line only
 > ever grows; the capability stack only ever deepens. See
-> `AURELIUS_MILESTONE_INDEX.md` for the milestone→commit history and
-> `AURELIUS_ARCHITECTURE.md` for how the capabilities compose.
+> `MENTISREX_MILESTONE_INDEX.md` for the milestone→commit history and
+> `MENTISREX_ARCHITECTURE.md` for how the capabilities compose.

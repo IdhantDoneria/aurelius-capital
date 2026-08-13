@@ -12,7 +12,7 @@ from uuid import uuid4
 
 import pytest
 
-from aurelius.infrastructure.database.validation.trading import (
+from mentisrex.infrastructure.database.validation.trading import (
     FillIngest,
     OrderCreateRequest,
     PositionCloseRequest,

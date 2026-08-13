@@ -4,7 +4,7 @@ The authoritative source of truth for every research experiment. Any run recorde
 today can be reproduced years later from stored metadata alone — no raw datasets,
 no manually-named output folders. Additive; M1–M6 APIs untouched.
 
-Module: `src/aurelius/research/experiment_registry/` · Store:
+Module: `src/mentisrex/research/experiment_registry/` · Store:
 `data/research_registry.duckdb`.
 
 ```python

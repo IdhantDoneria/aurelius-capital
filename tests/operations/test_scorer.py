@@ -1,7 +1,7 @@
 """Tests for the paper priority scorer."""
 
 import pytest
-from aurelius.operations.scorer import score_paper
+from mentisrex.operations.scorer import score_paper
 
 
 def _meta(**kwargs):

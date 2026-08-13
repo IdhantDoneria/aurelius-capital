@@ -21,7 +21,7 @@ import argparse
 import csv
 from datetime import date
 
-from aurelius.market_data.delistings import DelistingEvent, DelistingStore
+from mentisrex.market_data.delistings import DelistingEvent, DelistingStore
 
 
 def _d(s: str | None) -> date | None:
@@ -63,7 +63,7 @@ def main() -> None:
             store.record(ev)
         applied = 0
         if args.apply:
-            from aurelius.market_data.identity import SecurityMaster
+            from mentisrex.market_data.identity import SecurityMaster
             sm = SecurityMaster(args.identity_db)
             try:
                 applied = store.apply_to_master(sm)

@@ -62,10 +62,10 @@ from typing import Any
 
 import pytest
 
-from aurelius.research.portfolio.engine import PortfolioEngine
-from aurelius.research.risk.engine import RiskEngine, RiskEngineConfig
-from aurelius.research.risk.models import RiskDecision
-from aurelius.research.strategy_deployment import (
+from mentisrex.research.portfolio.engine import PortfolioEngine
+from mentisrex.research.risk.engine import RiskEngine, RiskEngineConfig
+from mentisrex.research.risk.models import RiskDecision
+from mentisrex.research.strategy_deployment import (
     ConsistencyChecker,
     EvaluationError,
     FeatureSet,
@@ -86,7 +86,7 @@ from aurelius.research.strategy_deployment import (
     make_manifest,
     make_spec,
 )
-from aurelius.research.execution.ems.models import OrderIntent as EmsOrderIntent
+from mentisrex.research.execution.ems.models import OrderIntent as EmsOrderIntent
 
 
 # ── shared fixtures ───────────────────────────────────────────────────────────
@@ -716,8 +716,8 @@ def test_risk_approved_flag():
 
 
 def test_risk_rejection_produces_no_ems_requests():
-    from aurelius.research.risk.limits import RiskLimits
-    from aurelius.research.risk.engine import RiskEngineConfig
+    from mentisrex.research.risk.limits import RiskLimits
+    from mentisrex.research.risk.engine import RiskEngineConfig
 
     # Set an absurdly tight position limit to force rejection
     tight_config = RiskEngineConfig(limits=RiskLimits(max_position=0.001))
@@ -762,7 +762,7 @@ def test_intent_record_side_correct():
 # ── 17. M14 OrderRequest generation ──────────────────────────────────────────
 
 def test_ems_requests_are_m14_order_requests():
-    from aurelius.research.execution.ems.models import OrderRequest
+    from mentisrex.research.execution.ems.models import OrderRequest
     spec = _base_spec()
     snap = FakeSnapshot(as_of=AS_OF, spots=SPOTS)
     logic = ConstantLogic({sid: 0.5 for sid in SPOTS})
@@ -1173,7 +1173,7 @@ def test_full_integration_pipeline():
     assert ev.evaluation_fingerprint != ""
 
     # 9. M14 boundary: verify EMS requests are valid
-    from aurelius.research.execution.ems.models import OrderRequest
+    from mentisrex.research.execution.ems.models import OrderRequest
     if ev.risk_approved:
         assert len(ev.ems_requests) > 0
         for req in ev.ems_requests:

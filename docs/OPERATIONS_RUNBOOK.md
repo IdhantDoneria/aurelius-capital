@@ -1,8 +1,8 @@
-# Aurelius Operations Engine — Runbook
+# Mentisrex Operations Engine — Runbook
 
 ## Overview
 
-The Operations Engine transforms the Aurelius platform into a continuously operating
+The Operations Engine transforms the Mentisrex platform into a continuously operating
 autonomous research organization. Drop a paper in `research_corpus/incoming/` — the
 engine handles everything else.
 
@@ -109,7 +109,7 @@ The engine only ingests:
 - Files referenced by absolute path via `/operations/ingest/path`
 
 It does NOT automatically fetch from the internet. Open-access source connectors
-(arXiv, SSRN, etc.) are already implemented in `src/aurelius/literature/` — wire
+(arXiv, SSRN, etc.) are already implemented in `src/mentisrex/literature/` — wire
 them to `FolderWatcher.process_now()` to enable automatic discovery.
 
 No paywalled content is fetched. If a dataset referenced in a paper is unavailable,
@@ -132,7 +132,7 @@ PDFs without pypdf are logged as unsupported and moved to `rejected/`.
 - Metadata indexed in `research_corpus/metadata/` as individual JSON files
 - No full repository reload needed for operations queries
 - Dashboard reads from folder counts + journal (no DB query)
-- Future prompts: load only `docs/OPERATIONS_RUNBOOK.md` + `src/aurelius/operations/config.py` for ops context
+- Future prompts: load only `docs/OPERATIONS_RUNBOOK.md` + `src/mentisrex/operations/config.py` for ops context
 
 ## Known Limitations / Skipped
 

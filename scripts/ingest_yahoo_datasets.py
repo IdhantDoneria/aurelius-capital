@@ -12,8 +12,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from aurelius.market_data.adapters.csv_loader import CSVLoader
-from aurelius.market_data.storage.duckdb_store import DuckDBStore
+from mentisrex.market_data.adapters.csv_loader import CSVLoader
+from mentisrex.market_data.storage.duckdb_store import DuckDBStore
 
 FETCHER = Path.home() / "market_data_fetcher" / "ingest_ready"
 DATASETS = [("US", FETCHER / "us_ohlcv.csv"), ("INDIA_NSE", FETCHER / "india_ohlcv.csv")]

@@ -12,8 +12,8 @@ import time
 import tracemalloc
 from datetime import date
 
-from aurelius.research import post_trade as PT
-from aurelius.research.post_trade import serialization
+from mentisrex.research import post_trade as PT
+from mentisrex.research.post_trade import serialization
 
 T0 = date(2026, 1, 5)          # a Monday
 UNIVERSE = 1000                # cycle names so holdings stay bounded, events scale with N

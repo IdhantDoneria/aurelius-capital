@@ -15,10 +15,10 @@ from datetime import date, datetime
 
 import pytest
 
-from aurelius.research import fx as m16fx
-from aurelius.research import instruments as ins
-from aurelius.research import valuation as val
-from aurelius.research.valuation import (
+from mentisrex.research import fx as m16fx
+from mentisrex.research import instruments as ins
+from mentisrex.research import valuation as val
+from mentisrex.research.valuation import (
     american,
     bonds,
     cross_currency as xccy,
@@ -663,7 +663,7 @@ def test_pit_clean():
 
 
 def test_pit_rejects_lookahead_quote():
-    from aurelius.research.valuation.models import MarketQuote, Provenance
+    from mentisrex.research.valuation.models import MarketQuote, Provenance
     q = MarketQuote("AAPL", 150, provenance=Provenance(observation_date=date(2026, 2, 1)))
     s = val.build_snapshot(AS_OF, spots={"AAPL": 150}, quotes={"AAPL": q})
     probs = val.validate_pit(s)
@@ -671,7 +671,7 @@ def test_pit_rejects_lookahead_quote():
 
 
 def test_pit_rejects_stale():
-    from aurelius.research.valuation.models import MarketQuote, Provenance
+    from mentisrex.research.valuation.models import MarketQuote, Provenance
     q = MarketQuote("AAPL", 150, provenance=Provenance(observation_date=date(2025, 1, 1)))
     s = val.build_snapshot(AS_OF, spots={"AAPL": 150}, quotes={"AAPL": q})
     assert val.validate_pit(s, max_staleness_days=30)
@@ -684,7 +684,7 @@ def test_pit_rejects_curve_future_refdate():
 
 
 def test_pit_timestamp_inconsistent():
-    from aurelius.research.valuation.models import MarketQuote, Provenance
+    from mentisrex.research.valuation.models import MarketQuote, Provenance
     q = MarketQuote("AAPL", 150, provenance=Provenance(
         observation_date=AS_OF, timestamp=datetime(2026, 1, 3, 12, 0)))
     s = val.build_snapshot(AS_OF, spots={"AAPL": 150}, quotes={"AAPL": q})
@@ -785,7 +785,7 @@ def test_engine_base_currency_conversion():
 
 
 def test_engine_rejects_lookahead():
-    from aurelius.research.valuation.models import MarketQuote, Provenance
+    from mentisrex.research.valuation.models import MarketQuote, Provenance
     q = MarketQuote("AAPL", 150, provenance=Provenance(observation_date=date(2026, 2, 1)))
     bad = val.build_snapshot(AS_OF, spots={"AAPL": 150}, quotes={"AAPL": q},
                              vol_surfaces={"AAPL": val.flat_surface("AAPL", AS_OF, 0.25)},
@@ -1005,7 +1005,7 @@ def test_m17_adapter_equity_price():
 
 
 def test_m17_adapter_greeks_return_m17_type():
-    from aurelius.research.instruments.models import Greeks as M17G
+    from mentisrex.research.instruments.models import Greeks as M17G
     g = val.M18Pricer().greeks(call_opt(), {"spot": 150, "vol": 0.25, "rate": 0.03, "t": 1.0})
     assert isinstance(g, M17G) and 0 < g.delta < 1
 
@@ -1031,7 +1031,7 @@ def test_m17_yield_adapter_duration():
 
 def test_m18_pricer_drops_into_m17_book_greeks():
     # M17 InstrumentBook risk consuming M18 greeks provider
-    from aurelius.research.instruments import risk as m17risk
+    from mentisrex.research.instruments import risk as m17risk
     b = ins.InstrumentBook(1_000_000.0)
     opt = ins.call("AAPL-C", underlying="AAPL", strike=150, expiry=date(2027, 1, 5))
     b.book_trade(opt, 10, 5.0)

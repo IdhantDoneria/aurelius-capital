@@ -1,6 +1,6 @@
 # Momentum Retirement Decision
 
-**Aurelius Capital — Momentum Campaign, Phases 2–4 (M11)**
+**Mentisrex Capital — Momentum Campaign, Phases 2–4 (M11)**
 **Date:** 2026-08-05. Archival synthesis; no code, no new experiments.
 **Decision: ARCHIVE.** The hypothesis is rejected; research retired.
 

@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from aurelius.hypothesis.models import HypothesisRecord
+from mentisrex.hypothesis.models import HypothesisRecord
 
 
 def _record(**kwargs) -> HypothesisRecord:

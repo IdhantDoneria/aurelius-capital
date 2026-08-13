@@ -42,11 +42,11 @@ logging.disable(logging.INFO)
 
 import duckdb
 
-from aurelius.backtesting.data.feed import BarData
-from aurelius.market_data.storage.isolation import validated_universe_filter
-from aurelius.research.runner import ResearchRunner, research_config
-from aurelius.research.store import ResearchStore
-from aurelius.research.templates import FactorStrategy
+from mentisrex.backtesting.data.feed import BarData
+from mentisrex.market_data.storage.isolation import validated_universe_filter
+from mentisrex.research.runner import ResearchRunner, research_config
+from mentisrex.research.store import ResearchStore
+from mentisrex.research.templates import FactorStrategy
 
 STORE_DB = "./data/analytics.duckdb"
 US_PRED = "frequency='1d' AND symbol NOT LIKE '%.%'"
@@ -109,7 +109,7 @@ def main() -> None:
     h = runner.hypothesis(
         statement="JT 6-1-6 decile (US, M5 GROSS reporting): report gross-of-cost "
                   "returns for direct comparability to JT-1993's headline tables.",
-        rationale="JT-1993 reports gross relative-strength returns; Aurelius reports "
+        rationale="JT-1993 reports gross relative-strength returns; Mentisrex reports "
                   "net-of-cost. M5 runs the M4 baseline under a zero-cost config to "
                   "surface the gross-comparable metric; net production metrics (M4) "
                   "are preserved. No engine/strategy/validation/statistics change.",

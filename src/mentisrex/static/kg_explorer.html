@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mentisrex KG Explorer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #7d8590;
+      --accent: #388bfd;
+      --accent-hover: #58a6ff;
+      --green: #3fb950;
+      --red: #f85149;
+      --orange: #d29922;
+      --purple: #bc8cff;
+      --cyan: #39d353;
+      --sidebar-w: 320px;
+      --detail-w: 340px;
+    }
+
+    body {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    #sidebar-header h1 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--accent-hover);
+      letter-spacing: 0.3px;
+    }
+
+    #sidebar-header p {
+      color: var(--text-muted);
+      font-size: 11px;
+      margin-top: 3px;
+    }
+
+    #stats-bar {
+      display: flex;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .stat { text-align: center; }
+    .stat-val { font-size: 16px; font-weight: 700; color: var(--accent-hover); }
+    .stat-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+
+    #search-section {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"], select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 6px 10px;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type="text"]:focus, select:focus { border-color: var(--accent); }
+    input[type="text"] { flex: 1; }
+    select { flex: 1; }
+
+    #search-input { width: 100%; }
+
+    .btn {
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 12px;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--accent-hover); }
+    .btn.secondary {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn.secondary:hover { border-color: var(--accent); color: var(--accent-hover); }
+    .btn.danger { background: #3d1a1f; border: 1px solid var(--red); color: var(--red); }
+    .btn.danger:hover { background: var(--red); color: #fff; }
+    .btn.sm { padding: 4px 8px; font-size: 11px; }
+
+    #discovery-section {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .disc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    #results-section {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .result-item {
+      padding: 8px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+    .result-item:hover { background: var(--surface2); }
+    .result-item.active { background: #1c2a3d; border-left: 3px solid var(--accent); }
+
+    .result-label {
+      font-weight: 500;
+      color: var(--text);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .result-meta {
+      display: flex;
+      gap: 6px;
+      margin-top: 3px;
+      align-items: center;
+    }
+
+    .type-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .result-score { font-size: 10px; color: var(--text-muted); }
+
+    /* ── Graph ── */
+    #graph-wrap {
+      flex: 1;
+      position: relative;
+      background: var(--bg);
+    }
+
+    #cy {
+      width: 100%;
+      height: 100%;
+    }
+
+    #graph-toolbar {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: flex;
+      gap: 6px;
+      z-index: 10;
+    }
+
+    #graph-empty {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    #graph-empty svg { margin-bottom: 12px; opacity: 0.3; }
+    #graph-empty p { font-size: 13px; }
+    #graph-empty small { font-size: 11px; margin-top: 4px; }
+
+    #loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(13,17,23,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    #loading-overlay.active { display: flex; }
+
+    /* ── Detail panel ── */
+    #detail-panel {
+      width: var(--detail-w);
+      min-width: var(--detail-w);
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateX(var(--detail-w));
+      transition: transform 0.2s ease;
+    }
+    #detail-panel.open { transform: translateX(0); }
+
+    #detail-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    #detail-title { flex: 1; font-weight: 600; font-size: 13px; word-break: break-word; }
+    #detail-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 2px;
+    }
+    #detail-close:hover { color: var(--text); }
+
+    #detail-body { flex: 1; overflow-y: auto; padding: 12px 16px; }
+
+    .detail-section { margin-bottom: 14px; }
+    .detail-section-title {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .prop-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 5px;
+      align-items: flex-start;
+    }
+    .prop-key {
+      color: var(--text-muted);
+      font-size: 11px;
+      min-width: 90px;
+      flex-shrink: 0;
+    }
+    .prop-val {
+      color: var(--text);
+      font-size: 11px;
+      word-break: break-word;
+      flex: 1;
+    }
+    .prop-val.good { color: var(--green); }
+    .prop-val.bad { color: var(--red); }
+    .prop-val.warn { color: var(--orange); }
+
+    .neighbor-item {
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .neighbor-item:hover { background: var(--surface2); margin: 0 -16px; padding: 5px 16px; }
+    .neighbor-label { flex: 1; font-size: 11px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .neighbor-rel { font-size: 10px; color: var(--text-muted); }
+    .expand-btn { font-size: 10px; color: var(--accent); background: none; border: none; cursor: pointer; }
+    .expand-btn:hover { color: var(--accent-hover); }
+
+    #detail-actions {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 12px;
+      color: var(--text);
+      z-index: 100;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.2s, transform 0.2s;
+      max-width: 300px;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.error { border-color: var(--red); color: var(--red); }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── Legend ── */
+    #legend {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      background: rgba(22,27,34,0.9);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      z-index: 10;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      max-width: 420px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text-muted); }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ───────────────────────────────────────────────────────────── -->
+<div id="sidebar">
+  <div id="sidebar-header">
+    <h1>Mentisrex KG Explorer</h1>
+    <p>Research knowledge graph — institutional memory</p>
+  </div>
+
+  <div id="stats-bar">
+    <div class="stat"><div class="stat-val" id="stat-nodes">—</div><div class="stat-lbl">Nodes</div></div>
+    <div class="stat"><div class="stat-val" id="stat-edges">—</div><div class="stat-lbl">Edges</div></div>
+    <div class="stat"><div class="stat-val" id="stat-embed">—</div><div class="stat-lbl">Embedded</div></div>
+  </div>
+
+  <div id="search-section">
+    <div class="input-row">
+      <input type="text" id="search-input" placeholder="Search nodes…" autocomplete="off" />
+    </div>
+    <div class="input-row">
+      <select id="type-filter">
+        <option value="">All types</option>
+        <option value="paper">Paper</option>
+        <option value="hypothesis">Hypothesis</option>
+        <option value="experiment">Experiment</option>
+        <option value="validation_report">Validation</option>
+        <option value="feature">Feature</option>
+        <option value="dataset">Dataset</option>
+        <option value="author">Author</option>
+        <option value="research_category">Category</option>
+        <option value="model">Model</option>
+      </select>
+      <button class="btn" onclick="runSearch()">Search</button>
+      <button class="btn secondary sm" onclick="runSemanticSearch()" title="Semantic (vector) search">∿</button>
+    </div>
+  </div>
+
+  <div id="discovery-section">
+    <div class="section-title">Discover</div>
+    <div class="disc-grid">
+      <button class="btn secondary sm" onclick="loadDiscover('failures', 'Repeated Failures')">Failures</button>
+      <button class="btn secondary sm" onclick="loadDiscover('features', 'Successful Features')">Features</button>
+      <button class="btn secondary sm" onclick="loadDiscover('gaps', 'Research Gaps')">Gaps</button>
+      <button class="btn secondary sm" onclick="loadDiscover('orphans', 'Orphaned Nodes')">Orphans</button>
+      <button class="btn secondary sm" onclick="loadDiscover('methodologies', 'Methodologies')">Methods</button>
+      <button class="btn secondary sm" onclick="runQC()">QC Report</button>
+    </div>
+  </div>
+
+  <div id="results-section"></div>
+</div>
+
+<!-- ── Graph ─────────────────────────────────────────────────────────────── -->
+<div id="graph-wrap">
+  <div id="graph-toolbar">
+    <button class="btn secondary sm" onclick="relayout()">Re-layout</button>
+    <button class="btn secondary sm" onclick="cy.fit()">Fit</button>
+    <button class="btn secondary sm" onclick="cy.zoom(cy.zoom() * 1.3)">+</button>
+    <button class="btn secondary sm" onclick="cy.zoom(cy.zoom() * 0.77)">−</button>
+    <button class="btn danger sm" onclick="clearGraph()">Clear</button>
+  </div>
+
+  <div id="graph-empty">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="5" cy="12" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="19" cy="19" r="2"/>
+      <line x1="7" y1="11" x2="17" y2="6"/><line x1="7" y1="13" x2="17" y2="18"/>
+    </svg>
+    <p>Search for nodes or click Discover</p>
+    <small>Click a result to add it to the graph</small>
+  </div>
+
+  <div id="loading-overlay"><span>Loading…</span></div>
+  <div id="cy"></div>
+
+  <div id="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#4A90D9"></div>Paper</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#BC8CFF"></div>Hypothesis</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#3FB950"></div>Exp (accept)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#F85149"></div>Exp (reject)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#F0AD4E"></div>Validation</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#5BC0DE"></div>Feature</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#9B59B6"></div>Dataset</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#1ABC9C"></div>Author</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#95A5A6"></div>Other</div>
+  </div>
+</div>
+
+<!-- ── Detail panel ──────────────────────────────────────────────────────── -->
+<div id="detail-panel">
+  <div id="detail-header">
+    <span id="detail-type-badge" class="type-badge"></span>
+    <div id="detail-title"></div>
+    <button id="detail-close" onclick="closeDetail()">✕</button>
+  </div>
+  <div id="detail-body"></div>
+  <div id="detail-actions">
+    <button class="btn sm" onclick="expandNode(currentNodeId, 1)">Expand ×1</button>
+    <button class="btn sm" onclick="expandNode(currentNodeId, 2)">Expand ×2</button>
+    <button class="btn secondary sm" onclick="loadHistory(currentNodeId)">History</button>
+    <button class="btn secondary sm" onclick="copyId()">Copy ID</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Constants ────────────────────────────────────────────────────────────────
+const NODE_COLORS = {
+  paper: '#4A90D9',
+  hypothesis: '#BC8CFF',
+  validation_report: '#F0AD4E',
+  feature: '#5BC0DE',
+  dataset: '#9B59B6',
+  author: '#1ABC9C',
+  research_category: '#E74C3C',
+  model: '#D4AC0D',
+  production_strategy: '#58D68D',
+  factor: '#EB984E',
+  default: '#95A5A6',
+};
+
+function nodeColor(type, props) {
+  if (type === 'experiment') {
+    const verdict = safeProps(props).verdict || '';
+    if (verdict === 'accept') return '#3FB950';
+    if (verdict === 'reject') return '#F85149';
+    return '#F0AD4E';
+  }
+  return NODE_COLORS[type] || NODE_COLORS.default;
+}
+
+const NODE_SHAPES = {
+  paper: 'rectangle',
+  hypothesis: 'diamond',
+  experiment: 'hexagon',
+  feature: 'triangle',
+  dataset: 'barrel',
+  author: 'ellipse',
+  validation_report: 'round-rectangle',
+  default: 'ellipse',
+};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let cy;
+let currentNodeId = null;
+let activeResultId = null;
+
+// ── Cytoscape init ────────────────────────────────────────────────────────────
+function initCy() {
+  cy = cytoscape({
+    container: document.getElementById('cy'),
+    style: [
+      {
+        selector: 'node',
+        style: {
+          'background-color': 'data(color)',
+          'label': 'data(shortLabel)',
+          'color': '#e6edf3',
+          'font-size': '10px',
+          'text-valign': 'bottom',
+          'text-margin-y': 4,
+          'text-max-width': '120px',
+          'text-wrap': 'ellipsis',
+          'shape': 'data(shape)',
+          'width': 'data(size)',
+          'height': 'data(size)',
+          'border-width': 2,
+          'border-color': 'data(color)',
+          'border-opacity': 0.6,
+        },
+      },
+      {
+        selector: 'node:selected',
+        style: {
+          'border-width': 3,
+          'border-color': '#fff',
+          'border-opacity': 1,
+        },
+      },
+      {
+        selector: 'edge',
+        style: {
+          'width': 1.5,
+          'line-color': '#30363d',
+          'target-arrow-color': '#30363d',
+          'target-arrow-shape': 'triangle',
+          'curve-style': 'bezier',
+          'label': 'data(label)',
+          'font-size': '8px',
+          'color': '#7d8590',
+          'text-rotation': 'autorotate',
+          'text-background-color': '#0d1117',
+          'text-background-opacity': 0.7,
+          'text-background-padding': '2px',
+        },
+      },
+      {
+        selector: 'edge:selected',
+        style: { 'line-color': '#388bfd', 'target-arrow-color': '#388bfd' },
+      },
+      {
+        selector: '.faded',
+        style: { 'opacity': 0.15 },
+      },
+    ],
+    layout: { name: 'preset' },
+    wheelSensitivity: 0.4,
+  });
+
+  cy.on('tap', 'node', (e) => selectNode(e.target.id()));
+  cy.on('tap', (e) => { if (e.target === cy) dimGraph(false); });
+}
+
+// ── Graph helpers ─────────────────────────────────────────────────────────────
+function nodeLabel(node) {
+  const label = node.label || node.id || '';
+  return label.length > 40 ? label.slice(0, 40) + '…' : label;
+}
+
+function safeProps(props) {
+  if (!props) return {};
+  if (typeof props === 'string') {
+    try { return JSON.parse(props); } catch { return {}; }
+  }
+  return props;
+}
+
+function nodeSize(type) {
+  return { paper: 36, hypothesis: 32, experiment: 28, validation_report: 24 }[type] || 20;
+}
+
+function addNodesToGraph(nodes, edges) {
+  const elements = [];
+  const existingIds = new Set(cy.nodes().map(n => n.id()));
+  const existingEdgeKeys = new Set(cy.edges().map(e => `${e.data('source')}-${e.data('target')}-${e.data('label')}`));
+
+  nodes.forEach(n => {
+    if (existingIds.has(n.id)) return;
+    const props = safeProps(n.properties);
+    elements.push({
+      group: 'nodes',
+      data: {
+        id: n.id,
+        label: n.label || n.id,
+        shortLabel: nodeLabel(n),
+        color: nodeColor(n.type, props),
+        shape: NODE_SHAPES[n.type] || 'ellipse',
+        size: nodeSize(n.type),
+        type: n.type,
+        properties: n.properties,
+      },
+      position: {
+        x: Math.random() * 600 + 100,
+        y: Math.random() * 400 + 100,
+      },
+    });
+    existingIds.add(n.id);
+  });
+
+  (edges || []).forEach(e => {
+    const key = `${e.source_id}-${e.target_id}-${e.rel_type}`;
+    if (existingEdgeKeys.has(key)) return;
+    if (!existingIds.has(e.source_id) || !existingIds.has(e.target_id)) return;
+    elements.push({
+      group: 'edges',
+      data: {
+        id: e.id || key,
+        source: e.source_id,
+        target: e.target_id,
+        label: e.rel_type,
+      },
+    });
+    existingEdgeKeys.add(key);
+  });
+
+  cy.add(elements);
+  document.getElementById('graph-empty').style.display = 'none';
+}
+
+function relayout() {
+  const count = cy.nodes().length;
+  const layoutName = count < 50 ? 'cose' : count < 200 ? 'breadthfirst' : 'grid';
+  cy.layout({
+    name: layoutName,
+    animate: true,
+    animationDuration: 400,
+    nodeRepulsion: 8000,
+    idealEdgeLength: 120,
+    edgeElasticity: 200,
+    gravity: 0.25,
+    directed: false,
+  }).run();
+}
+
+function clearGraph() {
+  cy.elements().remove();
+  document.getElementById('graph-empty').style.display = 'flex';
+  closeDetail();
+  dimGraph(false);
+}
+
+function dimGraph(enabled) {
+  if (enabled) {
+    cy.elements().addClass('faded');
+    if (currentNodeId) {
+      const node = cy.getElementById(currentNodeId);
+      node.removeClass('faded');
+      node.neighborhood().removeClass('faded');
+    }
+  } else {
+    cy.elements().removeClass('faded');
+  }
+}
+
+// ── API ──────────────────────────────────────────────────────────────────────
+async function api(path) {
+  const r = await fetch(path);
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  return r.json();
+}
+
+function loading(on) {
+  document.getElementById('loading-overlay').classList.toggle('active', on);
+}
+
+function toast(msg, isError = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (isError ? ' error' : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = '', 3000);
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+async function runSearch() {
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) return;
+  const type = document.getElementById('type-filter').value;
+  const url = `/kg/search?q=${encodeURIComponent(q)}&limit=30` + (type ? `&node_type=${type}` : '');
+  loading(true);
+  try {
+    const results = await api(url);
+    renderResults(results, 'Search Results');
+    toast(`${results.length} result${results.length !== 1 ? 's' : ''}`);
+  } catch (e) { toast(e.message, true); }
+  loading(false);
+}
+
+async function runSemanticSearch() {
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) return;
+  const type = document.getElementById('type-filter').value;
+  const url = `/kg/semantic-search?q=${encodeURIComponent(q)}&limit=30` + (type ? `&node_type=${type}` : '');
+  loading(true);
+  try {
+    const results = await api(url);
+    renderResults(results, 'Semantic Results');
+    toast(`Semantic: ${results.length} result${results.length !== 1 ? 's' : ''}`);
+  } catch (e) { toast(e.message, true); }
+  loading(false);
+}
+
+document.getElementById('search-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') runSearch();
+});
+
+// ── Discovery ─────────────────────────────────────────────────────────────────
+async function loadDiscover(endpoint, title) {
+  loading(true);
+  try {
+    const data = await api(`/kg/discover/${endpoint}`);
+    if (endpoint === 'failures' || endpoint === 'features' || endpoint === 'gaps' || endpoint === 'methodologies') {
+      renderDiscoveryTable(data, title);
+    } else {
+      renderResults(data, title);
+    }
+    toast(`${title}: ${data.length} items`);
+  } catch (e) { toast(e.message, true); }
+  loading(false);
+}
+
+async function runQC() {
+  loading(true);
+  try {
+    const qc = await api('/kg/qc');
+    const lines = Object.entries(qc).map(([k, v]) => `${k}: ${v}`).join('\n');
+    alert(`QC Report\n\n${lines}`);
+  } catch (e) { toast(e.message, true); }
+  loading(false);
+}
+
+// ── Render results list ───────────────────────────────────────────────────────
+function typeBadgeStyle(type, props) {
+  const color = nodeColor(type, safeProps(props));
+  return `background:${color}22;color:${color};border:1px solid ${color}55`;
+}
+
+function renderResults(items, title = '') {
+  const sec = document.getElementById('results-section');
+  if (!items.length) { sec.innerHTML = '<div style="padding:16px;color:var(--text-muted);font-size:12px">No results</div>'; return; }
+
+  sec.innerHTML = title
+    ? `<div class="section-title" style="padding:8px 16px">${escHtml(title)}</div>`
+    : '';
+
+  items.forEach(item => {
+    const score = item.score != null ? `<span class="result-score">${Number(item.score).toFixed(3)}</span>` : '';
+    const style = typeBadgeStyle(item.type, item.properties);
+    const div = document.createElement('div');
+    div.className = 'result-item';
+    div.dataset.id = item.id;
+    div.innerHTML = `
+      <div class="result-label">${escHtml(item.label || item.id)}</div>
+      <div class="result-meta">
+        <span class="type-badge" style="${style}">${escHtml(item.type || '')}</span>
+        ${score}
+      </div>`;
+    div.addEventListener('click', () => {
+      document.querySelectorAll('.result-item').forEach(el => el.classList.remove('active'));
+      div.classList.add('active');
+      addNodesToGraph([item], []);
+      relayout();
+      selectNode(item.id);
+    });
+    sec.appendChild(div);
+  });
+}
+
+function renderDiscoveryTable(items, title) {
+  if (!items.length) {
+    document.getElementById('results-section').innerHTML =
+      `<div style="padding:16px;color:var(--text-muted);font-size:12px">${escHtml(title)}: none found</div>`;
+    return;
+  }
+  const keys = Object.keys(items[0]);
+  let html = `<div class="section-title" style="padding:8px 16px">${escHtml(title)}</div>
+    <div style="overflow-x:auto;padding:0 8px">
+    <table style="width:100%;border-collapse:collapse;font-size:11px">
+      <thead><tr>${keys.map(k => `<th style="text-align:left;padding:4px 8px;color:var(--text-muted);border-bottom:1px solid var(--border)">${escHtml(k)}</th>`).join('')}</tr></thead>
+      <tbody>`;
+  items.slice(0, 50).forEach(row => {
+    html += `<tr>${keys.map(k => `<td style="padding:4px 8px;border-bottom:1px solid var(--border);color:var(--text)">${escHtml(String(row[k] ?? ''))}</td>`).join('')}</tr>`;
+  });
+  html += '</tbody></table></div>';
+  document.getElementById('results-section').innerHTML = html;
+}
+
+// ── Node selection & detail ───────────────────────────────────────────────────
+async function selectNode(nodeId) {
+  currentNodeId = nodeId;
+  cy.nodes().removeClass('selected');
+  cy.getElementById(nodeId).addClass('selected');
+  dimGraph(true);
+
+  const panel = document.getElementById('detail-panel');
+  panel.classList.add('open');
+  document.getElementById('detail-body').innerHTML = '<div style="color:var(--text-muted);padding:8px">Loading…</div>';
+
+  try {
+    const node = await api(`/kg/nodes/${encodeURIComponent(nodeId)}?neighbors=true`);
+    renderDetail(node);
+  } catch (e) {
+    document.getElementById('detail-body').innerHTML = `<div style="color:var(--red);padding:8px">${e.message}</div>`;
+  }
+}
+
+function renderDetail(node) {
+  const props = safeProps(node.properties);
+  const type = node.type || '';
+  const color = nodeColor(type, props);
+
+  const badge = document.getElementById('detail-type-badge');
+  badge.textContent = type;
+  badge.style.cssText = typeBadgeStyle(type, props);
+
+  document.getElementById('detail-title').textContent = node.label || node.id;
+
+  const body = document.getElementById('detail-body');
+  let html = '';
+
+  // Key metrics by type
+  const keyProps = getKeyProps(type, props);
+  if (keyProps.length) {
+    html += `<div class="detail-section"><div class="detail-section-title">Key Info</div>`;
+    keyProps.forEach(([k, v, cls]) => {
+      html += `<div class="prop-row"><span class="prop-key">${escHtml(k)}</span><span class="prop-val ${cls || ''}">${escHtml(String(v))}</span></div>`;
+    });
+    html += '</div>';
+  }
+
+  // Neighbors
+  const neighbors = node.neighbors || {};
+  const outbound = neighbors.outbound || [];
+  const inbound = neighbors.inbound || [];
+
+  if (outbound.length || inbound.length) {
+    html += `<div class="detail-section"><div class="detail-section-title">Connections (${outbound.length + inbound.length})</div>`;
+    [...outbound.map(n => ({...n, dir: '→'})), ...inbound.map(n => ({...n, dir: '←'}))].slice(0, 30).forEach(n => {
+      const nc = nodeColor(n.type, safeProps(n.properties));
+      html += `<div class="neighbor-item" onclick="addNeighborToGraph('${escAttr(n.id)}','${escAttr(n.type)}','${escAttr(n.label || n.id)}',${JSON.stringify(n.properties)})">
+        <span style="color:${nc};font-size:9px">●</span>
+        <span class="neighbor-label">${escHtml(n.label || n.id)}</span>
+        <span class="neighbor-rel">${n.dir} ${escHtml(n.rel_type)}</span>
+        <button class="expand-btn" onclick="event.stopPropagation();expandNode('${escAttr(n.id)}', 1)">+</button>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // Version info
+  html += `<div class="detail-section"><div class="detail-section-title">Metadata</div>
+    <div class="prop-row"><span class="prop-key">ID</span><span class="prop-val" style="font-family:monospace;font-size:10px;word-break:break-all">${escHtml(node.id)}</span></div>
+    <div class="prop-row"><span class="prop-key">Version</span><span class="prop-val">${node.version || 1}</span></div>
+    <div class="prop-row"><span class="prop-key">Created by</span><span class="prop-val">${escHtml(node.created_by || '—')}</span></div>
+    <div class="prop-row"><span class="prop-key">Updated</span><span class="prop-val">${fmtDate(node.updated_at)}</span></div>
+  </div>`;
+
+  // All properties (collapsible)
+  const allKeys = Object.keys(props).filter(k => !['id','type','label','text_corpus'].includes(k));
+  if (allKeys.length) {
+    html += `<div class="detail-section">
+      <div class="detail-section-title" style="cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        All Properties ▾
+      </div>
+      <div style="display:none">`;
+    allKeys.forEach(k => {
+      const v = props[k];
+      const vs = Array.isArray(v) ? v.join(', ') : String(v ?? '');
+      html += `<div class="prop-row"><span class="prop-key">${escHtml(k)}</span><span class="prop-val">${escHtml(vs.slice(0, 200))}</span></div>`;
+    });
+    html += '</div></div>';
+  }
+
+  body.innerHTML = html;
+}
+
+function getKeyProps(type, props) {
+  const rows = [];
+  if (type === 'hypothesis') {
+    if (props.status) rows.push(['Status', props.status, statusClass(props.status)]);
+    if (props.confidence_score != null) rows.push(['Confidence', `${(props.confidence_score * 100).toFixed(0)}%`, props.confidence_score > 0.7 ? 'good' : 'warn']);
+    if (props.research_category) rows.push(['Category', props.research_category]);
+    if (props.rejection_reason) rows.push(['Rejection', props.rejection_reason, 'bad']);
+  } else if (type === 'experiment') {
+    if (props.verdict) rows.push(['Verdict', props.verdict.toUpperCase(), verdictClass(props.verdict)]);
+    if (props.oos_sharpe != null) rows.push(['OOS Sharpe', Number(props.oos_sharpe).toFixed(3), props.oos_sharpe > 0.5 ? 'good' : 'bad']);
+    if (props.strategy_name) rows.push(['Strategy', props.strategy_name]);
+    if (props.features_used) rows.push(['Features', Array.isArray(props.features_used) ? props.features_used.join(', ') : props.features_used]);
+  } else if (type === 'validation_report') {
+    if (props.verdict) rows.push(['Verdict', props.verdict.toUpperCase(), verdictClass(props.verdict)]);
+    if (props.oos_sharpe != null) rows.push(['OOS Sharpe', Number(props.oos_sharpe).toFixed(3)]);
+    if (props.adjusted_pvalue != null) rows.push(['Adj p-val', Number(props.adjusted_pvalue).toFixed(4), props.adjusted_pvalue < 0.05 ? 'good' : 'bad']);
+    if (props.reasons) rows.push(['Reasons', Array.isArray(props.reasons) ? props.reasons.join('; ') : props.reasons]);
+  } else if (type === 'paper') {
+    if (props.research_category) rows.push(['Category', props.research_category]);
+    if (props.methodology) rows.push(['Method', props.methodology]);
+    if (props.published_at) rows.push(['Published', String(props.published_at).slice(0, 10)]);
+  }
+  return rows;
+}
+
+function statusClass(s) {
+  if (!s) return '';
+  const sl = s.toLowerCase();
+  if (sl === 'promoted' || sl === 'active') return 'good';
+  if (sl === 'rejected') return 'bad';
+  return 'warn';
+}
+function verdictClass(v) {
+  if (!v) return '';
+  const vl = v.toLowerCase();
+  if (vl === 'accept') return 'good';
+  if (vl === 'reject') return 'bad';
+  return 'warn';
+}
+
+function addNeighborToGraph(id, type, label, properties) {
+  if (!cy.getElementById(id).length) {
+    addNodesToGraph([{ id, type, label, properties }], []);
+    relayout();
+  }
+  selectNode(id);
+}
+
+// ── Graph expansion ───────────────────────────────────────────────────────────
+async function expandNode(nodeId, depth) {
+  if (!nodeId) return;
+  loading(true);
+  try {
+    const data = await api(`/kg/graph?root_id=${encodeURIComponent(nodeId)}&depth=${depth}`);
+    addNodesToGraph(data.nodes, data.edges);
+    relayout();
+    toast(`Added ${data.nodes.length} nodes, ${data.edges.length} edges`);
+  } catch (e) { toast(e.message, true); }
+  loading(false);
+}
+
+// ── History ───────────────────────────────────────────────────────────────────
+async function loadHistory(nodeId) {
+  if (!nodeId) return;
+  loading(true);
+  try {
+    const history = await api(`/kg/nodes/${encodeURIComponent(nodeId)}/history`);
+    if (!history.length) { toast('No version history'); loading(false); return; }
+    const lines = history.map(h => `v${h.version} — ${fmtDate(h.changed_at)} by ${h.changed_by || '?'}: ${h.change_reason || ''}`).join('\n');
+    alert(`Version History (${history.length} versions)\n\n${lines}`);
+  } catch (e) { toast(e.message, true); }
+  loading(false);
+}
+
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('open');
+  currentNodeId = null;
+  dimGraph(false);
+}
+
+function copyId() {
+  if (!currentNodeId) return;
+  navigator.clipboard.writeText(currentNodeId).then(() => toast('ID copied'));
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const [stats, coverage] = await Promise.all([
+      api('/kg/stats'),
+      api('/kg/embed/coverage').catch(() => ({ pct: 0 })),
+    ]);
+    const totalNodes = (stats.nodes_by_type || []).reduce((s, r) => s + (r.count || 0), 0);
+    const totalEdges = (stats.edges_by_relation || []).reduce((s, r) => s + (r.count || 0), 0);
+    document.getElementById('stat-nodes').textContent = totalNodes.toLocaleString();
+    document.getElementById('stat-edges').textContent = totalEdges.toLocaleString();
+    document.getElementById('stat-embed').textContent = `${coverage.pct || 0}%`;
+  } catch {}
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) {
+  return String(s).replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  try { return new Date(iso).toLocaleString(undefined, {dateStyle:'short',timeStyle:'short'}); } catch { return iso; }
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+initCy();
+loadStats();
+</script>
+</body>
+</html>

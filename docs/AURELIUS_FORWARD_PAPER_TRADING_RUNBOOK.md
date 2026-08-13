@@ -1,4 +1,4 @@
-# Aurelius — Controlled Forward Paper-Trading Runbook
+# Mentisrex — Controlled Forward Paper-Trading Runbook
 
 **Status**: OPERATIONAL (Post-M24 Checkpoint)
 **Strategy**: `ew-momentum-exp` v1.0.0 — EXPERIMENTAL PAPER TRADING
@@ -76,9 +76,9 @@ Research lineage: SIM experiment from M9 validation, `overall_verdict=PASS`, `co
 | `data/forward_runs/FORWARD_RUN_*/cycle_records.json` | Persisted cycle records |
 | `data/forward_runs/FORWARD_RUN_*/run_manifest.json` | Run manifest (strategy + capital + lineage) |
 | `data/forward_runs/FORWARD_RUN_*/run_health.json` | Operational health counters |
-| `src/aurelius/research/paper_trading/loop.py` | M23 `PaperTradingLoop` |
-| `src/aurelius/research/paper_trading/checkpoint.py` | JSON checkpoint save/load |
-| `src/aurelius/research/forward_validation/engine.py` | M24 `ForwardValidationEngine` |
+| `src/mentisrex/research/paper_trading/loop.py` | M23 `PaperTradingLoop` |
+| `src/mentisrex/research/paper_trading/checkpoint.py` | JSON checkpoint save/load |
+| `src/mentisrex/research/forward_validation/engine.py` | M24 `ForwardValidationEngine` |
 | `tests/research/test_forward_activation.py` | 41 integration tests (10 verification points) |
 
 ## 5. Safety Constraints (Non-Negotiable)
@@ -95,7 +95,7 @@ Research lineage: SIM experiment from M9 validation, `overall_verdict=PASS`, `co
 ### SIMULATION mode (offline, synthetic prices)
 
 ```bash
-cd aurelius-capital
+cd mentisrex-capital
 python scripts/forward_run/run_forward.py --mode SIMULATION --cycles 12
 ```
 
@@ -139,7 +139,7 @@ Checkpoints are JSON files written every `checkpoint_every` evaluations and at l
 ### Restart
 
 ```python
-from aurelius.research.paper_trading.checkpoint import load_checkpoint
+from mentisrex.research.paper_trading.checkpoint import load_checkpoint
 data = load_checkpoint("path/to/checkpoint.json")
 loop = build_loop(registry)
 loop.restore_from_checkpoint(data)

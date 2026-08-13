@@ -13,7 +13,7 @@ The pilot research campaign selected **Jegadeesh & Titman (1993)** as the firm's
 ### Justification Criteria
 1. **Academic Standing**: ~12,000+ citations; universally recognized as the foundational paper for cross-sectional price momentum anomalies.
 2. **Methodological Transparency**: Fully specified formation period (12-month lookback), skip period (1 month), and holding period (1 to 12 months).
-3. **Data Requirements**: Uses standard daily/monthly OHLCV market data natively supported by the Aurelius pipeline.
+3. **Data Requirements**: Uses standard daily/monthly OHLCV market data natively supported by the Mentisrex pipeline.
 4. **Reproducibility**: Clear benchmark statistics (Sharpe ~0.70, turnover profiles) for objective platform validation.
 
 ---

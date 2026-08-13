@@ -14,11 +14,11 @@ import time
 import tracemalloc
 from datetime import date
 
-from aurelius.research import instruments as ins
-from aurelius.research.instruments import margin as mg
-from aurelius.research.instruments import reconciliation as recon
-from aurelius.research.instruments import risk as rk
-from aurelius.research.instruments import serialization as ser
+from mentisrex.research import instruments as ins
+from mentisrex.research.instruments import margin as mg
+from mentisrex.research.instruments import reconciliation as recon
+from mentisrex.research.instruments import risk as rk
+from mentisrex.research.instruments import serialization as ser
 
 T0 = date(2026, 1, 5)
 DE = date(2026, 12, 18)
@@ -66,7 +66,7 @@ def _bench(n_instruments: int, *, mark_rounds: int = 1) -> dict:
                          for k in marks if k.startswith("OP")})
     t_risk = time.perf_counter() - t
 
-    from aurelius.research.instruments.models import InstrumentType
+    from mentisrex.research.instruments.models import InstrumentType
     futures = b.registry.of_type(InstrumentType.FUTURE)
     t = time.perf_counter()
     for f in futures:                                          # margin on the futures slice

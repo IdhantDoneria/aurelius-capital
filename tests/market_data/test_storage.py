@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from aurelius.market_data.storage.duckdb_store import DuckDBStore
+from mentisrex.market_data.storage.duckdb_store import DuckDBStore
 
 
 @pytest.fixture

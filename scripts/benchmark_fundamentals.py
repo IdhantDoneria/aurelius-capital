@@ -15,7 +15,7 @@ import sys
 import time
 from datetime import date
 
-from aurelius.market_data.fundamentals import FundamentalsStore
+from mentisrex.market_data.fundamentals import FundamentalsStore
 
 CONCEPTS = ["Assets", "Liabilities", "StockholdersEquity", "NetIncomeLoss", "Revenues",
             "GrossProfit", "OperatingIncomeLoss", "CommonStockSharesOutstanding", "LongTermDebt",

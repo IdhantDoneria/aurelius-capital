@@ -1,15 +1,15 @@
 # Methodology Fidelity — Pairs Trading Campaign
 
-**Aurelius Capital — Workstream C**
+**Mentisrex Capital — Workstream C**
 **Date:** 2026-08-04
 **Scope:** how faithfully the frozen `PairsStrategy` / `MultiPairStrategy` +
 `select_pairs` reproduce the canonical Gatev (2006) construction, every deviation
 named, ranked, and classified. **No deviation is "fixed" here** — this is the gap
 register that governs which engineering is (not) authorized under the freeze.
 
-## 1. Construction map — Gatev vs Aurelius
+## 1. Construction map — Gatev vs Mentisrex
 
-| Step | Gatev 2006 | Aurelius frozen | Faithful? |
+| Step | Gatev 2006 | Mentisrex frozen | Faithful? |
 |---|---|---|---|
 | Universe | liquid CRSP common stock | complete-history-in-formation, top-300 by formation dollar-volume | ✓ (liquidity screen equivalent) |
 | Normalization | cumulative **total-return** index | cumulative **price** index (close) | partial — no dividends in panel |
@@ -33,7 +33,7 @@ methodology difference · **C** data limitation · **D** market evolution · **E
 statistical variation.
 
 1. **P3 — single 70/30 split vs rolling monthly re-formation.** *Class B (highest
-   impact).* Gatev re-selects pairs every month over 6-month books; Aurelius picks
+   impact).* Gatev re-selects pairs every month over 6-month books; Mentisrex picks
    the top-N **once** on the first 12 months and trades them for ~11 years. Pairs
    decay (co-integration breaks), so a static book is a *pessimistic* bound — it
    biases against reproduction. **Unblock:** a walk-forward re-formation harness

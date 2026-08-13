@@ -19,31 +19,31 @@ from decimal import Decimal
 
 import pytest
 
-from aurelius.backtesting.analytics.performance import (
+from mentisrex.backtesting.analytics.performance import (
     EquityPoint,
     PerformanceCalculator,
     PerformanceMetrics,
 )
-from aurelius.backtesting.config import BacktestConfig
-from aurelius.backtesting.data.feed import BarData
-from aurelius.research.runner import synth_bars
-from aurelius.research.templates import MeanReversionStrategy
-from aurelius.validation.audit import AuditRecord, capture_environment
-from aurelius.validation.metrics import (
+from mentisrex.backtesting.config import BacktestConfig
+from mentisrex.backtesting.data.feed import BarData
+from mentisrex.research.runner import synth_bars
+from mentisrex.research.templates import MeanReversionStrategy
+from mentisrex.validation.audit import AuditRecord, capture_environment
+from mentisrex.validation.metrics import (
     MetricsCalculator,
     _excess_kurtosis,
     _percentile,
     _skewness,
 )
-from aurelius.validation.promotion import (
+from mentisrex.validation.promotion import (
     PromotionCriteria,
     PromotionEngine,
     PromotionState,
 )
-from aurelius.validation.report import ComprehensiveReport
-from aurelius.validation.robustness import RobustnessAnalyzer, _cost_adjusted_sharpe
-from aurelius.validation.service import DataIntegrityError, ValidationService
-from aurelius.validation.stats import StatEngine, _norm_ppf
+from mentisrex.validation.report import ComprehensiveReport
+from mentisrex.validation.robustness import RobustnessAnalyzer, _cost_adjusted_sharpe
+from mentisrex.validation.service import DataIntegrityError, ValidationService
+from mentisrex.validation.stats import StatEngine, _norm_ppf
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -536,14 +536,14 @@ def test_audit_record_to_dict():
         validated_at=datetime(2026, 7, 28, tzinfo=UTC),
         python_version="3.12.0",
         platform="Darwin",
-        aurelius_commit="abc1234",
+        mentisrex_commit="abc1234",
         config_hash="deadbeef01234567",
         dataset_fingerprint="fp12345678",
         random_seed=42,
         key_package_versions={"duckdb": "1.1.0"},
     )
     d = record.to_dict()
-    assert d["aurelius_commit"] == "abc1234"
+    assert d["mentisrex_commit"] == "abc1234"
     assert d["random_seed"] == 42
     assert "validated_at" in d
     assert d["key_package_versions"]["duckdb"] == "1.1.0"
@@ -563,7 +563,7 @@ def test_capture_environment_git_commit():
     config = BacktestConfig()
     record = capture_environment(config, "fp")
     # Should either be a real commit hash or "unknown"
-    assert record.aurelius_commit != ""
+    assert record.mentisrex_commit != ""
 
 
 def test_capture_environment_package_versions():
@@ -576,10 +576,10 @@ def test_capture_environment_package_versions():
 
 
 def _make_minimal_report() -> ComprehensiveReport:
-    from aurelius.validation.promotion import PromotionDecision, PromotionState
-    from aurelius.validation.report import ComprehensiveReport
-    from aurelius.validation.robustness import RobustnessAssessment, SensitivitySweep
-    from aurelius.validation.stats import BootstrapResult, PermutationResult
+    from mentisrex.validation.promotion import PromotionDecision, PromotionState
+    from mentisrex.validation.report import ComprehensiveReport
+    from mentisrex.validation.robustness import RobustnessAssessment, SensitivitySweep
+    from mentisrex.validation.stats import BootstrapResult, PermutationResult
 
     returns = _daily_returns(300, drift=0.001)
     m = _flat_metrics(returns)
@@ -616,7 +616,7 @@ def _make_minimal_report() -> ComprehensiveReport:
         validated_at=datetime(2026, 7, 28, tzinfo=UTC),
         python_version="3.12",
         platform="Darwin",
-        aurelius_commit="abc1234",
+        mentisrex_commit="abc1234",
         config_hash="deadbeef01234567",
         dataset_fingerprint="fp12345678",
         random_seed=42,

@@ -15,11 +15,11 @@ import time
 import tracemalloc
 from datetime import date, datetime
 
-from aurelius.market_data.fundamentals import FundamentalsEngine, FundamentalsStore
-from aurelius.market_data.insiders import InsiderEngine, InsiderStore
-from aurelius.market_data.research_matrix import FEATURES, ResearchMatrixEngine
-from aurelius.market_data.storage.pit_store import PitPriceStore
-from aurelius.market_data.universe import UniverseEngine
+from mentisrex.market_data.fundamentals import FundamentalsEngine, FundamentalsStore
+from mentisrex.market_data.insiders import InsiderEngine, InsiderStore
+from mentisrex.market_data.research_matrix import FEATURES, ResearchMatrixEngine
+from mentisrex.market_data.storage.pit_store import PitPriceStore
+from mentisrex.market_data.universe import UniverseEngine
 
 
 class _FakeSM:

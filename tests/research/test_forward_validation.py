@@ -16,16 +16,16 @@ from typing import Any
 import pytest
 
 # ── M24 imports ───────────────────────────────────────────────────────────────
-from aurelius.research.forward_validation.comparison import (
+from mentisrex.research.forward_validation.comparison import (
     build_comparison,
     classify_discrepancies,
 )
-from aurelius.research.forward_validation.data_diagnostics import (
+from mentisrex.research.forward_validation.data_diagnostics import (
     analyze_snapshot_coverage,
     analyze_snapshot_metadata,
     build_data_diagnostics,
 )
-from aurelius.research.forward_validation.drift import (
+from mentisrex.research.forward_validation.drift import (
     detect_metric_drift,
     detect_pit_violation,
     detect_snapshot_ordering,
@@ -34,20 +34,20 @@ from aurelius.research.forward_validation.drift import (
     risk_drift,
     signal_drift,
 )
-from aurelius.research.forward_validation.engine import EngineConfig, ForwardValidationEngine
-from aurelius.research.forward_validation.errors import (
+from mentisrex.research.forward_validation.engine import EngineConfig, ForwardValidationEngine
+from mentisrex.research.forward_validation.errors import (
     ForwardValidationError,
     ImplementationDivergenceError,
     InsufficientDataError,
     LineageError,
     PITViolationError,
 )
-from aurelius.research.forward_validation.execution_diagnostics import (
+from mentisrex.research.forward_validation.execution_diagnostics import (
     analyze_execution,
     build_execution_diagnostics,
 )
-from aurelius.research.forward_validation.lineage import LineageChain, build_lineage
-from aurelius.research.forward_validation.models import (
+from mentisrex.research.forward_validation.lineage import LineageChain, build_lineage
+from mentisrex.research.forward_validation.models import (
     DiagnosticRecord,
     DiagnosticSeverity,
     DiscrepancyCategory,
@@ -61,22 +61,22 @@ from aurelius.research.forward_validation.models import (
     make_diagnostic,
     stamp_artifact,
 )
-from aurelius.research.forward_validation.portfolio_diagnostics import (
+from mentisrex.research.forward_validation.portfolio_diagnostics import (
     analyze_portfolio_drift,
     analyze_turnover,
     build_portfolio_diagnostics,
 )
-from aurelius.research.forward_validation.report import assemble_report
-from aurelius.research.forward_validation.risk_diagnostics import (
+from mentisrex.research.forward_validation.report import assemble_report
+from mentisrex.research.forward_validation.risk_diagnostics import (
     analyze_risk_decisions,
     build_risk_diagnostics,
 )
-from aurelius.research.forward_validation.signal_diagnostics import (
+from mentisrex.research.forward_validation.signal_diagnostics import (
     analyze_signal_distribution,
     check_signal_consistency,
     compare_signal_distributions,
 )
-from aurelius.research.forward_validation.statistics import (
+from mentisrex.research.forward_validation.statistics import (
     AnnualizedMetrics,
     bootstrap_mean_ci,
     compute_annualized,

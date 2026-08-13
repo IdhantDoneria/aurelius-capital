@@ -6,7 +6,7 @@ a descriptive SEC User-Agent ("Name email") per SEC fair-access policy.
 
 Usage:
     python scripts/backfill_fundamentals.py 320193 789019 \
-        --user-agent "Aurelius Research you@example.com"
+        --user-agent "Mentisrex Research you@example.com"
     python scripts/backfill_fundamentals.py --cik-file ciks.txt --user-agent "..."
 """
 
@@ -17,7 +17,7 @@ import asyncio
 import time
 from pathlib import Path
 
-from aurelius.market_data.fundamentals import (
+from mentisrex.market_data.fundamentals import (
     FundamentalsStore,
     fetch_company_facts,
     parse_company_facts,

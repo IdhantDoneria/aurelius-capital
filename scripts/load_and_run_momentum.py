@@ -18,14 +18,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from aurelius.backtesting.data.feed import BarData
-from aurelius.hypothesis.store import HypothesisStore
-from aurelius.market_data.adapters.csv_loader import CSVLoader
-from aurelius.market_data.storage.duckdb_store import DuckDBStore
-from aurelius.market_data.storage.isolation import TOY_DB, assert_not_production
-from aurelius.research.runner import ResearchRunner, research_config
-from aurelius.research.store import ResearchStore
-from aurelius.research.templates import MomentumStrategy
+from mentisrex.backtesting.data.feed import BarData
+from mentisrex.hypothesis.store import HypothesisStore
+from mentisrex.market_data.adapters.csv_loader import CSVLoader
+from mentisrex.market_data.storage.duckdb_store import DuckDBStore
+from mentisrex.market_data.storage.isolation import TOY_DB, assert_not_production
+from mentisrex.research.runner import ResearchRunner, research_config
+from mentisrex.research.store import ResearchStore
+from mentisrex.research.templates import MomentumStrategy
 
 CSV = Path("data/market_data/sample_momentum_universe.csv")
 # G2: this is a toy/sample loader — it writes to an ISOLATED store, never the

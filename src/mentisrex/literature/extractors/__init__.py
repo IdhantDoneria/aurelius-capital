@@ -1,0 +1,33 @@
+"""Literature source extractor registry."""
+
+from __future__ import annotations
+
+from mentisrex.literature.extractors.arxiv import ArxivExtractor
+from mentisrex.literature.extractors.base import SourceExtractor
+from mentisrex.literature.extractors.crossref import CrossRefExtractor
+from mentisrex.literature.extractors.nber import NBERExtractor
+
+SOURCES = ["arxiv", "nber", "ssrn", "jf", "jfe", "rfs", "qf"]
+
+
+def get_extractor(source: str) -> SourceExtractor:
+    """Return an instantiated extractor for the given source name."""
+    match source:
+        case "arxiv":
+            return ArxivExtractor()
+        case "nber":
+            return NBERExtractor()
+        case "ssrn" | "jf" | "jfe" | "rfs" | "qf":
+            return CrossRefExtractor(source)
+        case _:
+            raise ValueError(f"Unknown source '{source}'. Valid: {SOURCES}")
+
+
+__all__ = [
+    "SOURCES",
+    "ArxivExtractor",
+    "CrossRefExtractor",
+    "NBERExtractor",
+    "SourceExtractor",
+    "get_extractor",
+]

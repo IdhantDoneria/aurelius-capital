@@ -5,8 +5,8 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
-from aurelius.backtesting.events.types import OrderType, Side
-from aurelius.paper import (
+from mentisrex.backtesting.events.types import OrderType, Side
+from mentisrex.paper import (
     OrderRequest,
     PaperBroker,
     Tick,
@@ -16,7 +16,7 @@ from aurelius.paper import (
     render_text,
     replay,
 )
-from aurelius.risk import RiskEngine
+from mentisrex.risk import RiskEngine
 
 T0 = datetime(2026, 1, 1, tzinfo=UTC)
 
@@ -198,6 +198,6 @@ def test_dashboard_snapshot(tmp_path):
 
 
 def test_demo_self_check():
-    from aurelius.paper import demo
+    from mentisrex.paper import demo
 
     demo()

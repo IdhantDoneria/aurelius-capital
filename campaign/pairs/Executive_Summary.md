@@ -1,12 +1,12 @@
 # Executive Summary — Pairs Trading Research Campaign
 
-**Aurelius Capital, 2026-08-04.** One-page answer to the campaign question, from 14
+**Mentisrex Capital, 2026-08-04.** One-page answer to the campaign question, from 14
 backtests on real US + India equities (2014–2026), frozen platform, no tuning.
 
 ## The question
 
 > Under what conditions does statistical arbitrage through pairs trading exist, how
-> faithfully can Aurelius reproduce the literature, and is Aurelius Capital ready to
+> faithfully can Mentisrex reproduce the literature, and is Mentisrex Capital ready to
 > deploy a production pairs strategy?
 
 ## The answer
@@ -22,7 +22,7 @@ diversification inverts** under the platform's fixed-% sizing + 1.5× gross cap
 (top-40 pairs is the worst config in both markets, −60%/−42% drawdown), because
 truncating an over-levered book breaks its market-neutrality.
 
-**2. How faithfully can Aurelius reproduce the literature?**
+**2. How faithfully can Mentisrex reproduce the literature?**
 **Faithfully, with genuine power — and it still rejects.** The canonical Gatev
 construction (12-month SSD formation, top-N portfolio, 2-SD entry / convergence
 exit) reproduces exactly; the 2026-07-30 data blocker (12 toy names, 22 trades) is
@@ -33,7 +33,7 @@ OU (Avellaneda-Lee), Kalman, sector, and cross-country variants are **BLOCKED** 
 absent selectors/data (reported honestly, no toy substitution). **0 platform
 defects** across all 14 runs.
 
-**3. Is Aurelius ready to deploy?**
+**3. Is Mentisrex ready to deploy?**
 **NO — and there is nothing to deploy.** Unlike the momentum campaign (one
 significant, paper-tradeable config), pairs yields **zero**. Naming a "best" config
 would be tuning to a backtest — forbidden. The least-bad book (India, tight exit:
@@ -56,7 +56,7 @@ inflated. **No production pairs strategy is justified by the evidence.**
 | | Verdict |
 |---|---|
 | Pairs edge exists in the data | **NO** (0/14 significant) |
-| Aurelius reproduces Gatev faithfully | **YES** (0 defects, 3000+ trades) |
+| Mentisrex reproduces Gatev faithfully | **YES** (0 defects, 3000+ trades) |
 | Reproduces the broader stat-arb literature | **BLOCKED** (data/selector, not engine) |
 | Live-capital ready | **NO** |
 | Paper-trade ready | **NO** (nothing significant to trade) |

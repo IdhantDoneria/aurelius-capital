@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "aurelius-capital"
+name = "mentisrex-capital"
 version = "0.1.0"
 description = "Institutional-grade quantitative research and trading platform"
 requires-python = ">=3.12"
@@ -38,7 +38,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/aurelius"]
+packages = ["src/mentisrex"]
 
 [tool.ruff]
 target-version = "py312"
@@ -74,7 +74,7 @@ markers = [
 addopts = "-v --tb=short"
 
 [tool.coverage.run]
-source = ["src/aurelius"]
+source = ["src/mentisrex"]
 omit = ["*/migrations/*", "*/tests/*"]
 
 [tool.coverage.report]

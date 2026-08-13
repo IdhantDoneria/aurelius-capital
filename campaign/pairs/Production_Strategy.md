@@ -12,7 +12,7 @@ Across 14 backtests (7 configs × US/India), **zero** cleared significance — e
 config is REJECT at adjusted p = 1.000, every OOS Sharpe is negative. This is a
 stronger null than the momentum campaign (which had exactly one significant
 config). The distance-pairs edge Gatev documented (1962–2002) **does not exist** in
-Aurelius's 2014–2026 US+India equity panel. There is therefore **no
+Mentisrex's 2014–2026 US+India equity panel. There is therefore **no
 evidence-justified production pairs strategy.**
 
 ## 2. Why there is no v1 (unlike momentum)
@@ -25,7 +25,7 @@ survivorship-inflated book. Deploying it would be deploying noise.
 
 ## 3. What a *research* pairs program would need first (NOT a strategy)
 
-If Aurelius chooses to keep investigating pairs (a research decision, not an
+If Mentisrex chooses to keep investigating pairs (a research decision, not an
 evidence conclusion), the campaign identifies the two changes most likely to give
 the method a *fair* test — both **unbuilt under the freeze**, neither authorized
 here:

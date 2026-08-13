@@ -12,10 +12,10 @@ from datetime import date, timedelta
 import numpy as np
 import pytest
 
-import aurelius.research.risk as risk
-from aurelius.research.risk.engine import RiskEngine, RiskEngineConfig
-from aurelius.research.risk.limits import RiskLimits
-from aurelius.research.risk.models import RiskDecision
+import mentisrex.research.risk as risk
+from mentisrex.research.risk.engine import RiskEngine, RiskEngineConfig
+from mentisrex.research.risk.limits import RiskLimits
+from mentisrex.research.risk.models import RiskDecision
 
 RNG = np.random.default_rng(7)
 
@@ -180,14 +180,14 @@ def test_stress_short_book_gains_in_crash():
 
 
 def test_stress_custom_scenario_breach_flag():
-    from aurelius.research.risk.models import StressScenario
+    from mentisrex.research.risk.models import StressScenario
     r = risk.apply_scenario({"A": 1.0}, StressScenario("big", market_shock=-0.5),
                             betas={"A": 1.0}, halt_threshold=-0.2)
     assert r.breached
 
 
 def test_stress_sector_shock():
-    from aurelius.research.risk.models import StressScenario
+    from mentisrex.research.risk.models import StressScenario
     s = StressScenario("tech_selloff", sector_shocks={"tech": -0.3})
     r = risk.apply_scenario({"A": 1.0}, s, sectors={"A": "tech"})
     assert r.pnl_fraction == pytest.approx(-0.3)
@@ -352,8 +352,8 @@ def test_assess_factor_when_model_injected():
 
 def test_gate_approves_within_limits():
     gate = _eng(max_position=0.5).as_gate()
-    from aurelius.research.simulation.state import PortfolioState
-    from aurelius.research.simulation.models import Order
+    from mentisrex.research.simulation.state import PortfolioState
+    from mentisrex.research.simulation.models import Order
     st = PortfolioState(1e6)
     orders = [Order("A", 4000.0)]      # 40% of 1M at $100
     approved, rejected = gate.check(orders, st, {"A": 100.0})
@@ -362,8 +362,8 @@ def test_gate_approves_within_limits():
 
 def test_gate_rejects_over_position():
     gate = _eng(max_position=0.1).as_gate()
-    from aurelius.research.simulation.state import PortfolioState
-    from aurelius.research.simulation.models import Order
+    from mentisrex.research.simulation.state import PortfolioState
+    from mentisrex.research.simulation.models import Order
     st = PortfolioState(1e6)
     approved, rejected = gate.check([Order("A", 9000.0)], st, {"A": 100.0})
     assert not approved and rejected[0][1] == "max_position"
@@ -371,14 +371,14 @@ def test_gate_rejects_over_position():
 
 def test_gate_rejects_unpriced():
     gate = _eng().as_gate()
-    from aurelius.research.simulation.state import PortfolioState
-    from aurelius.research.simulation.models import Order
+    from mentisrex.research.simulation.state import PortfolioState
+    from mentisrex.research.simulation.models import Order
     approved, rejected = gate.check([Order("A", 1.0)], PortfolioState(1e6), {})
     assert not approved and rejected[0][1] == "unpriced"
 
 
 def test_gate_drops_into_m12_session():
-    import aurelius.research.paper_trading as pt
+    import mentisrex.research.paper_trading as pt
     gate = _eng(max_position=0.5).as_gate(adv_provider=lambda sid: 5e7)
     prices = {"A": 100.0, "B": 50.0, "C": 25.0}
     sess = pt.PaperTradingSession(broker=pt.MockBroker(initial_cash=1_000_000.0), risk_gate=gate)
@@ -389,7 +389,7 @@ def test_gate_drops_into_m12_session():
 
 
 def test_gate_blocks_concentration_in_m12():
-    import aurelius.research.paper_trading as pt
+    import mentisrex.research.paper_trading as pt
     gate = _eng(max_position=0.1).as_gate()
     sess = pt.PaperTradingSession(broker=pt.MockBroker(initial_cash=1_000_000.0), risk_gate=gate)
     sess.step(date(2024, 1, 1), {"A": 0.9}, {"A": 100.0})
@@ -462,7 +462,7 @@ def test_validate_risk_bundle():
 
 def test_serialization_roundtrip_stable():
     import json
-    from aurelius.research.risk import serialization
+    from mentisrex.research.risk import serialization
     rep = _eng(max_position=1.0).assess({"A": 0.5, "B": 0.5}, returns=_returns(["A", "B"]),
                                         portfolio_value=1e6, when=date(2024, 1, 1))
     a = serialization.to_json(rep)

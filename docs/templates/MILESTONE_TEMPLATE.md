@@ -1,12 +1,12 @@
 # M{N} — {Official Milestone Name}
 
 > Template for all milestones **M12 onward**. Copy to `docs/AIDP_M{N}_{SLUG}.md`,
-> fill every section, and add the milestone to `AURELIUS_MILESTONE_INDEX.md`.
-> Obey `AURELIUS_ENGINEERING_PRINCIPLES.md` — additive, PIT-safe, deterministic,
+> fill every section, and add the milestone to `MENTISREX_MILESTONE_INDEX.md`.
+> Obey `MENTISREX_ENGINEERING_PRINCIPLES.md` — additive, PIT-safe, deterministic,
 > dependency-injected, zero regressions.
 
 **Milestone:** M{N}
-**Capability:** {which capability in AURELIUS_ROADMAP.md this delivers/extends}
+**Capability:** {which capability in MENTISREX_ROADMAP.md this delivers/extends}
 **Depends on:** M{…}
 **Status:** DRAFT → CERTIFIED
 **Branch:** `{branch}`

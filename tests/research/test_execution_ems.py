@@ -13,14 +13,14 @@ from datetime import date
 
 import pytest
 
-from aurelius.research.execution import ems as E
-from aurelius.research.execution.ems import scheduler
-from aurelius.research.execution.ems.models import OrderStatus, OrderType
-from aurelius.research.execution.ems.oms import OMS, OMSError
-from aurelius.research.execution.ems.orders import MarketInfo
-from aurelius.research.paper_trading.portfolio import PaperPortfolio
-from aurelius.research.risk.engine import RiskEngine, RiskEngineConfig
-from aurelius.research.risk.limits import RiskLimits
+from mentisrex.research.execution import ems as E
+from mentisrex.research.execution.ems import scheduler
+from mentisrex.research.execution.ems.models import OrderStatus, OrderType
+from mentisrex.research.execution.ems.oms import OMS, OMSError
+from mentisrex.research.execution.ems.orders import MarketInfo
+from mentisrex.research.paper_trading.portfolio import PaperPortfolio
+from mentisrex.research.risk.engine import RiskEngine, RiskEngineConfig
+from mentisrex.research.risk.limits import RiskLimits
 
 PRICES = {"AAA": 100.0, "BBB": 50.0, "CCC": 25.0}
 
@@ -77,7 +77,7 @@ def test_twap_vwap_pov_factories():
 
 
 def test_order_intent_side():
-    from aurelius.research.execution.ems.models import OrderIntent
+    from mentisrex.research.execution.ems.models import OrderIntent
     assert OrderIntent("AAA", 5).side == "buy"
     assert OrderIntent("AAA", -5).side == "sell"
     assert OrderIntent("AAA", 0).side == "flat"
@@ -595,7 +595,7 @@ def test_duplicate_fill_protection():
     fp = E.FillProcessor()
     oms = _oms_with(E.market_order("o", "AAA", 100, arrival_price=100.0))
     _walk_to_ack(oms, "o")
-    from aurelius.research.execution.ems.models import BrokerFill
+    from mentisrex.research.execution.ems.models import BrokerFill
     bf = BrokerFill("f1", "b", "AAA", 50, 100.0, 0.0)
     assert fp.process(bf, parent_id="o", child_id="o.0", oms=oms) is not None
     assert fp.process(bf, parent_id="o", child_id="o.0", oms=oms) is None
@@ -605,18 +605,18 @@ def test_duplicate_fill_protection():
 # ── cost / slippage / IS ──────────────────────────────────────────────────────
 
 def test_slippage_buy_positive_when_fill_above_arrival():
-    from aurelius.research.execution.ems.slippage import arrival_slippage_bps
+    from mentisrex.research.execution.ems.slippage import arrival_slippage_bps
     assert arrival_slippage_bps(100.1, 100.0, 100) == pytest.approx(10.0)
 
 
 def test_slippage_sell_sign_flips():
-    from aurelius.research.execution.ems.slippage import arrival_slippage_bps
+    from mentisrex.research.execution.ems.slippage import arrival_slippage_bps
     # sell filled below arrival is adverse → positive
     assert arrival_slippage_bps(99.9, 100.0, -100) == pytest.approx(10.0)
 
 
 def test_slippage_zero_arrival_safe():
-    from aurelius.research.execution.ems.slippage import arrival_slippage_bps
+    from mentisrex.research.execution.ems.slippage import arrival_slippage_bps
     assert arrival_slippage_bps(100, 0, 100) == 0.0
 
 
@@ -659,8 +659,8 @@ def test_metrics_counts():
 
 
 def test_metrics_total_cost_with_cost_model():
-    from aurelius.research.portfolio.costs import TransactionCostModel
-    from aurelius.research.simulation.execution import CostExecutionModel
+    from mentisrex.research.portfolio.costs import TransactionCostModel
+    from mentisrex.research.simulation.execution import CostExecutionModel
     b = E.MockExecutionBroker(initial_cash=1_000_000,
                               execution_model=CostExecutionModel(TransactionCostModel()))
     engine = E.EMS(E.ExecutionRouter({"b": b}))
@@ -768,7 +768,7 @@ def test_validate_session_audit_starts_created():
 # ── serialization ─────────────────────────────────────────────────────────────
 
 def test_serialization_round_trip_stable():
-    from aurelius.research.execution.ems import serialization
+    from mentisrex.research.execution.ems import serialization
     engine, _ = _ems(twap_slices=3)
     sess = engine.execute([E.twap_order("o", "AAA", 90, arrival_price=100.0)], _market())
     j1 = serialization.to_json(sess)
@@ -777,7 +777,7 @@ def test_serialization_round_trip_stable():
 
 
 def test_serialization_sorted_keys():
-    from aurelius.research.execution.ems import serialization
+    from mentisrex.research.execution.ems import serialization
     engine, _ = _ems()
     sess = engine.execute([E.market_order("o", "AAA", 100, arrival_price=100.0)], _market())
     d = serialization.to_dict(sess)
@@ -785,7 +785,7 @@ def test_serialization_sorted_keys():
 
 
 def test_serialization_save(tmp_path):
-    from aurelius.research.execution.ems import serialization
+    from mentisrex.research.execution.ems import serialization
     engine, _ = _ems()
     sess = engine.execute([E.market_order("o", "AAA", 100, arrival_price=100.0)], _market())
     p = tmp_path / "s.json"
@@ -794,7 +794,7 @@ def test_serialization_save(tmp_path):
 
 
 def test_serialization_reports_have_events():
-    from aurelius.research.execution.ems import serialization
+    from mentisrex.research.execution.ems import serialization
     engine, _ = _ems()
     sess = engine.execute([E.market_order("o", "AAA", 100, arrival_price=100.0)], _market())
     assert serialization.to_dict(sess)["reports"][0]["events"]

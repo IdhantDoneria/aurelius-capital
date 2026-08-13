@@ -12,9 +12,9 @@ from datetime import date
 
 import pytest
 
-from aurelius.research import post_trade as PT
-from aurelius.research.post_trade import serialization
-from aurelius.research.post_trade.models import (
+from mentisrex.research import post_trade as PT
+from mentisrex.research.post_trade import serialization
+from mentisrex.research.post_trade.models import (
     CashType,
     DelistingEvent,
     DividendEvent,
@@ -113,13 +113,13 @@ def test_book_creates_settlement_instruction():
 def test_book_emits_events():
     eng = _eng()
     _booked(eng)
-    from aurelius.research.post_trade.models import CashEvent, PositionEvent, TradeEvent
+    from mentisrex.research.post_trade.models import CashEvent, PositionEvent, TradeEvent
     assert eng.log.of_type(TradeEvent) and eng.log.of_type(PositionEvent) and eng.log.of_type(CashEvent)
 
 
 def test_book_fills_batch():
     eng = _eng()
-    from aurelius.research.post_trade.models import CashEvent
+    from mentisrex.research.post_trade.models import CashEvent
 
     class F:
         def __init__(s, sid, q, p):
@@ -317,7 +317,7 @@ def test_corporate_action_emits_event():
     eng = _eng()
     _booked(eng, qty=100)
     PT.apply_corporate_action(eng, DividendEvent(action_id="D", security_id="AAA", amount_per_share=1.0))
-    from aurelius.research.post_trade.models import CorporateActionEvent
+    from mentisrex.research.post_trade.models import CorporateActionEvent
     assert len(eng.log.of_type(CorporateActionEvent)) == 1
 
 
@@ -339,7 +339,7 @@ def test_reconcile_clean():
 
 
 def test_reconcile_broker_match():
-    from aurelius.research.paper_trading.models import BrokerAccount, BrokerPosition
+    from mentisrex.research.paper_trading.models import BrokerAccount, BrokerPosition
     eng = _eng()
     _booked(eng, qty=100, price=100.0)
     acct = BrokerAccount("B", eng.accounting.cash, {"AAA": BrokerPosition("AAA", 100, 100.0, 100.0)})
@@ -347,7 +347,7 @@ def test_reconcile_broker_match():
 
 
 def test_reconcile_incorrect_quantity():
-    from aurelius.research.paper_trading.models import BrokerAccount, BrokerPosition
+    from mentisrex.research.paper_trading.models import BrokerAccount, BrokerPosition
     eng = _eng()
     _booked(eng, qty=100, price=100.0)
     acct = BrokerAccount("B", eng.accounting.cash, {"AAA": BrokerPosition("AAA", 90, 100.0, 100.0)})
@@ -398,8 +398,8 @@ def test_unrealized_pnl_from_m11():
 # ── M14 execution integration ─────────────────────────────────────────────────
 
 def test_book_m14_execution_report():
-    from aurelius.research.execution import ems as E
-    from aurelius.research.execution.ems.orders import MarketInfo
+    from mentisrex.research.execution import ems as E
+    from mentisrex.research.execution.ems.orders import MarketInfo
     broker = E.MockExecutionBroker(initial_cash=1e9)
     engine = E.EMS(E.ExecutionRouter({"b": broker}))
     sess = engine.execute([E.market_order("o", "AAA", 100, arrival_price=100.0)],
@@ -410,8 +410,8 @@ def test_book_m14_execution_report():
 
 
 def test_book_m14_fills():
-    from aurelius.research.execution import ems as E
-    from aurelius.research.execution.ems.orders import MarketInfo
+    from mentisrex.research.execution import ems as E
+    from mentisrex.research.execution.ems.orders import MarketInfo
     broker = E.MockExecutionBroker(initial_cash=1e9)
     engine = E.EMS(E.ExecutionRouter({"b": broker}), config=E.ExecutionConfig(twap_slices=4))
     sess = engine.execute([E.twap_order("o", "AAA", 100, arrival_price=100.0)],

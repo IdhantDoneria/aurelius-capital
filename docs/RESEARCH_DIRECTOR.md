@@ -27,8 +27,8 @@ the three persisted sources, so a decision is always current and never stale:
 | `ResearchStore` (`research.duckdb`) | outcome history: experiment verdicts, trial counts, timestamps → success rates + velocity |
 | `KnowledgeGraph` (`knowledge_graph.duckdb`) | availability (which datasets/features exist), gap discovery, failure/feature-family patterns |
 
-Files: `src/aurelius/director/{scoring,director,api}.py`, dashboard at
-`src/aurelius/static/director_dashboard.html`.
+Files: `src/mentisrex/director/{scoring,director,api}.py`, dashboard at
+`src/mentisrex/static/director_dashboard.html`.
 
 ---
 
@@ -159,6 +159,6 @@ four research queues, and gap analysis.
 
 ## Self-checks
 
-`python -m aurelius.director.scoring` and `python -m aurelius.director.director`
+`python -m mentisrex.director.scoring` and `python -m mentisrex.director.director`
 run assertion-based smoke tests (duplicate scores lower novelty, missing dataset
 → delay, near-duplicate → merge, ranking monotonic).

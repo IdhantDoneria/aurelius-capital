@@ -1,4 +1,4 @@
-# Aurelius Capital — Repository Checkpoint Report
+# Mentisrex Capital — Repository Checkpoint Report
 ## Pre-M21 Gate | 2026-08-11
 
 ---
@@ -7,7 +7,7 @@
 
 | Field | Value |
 |-------|-------|
-| Root | `/Users/idhantdoneria/aurelius-capital` |
+| Root | `/Users/idhantdoneria/mentisrex-capital` |
 | Working tree | **CLEAN** (nothing to commit) |
 | Active branch | `aidp/audit-and-pit-gaps` |
 | HEAD commit | `bba46a8` — `docs(m20): correct module count to 15` |
@@ -20,8 +20,8 @@
 | Field | Value |
 |-------|-------|
 | Remote name | `origin` |
-| Fetch URL | `https://github.com/IdhantDoneria/aurelius-capital.git` |
-| Push URL | `https://github.com/IdhantDoneria/aurelius-capital.git` |
+| Fetch URL | `https://github.com/IdhantDoneria/mentisrex-capital.git` |
+| Push URL | `https://github.com/IdhantDoneria/mentisrex-capital.git` |
 | Remote HEAD | `09c03b4` — `fix(ci): run integration dir without marker filter` |
 
 ---
@@ -73,7 +73,7 @@
 | M19 | Market Data, Curve Calibration & Vol Surface | ✓ | ✓ | ✓ | `1db2035` | CERTIFIED |
 | M20 | Live Market-Data, Replay & Production Data Layer | ✓ | ✓ | ✓ | `f8d48fd`–`bba46a8` | CERTIFIED |
 
-All 20 milestones: **CERTIFIED** per `docs/AURELIUS_MILESTONE_INDEX.md`.
+All 20 milestones: **CERTIFIED** per `docs/MENTISREX_MILESTONE_INDEX.md`.
 
 ---
 
@@ -108,7 +108,7 @@ All 20 milestones: **CERTIFIED** per `docs/AURELIUS_MILESTONE_INDEX.md`.
 
 ## 8. Repository Structure Audit
 
-All expected `src/aurelius/research/` layers present and tracked:
+All expected `src/mentisrex/research/` layers present and tracked:
 
 | Layer | Directory | Status |
 |-------|-----------|--------|
@@ -132,8 +132,8 @@ All expected `src/aurelius/research/` layers present and tracked:
 
 | Document | Status |
 |----------|--------|
-| `docs/AURELIUS_MILESTONE_INDEX.md` | 20 milestones, all CERTIFIED, hashes cross-checked against git log ✓ |
-| `docs/AURELIUS_ROADMAP.md` | M20 marked delivered; M21+ ("Execution live & Production Infra") future ✓ |
+| `docs/MENTISREX_MILESTONE_INDEX.md` | 20 milestones, all CERTIFIED, hashes cross-checked against git log ✓ |
+| `docs/MENTISREX_ROADMAP.md` | M20 marked delivered; M21+ ("Execution live & Production Infra") future ✓ |
 | `docs/AIDP_AUDIT_AND_ROADMAP.md` | Present ✓ |
 | `docs/RESEARCH_CAMPAIGN_ROADMAP.md` | Present ✓ |
 

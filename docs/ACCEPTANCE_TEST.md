@@ -1,4 +1,4 @@
-# Aurelius Capital — Institutional Acceptance Test
+# Mentisrex Capital — Institutional Acceptance Test
 
 **Role:** CTO, final acceptance before handing the platform to research.
 **Date:** 2026-07-27.

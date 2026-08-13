@@ -1,6 +1,6 @@
 # M12 — Low-Volatility Alpha: Final Report & Certification
 
-**Aurelius Capital — Low-Volatility Campaign**
+**Mentisrex Capital — Low-Volatility Campaign**
 **Date:** 2026-08-06 · **Certification:** **REJECT** · **Platform defects:** None
 
 ---
@@ -9,7 +9,7 @@
 
 Determine whether a low-volatility equity factor — long the lowest-volatility names,
 short the highest — produces a statistically significant, economically meaningful,
-deployable, robust source of risk-adjusted return on the Aurelius panel, using an
+deployable, robust source of risk-adjusted return on the Mentisrex panel, using an
 academically standard specification with **no performance optimization**. This is a
 new alpha family, independent of the archived momentum program (M11).
 
@@ -191,7 +191,7 @@ Do NOT fund further low-vol *long-short* engineering; gate any revisit behind it
 ---
 
 ### Appendix — artifacts
-- Factor: `src/aurelius/research/templates.py::LowVolStrategy`; test
+- Factor: `src/mentisrex/research/templates.py::LowVolStrategy`; test
   `tests/research/test_research.py::test_lowvol_ranks_low_vol_long_and_is_deterministic`.
 - Drivers: `scripts/run_m12.py`, `scripts/run_m12_capacity.py`.
 - Results: `campaign/lowvol/shards/*.jsonl`, `campaign/lowvol/capacity_india.json`.

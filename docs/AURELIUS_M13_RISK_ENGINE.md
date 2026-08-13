@@ -1,7 +1,7 @@
 # M13 — Institutional Risk Engine Consolidation
 
 **Milestone:** M13
-**Capability:** Risk Engine (see `AURELIUS_ROADMAP.md`)
+**Capability:** Risk Engine (see `MENTISREX_ROADMAP.md`)
 **Depends on:** M9 (validation), M10 (covariance / risk contribution), M11 (drawdown / exposure), M12 (paper-trading state)
 **Status:** DRAFT → CERTIFIED
 **Branch:** `aidp/audit-and-pit-gaps`
@@ -10,14 +10,14 @@
 
 ## Summary
 
-M13 builds the **canonical Aurelius Institutional Risk Engine** — the missing
+M13 builds the **canonical Mentisrex Institutional Risk Engine** — the missing
 risk-management layer between portfolio construction/simulation/paper-trading and
 live deployment. It answers: is the portfolio within limits, where does risk come
 from, what exposures exist, what happens under stress, should a trade be blocked,
 should the portfolio rebalance, is it deployable.
 
 It **consolidates and supersedes** the legacy Platform-Track risk engine
-(`aurelius.risk`) in the canonical M-line. Per the legacy-track audit, the legacy
+(`mentisrex.risk`) in the canonical M-line. Per the legacy-track audit, the legacy
 package is left **historical and untouched** — no renames, no breakage. M13 is
 additive, dependency-injected, deterministic, PIT-safe, and **reuses** M9/M10/M11
 rather than duplicating accounting, covariance, or validation.
@@ -43,12 +43,12 @@ weights (from M10 construction / M11 sim / M12 paper state)
 
 ## Legacy migration approach
 
-The legacy `aurelius.risk` (Decimal, `backtesting.PortfolioState`, single-asset
+The legacy `mentisrex.risk` (Decimal, `backtesting.PortfolioState`, single-asset
 lineage) stays frozen as the Platform-Track historical implementation. M13 is a
-**parallel canonical package** `aurelius.research.risk` (numpy, cross-sectional,
+**parallel canonical package** `mentisrex.research.risk` (numpy, cross-sectional,
 reuses M9/M10/M11). Object names intentionally overlap (`RiskEngine`, `RiskDecision`,
 `RiskReport`, `RiskLimits`) but live in a different package — no collision, no
-rename, per `AURELIUS_LEGACY_TRACK_AUDIT.md` (freeze legacy by name, rebuild into the
+rename, per `MENTISREX_LEGACY_TRACK_AUDIT.md` (freeze legacy by name, rebuild into the
 M-line). Capability mapping legacy → M13: `RiskEngine`→`research.risk.RiskEngine`,
 `StressTester`→`stress`, `PortfolioRiskMonitor`→`monitoring`, `RiskLimits`→`limits`.
 

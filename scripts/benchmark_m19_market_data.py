@@ -12,8 +12,8 @@ import time
 import tracemalloc
 from datetime import date, timedelta
 
-from aurelius.research import market_data as md
-from aurelius.research.market_data.sabr import sabr_vol
+from mentisrex.research import market_data as md
+from mentisrex.research.market_data.sabr import sabr_vol
 
 REF = date(2024, 6, 3)
 
@@ -46,7 +46,7 @@ def bench_observations(n: int) -> None:
     (_qr, dt_q, mem_q) = _time(qe.check, nz.observations, as_of=REF)
     builder = md.MarketDataSnapshotBuilder()
     (res, dt_b, mem_b) = _time(builder.build, as_of=REF, raw=raw)
-    from aurelius.research.market_data import serialization as ser
+    from mentisrex.research.market_data import serialization as ser
     (_j, dt_s, _m) = _time(ser.observations_to_json, nz.observations[:5000])
     thru = n / dt_n if dt_n else float("inf")
     print(f"obs={n:>9}  normalize={dt_n*1e3:8.1f}ms ({thru:>10.0f}/s)  quality={dt_q*1e3:7.1f}ms  "

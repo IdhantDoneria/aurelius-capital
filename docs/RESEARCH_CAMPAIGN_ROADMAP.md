@@ -8,10 +8,10 @@ capabilities.
 
 | Capability | Actual state | Source |
 |---|---|---|
-| Strategy templates | 4: `MomentumStrategy`, `MeanReversionStrategy`, `PairsStrategy`, `FactorStrategy` | `src/aurelius/backtesting/strategy/templates.py` |
-| Registered features | 18, **all price/volume/technical** | `src/aurelius/features/library/*.py` |
+| Strategy templates | 4: `MomentumStrategy`, `MeanReversionStrategy`, `PairsStrategy`, `FactorStrategy` | `src/mentisrex/backtesting/strategy/templates.py` |
+| Registered features | 18, **all price/volume/technical** | `src/mentisrex/features/library/*.py` |
 | Fundamentals features | **0** | (none in registry) |
-| Data adapters | `csv_loader`, `yahoo`, `alpaca` | `src/aurelius/market_data/adapters/` |
+| Data adapters | `csv_loader`, `yahoo`, `alpaca` | `src/mentisrex/market_data/adapters/` |
 | Data on hand | OHLCV only, toy (12 names × 2 yr), synthetic | `docs/MARKET_DATA_SPEC.md`, `data/analytics.duckdb` |
 | Loader throughput | ~256k rows/s; 37.8M rows (5000×30yr) ≈ 2.5 min | `docs/DATA_READINESS_REPORT.md` |
 | Validation | deterministic fingerprint short-circuit, IS/OOS split, multiple-testing adj | IPAT run (JT re-run hit `duplicate_experiment`) |

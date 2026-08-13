@@ -1,6 +1,6 @@
 # Institutional Reproduction Report — Jegadeesh & Titman (1993), US Dataset
 
-**Program:** Aurelius Capital — Research Reproduction Campaign
+**Program:** Mentisrex Capital — Research Reproduction Campaign
 **Paper:** Jegadeesh, N. & Titman, S. (1993), *Returns to Buying Winners and
 Selling Losers: Implications for Stock Market Efficiency*, Journal of Finance.
 **Run date:** 2026-07-31
@@ -182,7 +182,7 @@ remediated factor:
 Defect reproduced, isolated and measured (no code modified — per mandate):
 
 - **Reproduced:** the single run halts at −65.6% and returns 0 OOS trades.
-- **Isolated:** `src/aurelius/research/validation.py::train_test` runs one
+- **Isolated:** `src/mentisrex/research/validation.py::train_test` runs one
   backtest and windows it; the halt in `BacktestConfig` is permanent and applies
   across the IS/OOS boundary.
 - **Impact:** total loss of out-of-sample evaluation for any strategy that

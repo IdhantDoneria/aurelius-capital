@@ -4,8 +4,8 @@ from datetime import UTC, date, datetime
 
 import pytest
 
-from aurelius.literature.models import Paper, paper_id
-from aurelius.literature.store import LiteratureStore
+from mentisrex.literature.models import Paper, paper_id
+from mentisrex.literature.store import LiteratureStore
 
 
 def _paper(

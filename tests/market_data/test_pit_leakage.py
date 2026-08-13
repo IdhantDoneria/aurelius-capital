@@ -16,8 +16,8 @@ from __future__ import annotations
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
-from aurelius.market_data.storage.duckdb_store import DuckDBStore
-from aurelius.market_data.storage.pit_store import PitPriceStore
+from mentisrex.market_data.storage.duckdb_store import DuckDBStore
+from mentisrex.market_data.storage.pit_store import PitPriceStore
 
 
 def _bar(day: int, close: str) -> dict:

@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
-from aurelius.backtesting.analytics.performance import PerformanceMetrics
-from aurelius.research import (
+from mentisrex.backtesting.analytics.performance import PerformanceMetrics
+from mentisrex.research import (
     ResearchRunner,
     ResearchStore,
     Verdict,
     research_config,
     synth_bars,
 )
-from aurelius.research.models import ValidationCriteria, bonferroni, sharpe_pvalue
-from aurelius.research.templates import (
+from mentisrex.research.models import ValidationCriteria, bonferroni, sharpe_pvalue
+from mentisrex.research.templates import (
     FactorStrategy,
     LowVolStrategy,
     MeanReversionStrategy,
@@ -19,7 +19,7 @@ from aurelius.research.templates import (
     OverlappingFactorStrategy,
     PairsStrategy,
 )
-from aurelius.research.validation import (
+from mentisrex.research.validation import (
     evaluate,
     parameter_sensitivity,
     run_backtest,
@@ -109,7 +109,7 @@ def test_equal_weight_parameter_and_run():
     """M1: equal_weight=True is reflected in parameters and the strategy runs
     end-to-end with max_position_pct=1.0 (strength IS the target NAV fraction)."""
     from decimal import Decimal
-    from aurelius.backtesting.config import BacktestConfig
+    from mentisrex.backtesting.config import BacktestConfig
 
     # parameters dict carries the flag
     strat = FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
@@ -138,7 +138,7 @@ def test_min_price_parameter_and_run():
     """M2: min_price filter reflected in parameters; backward-compat default 0.0.
     With a high min_price, low-price synth names are excluded from the cross-section."""
     from decimal import Decimal
-    from aurelius.backtesting.config import BacktestConfig
+    from mentisrex.backtesting.config import BacktestConfig
 
     strat = FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
                            equal_weight=True, min_price=5.0)
@@ -168,7 +168,7 @@ def test_skip_parameter_and_run():
     """M4: skip period reflected in parameters; backward-compat default 0.
     skip shifts the formation window back by `skip` bars; skip=0 == M2."""
     from decimal import Decimal
-    from aurelius.backtesting.config import BacktestConfig
+    from mentisrex.backtesting.config import BacktestConfig
 
     strat = FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
                            equal_weight=True, min_price=5.0, skip=5)
@@ -200,7 +200,7 @@ def test_gross_vs_net_reporting():
     on — costs can only subtract, so gross must dominate net. Config-only, no
     engine/strategy change."""
     from decimal import Decimal
-    from aurelius.backtesting.config import BacktestConfig
+    from mentisrex.backtesting.config import BacktestConfig
 
     bars = synth_bars(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"], days=200, seed=42)
 
@@ -224,8 +224,8 @@ def test_liquidity_filter_disabled_is_identical_and_enabled_runs():
     off by default. Filter ON → runs end-to-end, drops names, no crash. Locks the
     'baseline unchanged when disabled' certification requirement."""
     from decimal import Decimal
-    from aurelius.backtesting.config import BacktestConfig
-    from aurelius.research.liquidity import (
+    from mentisrex.backtesting.config import BacktestConfig
+    from mentisrex.research.liquidity import (
         DEFAULT_METRIC, LIQUIDITY_METRICS, screen,
     )
 
@@ -275,8 +275,8 @@ def test_invariant_construction_preserves_baseline_and_bounds_concentration():
     ON but bounds slack (full universe), and caps single-name weight / HHI under
     universe shrink. Locks the invariance-framework certification requirements."""
     from decimal import Decimal
-    from aurelius.backtesting.config import BacktestConfig
-    from aurelius.research.portfolio_construction import (
+    from mentisrex.backtesting.config import BacktestConfig
+    from mentisrex.research.portfolio_construction import (
         baseline_weight, invariant_weight, exposures,
     )
 
@@ -330,9 +330,9 @@ def test_lowvol_ranks_low_vol_long_and_is_deterministic():
     """M12: LowVolStrategy ranks the lowest-volatility name LONG and the highest
     SHORT, exposes params, runs deterministically end-to-end, no look-ahead."""
     from decimal import Decimal
-    from aurelius.backtesting.config import BacktestConfig
-    from aurelius.backtesting.strategy.base import StrategyContext
-    from aurelius.backtesting.events.types import Direction
+    from mentisrex.backtesting.config import BacktestConfig
+    from mentisrex.backtesting.strategy.base import StrategyContext
+    from mentisrex.backtesting.events.types import Direction
 
     s = LowVolStrategy(lookback=30, quantile=0.20, rebalance_days=10)
     assert s.parameters["lookback"] == 30
@@ -370,7 +370,7 @@ def test_overlapping_factor_parameters_and_run():
     """M3: OverlappingFactorStrategy exposes K/lookback/etc; runs end-to-end.
     K=2 cohorts with short lookback so both cohorts fill within 200 synthetic bars."""
     from decimal import Decimal
-    from aurelius.backtesting.config import BacktestConfig
+    from mentisrex.backtesting.config import BacktestConfig
 
     strat = OverlappingFactorStrategy(K=2, lookback=42, rebalance_days=21, quantile=0.20,
                                       allow_short=True, equal_weight=True, min_price=0.0)
@@ -460,7 +460,7 @@ def test_investigate_records_and_updates_status():
 
 
 def test_demo_runs_end_to_end():
-    from aurelius.research import demo
+    from mentisrex.research import demo
 
     report = demo()
     assert report.verdict in (Verdict.ACCEPT, Verdict.REJECT, Verdict.INCONCLUSIVE)
@@ -470,7 +470,7 @@ def test_config_snapshot_stored_and_retrieved():
     """ExperimentRecord stores config_snapshot; find_duplicate includes config in identity."""
     from datetime import UTC, datetime
 
-    from aurelius.research.models import ExperimentRecord, ValidationReport, Verdict
+    from mentisrex.research.models import ExperimentRecord, ValidationReport, Verdict
 
     store = ResearchStore(":memory:")
     h = store.record_hypothesis("test", "rationale", "researcher")

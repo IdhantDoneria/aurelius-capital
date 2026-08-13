@@ -35,19 +35,19 @@ from typing import Any
 
 import pytest
 
-from aurelius.research.paper_trading.broker import MockBroker, SimulatedBroker
-from aurelius.research.paper_trading.checkpoint import (
+from mentisrex.research.paper_trading.broker import MockBroker, SimulatedBroker
+from mentisrex.research.paper_trading.checkpoint import (
     _checkpoint_dict,
     _restore_checkpoint,
     load_checkpoint,
     save_checkpoint,
 )
-from aurelius.research.paper_trading.cycle import (
+from mentisrex.research.paper_trading.cycle import (
     CycleRecord,
     ForwardPerformanceRecord,
     PerformanceMetrics,
 )
-from aurelius.research.paper_trading.loop import (
+from mentisrex.research.paper_trading.loop import (
     LoopConfig,
     LoopCycleResult,
     LoopError,
@@ -58,18 +58,18 @@ from aurelius.research.paper_trading.loop import (
     _extract_prices,
     _snapshot_fp,
 )
-from aurelius.research.paper_trading.runtime_state import StrategyRuntimeState
-from aurelius.research.paper_trading.scheduler import (
+from mentisrex.research.paper_trading.runtime_state import StrategyRuntimeState
+from mentisrex.research.paper_trading.scheduler import (
     Clock,
     FixedClock,
     RebalanceScheduler,
 )
-from aurelius.research.paper_trading.session import PaperTradingSession, SessionConfig
-from aurelius.research.paper_trading.risk import PreTradeRiskGate
-from aurelius.research.paper_trading.risk import RiskLimits as M12RiskLimits
-from aurelius.research.risk.engine import RiskEngine, RiskEngineConfig
-from aurelius.research.risk.limits import RiskLimits
-from aurelius.research.strategy_deployment import (
+from mentisrex.research.paper_trading.session import PaperTradingSession, SessionConfig
+from mentisrex.research.paper_trading.risk import PreTradeRiskGate
+from mentisrex.research.paper_trading.risk import RiskLimits as M12RiskLimits
+from mentisrex.research.risk.engine import RiskEngine, RiskEngineConfig
+from mentisrex.research.risk.limits import RiskLimits
+from mentisrex.research.strategy_deployment import (
     EvaluationError,
     FeatureSet,
     ReadinessValidator,

@@ -1,8 +1,8 @@
-# Session Handoff — Aurelius Capital
+# Session Handoff — Mentisrex Capital
 
 **Read this, then delete it.** Ephemeral. Warm-starts one fresh session, then self-destructs. All durable content lives in the code it points to. **Delete this file (`docs/HANDOFF.md`) once read.**
 
-Repo: `/Users/idhantdoneria/aurelius-capital` (git, branch `main`). Venv at `.venv` — **use `.venv/bin/python`, not `python`**.
+Repo: `/Users/idhantdoneria/mentisrex-capital` (git, branch `main`). Venv at `.venv` — **use `.venv/bin/python`, not `python`**.
 
 ---
 
@@ -11,7 +11,7 @@ Repo: `/Users/idhantdoneria/aurelius-capital` (git, branch `main`). Venv at `.ve
 - **Ponytail (ultra)** — YAGNI extremist. Deletion before addition. No fix until a profiler or real dataset demands it. Climb the ladder before writing anything.
 - **Caveman (full)** — terse chat prose. **Code, commits, docs, security = normal English.**
 
-**Hard rule:** NEVER commit from HOME repo `/Users/idhantdoneria/.git` (stages entire home dir + dotfiles). Commit only inside `/Users/idhantdoneria/aurelius-capital/.git`.
+**Hard rule:** NEVER commit from HOME repo `/Users/idhantdoneria/.git` (stages entire home dir + dotfiles). Commit only inside `/Users/idhantdoneria/mentisrex-capital/.git`.
 
 ---
 
@@ -30,9 +30,9 @@ Daily bars ≈ 252/yr/symbol.
 
 Three independent walls, each fires before runtime matters:
 
-1. **Depth cap = 7 years, fixed window 2020–2026.** Postgres OHLCV is `PARTITION BY RANGE (timestamp)`, monthly partitions only for `range(2020, 2027)`, **no DEFAULT partition** — `src/aurelius/infrastructure/database/migrations/versions/0001_initial_schema.py:264-274`. Any bar outside → insert error. `feature_values` covers 2015–2026 but useless without OHLCV.
+1. **Depth cap = 7 years, fixed window 2020–2026.** Postgres OHLCV is `PARTITION BY RANGE (timestamp)`, monthly partitions only for `range(2020, 2027)`, **no DEFAULT partition** — `src/mentisrex/infrastructure/database/migrations/versions/0001_initial_schema.py:264-274`. Any bar outside → insert error. `feature_values` covers 2015–2026 but useless without OHLCV.
 
-2. **O(symbols × total_bars) gap detection** — `src/aurelius/market_data/pipeline/ingestion.py:128-132` re-scans the whole `known_bars` list per ticker. 3000 sym × 22.7M bars ≈ 68B ops → hours. Bites at ~500+ symbols.
+2. **O(symbols × total_bars) gap detection** — `src/mentisrex/market_data/pipeline/ingestion.py:128-132` re-scans the whole `known_bars` list per ticker. 3000 sym × 22.7M bars ≈ 68B ops → hours. Bites at ~500+ symbols.
 
 3. **In-memory OOM.** Every ingestion + research path holds full dataset in RAM: ingestion ~6 list copies (`ingestion.py:114-167`); `FeaturePipeline.compute_batch` returns one list + unbounded cache (`features/pipeline.py:46,91`); research re-materializes + re-sorts full set per backtest slice (`research/validation.py:44`). ~22.7M bars × ~6 copies ≈ 95 GB. Dies before ~3M bars.
 
@@ -51,8 +51,8 @@ Laziest-first, only if user asks:
 
 Both APIs preserved; research/experiment/feature logic untouched.
 
-1. **Depth cap removed** — new migration `src/aurelius/infrastructure/database/migrations/versions/0002_ohlcv_default_partition.py` adds a DEFAULT partition to `market_data_ohlcv`. Arbitrary dates now insert; propagated indexes keep queries fast; hot-window (2020–2026) pruning intact. Ceiling: cold rows share one default partition (see `# ponytail:` note in the migration).
-2. **O(S×N) gap detect fixed** — `src/aurelius/market_data/pipeline/ingestion.py` buckets `known_bars` by symbol in one pass (`defaultdict`) instead of re-scanning per ticker. Measured **10× / 55× / 104×** faster at 100 / 500 / 1000 symbols; identical output.
+1. **Depth cap removed** — new migration `src/mentisrex/infrastructure/database/migrations/versions/0002_ohlcv_default_partition.py` adds a DEFAULT partition to `market_data_ohlcv`. Arbitrary dates now insert; propagated indexes keep queries fast; hot-window (2020–2026) pruning intact. Ceiling: cold rows share one default partition (see `# ponytail:` note in the migration).
+2. **O(S×N) gap detect fixed** — `src/mentisrex/market_data/pipeline/ingestion.py` buckets `known_bars` by symbol in one pass (`defaultdict`) instead of re-scanning per ticker. Measured **10× / 55× / 104×** faster at 100 / 500 / 1000 symbols; identical output.
 
 Tests: `tests/market_data/test_pipeline.py` +2 unit (multi-symbol gap attribution); `tests/market_data/test_ohlcv_partitions.py` new integration (default-partition attached + out-of-window insert routes to default). Full non-integration suite: **575 passed**.
 

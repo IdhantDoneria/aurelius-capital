@@ -15,14 +15,14 @@ from datetime import date, datetime
 
 import pytest
 
-from aurelius.research import fx as m16fx
-from aurelius.research import instruments as ins
-from aurelius.research import market_data as md
-from aurelius.research.market_data import diagnostics as mdiag
-from aurelius.research.market_data import serialization as ser
-from aurelius.research.market_data.sabr import sabr_vol
-from aurelius.research.valuation.engine import ValuationEngine
-from aurelius.research.valuation.models import ValuationConfiguration
+from mentisrex.research import fx as m16fx
+from mentisrex.research import instruments as ins
+from mentisrex.research import market_data as md
+from mentisrex.research.market_data import diagnostics as mdiag
+from mentisrex.research.market_data import serialization as ser
+from mentisrex.research.market_data.sabr import sabr_vol
+from mentisrex.research.valuation.engine import ValuationEngine
+from mentisrex.research.valuation.models import ValuationConfiguration
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ REF = date(2024, 6, 3)
 
 
 def obs(sid="AAPL", field="close", value=190.0, obs_d=REF, eff=None, **kw):
-    from aurelius.research.market_data.models import CanonicalObservation, ObservationType, Unit
+    from mentisrex.research.market_data.models import CanonicalObservation, ObservationType, Unit
     return CanonicalObservation(
         security_id=sid, obs_type=kw.pop("obs_type", ObservationType.CLOSE), field=field,
         value=value, observation_date=obs_d, effective_date=eff or obs_d,
@@ -72,7 +72,7 @@ def test_observation_provenance_carries_pit():
 
 
 def test_observation_with_status_immutable():
-    from aurelius.research.market_data.models import QualityStatus
+    from mentisrex.research.market_data.models import QualityStatus
     o = obs()
     o2 = o.with_status(QualityStatus.VALIDATED)
     assert o.status is QualityStatus.RAW and o2.status is QualityStatus.VALIDATED
@@ -83,23 +83,23 @@ def test_observation_key_ignores_source_revision():
 
 
 def test_observation_types_distinct():
-    from aurelius.research.market_data.models import ObservationType
+    from mentisrex.research.market_data.models import ObservationType
     assert len({t.value for t in ObservationType}) == len(list(ObservationType))
 
 
 def test_quality_diagnostic_rejects():
-    from aurelius.research.market_data.models import QualityDiagnostic, Severity
+    from mentisrex.research.market_data.models import QualityDiagnostic, Severity
     assert QualityDiagnostic("c", Severity.REJECT, "m").rejects
     assert not QualityDiagnostic("c", Severity.WARNING, "m").rejects
 
 
 def test_unit_enum_has_rate_and_price():
-    from aurelius.research.market_data.models import Unit
+    from mentisrex.research.market_data.models import Unit
     assert Unit.RATE.value == "rate" and Unit.PRICE.value == "price"
 
 
 def test_observation_default_unit_price():
-    from aurelius.research.market_data.models import Unit
+    from mentisrex.research.market_data.models import Unit
     assert obs().unit is Unit.PRICE
 
 
@@ -135,7 +135,7 @@ def test_identifier_no_collision_disjoint_windows():
 
 
 def test_identifier_ambiguous_resolution_raises():
-    from aurelius.research.market_data.identifiers import IdentifierRecord
+    from mentisrex.research.market_data.identifiers import IdentifierRecord
     m = md.IdentifierMap()
     # a corrupted map with two overlapping records for one external id must refuse to resolve
     m._records.append(IdentifierRecord(md.IdType.TICKER, "T", "A"))
@@ -369,7 +369,7 @@ def test_normalize_close_alias():
 
 
 def test_normalize_percent_to_rate():
-    from aurelius.research.market_data.models import Unit
+    from mentisrex.research.market_data.models import Unit
     r = md.Normalizer().normalize(
         [{"id": "C", "field": "rate", "value": 5.0, "unit": "percent"}], as_of=REF)
     o = r.observations[0]
@@ -397,7 +397,7 @@ def test_normalize_dedup_keeps_highest_revision():
 
 
 def test_normalize_missing_id_rejected():
-    from aurelius.research.market_data.models import Severity
+    from mentisrex.research.market_data.models import Severity
     r = md.Normalizer().normalize([{"field": "close", "value": 1.0}], as_of=REF)
     assert not r.observations and any(d.severity is Severity.REJECT for d in r.diagnostics)
 
@@ -451,7 +451,7 @@ def test_quality_look_ahead_rejected():
 
 
 def test_quality_stale_warns():
-    from aurelius.research.market_data.models import Severity
+    from mentisrex.research.market_data.models import Severity
     qe = md.MarketDataQualityEngine(md.QualityConfig(max_staleness_days=2))
     rep = qe.check([obs(obs_d=date(2024, 5, 1))], as_of=REF)
     assert any(d.code == "stale" and d.severity is Severity.WARNING for d in rep.diagnostics)
@@ -469,7 +469,7 @@ def test_quality_crossed_quote_rejected():
 
 
 def test_quality_wide_spread_warns():
-    from aurelius.research.market_data.models import Severity
+    from mentisrex.research.market_data.models import Severity
     o = obs(meta={"bid": 100.0, "ask": 130.0})
     rep = md.MarketDataQualityEngine().check([o], as_of=REF)
     assert any(d.code == "wide_spread" and d.severity is Severity.WARNING for d in rep.diagnostics)
@@ -482,39 +482,39 @@ def test_quality_bad_ohlc_rejected():
 
 
 def test_quality_negative_volume_error():
-    from aurelius.research.market_data.models import ObservationType, Severity, Unit
+    from mentisrex.research.market_data.models import ObservationType, Severity, Unit
     o = obs(field="volume", value=-5.0, obs_type=ObservationType.VOLUME, unit=Unit.SHARES)
     rep = md.MarketDataQualityEngine().check([o], as_of=REF)
     assert any(d.code == "negative_volume" and d.severity is Severity.ERROR for d in rep.diagnostics)
 
 
 def test_quality_price_jump_warns():
-    from aurelius.research.market_data.models import Severity
+    from mentisrex.research.market_data.models import Severity
     rep = md.MarketDataQualityEngine().check([obs(value=300.0)], as_of=REF, prior={"AAPL": 190.0})
     assert any(d.code == "price_jump" and d.severity is Severity.WARNING for d in rep.diagnostics)
 
 
 def test_quality_clean_accepted_validated():
-    from aurelius.research.market_data.models import QualityStatus
+    from mentisrex.research.market_data.models import QualityStatus
     rep = md.MarketDataQualityEngine().check([obs()], as_of=REF)
     assert rep.ok and rep.accepted[0].status is QualityStatus.VALIDATED
 
 
 def test_quality_suspect_status_on_warning():
-    from aurelius.research.market_data.models import QualityStatus
+    from mentisrex.research.market_data.models import QualityStatus
     o = obs(meta={"bid": 100.0, "ask": 130.0})
     rep = md.MarketDataQualityEngine().check([o], as_of=REF)
     assert rep.accepted[0].status is QualityStatus.SUSPECT
 
 
 def test_quality_by_severity():
-    from aurelius.research.market_data.models import Severity
+    from mentisrex.research.market_data.models import Severity
     rep = md.MarketDataQualityEngine().check([obs(value=-1.0)], as_of=REF)
     assert rep.by_severity(Severity.REJECT)
 
 
 def test_quality_missing_value_rejected():
-    from aurelius.research.market_data.models import CanonicalObservation, ObservationType, Unit
+    from mentisrex.research.market_data.models import CanonicalObservation, ObservationType, Unit
     o = CanonicalObservation("A", ObservationType.CLOSE, "close", float("nan"), REF, REF)
     rep = md.MarketDataQualityEngine().check([o], as_of=REF)
     assert rep.rejected
@@ -648,8 +648,8 @@ def test_bootstrap_flat_when_all_equal():
 
 
 def test_bootstrap_par_swap_reprices_par_rate():
-    import aurelius.research.valuation.swaps as sw
-    from aurelius.research.valuation.daycount import DayCount
+    import mentisrex.research.valuation.swaps as sw
+    from mentisrex.research.valuation.daycount import DayCount
     c = swap_curve([(0.25, 0.05), (1, 0.05), (5, 0.05), (10, 0.05)])
     pay_dates = tuple(date(y, 6, 3) for y in range(2025, 2030))
     spec = sw.SwapSpec(notional=1.0, fixed_rate=0.05, pay_dates=pay_dates, start=REF,
@@ -777,7 +777,7 @@ def test_sabr_params_validate_clean():
 
 
 def test_sabr_invalid_params_flagged():
-    from aurelius.research.market_data.sabr import SABRParams
+    from mentisrex.research.market_data.sabr import SABRParams
     assert SABRParams(-1, 0.5, 0.0, 0.4).validate()
     assert SABRParams(0.2, 0.5, 1.5, 0.4).validate()
     assert SABRParams(0.2, 0.5, 0.0, -0.1).validate()
@@ -834,7 +834,7 @@ def test_svi_no_butterfly_arbitrage_on_fit():
 
 
 def test_svi_durrleman_detects_arbitrage():
-    from aurelius.research.market_data.svi import SVIParams
+    from mentisrex.research.market_data.svi import SVIParams
     bad = SVIParams(a=0.0, b=2.0, rho=0.9, m=0.0, sigma=0.01)  # steep -> butterfly
     assert md.butterfly_arbitrage(bad)
 
@@ -855,7 +855,7 @@ def test_svi_needs_three_points():
 # ══════════════════════════════════════════════════════════════════════════════
 
 def test_surface_calibration_sabr_materializes_m18_surface():
-    from aurelius.research.valuation.volatility import VolatilitySurface
+    from mentisrex.research.valuation.volatility import VolatilitySurface
     smiles = [sabr_smile(100, t) for t in (0.5, 1.0, 2.0)]
     surf, rep, prov = md.VolatilitySurfaceCalibrator(md.VolModel.SABR).calibrate_surface(
         smiles, "SPX", REF)
@@ -877,7 +877,7 @@ def test_surface_interpolated_model():
 
 
 def test_surface_calendar_arbitrage_flagged():
-    from aurelius.research.market_data.vol_calibration import SmileQuotes
+    from mentisrex.research.market_data.vol_calibration import SmileQuotes
     # decreasing total variance across maturity at fixed strike -> calendar arb
     s1 = SmileQuotes(100, 1.0, (100,), (0.30,), underlying="X")
     s2 = SmileQuotes(100, 2.0, (100,), (0.10,), underlying="X")
@@ -894,7 +894,7 @@ def test_calibrated_vol_provider_protocol():
 
 
 def test_surface_bid_ask_flag():
-    from aurelius.research.market_data.vol_calibration import SmileQuotes
+    from mentisrex.research.market_data.vol_calibration import SmileQuotes
     s = SmileQuotes(100, 1.0, (90, 100, 110), (0.2, 0.2, 0.2),
                     bids=(0.30, 0.30, 0.30), asks=(0.31, 0.31, 0.31), underlying="X")
     fn = md.VolatilitySurfaceCalibrator(md.VolModel.INTERPOLATED).calibrate_smile(s)
@@ -955,7 +955,7 @@ def test_builder_fingerprint_present():
 
 
 def test_builder_result_is_m18_snapshot():
-    from aurelius.research.valuation.models import MarketDataSnapshot
+    from mentisrex.research.valuation.models import MarketDataSnapshot
     res = md.MarketDataSnapshotBuilder().build(
         as_of=REF, raw=[{"id": "A", "field": "close", "value": 1.0}])
     assert isinstance(res.snapshot, MarketDataSnapshot)
@@ -1117,7 +1117,7 @@ def test_adapter_fetch_not_implemented():
 
 
 def test_adapter_yield_maps_to_rate_unit():
-    from aurelius.research.market_data.models import Unit
+    from mentisrex.research.market_data.models import Unit
     o = md.BloombergAdapter().to_canonical(
         {"id": "T", "field": "YLD_YTM_MID", "value": 4.5}, as_of=REF)
     assert o.unit is Unit.RATE
@@ -1239,7 +1239,7 @@ def test_m18_valuation_reproducible_key():
 
 
 def test_m18_portfolio_valuation_from_m19_snapshot():
-    from aurelius.research.valuation.engine import PortfolioValuationEngine
+    from mentisrex.research.valuation.engine import PortfolioValuationEngine
     snap = _built_snapshot()
     eq = ins.equity("AAPL", currency="USD")
     opt = ins.option("C", underlying="AAPL", strike=200.0, expiry=date(2025, 6, 3),
@@ -1405,7 +1405,7 @@ def test_credit_recovery_effect_on_hazard():
 
 
 def test_quality_custom_reject_on_error():
-    from aurelius.research.market_data.models import ObservationType, Severity, Unit
+    from mentisrex.research.market_data.models import ObservationType, Severity, Unit
     cfg = md.QualityConfig(reject_severities=(Severity.REJECT, Severity.ERROR))
     o = obs(field="volume", value=-5.0, obs_type=ObservationType.VOLUME, unit=Unit.SHARES)
     rep = md.MarketDataQualityEngine(cfg).check([o], as_of=REF)

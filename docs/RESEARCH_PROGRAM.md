@@ -1,10 +1,10 @@
-# Aurelius Capital — Quantitative Research Program
+# Mentisrex Capital — Quantitative Research Program
 
 **Owner:** Director of Quantitative Research
 **Mandate:** discover statistically robust, economically explainable alpha.
 **Constraint:** platform is complete. Build no new infrastructure unless a hypothesis is blocked by a genuine capability gap. Output of this org is *validated alpha*, not software.
 
-This document is the research constitution. It defines what we research, how an idea travels from paper to capital, and what stops a bad idea from ever consuming a second cycle. It reuses the existing platform: `aurelius.research.models` (`Verdict`, `ValidationReport`, `ValidationCriteria`, `ExperimentRecord`, `dataset_fingerprint`), `aurelius.assistant` (paper parsing, hypothesis generation, bias detection, reports), the backtest engine, construction, risk, and paper-trading loop.
+This document is the research constitution. It defines what we research, how an idea travels from paper to capital, and what stops a bad idea from ever consuming a second cycle. It reuses the existing platform: `mentisrex.research.models` (`Verdict`, `ValidationReport`, `ValidationCriteria`, `ExperimentRecord`, `dataset_fingerprint`), `mentisrex.assistant` (paper parsing, hypothesis generation, bias detection, reports), the backtest engine, construction, risk, and paper-trading loop.
 
 ---
 
@@ -90,7 +90,7 @@ Common success bar (all lanes, net of costs, unless tightened per-lane):
 
 ## 2. Paper → testable hypothesis
 
-Pipeline (uses `aurelius.assistant.ResearchAssistant`):
+Pipeline (uses `mentisrex.assistant.ResearchAssistant`):
 
 1. **Ingest.** `read_paper(text)` → `PaperSummary` (title, abstract, claims, keywords). Human confirms the *central claim* and the *economic mechanism* in one sentence each. No mechanism sentence → paper rejected at intake.
 2. **Extract the bet.** Reduce the paper to: signal definition, universe, horizon, rebalance frequency, and the *direction* of the predicted return. If the paper cannot be reduced to a falsifiable directional bet, it is a survey, not a hypothesis.
@@ -164,7 +164,7 @@ Rejections 1-7 are terminal for that formulation. INCONCLUSIVE (8) may be re-que
 
 ## 7. Paper-trading promotion
 
-A PASS verdict earns paper trading, not capital. Uses the existing supervised paper loop (`aurelius.paper`).
+A PASS verdict earns paper trading, not capital. Uses the existing supervised paper loop (`mentisrex.paper`).
 
 Promotion to paper requires:
 1. Verdict PASS on all six validation gates.

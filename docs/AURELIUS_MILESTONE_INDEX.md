@@ -1,4 +1,4 @@
-# Aurelius Research Platform — Canonical Milestone Index
+# Mentisrex Research Platform — Canonical Milestone Index
 
 Authoritative history of engineering milestones. The project uses **one** milestone
 convention: `M1, M2, … M11`, continuing `M12, M13, …`. Never "Phase". Milestone
@@ -179,7 +179,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 - **Dependencies:** M7 (registry), M9 (validation), M10 (cost), M11 (accounting).
 - **Commit:** `1813176`.
 - **Status:** CERTIFIED.
-- **Documentation:** `AURELIUS_M12_PAPER_TRADING.md`.
+- **Documentation:** `MENTISREX_M12_PAPER_TRADING.md`.
 - **Tests:** `tests/research/test_paper_trading.py` (50).
 - **Benchmark:** reconcile/drift/order-gen < 8.5 ms at 10k; sync O(N)/tick, 25.6 MB.
 - **Successor:** M13.
@@ -197,7 +197,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
   (drawdown/exposure), M12 (paper-trading state).
 - **Commit:** `1a7b77b`.
 - **Status:** CERTIFIED.
-- **Documentation:** `AURELIUS_M13_RISK_ENGINE.md`.
+- **Documentation:** `MENTISREX_M13_RISK_ENGINE.md`.
 - **Tests:** `tests/research/test_risk.py` (74).
 - **Benchmark:** 10k securities assess 85.7 ms, 20.5 MB (no dense N×N); VaR/stress
   sub-3 ms.
@@ -215,7 +215,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 - **Dependencies:** M10 (costs), M11 (accounting), M12 (broker/state), M13 (risk gate).
 - **Commit:** `961cbfc`.
 - **Status:** CERTIFIED.
-- **Documentation:** `AURELIUS_M14_EXECUTION_SYSTEM.md`.
+- **Documentation:** `MENTISREX_M14_EXECUTION_SYSTEM.md`.
 - **Tests:** `tests/research/test_execution_ems.py` (122).
 - **Successor:** M15.
 
@@ -231,7 +231,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 - **Dependencies:** M11 (accounting), M12 (broker reconciliation), M14 (fills/reports).
 - **Commit:** `7b5073e`.
 - **Status:** CERTIFIED.
-- **Documentation:** `AURELIUS_M15_POST_TRADE_OPERATIONS.md`.
+- **Documentation:** `MENTISREX_M15_POST_TRADE_OPERATIONS.md`.
 - **Tests:** `tests/research/test_post_trade.py` (83).
 - **Benchmark:** ~10k trades/s, reconcile 0.09 s over 1.36M events.
 - **Successor:** M16.
@@ -249,7 +249,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 - **Dependencies:** M11 (accounting), M13 (risk idea), M14 (fills), M15 (post-trade engine).
 - **Commit:** `b029345`.
 - **Status:** CERTIFIED.
-- **Documentation:** `AURELIUS_M16_MULTI_CURRENCY.md`.
+- **Documentation:** `MENTISREX_M16_MULTI_CURRENCY.md`.
 - **Tests:** `tests/research/test_fx.py` (140).
 - **Benchmark:** valuation/reconcile linear (reconcile 0.37 s over 1.05M events), FX
   conversion sub-ms; backward-compatible with M15 (single-currency book matches
@@ -270,7 +270,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 - **Dependencies:** M11 (accounting), M13 (risk), M14 (execution), M15 (settlement), M16 (FX).
 - **Commit:** `22b4c38` (feature), `38e501b` (hash record).
 - **Status:** CERTIFIED.
-- **Documentation:** `AURELIUS_M17_MULTI_ASSET.md`.
+- **Documentation:** `MENTISREX_M17_MULTI_ASSET.md`.
 - **Tests:** `tests/research/test_instruments.py` (123).
 - **Benchmark:** 1.08M lifecycle events in 4.4 s; equity-only book matches M15 fingerprint.
 - **Successor:** M18.
@@ -289,7 +289,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 - **Dependencies:** M16 (FX providers), M17 (instrument model). Feeds M13 (risk authority).
 - **Commit:** `0d910ae`.
 - **Status:** CERTIFIED.
-- **Documentation:** `AURELIUS_M18_VALUATION.md`.
+- **Documentation:** `MENTISREX_M18_VALUATION.md`.
 - **Tests:** `tests/research/test_valuation.py` (171).
 - **Benchmark:** 100k-instrument portfolio valuation in ~20 s (~5k/s); single valuation
   ~100 µs; analytic Greeks match finite differences; fully additive (zero M1–M17 regressions).
@@ -312,7 +312,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
   Feeds M13 (risk authority), M17 (vol/curve providers), M18 valuation.
 - **Commit:** `1db2035`.
 - **Status:** CERTIFIED.
-- **Documentation:** `AURELIUS_M19_MARKET_DATA.md`.
+- **Documentation:** `MENTISREX_M19_MARKET_DATA.md`.
 - **Tests:** `tests/research/test_market_data.py` (206).
 - **Benchmark:** ~27k observations/s normalization (linear scaling to 1M); curve bootstrap ~20 ms,
   SVI surface calibration ~370 ms, credit bootstrap ~19 ms; calibration reprices inputs to
@@ -339,7 +339,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
   provider, injected). Feeds M18 valuation → M17 → M13.
 - **Commit:** `f8d48fd` (implementation) … `7fefd8e` (docs/benchmark).
 - **Status:** CERTIFIED.
-- **Documentation:** `AURELIUS_M20_MARKET_DATA_OPERATIONS.md`.
+- **Documentation:** `MENTISREX_M20_MARKET_DATA_OPERATIONS.md`.
 - **Tests:** `tests/research/test_market_data_operations.py` (154).
 - **Benchmark:** ingestion ~21k messages/s (dedup); ordering + arbitration linear passes;
   reconstruction dominated by M19 normalization (~1.05 s at ~12k msgs, ~130 s at ~1.2M);
@@ -359,7 +359,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 - **Dependencies:** M18, M19, M20.
 - **Commit:** TBD (current HEAD — see git log).
 - **Status:** CERTIFIED.
-- **Documentation:** `AURELIUS_M21_OPEN_DATA_PROVIDERS.md`.
+- **Documentation:** `MENTISREX_M21_OPEN_DATA_PROVIDERS.md`.
 - **Tests:** 81 deterministic offline tests; 1942 total suite passing (0 regressions).
 - **Benchmark:** 100k observations < 4s; 1M observations < 33s.
 
@@ -369,7 +369,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 
 ## M22 — Research-to-Execution Strategy Deployment Layer
 
-- **Purpose:** Formal, versioned contract between validated research and the existing Aurelius
+- **Purpose:** Formal, versioned contract between validated research and the existing Mentisrex
   execution and paper-trading infrastructure. Provides `StrategySpecification` (immutable,
   versioned), `StrategyRuntime.evaluate()` (deterministic pipeline: M10 → M13 → M14),
   `ReadinessValidator` (deployment gate), `ConsistencyChecker` (research/deployment drift),
@@ -383,7 +383,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
   (MarketDataSnapshot).
 - **Commit:** TBD (current HEAD).
 - **Status:** CERTIFIED.
-- **Documentation:** `AURELIUS_M22_STRATEGY_DEPLOYMENT.md`.
+- **Documentation:** `MENTISREX_M22_STRATEGY_DEPLOYMENT.md`.
 - **Tests:** `tests/research/test_strategy_deployment.py` (88 tests).
 - **Benchmark:** single evaluation < 10 ms on 5-security universe; deterministic replay verified.
 - **Current state:** IMPLEMENTED, TESTED. Zero M1–M21 regressions (2030 passed, 3 pre-existing skips).
@@ -410,7 +410,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
   - Fail-closed: risk rejection → empty targets; evaluation error → error result, not crash.
   - Idempotent: duplicate snapshot fingerprints skipped; restart-safe.
 - **Tests:** `tests/research/test_paper_trading_runtime.py` — 136 tests, all offline, all passing.
-- **Documentation:** `AURELIUS_M23_PAPER_TRADING.md`.
+- **Documentation:** `MENTISREX_M23_PAPER_TRADING.md`.
 - **Certification:** restart test, duplicate-event test, determinism test — all passing.
 - **Current state:** IMPLEMENTED, TESTED. Zero regressions (2166 passed, 3 pre-existing skips).
 - **Successor:** M24 (Forward Paper-Trading Validation & Diagnostics Framework).
@@ -421,7 +421,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 
 - **Commit:** `feat: M24 forward validation and diagnostics`
 - **Delivered:** 2026-08-12
-- **Package:** `src/aurelius/research/forward_validation/`
+- **Package:** `src/mentisrex/research/forward_validation/`
 - **Modules:** `engine.py`, `models.py`, `statistics.py`, `drift.py`, `data_diagnostics.py`,
   `signal_diagnostics.py`, `execution_diagnostics.py`, `portfolio_diagnostics.py`,
   `risk_diagnostics.py`, `comparison.py`, `attribution.py`, `lineage.py`, `report.py`,
@@ -445,7 +445,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
   - No external data providers (no Bloomberg, Yahoo, FRED, SEC, NSE, BSE, etc.).
   - No live-money execution, no second backtesting/risk/paper-trading engine.
 - **Tests:** `tests/research/test_forward_validation.py` — 117 tests, all offline, all passing.
-- **Documentation:** `AURELIUS_M24_FORWARD_VALIDATION.md`.
+- **Documentation:** `MENTISREX_M24_FORWARD_VALIDATION.md`.
 - **Current state:** IMPLEMENTED, TESTED. Zero regressions (2283 passed, 3 pre-existing skips).
 - **Successor:** M25 (to be determined — M24 does not begin M25).
 
@@ -453,7 +453,7 @@ Branch of record: `aidp/audit-and-pit-gaps`. Test suite at time of index:
 
 ## Planned milestones (M25+)
 
-Future work continues the sequence — never restarts. See `AURELIUS_ROADMAP.md` for
+Future work continues the sequence — never restarts. See `MENTISREX_ROADMAP.md` for
 the capability view.
 
 - **M25+** — live vendor transport implementing the M20 production adapter contracts (Bloomberg/
@@ -470,11 +470,11 @@ risk = "Phase 7", construction = "Phase 8", paper = "Phase 9", assistant =
 canonical AIDP M-numbers above, so they were **not** mechanically renamed (doing so
 would create duplicate M-numbers). They are preserved as historical and flagged for
 a future governance milestone to reconcile the two tracks under one authoritative
-number line. Affected areas: `src/aurelius/{risk,construction,paper,assistant,
-knowledge,intelligence,catalog,…}`, `src/aurelius/research/{models,templates}.py`,
+number line. Affected areas: `src/mentisrex/{risk,construction,paper,assistant,
+knowledge,intelligence,catalog,…}`, `src/mentisrex/research/{models,templates}.py`,
 `research/validation/legacy.py`, and their tests.
 
 The full cataloguing, classification, and resolution recommendation for this legacy
-Platform Track is in **[`AURELIUS_LEGACY_TRACK_AUDIT.md`](AURELIUS_LEGACY_TRACK_AUDIT.md)**
+Platform Track is in **[`MENTISREX_LEGACY_TRACK_AUDIT.md`](MENTISREX_LEGACY_TRACK_AUDIT.md)**
 (recommended resolution: freeze legacy "Phase N" as historical, track capabilities by
 name, adopt into the M-line only as a future milestone rebuilds each capability).

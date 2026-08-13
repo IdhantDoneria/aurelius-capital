@@ -74,7 +74,7 @@ sub-periods would be the fidelity upgrade (identified, not run under the freeze)
 
 ## 5. Conclusion
 
-Under the frozen Aurelius engine, on real US 2014–2026 equities, momentum exists
+Under the frozen Mentisrex engine, on real US 2014–2026 equities, momentum exists
 **only in a narrow configuration**: ~6-month formation, extreme deciles, frequent
 (monthly) rebalancing, with the long leg carrying the return and the short leg
 carrying the crash risk. Every neighboring configuration — longer/shorter

@@ -1,6 +1,6 @@
 # M10 — Capacity & Liquidity Deployability Audit
 
-**Aurelius Capital — Methodology Fidelity Campaign**
+**Mentisrex Capital — Methodology Fidelity Campaign**
 **Date:** 2026-08-05
 **Type:** deployability audit. Frozen: signal / factor / portfolio-construction rule /
 data pipeline / benchmark. Varied only: execution assumptions (rebalance cadence,

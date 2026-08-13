@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from aurelius.market_data.adapters.base import RawBar
-from aurelius.market_data.adapters.csv_loader import CSVLoader, _parse_timestamp
-from aurelius.market_data.pipeline.normalizer import (
+from mentisrex.market_data.adapters.base import RawBar
+from mentisrex.market_data.adapters.csv_loader import CSVLoader, _parse_timestamp
+from mentisrex.market_data.pipeline.normalizer import (
     compute_spike,
     detect_gaps,
     normalize_bar,

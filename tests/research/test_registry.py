@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import pytest
 
-from aurelius.research.experiment_registry import ExperimentRegistry, RegistryStore, check
-from aurelius.research.experiment_registry import hashing, lineage
+from mentisrex.research.experiment_registry import ExperimentRegistry, RegistryStore, check
+from mentisrex.research.experiment_registry import hashing, lineage
 
 
 @pytest.fixture

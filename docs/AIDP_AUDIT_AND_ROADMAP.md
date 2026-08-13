@@ -1,6 +1,6 @@
 # AIDP — Data-Layer Audit & Gap Roadmap
 
-Scope decision (2026-08-06): the "AURELIUS INSTITUTIONAL DATA PLATFORM" spec is
+Scope decision (2026-08-06): the "MENTISREX INSTITUTIONAL DATA PLATFORM" spec is
 largely a **rewrite of a platform that already exists and is certified** for the
 current momentum/pairs research (`docs/DATA_READINESS_REPORT.md`). We do **not**
 rebuild. We audit what's shipped against the spec's correctness requirements,

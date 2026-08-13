@@ -1,6 +1,6 @@
 # M9 — Engine Reproducibility & Vintage Integrity Audit
 
-**Aurelius Capital — Methodology Fidelity Campaign**
+**Mentisrex Capital — Methodology Fidelity Campaign**
 **Date:** 2026-08-05
 **Type:** forensic audit only. No signal / factor / portfolio / cost / reporting /
 ingestion change. **No code correction required** (none found necessary).

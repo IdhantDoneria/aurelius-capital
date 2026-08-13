@@ -14,11 +14,11 @@ import tempfile
 import time
 from datetime import UTC, datetime, timedelta
 
-from aurelius.backtesting.analytics.performance import EquityPoint, PerformanceMetrics, RoundTrip
-from aurelius.research.execution import ResearchRunner, RunConfiguration
-from aurelius.research.execution.artifact_manager import ArtifactManager
-from aurelius.research.execution.event_log import EventLog
-from aurelius.research.experiment_registry import ExperimentRegistry, RegistryStore, lineage
+from mentisrex.backtesting.analytics.performance import EquityPoint, PerformanceMetrics, RoundTrip
+from mentisrex.research.execution import ResearchRunner, RunConfiguration
+from mentisrex.research.execution.artifact_manager import ArtifactManager
+from mentisrex.research.execution.event_log import EventLog
+from mentisrex.research.experiment_registry import ExperimentRegistry, RegistryStore, lineage
 
 
 def _pm():

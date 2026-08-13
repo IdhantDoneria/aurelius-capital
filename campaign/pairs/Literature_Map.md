@@ -1,11 +1,11 @@
 # Pairs Trading / Statistical Arbitrage — Literature Map
 
-**Aurelius Capital — Pairs Trading Research Campaign**
+**Mentisrex Capital — Pairs Trading Research Campaign**
 **Workstream A — Literature Intelligence**
 **Date:** 2026-08-04
 **Status:** Literature review. Every figure below is a *published* number from the
-cited work, NOT an Aurelius empirical result. Statistics not firmly grounded are
-marked `[recall]`. Aurelius reproducibility judged against the frozen platform
+cited work, NOT an Mentisrex empirical result. Statistics not firmly grounded are
+marked `[recall]`. Mentisrex reproducibility judged against the frozen platform
 (price-only DuckDB panel, US + India daily 2014–2026) and `PairsStrategy` /
 `MultiPairStrategy`.
 
@@ -13,7 +13,7 @@ marked `[recall]`. Aurelius reproducibility judged against the frozen platform
 
 ## 1. Statistical-arbitrage families (scope map)
 
-| Family | Spread object | Canonical anchor | Aurelius-reproducible? |
+| Family | Spread object | Canonical anchor | Mentisrex-reproducible? |
 |---|---|---|---|
 | Distance (SSD) | min sum-of-squared-deviation of normalized prices | **Gatev, Goetzmann & Rouwenhorst 2006** | **Yes** — exactly `select_pairs` + `MultiPairStrategy` |
 | Cointegration | stationary linear combination (Engle-Granger / Johansen) | Vidyamurthy 2004; Lin et al. 2006 | Partial — needs an ADF/Johansen selection step (not in frozen template) |
@@ -57,7 +57,7 @@ marked `[recall]`. Aurelius reproducibility judged against the frozen platform
   vector (regression β), not scale balance.
 - **Trading:** z-score bands on the cointegration residual; entry/exit as SD
   multiples. **Method book, not an empirical dataset** — no single canonical return.
-- **Aurelius gap:** template uses SSD selection + static scale-balance hedge, not an
+- **Mentisrex gap:** template uses SSD selection + static scale-balance hedge, not an
   ADF-tested cointegrating β. Cointegration selection is the top ranked fidelity add.
 
 ### Avellaneda & Lee (2010) — *Statistical arbitrage in the US equities market*
@@ -70,7 +70,7 @@ marked `[recall]`. Aurelius reproducibility judged against the frozen platform
   mean-reversion **speed** (half-life) below a threshold.
 - **Results:** Sharpe ≈ 1.1 net after 2002 `[recall]`; higher earlier; decays with
   crowding; hurt in 2007 (the quant deleveraging).
-- **Aurelius gap:** **BLOCKED for the PCA/ETF residual variant** (no factor series /
+- **Mentisrex gap:** **BLOCKED for the PCA/ETF residual variant** (no factor series /
   ETFs); the raw-spread z-score is the OU s-score's price-only cousin.
 
 ### Do & Faff (2010, 2012) — *Does simple pairs trading still work?*
@@ -82,7 +82,7 @@ marked `[recall]`. Aurelius reproducibility judged against the frozen platform
 - **Results:** post-2002 raw profits shrink toward **~ costs**; net returns often
   insignificant after 2002; **industry-matched** pairs and high-reversal pairs do
   better; sensitive to short costs and to the 2008 crisis `[recall]`.
-- **Aurelius relevance:** the decay result is the key prior — expect *thin* net
+- **Mentisrex relevance:** the decay result is the key prior — expect *thin* net
   edge on a 2014–2026 sample; the industry screen is **BLOCKED** (no sector map).
 
 ### Khandani & Lo (2007) — *What happened to the quants in August 2007?*
@@ -93,7 +93,7 @@ marked `[recall]`. Aurelius reproducibility judged against the frozen platform
 
 ## 3. Cross-cutting methodology dimensions (feeds Workstream C)
 
-| Dimension | Gatev | Vidyamurthy | Avellaneda-Lee | Do-Faff | Aurelius frozen |
+| Dimension | Gatev | Vidyamurthy | Avellaneda-Lee | Do-Faff | Mentisrex frozen |
 |---|---|---|---|---|---|
 | Selection | SSD distance | cointegration (ADF) | OU half-life on residual | SSD + industry | **SSD distance** ✓ |
 | Formation | 12 mo | rolling | 60-day est. window | 12 mo | **12 mo (252d)** ✓ |
@@ -105,7 +105,7 @@ marked `[recall]`. Aurelius reproducibility judged against the frozen platform
 | Portfolio | top-20 (+5, control) | n pairs | many | top-20 + industry | **top-N (5/20/40)** ✓ |
 | Costs | gross + net, 1-day wait | — | net | net, short cost | **engine commission (net)** |
 
-## 4. What Aurelius can and cannot reproduce (honest scope)
+## 4. What Mentisrex can and cannot reproduce (honest scope)
 
 **Reproducible now (price-only, this campaign):**
 - **Gatev 2006** distance selection + 2-SD divergence trading + top-N portfolio,

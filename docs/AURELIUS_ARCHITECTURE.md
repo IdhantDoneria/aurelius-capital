@@ -1,9 +1,9 @@
-# Aurelius Research Platform — Architecture Overview
+# Mentisrex Research Platform — Architecture Overview
 
 Authoritative architecture reference. Describes system boundaries, module
 responsibilities, the dependency graph, data flow, and the guarantees every
-milestone inherits. Milestone → module mapping is in `AURELIUS_MILESTONE_INDEX.md`;
-capability view in `AURELIUS_ROADMAP.md`.
+milestone inherits. Milestone → module mapping is in `MENTISREX_MILESTONE_INDEX.md`;
+capability view in `MENTISREX_ROADMAP.md`.
 
 ## Design philosophy
 
@@ -162,7 +162,7 @@ absorb constrained QP, factor covariance, HRP, and Black-Litterman.
 
 ## References
 
-- `AURELIUS_MILESTONE_INDEX.md` — milestone → commit history.
-- `AURELIUS_ROADMAP.md` — capability view.
-- `AURELIUS_ENGINEERING_PRINCIPLES.md` — the rules every milestone obeys.
+- `MENTISREX_MILESTONE_INDEX.md` — milestone → commit history.
+- `MENTISREX_ROADMAP.md` — capability view.
+- `MENTISREX_ENGINEERING_PRINCIPLES.md` — the rules every milestone obeys.
 - `AIDP_Mn_*.md` — per-milestone deep-dive documents.

@@ -4,8 +4,8 @@ import tempfile
 from pathlib import Path
 
 import pytest
-from aurelius.operations.config import OperationsConfig
-from aurelius.operations.monitor import OperationsMonitor
+from mentisrex.operations.config import OperationsConfig
+from mentisrex.operations.monitor import OperationsMonitor
 
 
 @pytest.fixture

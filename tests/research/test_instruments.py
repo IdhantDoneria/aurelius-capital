@@ -14,8 +14,8 @@ from datetime import date
 
 import pytest
 
-from aurelius.research import instruments as ins
-from aurelius.research.instruments import (
+from mentisrex.research import instruments as ins
+from mentisrex.research.instruments import (
     collateral,
     contracts,
     diagnostics,
@@ -32,7 +32,7 @@ from aurelius.research.instruments import (
     validation as val,
     valuation as vln,
 )
-from aurelius.research.instruments.models import (
+from mentisrex.research.instruments.models import (
     CashConvention,
     ExerciseStatus,
     Greeks,
@@ -40,8 +40,8 @@ from aurelius.research.instruments.models import (
     OptionRight,
     SettlementStyle,
 )
-from aurelius.research.post_trade import PostTradeEngine
-from aurelius.research.post_trade import fingerprint as pt_fingerprint
+from mentisrex.research.post_trade import PostTradeEngine
+from mentisrex.research.post_trade import fingerprint as pt_fingerprint
 
 D0 = date(2026, 1, 5)
 DE = date(2026, 12, 18)
@@ -291,14 +291,14 @@ def test_option_premium_received_short():
 
 
 def test_option_intrinsic_call():
-    from aurelius.research.instruments.options import intrinsic_value
+    from mentisrex.research.instruments.options import intrinsic_value
     c = ins.call("C", underlying="U", strike=150, expiry=OE)
     assert intrinsic_value(c, 170.0) == 20.0
     assert intrinsic_value(c, 140.0) == 0.0
 
 
 def test_option_intrinsic_put():
-    from aurelius.research.instruments.options import intrinsic_value
+    from mentisrex.research.instruments.options import intrinsic_value
     p = ins.put("P", underlying="U", strike=150, expiry=OE)
     assert intrinsic_value(p, 130.0) == 20.0
     assert intrinsic_value(p, 170.0) == 0.0
@@ -796,7 +796,7 @@ def test_diagnostics_counts():
 # ─────────────────────────── validation ────────────────────────────────────
 
 def test_validate_option_missing_strike():
-    from aurelius.research.instruments.models import Instrument
+    from mentisrex.research.instruments.models import Instrument
     # model allows an under-specified option; the validator is what flags it
     bad = Instrument("C", InstrumentType.OPTION, expiry=None, underlying=None, strike=None)
     problems = val.validate_instrument(bad)
@@ -846,7 +846,7 @@ def test_close_flat_noop():
 
 
 def test_position_flip_through_zero():
-    from aurelius.research.instruments.positions import DerivativePosition
+    from mentisrex.research.instruments.positions import DerivativePosition
     p = DerivativePosition(es_future())
     p.apply(2, 4000.0)
     p.apply(-3, 4010.0)         # close 2, open -1
@@ -882,7 +882,7 @@ def test_events_appended():
 
 
 def test_creation_event_emitted():
-    from aurelius.research.instruments.models import InstrumentEventType
+    from mentisrex.research.instruments.models import InstrumentEventType
     b = book()
     b.register(es_future())
     assert b.events.of_type(type(b.events.events[0]))

@@ -5,7 +5,7 @@ Reconstruct the investable universe as of any historical date, **survivorship-fr
 investable then — including companies that have since disappeared — and excludes
 anything that listed later. Additive; M1–M3 unchanged.
 
-Modules: `src/aurelius/market_data/{delistings,universe}/`.
+Modules: `src/mentisrex/market_data/{delistings,universe}/`.
 
 ## Motivation
 

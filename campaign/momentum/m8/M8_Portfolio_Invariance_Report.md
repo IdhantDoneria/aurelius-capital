@@ -1,6 +1,6 @@
 # M8 — Portfolio Invariance Framework
 
-**Aurelius Capital — Methodology Fidelity Campaign**
+**Mentisrex Capital — Methodology Fidelity Campaign**
 **Date:** 2026-08-05
 **Baseline:** M1+M2+M4 (net), M5 dual reporting, M6 audit, M7 liquidity (REJECTED).
 **Objective:** invariance, NOT performance — portfolio exposure stable under

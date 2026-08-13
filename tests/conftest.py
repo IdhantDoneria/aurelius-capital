@@ -17,8 +17,8 @@ from httpx import ASGITransport, AsyncClient
 os.environ.setdefault("ENVIRONMENT", "testing")
 os.environ.setdefault("DATABASE_HOST", "localhost")
 os.environ.setdefault("DATABASE_PORT", "5433")
-os.environ.setdefault("DATABASE_NAME", "aurelius_test")
-os.environ.setdefault("DATABASE_USER", "aurelius")
+os.environ.setdefault("DATABASE_NAME", "mentisrex_test")
+os.environ.setdefault("DATABASE_USER", "mentisrex")
 os.environ.setdefault("DATABASE_PASSWORD", "test_password")
 os.environ.setdefault("REDIS_HOST", "localhost")
 os.environ.setdefault("REDIS_PORT", "6380")
@@ -50,8 +50,8 @@ def mock_cache_manager() -> AsyncMock:
 @pytest.fixture
 def app_with_mocks(mock_db_manager: AsyncMock, mock_cache_manager: AsyncMock) -> FastAPI:
     """FastAPI app with infrastructure dependencies replaced by mocks."""
-    from aurelius.main import create_app
-    from aurelius.presentation.api.dependencies import get_cache_manager, get_database_manager
+    from mentisrex.main import create_app
+    from mentisrex.presentation.api.dependencies import get_cache_manager, get_database_manager
 
     application = create_app()
     application.dependency_overrides[get_database_manager] = lambda: mock_db_manager

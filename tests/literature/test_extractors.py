@@ -4,9 +4,9 @@ from datetime import UTC, datetime
 
 import pytest
 
-from aurelius.literature.extractors.arxiv import ArxivExtractor
-from aurelius.literature.extractors.crossref import CrossRefExtractor
-from aurelius.literature.extractors.nber import NBERExtractor
+from mentisrex.literature.extractors.arxiv import ArxivExtractor
+from mentisrex.literature.extractors.crossref import CrossRefExtractor
+from mentisrex.literature.extractors.nber import NBERExtractor
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 

@@ -5,14 +5,14 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
-from aurelius.features import (
+from mentisrex.features import (
     Bar,
     FeaturePipeline,
     FeatureStore,
     all_features,
     get,
 )
-from aurelius.features.registry import Window
+from mentisrex.features.registry import Window
 
 
 def _bars(closes, start=None, vol=1000):

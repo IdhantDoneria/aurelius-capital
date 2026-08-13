@@ -1,7 +1,7 @@
 """Unit tests for CorpusClassifier."""
 
-from aurelius.corpus.classifier import CorpusClassifier
-from aurelius.corpus.models import AssetClass, Market
+from mentisrex.corpus.classifier import CorpusClassifier
+from mentisrex.corpus.models import AssetClass, Market
 
 
 def test_classify_microstructure_paper() -> None:

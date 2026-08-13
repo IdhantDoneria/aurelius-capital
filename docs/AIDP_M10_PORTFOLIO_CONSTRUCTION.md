@@ -4,7 +4,7 @@ Transforms validated research signals into implementable portfolios. Alpha
 generation (the signal) is kept strictly separate from construction (sizing, risk,
 constraints, costs): a signal is *not* a portfolio. Additive; M1–M9 untouched.
 
-Module: `src/aurelius/research/portfolio/`.
+Module: `src/mentisrex/research/portfolio/`.
 
 ```python
 sig = signals_from_matrix(research_matrix, "earnings_yield")      # M6 → signal

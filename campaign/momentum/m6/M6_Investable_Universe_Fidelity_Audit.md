@@ -1,6 +1,6 @@
 # M6 — Investable Universe Fidelity Audit
 
-**Aurelius Capital — Methodology Fidelity Campaign**
+**Mentisrex Capital — Methodology Fidelity Campaign**
 **Date:** 2026-08-05
 **Type:** institutional data-availability audit. **No production code, methodology,
 strategy, filter, portfolio, or parameter changed.**

@@ -5,8 +5,8 @@ from decimal import Decimal
 
 import pytest
 
-from aurelius.backtesting.events.base import EventQueue
-from aurelius.backtesting.events.types import (
+from mentisrex.backtesting.events.base import EventQueue
+from mentisrex.backtesting.events.types import (
     Direction,
     FillEvent,
     MarketEvent,

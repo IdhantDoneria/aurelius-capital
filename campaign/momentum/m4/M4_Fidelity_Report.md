@@ -1,6 +1,6 @@
 # M4 Methodology Report — One-Month Skip Period
 
-**Aurelius Capital — Methodology Fidelity Campaign**
+**Mentisrex Capital — Methodology Fidelity Campaign**
 **Date:** 2026-08-04
 **Baseline:** M2 (`campaign/momentum/m2/us_jt_m2.jsonl`)
 **Source:** `campaign/momentum/m4/us_jt_m4.jsonl`
@@ -19,7 +19,7 @@
 | Purpose | — | remove short-term (1-month) reversal at the formation/holding boundary |
 | JT justification | — | JT-1993: rank on past J months, skip the most recent month, hold K months |
 
-**Implementation:** `skip` parameter added to `FactorStrategy` (`src/aurelius/research/templates.py`).
+**Implementation:** `skip` parameter added to `FactorStrategy` (`src/mentisrex/research/templates.py`).
 - Fetch `lookback + skip + 1` closes.
 - Formation return = `(c[-1-skip] - c[0]) / c[0]` — window ends `skip` bars ago, spans exactly `lookback` bars.
 - Price screen still uses current price `c[-1]` (tradeable price now, per M2).

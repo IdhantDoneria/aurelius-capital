@@ -1,6 +1,6 @@
 # Research Corpus & Institutional Knowledge Acquisition System — Phase 19
 
-The Aurelius Capital Research Corpus Management System continuously acquires, classifies, versions, and indexes quantitative finance literature, serving as the firm's permanent institutional research library.
+The Mentisrex Capital Research Corpus Management System continuously acquires, classifies, versions, and indexes quantitative finance literature, serving as the firm's permanent institutional research library.
 
 ---
 

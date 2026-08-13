@@ -15,11 +15,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from aurelius.corpus.api import get_corpus_store
-from aurelius.knowledge.api import _get_kg
-from aurelius.operations.config import OperationsConfig
-from aurelius.operations.models import JobStatus
-from aurelius.operations.pipeline import PipelineOrchestrator
+from mentisrex.corpus.api import get_corpus_store
+from mentisrex.knowledge.api import _get_kg
+from mentisrex.operations.config import OperationsConfig
+from mentisrex.operations.models import JobStatus
+from mentisrex.operations.pipeline import PipelineOrchestrator
 
 _SUPPORTED = {".pdf", ".txt", ".md", ".rst", ".tex", ".json"}
 

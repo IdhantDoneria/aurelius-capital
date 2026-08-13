@@ -29,7 +29,7 @@ engine reuses it rather than duplicating SQL. Net-new analytics — experiment-
 derived meta-analysis, time-series trends, self-evaluation — live in
 `intelligence/engine.py`.
 
-File: `src/aurelius/intelligence/{engine,api}.py`.
+File: `src/mentisrex/intelligence/{engine,api}.py`.
 
 ---
 
@@ -117,7 +117,7 @@ self-evaluation, top recommendations) **and** a rendered `markdown` field.
 
 ## Paper-trading feedback loop (built)
 
-`PaperOutcomeStore` (`src/aurelius/paper/outcomes.py`, `paper_outcomes.duckdb`) is
+`PaperOutcomeStore` (`src/mentisrex/paper/outcomes.py`, `paper_outcomes.duckdb`) is
 the durable home for what happened *after* validation said "accept" and a
 strategy went to paper trading. Keyed by `hypothesis_id`, each record carries the
 live `regime`, paper Sharpe/return/drawdown, backtest Sharpe (for decay), and an
@@ -156,7 +156,7 @@ None owned. Reads:
 
 ## Self-check
 
-`python -m aurelius.intelligence.engine` seeds a productive and a failing category
+`python -m mentisrex.intelligence.engine` seeds a productive and a failing category
 in-memory and asserts: failing category detected, guard-effectiveness ranks the
 Sharpe floor, a `retire` recommendation with evidence is emitted, and
 `decision_signal_lift > 0`.

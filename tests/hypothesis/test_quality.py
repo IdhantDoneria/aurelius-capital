@@ -4,8 +4,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from aurelius.hypothesis.models import HypothesisRecord
-from aurelius.hypothesis.quality import check_quality
+from mentisrex.hypothesis.models import HypothesisRecord
+from mentisrex.hypothesis.quality import check_quality
 
 
 def _record(**kwargs) -> HypothesisRecord:

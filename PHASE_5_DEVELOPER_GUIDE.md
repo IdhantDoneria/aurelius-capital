@@ -3,10 +3,10 @@
 ## Quick Start
 
 ```python
-from aurelius.backtesting import BacktestEngine, BacktestConfig
-from aurelius.backtesting.data.feed import InMemoryDataFeed
-from aurelius.backtesting.strategy.base import Strategy, StrategyContext
-from aurelius.backtesting.events.types import Direction, MarketEvent, SignalEvent
+from mentisrex.backtesting import BacktestEngine, BacktestConfig
+from mentisrex.backtesting.data.feed import InMemoryDataFeed
+from mentisrex.backtesting.strategy.base import Strategy, StrategyContext
+from mentisrex.backtesting.events.types import Direction, MarketEvent, SignalEvent
 
 class MyStrategy(Strategy):
     name = "my_strategy"
@@ -89,7 +89,7 @@ This ordering prevents the strategy from seeing its own fills retroactively.
 ### Minimal Implementation
 
 ```python
-from aurelius.backtesting.strategy.base import Strategy
+from mentisrex.backtesting.strategy.base import Strategy
 
 class MinimalStrategy(Strategy):
     name = "minimal"
@@ -279,7 +279,7 @@ If `max_position_pct=0.10` and `total_value=$1M`:
 ## Config Reference
 
 ```python
-from aurelius.backtesting import BacktestConfig
+from mentisrex.backtesting import BacktestConfig
 from decimal import Decimal
 
 config = BacktestConfig(
@@ -334,7 +334,7 @@ config = BacktestConfig(
 ### InMemoryDataFeed (For Research)
 
 ```python
-from aurelius.backtesting.data.feed import InMemoryDataFeed, BarData
+from mentisrex.backtesting.data.feed import InMemoryDataFeed, BarData
 
 bars = [
     BarData(
@@ -366,7 +366,7 @@ feed = InMemoryDataFeed(
 ### DuckDBDataFeed (For Production)
 
 ```python
-from aurelius.backtesting.data.feed import DuckDBDataFeed
+from mentisrex.backtesting.data.feed import DuckDBDataFeed
 
 feed = DuckDBDataFeed(
     db_path="market_data.duckdb",

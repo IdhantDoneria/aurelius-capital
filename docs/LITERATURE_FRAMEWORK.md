@@ -1,6 +1,6 @@
 # Literature Intelligence Framework
 
-**Phase 11 — Aurelius Capital**
+**Phase 11 — Mentisrex Capital**
 
 Single source of truth for all external quantitative research. Ingests, stores, and enriches papers from seven academic sources. Feeds the Hypothesis Generation Framework (Phase 12).
 
@@ -118,7 +118,7 @@ List fields are stored as JSON arrays (DuckDB has no native array type for VARCH
 ## Folder Structure
 
 ```
-src/aurelius/literature/
+src/mentisrex/literature/
 ├── __init__.py                 # Public API: Paper, LiteratureStore, LLMClient, enrich
 ├── models.py                   # Paper dataclass + paper_id()
 ├── store.py                    # LiteratureStore (DuckDB)
@@ -178,14 +178,14 @@ arXiv and NBER return recent papers only (RSS/API window). CrossRef returns full
 
 ## LLM Enrichment
 
-The `enrich()` function follows the same `LLMClient = Callable[[str], str]` pattern as `aurelius.assistant`.
+The `enrich()` function follows the same `LLMClient = Callable[[str], str]` pattern as `mentisrex.assistant`.
 
 ```python
 # Offline (no LLM)
 store.upsert(paper)                     # enriched=False
 
 # With any LLM
-from aurelius.literature import enrich
+from mentisrex.literature import enrich
 paper = enrich(paper, llm=my_llm_client)
 store.upsert(paper)                     # enriched=True, all fields populated
 ```
@@ -240,7 +240,7 @@ python scripts/ingest_literature.py --stats
 
 **Adding a new source:**
 
-1. Create `src/aurelius/literature/extractors/newjournal.py`
+1. Create `src/mentisrex/literature/extractors/newjournal.py`
 2. Subclass `SourceExtractor`, set `source = "newjournal"`, implement `fetch()`
 3. Add to `extractors/__init__.py` registry (`SOURCES` list and `get_extractor` match)
 4. No other files change.

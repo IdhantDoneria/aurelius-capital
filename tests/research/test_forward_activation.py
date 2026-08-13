@@ -28,25 +28,25 @@ from pathlib import Path
 
 import pytest
 
-from aurelius.research.forward_validation.engine import ForwardValidationEngine
-from aurelius.research.paper_trading.broker import MockBroker, SimulatedBroker
-from aurelius.research.paper_trading.checkpoint import (
+from mentisrex.research.forward_validation.engine import ForwardValidationEngine
+from mentisrex.research.paper_trading.broker import MockBroker, SimulatedBroker
+from mentisrex.research.paper_trading.checkpoint import (
     _checkpoint_dict,
     _restore_checkpoint,
     load_checkpoint,
     save_checkpoint,
 )
-from aurelius.research.paper_trading.loop import LoopConfig, LoopError, PaperTradingLoop
-from aurelius.research.paper_trading.scheduler import FixedClock
-from aurelius.research.strategy_deployment.models import (
+from mentisrex.research.paper_trading.loop import LoopConfig, LoopError, PaperTradingLoop
+from mentisrex.research.paper_trading.scheduler import FixedClock
+from mentisrex.research.strategy_deployment.models import (
     StrategyState,
     StrategyType,
     make_manifest,
     make_spec,
 )
-from aurelius.research.strategy_deployment.readiness import ReadinessValidator
-from aurelius.research.strategy_deployment.registry import StrategyRegistry
-from aurelius.research.strategy_deployment.runtime import StrategyLogic, StrategyRuntime
+from mentisrex.research.strategy_deployment.readiness import ReadinessValidator
+from mentisrex.research.strategy_deployment.registry import StrategyRegistry
+from mentisrex.research.strategy_deployment.runtime import StrategyLogic, StrategyRuntime
 
 
 # ── shared fixtures (offline; deterministic) ──────────────────────────────────
@@ -81,7 +81,7 @@ SNAPSHOTS = [_snap(d, 1.005 ** i) for i, d in enumerate(DATES)]
 
 # ── strategy logic (local test double; same pattern as EqualWeightMomentumLogic) ─
 
-from aurelius.research.strategy_deployment.models import (
+from mentisrex.research.strategy_deployment.models import (
     FeatureSet, SignalRecord, SignalSet, StrategySpecification,
 )
 
@@ -144,7 +144,7 @@ def _make_exp_spec(**overrides) -> StrategySpecification:
         allowed_instruments=["equity"],
         capital_assumption=1_000_000.0,
         model_version="1.0.0",
-        dependency_versions={"aurelius_milestone": "M24"},
+        dependency_versions={"mentisrex_milestone": "M24"},
     )
     defaults.update(overrides)
     return make_spec(**defaults)
@@ -512,7 +512,7 @@ class TestFaultRehearsal:
 
     def test_rejected_order_does_not_corrupt_state(self):
         """Fault 4: risk rejection → no orders → portfolio unchanged."""
-        from aurelius.research.paper_trading.risk import PreTradeRiskGate, RiskLimits
+        from mentisrex.research.paper_trading.risk import PreTradeRiskGate, RiskLimits
         spec = _make_exp_spec()
         registry = _make_registry(spec)
         runtime = StrategyRuntime()

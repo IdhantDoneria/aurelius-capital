@@ -1,6 +1,6 @@
 # Robustness Report — Pairs Trading Campaign
 
-**Aurelius Capital — Workstream D**
+**Mentisrex Capital — Workstream D**
 **Date:** 2026-08-04
 **Source:** `campaign/pairs/runs/{us,india}.jsonl`. 7 configs × 2 markets = 14 runs,
 each ONE hypothesis judged once on its own 70/30 OOS split. No tuning.

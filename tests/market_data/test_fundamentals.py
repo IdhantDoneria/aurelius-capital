@@ -12,14 +12,14 @@ from decimal import Decimal
 
 import pytest
 
-from aurelius.market_data.fundamentals import (
+from mentisrex.market_data.fundamentals import (
     FundamentalsEngine,
     FundamentalsStore,
     check,
     parse_company_facts,
 )
-from aurelius.market_data.identity import Security, SecurityMaster, make_security_id
-from aurelius.market_data.storage.pit_store import PitPriceStore
+from mentisrex.market_data.identity import Security, SecurityMaster, make_security_id
+from mentisrex.market_data.storage.pit_store import PitPriceStore
 
 CIK = "320193"
 

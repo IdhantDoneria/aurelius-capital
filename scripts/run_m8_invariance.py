@@ -27,8 +27,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import duckdb
 
-from aurelius.market_data.storage.isolation import validated_universe_filter
-from aurelius.research.portfolio_construction import (
+from mentisrex.market_data.storage.isolation import validated_universe_filter
+from mentisrex.research.portfolio_construction import (
     baseline_weight, exposures, invariant_weight,
 )
 

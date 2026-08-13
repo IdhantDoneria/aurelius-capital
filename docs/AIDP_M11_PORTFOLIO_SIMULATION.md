@@ -6,7 +6,7 @@ rebalancing, and institutional analytics. **This is not a backtester** — the a
 and portfolio engines already exist; this is a *portfolio evolution* engine. It
 never reruns research. Additive; M1–M10 untouched.
 
-Module: `src/aurelius/research/simulation/`.
+Module: `src/mentisrex/research/simulation/`.
 
 ```python
 eng = PortfolioSimulationEngine(

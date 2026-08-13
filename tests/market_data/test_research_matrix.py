@@ -12,12 +12,12 @@ from datetime import date, datetime
 
 import pytest
 
-from aurelius.market_data.fundamentals import FundamentalsEngine, FundamentalsStore
-from aurelius.market_data.identity import Security, SecurityMaster, make_security_id
-from aurelius.market_data.insiders import InsiderEngine, InsiderStore, parse_form4
-from aurelius.market_data.research_matrix import ResearchMatrixEngine, check
-from aurelius.market_data.storage.pit_store import PitPriceStore
-from aurelius.market_data.universe import UniverseEngine
+from mentisrex.market_data.fundamentals import FundamentalsEngine, FundamentalsStore
+from mentisrex.market_data.identity import Security, SecurityMaster, make_security_id
+from mentisrex.market_data.insiders import InsiderEngine, InsiderStore, parse_form4
+from mentisrex.market_data.research_matrix import ResearchMatrixEngine, check
+from mentisrex.market_data.storage.pit_store import PitPriceStore
+from mentisrex.market_data.universe import UniverseEngine
 
 CIK = "320193"
 

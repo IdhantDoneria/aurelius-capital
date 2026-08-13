@@ -1,4 +1,4 @@
-# Aurelius Capital — project rules
+# Mentisrex Capital — project rules
 
 ## HARD RULE: nothing mentioned in a prompt gets silently skipped
 

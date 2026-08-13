@@ -11,7 +11,7 @@ import tracemalloc
 
 import numpy as np
 
-from aurelius.research.risk import (
+from mentisrex.research.risk import (
     RiskEngine,
     RiskEngineConfig,
     RiskLimits,

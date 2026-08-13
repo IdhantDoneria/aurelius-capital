@@ -1,10 +1,10 @@
 # Momentum Literature Map
 
-**Aurelius Capital — Momentum Research Campaign**
+**Mentisrex Capital — Momentum Research Campaign**
 **Agent:** Literature Intelligence + Methodology Fidelity
 **Date:** 2026-07-31
 **Status:** Literature review. Every number below is a *published* figure from the
-cited paper, NOT an Aurelius empirical result. Where an exact statistic is not
+cited paper, NOT an Mentisrex empirical result. Where an exact statistic is not
 grounded in the extracted corpus or firmly recalled, it is marked `approx` or omitted.
 
 Grounded from `research_corpus/extracted/`: JT-1993 (`ed02251ff8152b78.txt`),
@@ -15,7 +15,7 @@ Others are from the published literature and flagged `[recall]`.
 
 ## 1. Momentum families (scope map)
 
-| Family | Signal object | Canonical anchor | Aurelius-reproducible? |
+| Family | Signal object | Canonical anchor | Mentisrex-reproducible? |
 |---|---|---|---|
 | Cross-sectional (relative-strength) | rank of trailing return across names | Jegadeesh-Titman 1993/2001 | **Yes** — daily equity is exactly this |
 | Time-series (absolute) | own trailing return vs zero | Moskowitz-Ooi-Pedersen 2012 | Partial — equity-only, no futures/multi-asset |
@@ -39,7 +39,7 @@ Others are from the published literature and flagged `[recall]`.
 - **Hypothesis:** Buying past winners / selling past losers over intermediate horizons yields significant positive returns not explained by systematic risk or lead-lag effects.
 - **Universe:** NYSE + AMEX stocks.
 - **Sample:** Jan 1965 – Dec 1989 (CRSP daily returns file).
-- **Data required:** monthly/daily total returns per stock. **No fundamentals.** → Aurelius-compatible.
+- **Data required:** monthly/daily total returns per stock. **No fundamentals.** → Mentisrex-compatible.
 - **Methodology:** 16 J-month/K-month strategies (J,K ∈ {3,6,9,12}), plus 16 with a 1-week skip = 32 strategies. Rank into 10 deciles on trailing J-month return; equal-weight; buy top decile (winners), sell bottom decile (losers); zero-cost W−L.
 - **Formation / holding / skip:** J ∈ {3,6,9,12} mo formation; K ∈ {3,6,9,12} mo holding; optional 1-week skip between formation and holding.
 - **Weighting:** equal-weight deciles. **Overlapping** portfolios — in month *t* the strategy holds cohorts formed in *t, t−1, …, t−K+1*, revising 1/K of the book each month and carrying the rest.
@@ -49,7 +49,7 @@ Others are from the published literature and flagged `[recall]`.
 - **Limitations:** ~half the year-1 abnormal return dissipates over the next 2 years (partial reversal); results concentrated outside January; no live transaction costs.
 - **Key contribution:** established intermediate-horizon momentum as a robust anomaly; the founding cross-sectional momentum paper.
 - **Implementation difficulty:** **Low.**
-- **DATA-REQUIREMENT VERDICT:** **Reproducible on Aurelius equity data.** (This is the paper Aurelius already reproduces — `scripts/run_jt_us_reproduction.py`.)
+- **DATA-REQUIREMENT VERDICT:** **Reproducible on Mentisrex equity data.** (This is the paper Mentisrex already reproduces — `scripts/run_jt_us_reproduction.py`.)
 
 ### 2.2 Jegadeesh & Titman (2001) — "Profitability of Momentum Strategies: An Evaluation of Alternative Explanations" *[recall]*
 - **Authors / year:** Jegadeesh, Titman. *Journal of Finance* 56(2), 2001.
@@ -57,7 +57,7 @@ Others are from the published literature and flagged `[recall]`.
 - **Hypothesis:** Momentum persists post-publication; profits reverse at long horizons, favoring behavioral over risk-based accounts.
 - **Universe:** NYSE/AMEX/Nasdaq; excludes low-price (<$5) and smallest-cap stocks to rebut microstructure critiques.
 - **Sample:** extends to 1998 (out-of-sample 1990–98).
-- **Data required:** returns + price/size for screens. Size screen not fully replicable on Aurelius (no market cap).
+- **Data required:** returns + price/size for screens. Size screen not fully replicable on Mentisrex (no market cap).
 - **Methodology:** repeats the 6/6 decile design; adds long-horizon (up to 60 months) post-holding return analysis.
 - **Formation / holding / skip:** 6/6 focus, 1-month skip typical.
 - **Weighting:** equal-weight deciles.
@@ -67,7 +67,7 @@ Others are from the published literature and flagged `[recall]`.
 - **Limitations:** reversal complicates risk interpretation; screens need size data.
 - **Key contribution:** confirmed out-of-sample robustness and long-horizon reversal.
 - **Implementation difficulty:** **Low-Medium** (price screen easy, size screen blocked).
-- **DATA-REQUIREMENT VERDICT:** **Reproducible on Aurelius equity data** for the return-only core; **partial** — the market-cap screen is BLOCKED (no fundamentals). Price (<$5) screen is doable.
+- **DATA-REQUIREMENT VERDICT:** **Reproducible on Mentisrex equity data** for the return-only core; **partial** — the market-cap screen is BLOCKED (no fundamentals). Price (<$5) screen is doable.
 
 ### 2.3 Carhart (1997) — "On Persistence in Mutual Fund Performance" *(grounded)*
 - **Authors / year:** Carhart. *Journal of Finance* 52(1), 1997.
@@ -84,8 +84,8 @@ Others are from the published literature and flagged `[recall]`.
 - **Headline results:** the momentum factor is the key driver of fund "hot hands"; funds do not skillfully *time* momentum. PR1YR is a large, priced zero-investment factor.
 - **Limitations:** momentum factor is mechanical, not a claim funds actively harvest it.
 - **Key contribution:** canonized **momentum as the 4th factor** (UMD/PR1YR); the standard momentum factor definition (11-1-1, 30/30 EW).
-- **Implementation difficulty:** **Medium** — the *factor construction* (11-1 EW 30/30) is trivially reproducible on Aurelius; the *fund-persistence study* is not (no fund data).
-- **DATA-REQUIREMENT VERDICT:** **Partial.** PR1YR momentum-factor construction = **reproducible on Aurelius equity data**. Full 4-factor attribution = **BLOCKED: needs SMB/HML factor return series** (no fundamentals to build them, no external factor file). Fund-persistence result = **BLOCKED: needs mutual-fund returns**.
+- **Implementation difficulty:** **Medium** — the *factor construction* (11-1 EW 30/30) is trivially reproducible on Mentisrex; the *fund-persistence study* is not (no fund data).
+- **DATA-REQUIREMENT VERDICT:** **Partial.** PR1YR momentum-factor construction = **reproducible on Mentisrex equity data**. Full 4-factor attribution = **BLOCKED: needs SMB/HML factor return series** (no fundamentals to build them, no external factor file). Fund-persistence result = **BLOCKED: needs mutual-fund returns**.
 
 ### 2.4 Moskowitz, Ooi & Pedersen (2012) — "Time Series Momentum" (TSMOM) *[recall]*
 - **Authors / year:** Moskowitz, Ooi, Pedersen. *Journal of Financial Economics* 104(2), 2012.
@@ -103,7 +103,7 @@ Others are from the published literature and flagged `[recall]`.
 - **Limitations:** multi-asset futures data intensive; vol-targeting adds estimation risk.
 - **Key contribution:** defined **time-series momentum** as distinct from and complementary to cross-sectional momentum; inverse-vol construction standard.
 - **Implementation difficulty:** **Medium-High.**
-- **DATA-REQUIREMENT VERDICT:** **BLOCKED: needs futures / multi-asset return series** for the headline. A *single-asset-class equity TSMOM proxy* (sign of trailing return on each stock, vol-scaled) IS reproducible on Aurelius but is NOT the paper's universe — mark any such run as a proxy, not a reproduction.
+- **DATA-REQUIREMENT VERDICT:** **BLOCKED: needs futures / multi-asset return series** for the headline. A *single-asset-class equity TSMOM proxy* (sign of trailing return on each stock, vol-scaled) IS reproducible on Mentisrex but is NOT the paper's universe — mark any such run as a proxy, not a reproduction.
 
 ### 2.5 Asness, Moskowitz & Pedersen (2013) — "Value and Momentum Everywhere" (AMP) *[recall]*
 - **Authors / year:** Asness, Moskowitz, Pedersen. *Journal of Finance* 68(3), 2013.
@@ -121,7 +121,7 @@ Others are from the published literature and flagged `[recall]`.
 - **Limitations:** value leg needs fundamentals; liquidity proxy external.
 - **Key contribution:** unified value+momentum as global, correlated factors; popularized **12-1 rank-weighted** momentum and the value/momentum diversification.
 - **Implementation difficulty:** **High.**
-- **DATA-REQUIREMENT VERDICT:** **BLOCKED for the paper as published: needs book-to-market fundamentals + multi-asset returns + liquidity proxy.** The **momentum-only, equity-only 12-1 leg** (US and India separately) IS reproducible on Aurelius — worth running as a partial, clearly labeled.
+- **DATA-REQUIREMENT VERDICT:** **BLOCKED for the paper as published: needs book-to-market fundamentals + multi-asset returns + liquidity proxy.** The **momentum-only, equity-only 12-1 leg** (US and India separately) IS reproducible on Mentisrex — worth running as a partial, clearly labeled.
 
 ---
 
@@ -135,7 +135,7 @@ Others are from the published literature and flagged `[recall]`.
 - **Formation/holding/skip:** ~6/6, 1-month skip. **Weighting:** roughly equal-weight; results controlled for size.
 - **Transaction costs:** gross. **Headline:** an internationally diversified winner-minus-loser earns ≈ **1%/month** `approx`; momentum present in every sampled country and stronger in small firms.
 - **Key contribution:** first broad out-of-US evidence — momentum is not US-data-mining.
-- **DATA-REQUIREMENT VERDICT:** **Reproducible in spirit on the Aurelius India panel** (1127 .NS/.BO names, 2014-26) as an independent international replication. Not the same countries/period, so label as *international extension*, not a reproduction of Rouwenhorst.
+- **DATA-REQUIREMENT VERDICT:** **Reproducible in spirit on the Mentisrex India panel** (1127 .NS/.BO names, 2014-26) as an independent international replication. Not the same countries/period, so label as *international extension*, not a reproduction of Rouwenhorst.
 
 ### 3.2 Moskowitz & Grinblatt (1999) — "Do Industries Explain Momentum?" (industry momentum) *[recall]*
 - **Authors / year:** Moskowitz, Grinblatt. *Journal of Finance* 54(4), 1999.
@@ -145,7 +145,7 @@ Others are from the published literature and flagged `[recall]`.
 - **Formation/holding/skip:** ~6/6, 1-week/1-month skip variants. **Weighting:** value-weight industries.
 - **Headline:** **industry momentum is strong and largely explains individual-stock momentum** in their tests; industry component profitable, individual component weaker once industry is controlled.
 - **Key contribution:** reframed momentum as substantially an industry phenomenon.
-- **DATA-REQUIREMENT VERDICT:** **BLOCKED: needs a GICS/industry classification map.** No sector map exists in Aurelius. Unblock: ingest a symbol→sector table.
+- **DATA-REQUIREMENT VERDICT:** **BLOCKED: needs a GICS/industry classification map.** No sector map exists in Mentisrex. Unblock: ingest a symbol→sector table.
 
 ### 3.3 Blitz, Huij & Martens (2011) — "Residual Momentum" *[recall]*
 - **Authors / year:** Blitz, Huij, Martens. *Journal of Empirical Finance* 18(3), 2011.
@@ -165,15 +165,15 @@ Others are from the published literature and flagged `[recall]`.
 - **Formation/holding/skip:** standard 12-1 WML. **Weighting:** decile.
 - **Headline:** momentum suffers rare, severe crashes in **panic states** (bear market + rising vol + market rebound), e.g. mid-1932 and **2009** (WML fell dramatically). A dynamically weighted momentum nearly **doubles the Sharpe** and cuts crash risk.
 - **Key contribution:** characterized momentum's negative skew / crash timing and a hedge.
-- **DATA-REQUIREMENT VERDICT:** **Partial.** Crash *observation* (conditional on realized market state/vol from the equity panel) is reproducible on Aurelius. The *bear-beta hedge* / optioinality decomposition ideally uses factor betas → **BLOCKED for the full hedge: needs factor series.** The 2008-09 crash predates the 2014-26 sample, so the canonical episode is not in-window — note this limitation.
+- **DATA-REQUIREMENT VERDICT:** **Partial.** Crash *observation* (conditional on realized market state/vol from the equity panel) is reproducible on Mentisrex. The *bear-beta hedge* / optioinality decomposition ideally uses factor betas → **BLOCKED for the full hedge: needs factor series.** The 2008-09 crash predates the 2014-26 sample, so the canonical episode is not in-window — note this limitation.
 
 ---
 
 ## 4. Cross-cutting themes
 
-- **Capacity / cost decay** (Korajczyk-Sadka 2004; Frazzini-Israel-Moskowitz 2012): net momentum survives realistic costs at institutional scale but decays; break-even costs are non-trivial. Aurelius has a cost model (10 bps commission/side + 10 bps slippage) but **no ADV / market-impact calibration data** → net figures are indicative, not capacity-calibrated.
+- **Capacity / cost decay** (Korajczyk-Sadka 2004; Frazzini-Israel-Moskowitz 2012): net momentum survives realistic costs at institutional scale but decays; break-even costs are non-trivial. Mentisrex has a cost model (10 bps commission/side + 10 bps slippage) but **no ADV / market-impact calibration data** → net figures are indicative, not capacity-calibrated.
 - **Liquidity / microstructure** (JT-1993 §III-IV; Lo-MacKinlay 1990): part of raw short-horizon reversal profit is bid-ask/lead-lag; the 1-week skip exists to dodge it. **BLOCKED for decomposition: no quote/intraday data.**
-- **Survivorship** (Carhart 1997): survivor-free samples are essential; the Aurelius 2014-26 panel is assembled from currently-listed names → **survivor-prone, no delisting returns** — momentum profits are likely biased and this must be stated on every result.
+- **Survivorship** (Carhart 1997): survivor-free samples are essential; the Mentisrex 2014-26 panel is assembled from currently-listed names → **survivor-prone, no delisting returns** — momentum profits are likely biased and this must be stated on every result.
 
 ---
 
@@ -181,7 +181,7 @@ Others are from the published literature and flagged `[recall]`.
 
 Per project rule, each skipped item names (a) what, (b) why impossible now, (c) unblock.
 
-1. **Industry/sector momentum (Moskowitz-Grinblatt).** What: sector-portfolio momentum. Why: no GICS/sector classification in Aurelius. Unblock: ingest a symbol→sector map.
+1. **Industry/sector momentum (Moskowitz-Grinblatt).** What: sector-portfolio momentum. Why: no GICS/sector classification in Mentisrex. Unblock: ingest a symbol→sector map.
 2. **Residual & factor momentum (Blitz; Gupta-Kelly).** What: momentum on FF residuals / factor portfolios. Why: no factor return series and no fundamentals to construct RMRF/SMB/HML. Unblock: obtain or build FF factor returns for US + India.
 3. **TSMOM (MOP 2012) and Value & Momentum Everywhere (AMP 2013) as published.** What: multi-asset / value legs. Why: no futures/multi-asset returns, no book-to-market fundamentals, no funding-liquidity proxy. Unblock: ingest futures panels, fundamentals, and a liquidity series. (Equity-only momentum legs are reproducible as labeled partials.)
 4. **Carhart 4-factor attribution + fund persistence.** What: SMB/HML α decomposition and fund result. Why: no factor series, no mutual-fund returns. Unblock: external FF factor file + fund return database. (PR1YR factor construction itself is reproducible.)

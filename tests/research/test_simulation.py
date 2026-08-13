@@ -12,9 +12,9 @@ from datetime import date, timedelta
 import numpy as np
 import pytest
 
-from aurelius.research.portfolio.costs import TransactionCostModel
-from aurelius.research.portfolio.rebalancing import RebalanceRule
-from aurelius.research.simulation import (
+from mentisrex.research.portfolio.costs import TransactionCostModel
+from mentisrex.research.portfolio.rebalancing import RebalanceRule
+from mentisrex.research.simulation import (
     CostExecutionModel,
     FrictionlessExecutionModel,
     PortfolioSimulationEngine,
@@ -27,12 +27,12 @@ from aurelius.research.simulation import (
     to_performance_metrics,
     validate_simulation,
 )
-from aurelius.research.simulation import performance, serialization
-from aurelius.research.simulation.diagnostics import build_logs
-from aurelius.research.simulation.execution import ExecutionModel
-from aurelius.research.simulation.models import Order
-from aurelius.research.simulation.state import PortfolioState
-from aurelius.research.experiment_registry import ExperimentRegistry, RegistryStore, lineage
+from mentisrex.research.simulation import performance, serialization
+from mentisrex.research.simulation.diagnostics import build_logs
+from mentisrex.research.simulation.execution import ExecutionModel
+from mentisrex.research.simulation.models import Order
+from mentisrex.research.simulation.state import PortfolioState
+from mentisrex.research.experiment_registry import ExperimentRegistry, RegistryStore, lineage
 
 IDS = [f"S{i:02d}" for i in range(10)]
 
@@ -197,7 +197,7 @@ def test_execution_di():
     class Custom(ExecutionModel):
         name = "custom"
         def execute(self, order, price, adv=None):
-            from aurelius.research.simulation.models import Fill
+            from mentisrex.research.simulation.models import Fill
             return Fill(order.security_id, order.quantity, price, 42.0, order.quantity * price)
     res = _run(execution=Custom())
     assert res.metadata.execution_model == "custom"
@@ -357,7 +357,7 @@ def test_validate_detects_short_when_disallowed():
 
 
 def test_phase9_integration():
-    from aurelius.research.validation import ResearchValidator, ValidationConfig
+    from mentisrex.research.validation import ResearchValidator, ValidationConfig
     res = _run()
     pm = to_performance_metrics(res)
     assert len(pm.daily_returns) == len(res.equity_curve) - 1

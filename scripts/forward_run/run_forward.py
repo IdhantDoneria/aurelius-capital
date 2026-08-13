@@ -7,7 +7,7 @@ FORWARD RESULTS ARE OBSERVATIONAL EVIDENCE AND ARE NOT YET A
 DEPLOYMENT OR PROFITABILITY DECISION.
 
 Usage (SIMULATION / rehearsal mode):
-    cd aurelius-capital
+    cd mentisrex-capital
     python scripts/forward_run/run_forward.py --mode SIMULATION --cycles 12
 
 Usage (operational forward run with M20/M21 snapshot injection):
@@ -35,12 +35,12 @@ _repo = Path(__file__).resolve().parent.parent.parent
 if str(_repo / "src") not in sys.path:
     sys.path.insert(0, str(_repo / "src"))
 
-from aurelius.research.paper_trading.checkpoint import save_checkpoint, load_checkpoint, _restore_checkpoint
-from aurelius.research.paper_trading.loop import LoopConfig, PaperTradingLoop
-from aurelius.research.paper_trading.scheduler import FixedClock
-from aurelius.research.strategy_deployment.models import StrategyState, make_manifest
-from aurelius.research.strategy_deployment.registry import StrategyRegistry
-from aurelius.research.strategy_deployment.runtime import StrategyRuntime
+from mentisrex.research.paper_trading.checkpoint import save_checkpoint, load_checkpoint, _restore_checkpoint
+from mentisrex.research.paper_trading.loop import LoopConfig, PaperTradingLoop
+from mentisrex.research.paper_trading.scheduler import FixedClock
+from mentisrex.research.strategy_deployment.models import StrategyState, make_manifest
+from mentisrex.research.strategy_deployment.registry import StrategyRegistry
+from mentisrex.research.strategy_deployment.runtime import StrategyRuntime
 
 # Import spec and logic (co-located in this package)
 sys.path.insert(0, str(Path(__file__).parent))
@@ -260,7 +260,7 @@ def run_loop(snapshots, *, checkpoint_every: int = 4) -> PaperTradingLoop:
 # ── CLI entry point ───────────────────────────────────────────────────────────
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="Aurelius forward paper-trading driver")
+    p = argparse.ArgumentParser(description="Mentisrex forward paper-trading driver")
     p.add_argument("--mode", default="SIMULATION",
                    choices=["SIMULATION"],
                    help="Only SIMULATION is supported from CLI")
@@ -273,7 +273,7 @@ def main() -> None:
     args = p.parse_args()
 
     print("=" * 60)
-    print("AURELIUS CONTROLLED FORWARD PAPER-TRADING ACTIVATION")
+    print("MENTISREX CONTROLLED FORWARD PAPER-TRADING ACTIVATION")
     print("EXPERIMENTAL PAPER TRADING — NOT PRODUCTION APPROVED")
     print("NO REAL CAPITAL DEPLOYED.")
     print("=" * 60)

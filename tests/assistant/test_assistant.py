@@ -6,8 +6,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from aurelius.assistant import ResearchAssistant
-from aurelius.research.models import ExperimentRecord, ValidationReport, Verdict
+from mentisrex.assistant import ResearchAssistant
+from mentisrex.research.models import ExperimentRecord, ValidationReport, Verdict
 
 PAPER = (
     "Betting Against Beta\n"
@@ -165,7 +165,7 @@ def test_assistant_cannot_trade_by_construction():
     # pulled in — this is what enforces "AI assists, AI does not trade".
     import ast
 
-    import aurelius.assistant.assistant as mod
+    import mentisrex.assistant.assistant as mod
 
     tree = ast.parse(open(mod.__file__).read())
     imported: list[str] = []
@@ -183,7 +183,7 @@ def test_assistant_cannot_trade_by_construction():
 
 
 def test_demo_self_check():
-    from aurelius.assistant import demo
+    from mentisrex.assistant import demo
 
     demo()
 

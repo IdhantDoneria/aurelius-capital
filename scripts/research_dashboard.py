@@ -13,8 +13,8 @@ from __future__ import annotations
 import argparse
 from datetime import UTC, datetime, timedelta
 
-from aurelius.research.models import ExperimentRecord, ValidationReport, Verdict
-from aurelius.research.store import ResearchStore
+from mentisrex.research.models import ExperimentRecord, ValidationReport, Verdict
+from mentisrex.research.store import ResearchStore
 
 # Lifecycle stages carried in hypotheses.status (RESEARCH_OS §3).
 _BACKLOG = ("idea", "hypothesis")
@@ -88,7 +88,7 @@ def _pct(x: float | None) -> str:
 
 
 def render(p: dict) -> str:
-    lines = ["", "=== Aurelius Research Dashboard ===", ""]
+    lines = ["", "=== Mentisrex Research Dashboard ===", ""]
     lines.append(f"Active hypotheses (by stage): {p['active_hypotheses'] or '{}'}")
     lines.append(f"Completed experiments:        {p['completed_experiments']}  {p['by_verdict']}")
     lines.append(f"Success rate (accept/decided): {_pct(p['success_rate'])}")
@@ -140,7 +140,7 @@ def _selftest() -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Aurelius research dashboard")
+    ap = argparse.ArgumentParser(description="Mentisrex research dashboard")
     ap.add_argument("--db", default="./data/research.duckdb")
     ap.add_argument("--selftest", action="store_true")
     args = ap.parse_args()

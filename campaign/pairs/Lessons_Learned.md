@@ -6,7 +6,7 @@
 
 - **L1 — The distance-pairs edge has decayed to nothing.** 0/14 configs significant
   on 2014–2026 US+India, both markets, every axis. This is Do & Faff's (2010/2012)
-  prediction confirmed on Aurelius data: Gatev's ~11%/yr is a 1962–2002 artifact,
+  prediction confirmed on Mentisrex data: Gatev's ~11%/yr is a 1962–2002 artifact,
   arbitraged away by the modern era. *Evidence:* all adjusted p = 1.000.
 - **L2 — Diversification INVERTS under fixed-% sizing + a gross cap.** Gatev's whole
   premium is diversifying across 20 pairs; here top40 is the *worst* config in both

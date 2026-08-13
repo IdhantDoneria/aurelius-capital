@@ -1,6 +1,6 @@
 # Momentum Campaign — Institutional Post-Mortem
 
-**Aurelius Capital — Momentum Campaign, Phase-5 (M11)**
+**Mentisrex Capital — Momentum Campaign, Phase-5 (M11)**
 **Date:** 2026-08-05. Capstone retrospective. Decision upstream: **ARCHIVE**.
 
 ---
@@ -9,7 +9,7 @@
 
 Reproduce Jegadeesh & Titman (1993/2001) cross-sectional momentum on real equity data
 as the first landmark in the institutional reproduction program, and determine
-whether a deployable momentum book exists on the data Aurelius actually holds
+whether a deployable momentum book exists on the data Mentisrex actually holds
 (2014–2026 daily US + India, price+volume only).
 
 ## 2. Research timeline

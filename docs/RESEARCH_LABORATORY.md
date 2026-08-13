@@ -31,7 +31,7 @@ per-cycle state dict and records a complete audit trail.
       └──────────────────────────► LabJournal (append-only audit trail) ─────────┘
 ```
 
-Files: `src/aurelius/lab/{supervisor,monitor,journal,api}.py`, dashboard at
+Files: `src/mentisrex/lab/{supervisor,monitor,journal,api}.py`, dashboard at
 `static/lab_dashboard.html`.
 
 ## The research cycle (13 steps)
@@ -132,6 +132,6 @@ Every metric the spec names:
 
 ## Self-checks
 
-- `python -m aurelius.lab.journal` — audit trail read/filter/summary.
-- `python -m aurelius.lab.supervisor` — **full 13-step cycle** end-to-end with an injected paper source + synthetic bars; asserts 0 failures, hypotheses inserted, experiments executed, audit trail written.
-- `python -m aurelius.lab.monitor` — snapshot contains every required metric key.
+- `python -m mentisrex.lab.journal` — audit trail read/filter/summary.
+- `python -m mentisrex.lab.supervisor` — **full 13-step cycle** end-to-end with an injected paper source + synthetic bars; asserts 0 failures, hypotheses inserted, experiments executed, audit trail written.
+- `python -m mentisrex.lab.monitor` — snapshot contains every required metric key.

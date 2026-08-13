@@ -25,8 +25,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import duckdb
 
-from aurelius.market_data.storage.isolation import validated_universe_filter
-from aurelius.research.portfolio_construction import invariant_weight
+from mentisrex.market_data.storage.isolation import validated_universe_filter
+from mentisrex.research.portfolio_construction import invariant_weight
 
 STORE_DB = "./data/analytics.duckdb"
 IN_PRED = "frequency='1d' AND symbol LIKE '%.NS'"

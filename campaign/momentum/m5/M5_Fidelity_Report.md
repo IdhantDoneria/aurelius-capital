@@ -1,6 +1,6 @@
 # M5 Methodology Report — Gross vs Net Return Reporting
 
-**Aurelius Capital — Methodology Fidelity Campaign**
+**Mentisrex Capital — Methodology Fidelity Campaign**
 **Date:** 2026-08-04
 **Baseline (net):** M4 (`campaign/momentum/m4/us_jt_m4.jsonl`)
 **Source (gross):** `campaign/momentum/m5/us_jt_m5_gross.jsonl`
@@ -45,7 +45,7 @@ deducted from the headline tables**.
 | | Return basis |
 |---|---|
 | JT-1993 headline | **gross** (raw portfolio returns, no cost deduction) |
-| Aurelius reproduction | **net** (commission + spread + slippage deducted) |
+| Mentisrex reproduction | **net** (commission + spread + slippage deducted) |
 
 Because they differ, the directive requires the minimum change to surface the
 JT-comparable (gross) metric while preserving the existing net production metrics.
@@ -159,7 +159,7 @@ headline, an unresolved fidelity gap the directive explicitly asks to close.
   (commission + spread + variable slippage) is fully removed. *Unblock:* thread the
   fallback through config (requires engine unfreeze). Impact on the gross number:
   immaterial.
-- **Gross is gross-of-cost, still within Aurelius execution** — discrete shares,
+- **Gross is gross-of-cost, still within Mentisrex execution** — discrete shares,
   T+1 open fills, 1.5× gross cap still apply to the gross run. M5 isolates the
   transaction-cost axis only; execution-model differences are documented separately
   (M3, `Leverage_Investigation.md`).

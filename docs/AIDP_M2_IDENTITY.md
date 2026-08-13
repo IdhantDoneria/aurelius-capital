@@ -4,7 +4,7 @@ Institutional (CRSP/Compustat-style) security identity. Ticker stops being an
 identity and becomes a time-versioned *attribute*; the stable reference is
 `security_id`. Additive — no existing store or engine was rewritten.
 
-Module: `src/aurelius/market_data/identity/` · Store: `data/identity.duckdb`.
+Module: `src/mentisrex/market_data/identity/` · Store: `data/identity.duckdb`.
 
 ## Why
 

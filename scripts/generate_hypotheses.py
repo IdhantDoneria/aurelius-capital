@@ -20,11 +20,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from aurelius.hypothesis.deduplication import DuplicateStatus, check_duplicates
-from aurelius.hypothesis.generator import generate
-from aurelius.hypothesis.quality import check_quality
-from aurelius.hypothesis.store import HypothesisStore
-from aurelius.literature.store import LiteratureStore
+from mentisrex.hypothesis.deduplication import DuplicateStatus, check_duplicates
+from mentisrex.hypothesis.generator import generate
+from mentisrex.hypothesis.quality import check_quality
+from mentisrex.hypothesis.store import HypothesisStore
+from mentisrex.literature.store import LiteratureStore
 
 
 def main() -> None:

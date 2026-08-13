@@ -1,6 +1,6 @@
 # Cross-Market Report — Pairs Trading (US vs India)
 
-**Aurelius Capital — Workstream E**
+**Mentisrex Capital — Workstream E**
 **Date:** 2026-08-04
 **Source:** `campaign/pairs/runs/{us,india}.jsonl`. Same frozen construction, same
 7 configs, only the universe differs.

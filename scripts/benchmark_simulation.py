@@ -15,8 +15,8 @@ from datetime import date, timedelta
 
 import numpy as np
 
-from aurelius.research.portfolio.costs import TransactionCostModel
-from aurelius.research.simulation import (
+from mentisrex.research.portfolio.costs import TransactionCostModel
+from mentisrex.research.simulation import (
     CostExecutionModel,
     PortfolioSimulationEngine,
     RebalancePolicy,

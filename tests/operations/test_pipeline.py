@@ -6,11 +6,11 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-from aurelius.corpus.models import CorpusDocument
-from aurelius.operations.config import OperationsConfig
-from aurelius.operations.extractor import _HAS_PYPDF
-from aurelius.operations.models import JobStatus
-from aurelius.operations.pipeline import PipelineOrchestrator
+from mentisrex.corpus.models import CorpusDocument
+from mentisrex.operations.config import OperationsConfig
+from mentisrex.operations.extractor import _HAS_PYPDF
+from mentisrex.operations.models import JobStatus
+from mentisrex.operations.pipeline import PipelineOrchestrator
 
 
 @pytest.fixture
@@ -162,7 +162,7 @@ def test_corrupt_pdf_rejected_without_retry_storm(tmp_config, pipeline):
 
 def test_invalid_format_no_text_rejected_permanently(tmp_config, pipeline):
     # Extractor yields no usable text → permanent, immediate reject, no retry.
-    with patch("aurelius.operations.pipeline.extract_text", return_value="   \n  "):
+    with patch("mentisrex.operations.pipeline.extract_text", return_value="   \n  "):
         paper = tmp_config.incoming / "blank.txt"
         _write_paper(paper)
         job = pipeline.process_file(paper)

@@ -15,7 +15,7 @@ Entry point: `ValidationService.validate()` → `ComprehensiveReport`
 ## Architecture
 
 ```
-src/aurelius/validation/
+src/mentisrex/validation/
 ├── service.py     ValidationService — orchestrates all 14 stages
 ├── metrics.py     ExtendedMetrics + MetricsCalculator
 ├── stats.py       StatEngine — bootstrap, Monte Carlo, BH-FDR
@@ -201,7 +201,7 @@ All decisions include:
 
 Every `ComprehensiveReport` includes an `AuditRecord` with:
 - Python version and platform
-- Git commit hash of the `aurelius-capital` repo
+- Git commit hash of the `mentisrex-capital` repo
 - SHA-256[:16] hash of the `BacktestConfig` (proves exact parameters used)
 - Dataset fingerprint (from `research.models.dataset_fingerprint`)
 - Random seed
@@ -240,9 +240,9 @@ svc = ValidationService(promotion_criteria=strict)
 ## Usage Example
 
 ```python
-from aurelius.validation import ValidationService
-from aurelius.research.templates import MeanReversionStrategy
-from aurelius.research.runner import synth_bars
+from mentisrex.validation import ValidationService
+from mentisrex.research.templates import MeanReversionStrategy
+from mentisrex.research.runner import synth_bars
 
 bars = synth_bars(["AAPL", "MSFT"], days=500)
 

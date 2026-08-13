@@ -13,10 +13,10 @@ from decimal import Decimal
 
 import pytest
 
-from aurelius.backtesting import BacktestConfig, BacktestEngine
-from aurelius.backtesting.data.feed import BarData, InMemoryDataFeed
-from aurelius.backtesting.events.types import Direction, MarketEvent, SignalEvent
-from aurelius.backtesting.strategy.base import Strategy, StrategyContext
+from mentisrex.backtesting import BacktestConfig, BacktestEngine
+from mentisrex.backtesting.data.feed import BarData, InMemoryDataFeed
+from mentisrex.backtesting.events.types import Direction, MarketEvent, SignalEvent
+from mentisrex.backtesting.strategy.base import Strategy, StrategyContext
 
 # ── Example strategy: SMA crossover ──────────────────────────────────────────
 

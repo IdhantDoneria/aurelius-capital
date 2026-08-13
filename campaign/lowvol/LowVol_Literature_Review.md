@@ -1,6 +1,6 @@
 # Low-Volatility Anomaly — Literature Review (M12 Phase 1)
 
-**Aurelius Capital — Low-Volatility Campaign**
+**Mentisrex Capital — Low-Volatility Campaign**
 **Date:** 2026-08-05. Momentum campaign ARCHIVED (M11); this is an independent factor.
 
 ## 1. The anomaly

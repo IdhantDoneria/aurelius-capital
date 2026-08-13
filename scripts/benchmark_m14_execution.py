@@ -13,8 +13,8 @@ from __future__ import annotations
 import time
 import tracemalloc
 
-from aurelius.research.execution import ems as E
-from aurelius.research.execution.ems.orders import MarketInfo
+from mentisrex.research.execution import ems as E
+from mentisrex.research.execution.ems.orders import MarketInfo
 
 
 def _prices(n):

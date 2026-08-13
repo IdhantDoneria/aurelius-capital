@@ -4,7 +4,7 @@ Institutional insider-activity ledger from SEC Forms 3/4/5, gated so queries
 answer *"what insider ownership changes were publicly known as of date X?"* —
 never *"what happened historically?"*. Additive; M1–M4 untouched.
 
-Module: `src/aurelius/market_data/insiders/` · Store: `data/insiders.duckdb`.
+Module: `src/mentisrex/market_data/insiders/` · Store: `data/insiders.duckdb`.
 
 ## SEC Forms 3 / 4 / 5
 
