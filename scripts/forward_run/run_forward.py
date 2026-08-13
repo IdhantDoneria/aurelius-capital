@@ -36,6 +36,7 @@ if str(_repo / "src") not in sys.path:
     sys.path.insert(0, str(_repo / "src"))
 
 from mentisrex.research.paper_trading.checkpoint import save_checkpoint, load_checkpoint, _restore_checkpoint
+from mentisrex.research.paper_trading.live_feed import LiveFeedBuilder, LiveFeedConfig
 from mentisrex.research.paper_trading.loop import LoopConfig, PaperTradingLoop
 from mentisrex.research.paper_trading.scheduler import FixedClock
 from mentisrex.research.strategy_deployment.models import StrategyState, make_manifest
@@ -257,19 +258,132 @@ def run_loop(snapshots, *, checkpoint_every: int = 4) -> PaperTradingLoop:
     return loop
 
 
+# ── real-data live cycle ──────────────────────────────────────────────────────
+
+def run_live_cycle(as_of: date, *, checkpoint_every: int = 4) -> PaperTradingLoop:
+    """Run one PAPER_LIVE_FEED cycle using real Yahoo Finance data.
+
+    Fetches real market observations for `as_of`, builds an M18 snapshot
+    through the M20/M19 pipeline, and passes it to the existing M23 loop.
+    Restores from checkpoint if one exists (enables incremental operation).
+
+    REAL MARKET DATA: YES
+    PAPER EXECUTION: YES
+    LIVE EXECUTION: NO
+    NO REAL CAPITAL DEPLOYED.
+    """
+    FORWARD_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+    feed_cfg = LiveFeedConfig(
+        universe=tuple(UNIVERSE),
+        fetch_window_days=5,
+        max_staleness_days=5,
+    )
+    feed = LiveFeedBuilder(feed_cfg)
+
+    print(f"[live-feed] fetching real market data for as_of={as_of} …", flush=True)
+    result = feed.fetch_snapshot(as_of)
+
+    if result is None:
+        print(f"[live-feed] WARN: could not build snapshot for {as_of} — no cycle recorded",
+              flush=True)
+        return None
+
+    snap = result.snapshot
+    n_spots = len(snap.spots)
+    print(f"[live-feed] snapshot built: {n_spots}/{len(UNIVERSE)} securities present  "
+          f"fingerprint={snap.fingerprint()[:16]}…", flush=True)
+    if n_spots < len(UNIVERSE):
+        missing = [s for s in UNIVERSE if s not in snap.spots]
+        print(f"[live-feed] WARN: missing securities: {missing}", flush=True)
+
+    registry = build_registry()
+    loop = build_loop(registry, initial_capital=STARTING_CAPITAL)
+    loop._config = loop._config.__class__(
+        initial_capital=loop._config.initial_capital,
+        permit_experimental=loop._config.permit_experimental,
+        fail_closed=loop._config.fail_closed,
+        validate_readiness=loop._config.validate_readiness,
+        mode="PAPER_LIVE_FEED",
+    )
+
+    # Restore checkpoint if available
+    if CHECKPOINT_PATH.exists():
+        ckpt = load_checkpoint(str(CHECKPOINT_PATH))
+        _restore_checkpoint(loop, ckpt)
+        recs = loop.strategy_records(SPEC.strategy_id)
+        print(f"[live-feed] checkpoint restored: {len(recs)} prior cycles", flush=True)
+
+    loop_result = loop.process_snapshot(snap)
+    sr = loop_result.result_for(SPEC.strategy_id)
+
+    if loop_result.skipped or (sr and sr.skipped):
+        skip_reason = (sr.skip_reason if sr else "") or loop_result.skip_reason or "not_due"
+        print(f"[live-feed] cycle skipped: {skip_reason}", flush=True)
+    elif sr and sr.error:
+        print(f"[WARN] cycle error: {sr.error}", flush=True)
+    else:
+        recs = loop.strategy_records(SPEC.strategy_id)
+        last_nav = recs[-1].nav if recs else STARTING_CAPITAL
+        fills = sr.sync_event.n_fills if sr and sr.sync_event else 0
+        print(
+            f"[live-feed] cycle completed: NAV={last_nav:.2f}  fills={fills}  "
+            f"risk_ok={sr.risk_approved if sr else 'n/a'}",
+            flush=True,
+        )
+
+        if sr and sr.sync_event and not sr.sync_event.reconciled:
+            print("[CRITICAL] reconciliation failed — stopping per stopping condition.",
+                  flush=True)
+
+    # Checkpoint after every live cycle
+    save_checkpoint(str(CHECKPOINT_PATH), loop)
+
+    # Persist updated cycle records
+    records_data = [r.to_dict() for r in loop.strategy_records(SPEC.strategy_id)]
+    RECORDS_PATH.write_text(json.dumps(records_data, indent=2, default=str))
+
+    # Persist feed metrics
+    feed_metrics_path = FORWARD_DATA_DIR / "feed_metrics.json"
+    feed_metrics_path.write_text(json.dumps(feed.metrics.report(), indent=2))
+
+    # Print feed metrics summary
+    rpt = feed.metrics.report()
+    print()
+    print("=== FEED METRICS ===")
+    print(f"provider:              {rpt['provider']}")
+    print(f"observations_received: {rpt['observations_received']}")
+    print(f"observations_rejected: {rpt['observations_rejected']}")
+    print(f"pit_violations:        {rpt['pit_violations']}")
+    print(f"stale_observations:    {rpt['stale_observations']}")
+    print(f"missing_securities:    {rpt['missing_securities']}")
+    print(f"avg_fetch_latency_s:   {rpt['avg_fetch_latency_s']:.3f}")
+    print(f"avg_build_latency_s:   {rpt['avg_build_latency_s']:.3f}")
+    print()
+    print("REAL MARKET DATA: YES")
+    print("PAPER EXECUTION: YES")
+    print("LIVE EXECUTION: NO")
+    print("NO REAL CAPITAL DEPLOYED.")
+    print("NO STRATEGY PARAMETERS WERE OPTIMIZED USING FORWARD DATA.")
+
+    return loop
+
+
 # ── CLI entry point ───────────────────────────────────────────────────────────
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Mentisrex forward paper-trading driver")
     p.add_argument("--mode", default="SIMULATION",
-                   choices=["SIMULATION"],
-                   help="Only SIMULATION is supported from CLI")
+                   choices=["SIMULATION", "PAPER_LIVE_FEED"],
+                   help="SIMULATION: synthetic prices. PAPER_LIVE_FEED: real Yahoo Finance data.")
     p.add_argument("--cycles", type=int, default=12,
-                   help="Number of monthly cycles to simulate")
+                   help="[SIMULATION] Number of monthly cycles")
     p.add_argument("--start", default="2026-01-01",
-                   help="Start date for synthetic snapshots (YYYY-MM-DD)")
+                   help="[SIMULATION] Start date for synthetic snapshots (YYYY-MM-DD)")
+    p.add_argument("--as-of", default=None,
+                   help="[PAPER_LIVE_FEED] Observation date (YYYY-MM-DD). Defaults to today.")
     p.add_argument("--checkpoint-every", type=int, default=4,
-                   help="Checkpoint interval (evaluations)")
+                   help="[SIMULATION] Checkpoint interval (evaluations)")
     args = p.parse_args()
 
     print("=" * 60)
@@ -277,33 +391,44 @@ def main() -> None:
     print("EXPERIMENTAL PAPER TRADING — NOT PRODUCTION APPROVED")
     print("NO REAL CAPITAL DEPLOYED.")
     print("=" * 60)
-    print(f"strategy_id       : {SPEC.strategy_id}")
-    print(f"strategy_version  : {SPEC.version}")
+    print(f"strategy_id         : {SPEC.strategy_id}")
+    print(f"strategy_version    : {SPEC.version}")
     print(f"strategy_fingerprint: {SPEC.configuration_fingerprint}")
-    print(f"run_id            : {RUN_ID}")
-    print(f"mode              : {args.mode}")
-    print(f"cycles            : {args.cycles}")
-    print(f"starting_capital  : {STARTING_CAPITAL:,.0f} USD (paper only)")
-    print(f"data_limitation   : Synthetic simulation — not institutional data")
+    print(f"run_id              : {RUN_ID}")
+    print(f"mode                : {args.mode}")
+    print(f"starting_capital    : {STARTING_CAPITAL:,.0f} USD (paper only)")
     print("=" * 60)
 
-    start = date.fromisoformat(args.start)
-    snapshots = _synthetic_snapshots(args.cycles, start)
-    loop = run_loop(snapshots, checkpoint_every=args.checkpoint_every)
-    fpr = loop.forward_record(SPEC.strategy_id)
-    m = fpr.metrics()
+    if args.mode == "PAPER_LIVE_FEED":
+        from datetime import date as _date
+        as_of = _date.fromisoformat(args.as_of) if args.as_of else _date.today()
+        print(f"data_source         : Yahoo Finance (real, public, no credentials)")
+        print(f"data_limitation     : Free/public — NOT institutional/exchange-grade data")
+        print(f"as_of               : {as_of}")
+        print("=" * 60)
+        run_live_cycle(as_of)
 
-    print()
-    print("=== FORWARD OBSERVATION RESULTS ===")
-    print(f"cycles accumulated : {m.n_cycles}")
-    print(f"total_return       : {m.total_return:.4%}")
-    print(f"max_drawdown       : {m.max_drawdown:.4%}")
-    print(f"fill_rate          : {m.fill_rate:.2%}")
-    print(f"risk_approval_rate : {m.risk_approval_rate:.2%}")
-    print()
-    print("NOTE: Short-sample results are OBSERVATIONAL EVIDENCE ONLY.")
-    print("Economic conclusions require extended forward observation.")
-    print(f"Evidence stored at: {FORWARD_DATA_DIR}")
+    else:  # SIMULATION
+        print(f"cycles              : {args.cycles}")
+        print(f"data_limitation     : Synthetic simulation — not institutional data")
+        print("=" * 60)
+        start = date.fromisoformat(args.start)
+        snapshots = _synthetic_snapshots(args.cycles, start)
+        loop = run_loop(snapshots, checkpoint_every=args.checkpoint_every)
+        fpr = loop.forward_record(SPEC.strategy_id)
+        m = fpr.metrics()
+
+        print()
+        print("=== FORWARD OBSERVATION RESULTS ===")
+        print(f"cycles accumulated : {m.n_cycles}")
+        print(f"total_return       : {m.total_return:.4%}")
+        print(f"max_drawdown       : {m.max_drawdown:.4%}")
+        print(f"fill_rate          : {m.fill_rate:.2%}")
+        print(f"risk_approval_rate : {m.risk_approval_rate:.2%}")
+        print()
+        print("NOTE: Short-sample results are OBSERVATIONAL EVIDENCE ONLY.")
+        print("Economic conclusions require extended forward observation.")
+        print(f"Evidence stored at: {FORWARD_DATA_DIR}")
 
 
 if __name__ == "__main__":
