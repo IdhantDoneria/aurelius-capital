@@ -1,4 +1,4 @@
-"""Forward paper-trading campaign infrastructure (M25).
+"""Forward paper-trading campaign infrastructure (M25 / M26).
 
 Provides isolated PAPER_FORWARD operating mode with:
   - Deterministic cycle identity
@@ -8,6 +8,7 @@ Provides isolated PAPER_FORWARD operating mode with:
   - Provider-revision-safe evidence storage
   - Restart / idempotency guarantees
   - No contamination from SIMULATION / BACKTEST / REPLAY state
+  - Automated operational runner with health gate (M26)
 """
 
 from mentisrex.research.forward_campaign.record import (
@@ -17,6 +18,7 @@ from mentisrex.research.forward_campaign.record import (
 )
 from mentisrex.research.forward_campaign.ledger import ForwardLedger
 from mentisrex.research.forward_campaign.campaign import ForwardCampaign, CampaignConfig
+from mentisrex.research.forward_campaign.runner import ForwardOperationsRunner, RunnerConfig
 
 __all__ = [
     "CycleStatus",
@@ -24,5 +26,7 @@ __all__ = [
     "ForwardLedger",
     "ForwardCampaign",
     "CampaignConfig",
+    "ForwardOperationsRunner",
+    "RunnerConfig",
     "make_forward_cycle_id",
 ]

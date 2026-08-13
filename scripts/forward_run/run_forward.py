@@ -43,6 +43,7 @@ from mentisrex.research.strategy_deployment.models import StrategyState, make_ma
 from mentisrex.research.strategy_deployment.registry import StrategyRegistry
 from mentisrex.research.strategy_deployment.runtime import StrategyRuntime
 from mentisrex.research.forward_campaign import ForwardCampaign
+from mentisrex.research.forward_campaign.runner import ForwardOperationsRunner
 
 # Import spec and logic (co-located in this package)
 sys.path.insert(0, str(Path(__file__).parent))
@@ -530,6 +531,13 @@ def main() -> None:
     ps = sub.add_parser("forward_status", help="Show PAPER_FORWARD campaign status")
     ps.add_argument("--data-dir", default=str(FORWARD_CAMPAIGN_DIR))
 
+    # forward_auto (M26): cron-safe check-and-run
+    pau = sub.add_parser("forward_auto",
+                         help="Check if cycle due and run it (cron-safe, idempotent)")
+    pau.add_argument("--as-of", default=None,
+                     help="Observation date (YYYY-MM-DD). Defaults to today.")
+    pau.add_argument("--data-dir", default=str(FORWARD_CAMPAIGN_DIR))
+
     # legacy SIMULATION / PAPER_LIVE_FEED via --mode (backward compat)
     p.add_argument("--mode", default=None,
                    choices=["SIMULATION", "PAPER_LIVE_FEED"],
@@ -570,6 +578,30 @@ def main() -> None:
 
     if args.subcommand == "forward_status":
         forward_status(Path(args.data_dir))
+        return
+
+    if args.subcommand == "forward_auto":
+        as_of = date.fromisoformat(args.as_of) if args.as_of else date.today()
+        print(f"data_source : Yahoo Finance (real, public, no credentials)")
+        print(f"as_of       : {as_of}")
+        print("=" * 60)
+        runner = ForwardOperationsRunner(
+            SPEC,
+            EqualWeightMomentumLogic(UNIVERSE),
+            Path(args.data_dir),
+            universe=UNIVERSE,
+            starting_capital=STARTING_CAPITAL,
+            campaign_id=CAMPAIGN_ID,
+        )
+        result = runner.check_and_run(as_of)
+        _print_cycle_result(result, as_of)
+        # show enriched operational status
+        op = runner.operational_status()
+        print("=== OPERATIONAL STATUS ===")
+        print(f"runner_state          : {op.get('runner_state')}")
+        print(f"next_expected_cycle   : {op.get('next_expected_cycle')}")
+        if op.get("last_error"):
+            print(f"last_error            : {op['last_error']}")
         return
 
     # ── Legacy --mode path (backward compat) ─────────────────────────────────

@@ -63,6 +63,8 @@ class CampaignConfig:
     data_dir: str = ""             # resolved at init time; set by ForwardCampaign
     account_id: str = "paper-default"
     mode: str = "PAPER_FORWARD"
+    # Data health gate (M26): 0.0 = disabled; >0 enforces minimum universe coverage.
+    min_universe_coverage: float = 0.0
 
 
 @dataclass
@@ -315,6 +317,32 @@ class ForwardCampaign:
             )
 
         snap = build_result.snapshot
+
+        # ── Data health gate (M26) ────────────────────────────────────────────
+        # Enforce minimum universe coverage before allowing any paper trade.
+        # min_universe_coverage=0.0 (default) disables the gate (backward compat).
+        universe = list(self._config.universe)
+        n_present = len(snap.spots) if hasattr(snap, "spots") else 0
+        n_universe = len(universe)
+        coverage = n_present / n_universe if n_universe > 0 else 1.0
+        if (self._config.min_universe_coverage > 0.0 and
+                coverage < self._config.min_universe_coverage):
+            rec.status = CycleStatus.FAILED
+            rec.error_message = (
+                f"Data health gate failed: coverage {n_present}/{n_universe} "
+                f"({coverage:.0%}) below minimum "
+                f"{self._config.min_universe_coverage:.0%}"
+            )
+            rec.end_time = datetime.utcnow().isoformat()
+            self._seal_and_persist(rec, CycleStatus.FAILED)
+            self._update_health(failed=True)
+            return CycleResult(
+                cycle_id=cycle_id,
+                status=CycleStatus.FAILED,
+                record=rec,
+                message=rec.error_message,
+            )
+
         rec.snapshot_fingerprint = snap.fingerprint() if hasattr(snap, "fingerprint") else ""
         rec.observations_accepted = len(build_result.observations)
 
@@ -330,7 +358,6 @@ class ForwardCampaign:
                 stale_v += 1
         rec.pit_violations = pit_v
         rec.stale_observations = stale_v
-        universe = list(self._config.universe)
         rec.universe = universe
         present = set(snap.spots.keys() if hasattr(snap, "spots") else {})
         rec.missing_securities = [s for s in universe if s not in present]
@@ -470,6 +497,15 @@ class ForwardCampaign:
         ledger = self.ledger
         latest = ledger.latest_cycle()
         all_cycles = ledger.list_cycles()
+
+        # Compute next expected evaluation date (M26)
+        next_expected: date | None = None
+        if latest and latest.evaluation_date:
+            next_expected = self._scheduler.next_due(
+                self._spec,
+                type("_S", (), {"last_eval_date": latest.evaluation_date})(),
+            )
+
         return {
             "campaign_id": self._config.campaign_id,
             "strategy_id": self._config.strategy_id,
@@ -483,6 +519,9 @@ class ForwardCampaign:
             "current_nav": latest.ending_nav if latest else self._config.starting_capital,
             "last_evaluation_date": (
                 latest.evaluation_date.isoformat() if latest and latest.evaluation_date else None
+            ),
+            "next_expected_cycle": (
+                next_expected.isoformat() if next_expected else None
             ),
             "checkpoint_exists": self._checkpoint_path.exists(),
             "data_limitation": (
