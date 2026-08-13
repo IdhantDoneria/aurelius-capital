@@ -42,19 +42,24 @@ from mentisrex.research.paper_trading.scheduler import FixedClock
 from mentisrex.research.strategy_deployment.models import StrategyState, make_manifest
 from mentisrex.research.strategy_deployment.registry import StrategyRegistry
 from mentisrex.research.strategy_deployment.runtime import StrategyRuntime
+from mentisrex.research.forward_campaign import ForwardCampaign
 
 # Import spec and logic (co-located in this package)
 sys.path.insert(0, str(Path(__file__).parent))
 from spec import SPEC, STARTING_CAPITAL, UNIVERSE
 from logic import EqualWeightMomentumLogic
 
-# ── forward run manifest constants ────────────────────────────────────────────
+# ── forward run manifest constants (SIMULATION / legacy PAPER_LIVE_FEED) ──────
 RUN_ID = "FORWARD_RUN_ew-momentum-exp_v1.0.0_20260812T000000Z"
 FORWARD_DATA_DIR = _repo / "data" / "forward_runs" / RUN_ID
 CHECKPOINT_PATH = FORWARD_DATA_DIR / "checkpoint.json"
 RECORDS_PATH = FORWARD_DATA_DIR / "cycle_records.json"
 MANIFEST_PATH = FORWARD_DATA_DIR / "run_manifest.json"
 HEALTH_PATH = FORWARD_DATA_DIR / "run_health.json"
+
+# ── PAPER_FORWARD campaign directory (isolated from SIMULATION) ────────────────
+CAMPAIGN_ID = "FORWARD_CAMPAIGN_ew-momentum-exp_v1.0.0_20260813"
+FORWARD_CAMPAIGN_DIR = _repo / "data" / "forward_campaign" / CAMPAIGN_ID
 
 
 # ── synthetic snapshot (no network; SIMULATION mode only) ─────────────────────
@@ -369,21 +374,170 @@ def run_live_cycle(as_of: date, *, checkpoint_every: int = 4) -> PaperTradingLoo
     return loop
 
 
+# ── PAPER_FORWARD campaign functions ─────────────────────────────────────────
+
+def forward_init(data_dir: Path = FORWARD_CAMPAIGN_DIR) -> ForwardCampaign:
+    """Initialize a fresh PAPER_FORWARD campaign.
+
+    Creates isolated campaign state — never loads SIMULATION checkpoint.
+    Idempotent: safe to call again if campaign_manifest.json already exists
+    with the same campaign_id.
+    """
+    return ForwardCampaign.init(
+        SPEC,
+        EqualWeightMomentumLogic(UNIVERSE),
+        data_dir=data_dir,
+        universe=UNIVERSE,
+        starting_capital=STARTING_CAPITAL,
+        campaign_id=CAMPAIGN_ID,
+    )
+
+
+def forward_run(as_of: date, data_dir: Path = FORWARD_CAMPAIGN_DIR):
+    """Run one PAPER_FORWARD cycle for as_of using real Yahoo Finance data.
+
+    Idempotent: running twice for the same month returns ALREADY_SEALED.
+    Restores only from the campaign checkpoint — never from SIMULATION state.
+
+    REAL MARKET DATA: YES
+    PAPER EXECUTION:  YES
+    LIVE EXECUTION:   NO
+    """
+    campaign = _get_or_init_campaign(data_dir)
+    result = campaign.run(as_of)
+    _print_cycle_result(result, as_of)
+    return result
+
+
+def forward_resume(as_of: date, data_dir: Path = FORWARD_CAMPAIGN_DIR):
+    """Resume an existing PAPER_FORWARD campaign and run as_of cycle."""
+    manifest_path = data_dir / "campaign_manifest.json"
+    if not manifest_path.exists():
+        print(f"[forward_resume] No campaign at {data_dir}. Running forward_init first.")
+        return forward_run(as_of, data_dir)
+    campaign = ForwardCampaign.resume(SPEC, EqualWeightMomentumLogic(UNIVERSE), data_dir)
+    result = campaign.run(as_of)
+    _print_cycle_result(result, as_of)
+    return result
+
+
+def forward_status(data_dir: Path = FORWARD_CAMPAIGN_DIR) -> dict:
+    """Print and return current campaign status."""
+    manifest_path = data_dir / "campaign_manifest.json"
+    if not manifest_path.exists():
+        print("[forward_status] No campaign initialized at", data_dir)
+        return {}
+    campaign = ForwardCampaign.resume(SPEC, EqualWeightMomentumLogic(UNIVERSE), data_dir)
+    st = campaign.status()
+    print()
+    print("=== PAPER_FORWARD CAMPAIGN STATUS ===")
+    print(f"campaign_id          : {st['campaign_id']}")
+    print(f"strategy_id          : {st['strategy_id']}")
+    print(f"strategy_fingerprint : {st['strategy_fingerprint']}")
+    print(f"mode                 : {st['mode']}")
+    print(f"n_sealed_cycles      : {st['n_sealed_cycles']}")
+    print(f"n_successful_cycles  : {st['n_successful_cycles']}")
+    print(f"n_failed_cycles      : {st['n_failed_cycles']}")
+    print(f"n_skipped_cycles     : {st['n_skipped_cycles']}")
+    print(f"current_nav          : {st['current_nav']:,.2f} USD")
+    print(f"last_evaluation_date : {st['last_evaluation_date']}")
+    print(f"checkpoint_exists    : {st['checkpoint_exists']}")
+    print()
+    print(f"REAL MARKET DATA: {st['real_market_data']}")
+    print(f"PAPER EXECUTION:  {st['paper_execution']}")
+    print(f"LIVE EXECUTION:   {st['live_execution']}")
+    print()
+
+    # performance summary
+    from mentisrex.research.forward_campaign.ledger import ForwardLedger
+    ledger = ForwardLedger(data_dir)
+    summary = ledger.performance_summary()
+    print("=== PERFORMANCE SUMMARY ===")
+    print(f"cumulative_return    : {summary.cumulative_return:.4%}")
+    print(f"max_drawdown         : {summary.max_drawdown:.4%}")
+    print(f"annualized_return    : "
+          f"{summary.annualized_return:.4%} [{summary.annualized_return_label}]"
+          if summary.annualized_return is not None
+          else f"annualized_return    : N/A [{summary.annualized_return_label}]")
+    print(f"sharpe               : "
+          f"{summary.sharpe:.3f} [{summary.sharpe_label}]"
+          if summary.sharpe is not None
+          else f"sharpe               : N/A [{summary.sharpe_label}]")
+    print(f"total_fills          : {summary.total_fills}")
+    print(f"pit_violations       : {summary.total_pit_violations}")
+    print()
+    print("NOTE: Observational evidence only. Economic validity requires extended forward observation.")
+    return st
+
+
+def _get_or_init_campaign(data_dir: Path) -> ForwardCampaign:
+    """Resume if campaign exists, else init."""
+    manifest_path = data_dir / "campaign_manifest.json"
+    if manifest_path.exists():
+        try:
+            return ForwardCampaign.resume(SPEC, EqualWeightMomentumLogic(UNIVERSE), data_dir)
+        except Exception:
+            pass
+    return forward_init(data_dir)
+
+
+def _print_cycle_result(result, as_of: date) -> None:
+    from mentisrex.research.forward_campaign.record import CycleStatus
+    print()
+    print("=== PAPER_FORWARD CYCLE RESULT ===")
+    print(f"cycle_id  : {result.cycle_id}")
+    print(f"as_of     : {as_of}")
+    print(f"status    : {result.status}")
+    if result.record:
+        r = result.record
+        print(f"ending_nav: {r.ending_nav:,.2f} USD")
+        print(f"fills     : {r.fills}")
+        print(f"risk_ok   : {r.risk_approved}")
+        print(f"sealed_at : {r.sealed_at}")
+    print()
+    print(f"REAL MARKET DATA: YES")
+    print(f"PAPER EXECUTION:  YES")
+    print(f"LIVE EXECUTION:   NO")
+    print(f"NO REAL CAPITAL DEPLOYED.")
+    if result.status == CycleStatus.ALREADY_SEALED:
+        print(f"NOTE: Cycle already sealed. No duplicate financial effect.")
+    elif result.status == CycleStatus.SKIPPED:
+        print(f"NOTE: Strategy not due. {result.message}")
+
+
 # ── CLI entry point ───────────────────────────────────────────────────────────
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Mentisrex forward paper-trading driver")
-    p.add_argument("--mode", default="SIMULATION",
+    sub = p.add_subparsers(dest="subcommand")
+
+    # forward_init
+    pi = sub.add_parser("forward_init", help="Initialize a new PAPER_FORWARD campaign")
+    pi.add_argument("--data-dir", default=str(FORWARD_CAMPAIGN_DIR))
+
+    # forward_run
+    pr = sub.add_parser("forward_run", help="Run one PAPER_FORWARD cycle (real data)")
+    pr.add_argument("--as-of", default=None,
+                    help="Observation date (YYYY-MM-DD). Defaults to today.")
+    pr.add_argument("--data-dir", default=str(FORWARD_CAMPAIGN_DIR))
+
+    # forward_resume
+    pre = sub.add_parser("forward_resume", help="Resume PAPER_FORWARD campaign")
+    pre.add_argument("--as-of", default=None)
+    pre.add_argument("--data-dir", default=str(FORWARD_CAMPAIGN_DIR))
+
+    # forward_status
+    ps = sub.add_parser("forward_status", help="Show PAPER_FORWARD campaign status")
+    ps.add_argument("--data-dir", default=str(FORWARD_CAMPAIGN_DIR))
+
+    # legacy SIMULATION / PAPER_LIVE_FEED via --mode (backward compat)
+    p.add_argument("--mode", default=None,
                    choices=["SIMULATION", "PAPER_LIVE_FEED"],
-                   help="SIMULATION: synthetic prices. PAPER_LIVE_FEED: real Yahoo Finance data.")
-    p.add_argument("--cycles", type=int, default=12,
-                   help="[SIMULATION] Number of monthly cycles")
-    p.add_argument("--start", default="2026-01-01",
-                   help="[SIMULATION] Start date for synthetic snapshots (YYYY-MM-DD)")
-    p.add_argument("--as-of", default=None,
-                   help="[PAPER_LIVE_FEED] Observation date (YYYY-MM-DD). Defaults to today.")
-    p.add_argument("--checkpoint-every", type=int, default=4,
-                   help="[SIMULATION] Checkpoint interval (evaluations)")
+                   help="Legacy: SIMULATION or PAPER_LIVE_FEED mode")
+    p.add_argument("--cycles", type=int, default=12)
+    p.add_argument("--start", default="2026-01-01")
+    p.add_argument("--as-of", default=None)
+    p.add_argument("--checkpoint-every", type=int, default=4)
     args = p.parse_args()
 
     print("=" * 60)
@@ -394,14 +548,38 @@ def main() -> None:
     print(f"strategy_id         : {SPEC.strategy_id}")
     print(f"strategy_version    : {SPEC.version}")
     print(f"strategy_fingerprint: {SPEC.configuration_fingerprint}")
-    print(f"run_id              : {RUN_ID}")
-    print(f"mode                : {args.mode}")
+    print("=" * 60)
+
+    # ── PAPER_FORWARD subcommands ─────────────────────────────────────────────
+    if args.subcommand == "forward_init":
+        campaign = forward_init(Path(args.data_dir))
+        print(f"[forward_init] Campaign initialized at: {args.data_dir}")
+        print(f"campaign_id: {campaign._config.campaign_id}")
+        return
+
+    if args.subcommand in ("forward_run", "forward_resume"):
+        as_of = date.fromisoformat(args.as_of) if args.as_of else date.today()
+        print(f"data_source : Yahoo Finance (real, public, no credentials)")
+        print(f"as_of       : {as_of}")
+        print("=" * 60)
+        if args.subcommand == "forward_run":
+            forward_run(as_of, Path(args.data_dir))
+        else:
+            forward_resume(as_of, Path(args.data_dir))
+        return
+
+    if args.subcommand == "forward_status":
+        forward_status(Path(args.data_dir))
+        return
+
+    # ── Legacy --mode path (backward compat) ─────────────────────────────────
+    mode = args.mode or "SIMULATION"
+    print(f"mode                : {mode}")
     print(f"starting_capital    : {STARTING_CAPITAL:,.0f} USD (paper only)")
     print("=" * 60)
 
-    if args.mode == "PAPER_LIVE_FEED":
-        from datetime import date as _date
-        as_of = _date.fromisoformat(args.as_of) if args.as_of else _date.today()
+    if mode == "PAPER_LIVE_FEED":
+        as_of = date.fromisoformat(args.as_of) if args.as_of else date.today()
         print(f"data_source         : Yahoo Finance (real, public, no credentials)")
         print(f"data_limitation     : Free/public — NOT institutional/exchange-grade data")
         print(f"as_of               : {as_of}")
