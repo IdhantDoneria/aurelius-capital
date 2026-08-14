@@ -42,6 +42,13 @@ from mentisrex.research.forward_campaign.alpaca_execution import (
     build_forward_vs_backtest_comparison,
 )
 
+from mentisrex.research.forward_campaign.data_quality import (
+    DataRisks,
+    DataQualityReport,
+    check_snapshot_quality,
+    check_universe_pit_risks,
+)
+
 __all__ = [
     # M25 / M26
     "CycleStatus",
@@ -71,4 +78,9 @@ __all__ = [
     "AlpacaCycleExecutor",
     "ForwardVsBacktestComparison",
     "build_forward_vs_backtest_comparison",
+    # M30 — data quality
+    "DataRisks",
+    "DataQualityReport",
+    "check_snapshot_quality",
+    "check_universe_pit_risks",
 ]

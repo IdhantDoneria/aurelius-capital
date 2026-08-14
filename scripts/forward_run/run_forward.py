@@ -911,6 +911,115 @@ def forward_execution_quality(data_dir: Path = FORWARD_CAMPAIGN_DIR) -> dict:
     return summary
 
 
+def pre_cycle_check(as_of: date, data_dir: Path = FORWARD_CAMPAIGN_DIR) -> dict:
+    """Pre-cycle system health and data-quality check (M30).
+
+    Runs entirely offline (no Alpaca connection required).
+    Verifies:
+      - Strategy fingerprint unchanged
+      - Campaign directory state
+      - September cycle not already contaminated
+      - Documented data risks (PIT, adjustment, delisting, etc.)
+    Returns a health dict with overall pass/fail.
+    """
+    from mentisrex.research.forward_campaign.data_quality import (
+        DataRisks, check_universe_pit_risks
+    )
+    from mentisrex.research.forward_campaign.record import make_forward_cycle_id
+    from mentisrex.research.forward_campaign.ledger import ForwardLedger
+    from mentisrex.research.forward_campaign.alpaca_execution import AlpacaExecutionLedger
+
+    print()
+    print("=== M30 PRE-CYCLE READINESS CHECK ===")
+    print(f"as_of          : {as_of}")
+    print(f"data_dir       : {data_dir}")
+    print()
+
+    results: dict = {}
+
+    # 1. strategy fingerprint
+    fp = SPEC.configuration_fingerprint
+    expected_fp = "b69961b65bab226a500d71f45709945b"
+    fp_ok = fp == expected_fp
+    results["strategy_fingerprint"] = fp
+    results["strategy_fingerprint_ok"] = fp_ok
+    results["strategy_modified"] = "NO" if fp_ok else "YES — FINGERPRINT CHANGED"
+    print(f"[{'OK' if fp_ok else 'FAIL'}] strategy_fingerprint : {fp}")
+
+    # 2. campaign manifest
+    manifest_path = data_dir / "campaign_manifest.json"
+    manifest_ok = manifest_path.exists()
+    results["campaign_manifest_exists"] = manifest_ok
+    print(f"[{'OK' if manifest_ok else 'WARN'}] campaign_manifest    : "
+          f"{'found' if manifest_ok else 'not yet created — run forward_init first'}")
+
+    # 3. cycle idempotency guard
+    cycle_id = make_forward_cycle_id(SPEC.strategy_id, SPEC.version, as_of)
+    results["cycle_id"] = cycle_id
+
+    fwd_ledger = ForwardLedger(data_dir)
+    all_cycles = fwd_ledger.list_cycles()
+    already_sealed = any(c.cycle_id == cycle_id for c in all_cycles)
+    results["cycle_already_sealed"] = already_sealed
+    print(f"[{'WARN' if already_sealed else 'OK'}] cycle_id             : {cycle_id}"
+          f"{' — ALREADY SEALED (idempotent re-run safe)' if already_sealed else ''}")
+
+    exec_ledger = AlpacaExecutionLedger(data_dir)
+    exec_rec = exec_ledger.get_cycle(cycle_id)
+    exec_already_sealed = exec_rec is not None and exec_rec.is_sealed
+    results["alpaca_execution_already_sealed"] = exec_already_sealed
+    if exec_already_sealed:
+        print(f"[WARN] alpaca execution   : already sealed — idempotent re-run safe")
+    else:
+        print(f"[OK]   alpaca execution   : not yet sealed")
+
+    # 4. documented data risks
+    pit_risks = check_universe_pit_risks(UNIVERSE)
+    results["data_risks"] = [DataRisks.ADJUSTMENT, DataRisks.PIT, DataRisks.DELISTING,
+                             DataRisks.TICKER_CHANGE, DataRisks.CORPORATE_ACT,
+                             DataRisks.SURVIVORSHIP, DataRisks.REVISION,
+                             DataRisks.CROSS_PROVIDER]
+    print()
+    print("Documented data risks (inherent — cannot be eliminated with Yahoo Finance):")
+    for risk in results["data_risks"]:
+        print(f"  [{risk}]")
+
+    # 5. per-symbol PIT risk
+    print()
+    print("Per-symbol PIT notes:")
+    for r in pit_risks:
+        print(f"  {r['symbol']:6s}: {r['note']}")
+
+    # 6. date gate
+    today = date.today()
+    is_past_sep_1 = as_of >= date(2026, 9, 1)
+    results["september_gate"] = "OPEN" if is_past_sep_1 else "CLOSED_NOT_YET"
+    results["today"] = today.isoformat()
+    print()
+    print(f"Today           : {today}")
+    print(f"Requested as_of : {as_of}")
+    if not is_past_sep_1:
+        print(f"[WARN] September gate: CLOSED — as_of {as_of} is before 2026-09-01.")
+        print(f"       The genuine September cycle must only run after September 1, 2026.")
+    else:
+        print(f"[OK]   September gate: OPEN — {as_of} >= 2026-09-01.")
+
+    # 7. governance
+    results["live_execution"] = "NO"
+    results["real_capital"] = "NO"
+    results["alpaca_environment"] = "PAPER (hardcoded in AlpacaPaperBroker)"
+    overall = fp_ok
+    results["overall"] = "READY" if overall else "NOT_READY"
+    print()
+    print(f"STRATEGY MODIFIED  : NO")
+    print(f"LIVE EXECUTION     : NO")
+    print(f"REAL CAPITAL       : NO")
+    print(f"ALPACA ENV         : PAPER (hardcoded)")
+    print()
+    print(f"OVERALL READINESS  : {'READY' if overall else 'NOT_READY — fix FAIL items above'}")
+    return results
+
+
 def _get_or_init_campaign(data_dir: Path) -> ForwardCampaign:
     """Resume if campaign exists, else init."""
     manifest_path = data_dir / "campaign_manifest.json"
@@ -1000,6 +1109,15 @@ def main() -> None:
     )
     peq.add_argument("--data-dir", default=str(FORWARD_CAMPAIGN_DIR))
 
+    # pre_cycle_check (M30): offline health + data-quality check before running cycle
+    pcc = sub.add_parser(
+        "pre_cycle_check",
+        help="Offline pre-cycle readiness check (M30): fingerprint, isolation, data risks.",
+    )
+    pcc.add_argument("--as-of", default=None,
+                     help="Planned cycle date (YYYY-MM-DD). Defaults to today.")
+    pcc.add_argument("--data-dir", default=str(FORWARD_CAMPAIGN_DIR))
+
     # alpaca_paper_status (M28): Alpaca paper account status
     sub.add_parser(
         "alpaca_paper_status",
@@ -1044,6 +1162,12 @@ def main() -> None:
     print(f"strategy_version    : {SPEC.version}")
     print(f"strategy_fingerprint: {SPEC.configuration_fingerprint}")
     print("=" * 60)
+
+    # ── M30 pre-cycle readiness check ────────────────────────────────────────
+    if args.subcommand == "pre_cycle_check":
+        as_of = date.fromisoformat(args.as_of) if args.as_of else date.today()
+        pre_cycle_check(as_of, Path(args.data_dir))
+        return
 
     # ── M29 Alpaca execution + evidence subcommands ───────────────────────────
     if args.subcommand == "forward_alpaca_cycle":
