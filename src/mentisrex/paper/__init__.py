@@ -8,21 +8,45 @@
                            checkpoint_path="./data/checkpoint.json")
     engine.run_forever(lambda: live_tick_source())   # never returns in production
 
-How this differs from backtesting: the backtest is a pure, deterministic pass
-over a fixed dataset that is thrown away at the end; this is a supervised,
-crash-surviving, wall-clock loop that sees only the present, journals every
-action, and must run unattended. Same broker/risk/execution contracts — only the
-data source and the survival machinery change.
+M28 adds AlpacaPaperBroker (Alpaca PAPER account, no live execution):
+
+    from mentisrex.paper import AlpacaPaperBroker, BrokerMode
+
+    with AlpacaPaperBroker() as broker:
+        report = broker.status_report()
+        rec = broker.submit_order("SPY", "buy", Decimal("1"))
 """
 
-from mentisrex.paper.alpaca_broker import AlpacaBroker
-from mentisrex.paper.broker import OrderRequest, OrderResult, PaperBroker, Tick
+from mentisrex.paper.alpaca_broker import (
+    AlpacaBroker,       # deprecated alias — use AlpacaPaperBroker
+    AlpacaFill,
+    AlpacaOrderRecord,
+    AlpacaPaperBroker,
+    InvalidPaperOrderError,
+    LiveTradingBlockedError,
+    NavReconciliationResult,
+    PaperAccountVerificationError,
+    PositionReconciliationResult,
+)
+from mentisrex.paper.broker import BrokerMode, OrderRequest, OrderResult, PaperBroker, Tick
 from mentisrex.paper.dashboard import build_snapshot, render_text
 from mentisrex.paper.engine import Health, TradingEngine, replay
 from mentisrex.paper.journal import TradeJournal
 
 __all__ = [
+    # M28 — Alpaca paper broker
+    "AlpacaPaperBroker",
+    "AlpacaOrderRecord",
+    "AlpacaFill",
+    "PositionReconciliationResult",
+    "NavReconciliationResult",
+    "LiveTradingBlockedError",
+    "InvalidPaperOrderError",
+    "PaperAccountVerificationError",
+    "BrokerMode",
+    # Legacy / deprecated
     "AlpacaBroker",
+    # Phase-9 local paper broker
     "Health",
     "OrderRequest",
     "OrderResult",

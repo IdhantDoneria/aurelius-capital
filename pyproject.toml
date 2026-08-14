@@ -70,6 +70,7 @@ markers = [
     "unit: fast tests, no I/O",
     "integration: requires running Docker stack",
     "slow: benchmarks and long-running tests (excluded from default CI run)",
+    "real_alpaca: requires ALPACA_PAPER_API_KEY / ALPACA_PAPER_API_SECRET (M28, excluded from offline CI)",
 ]
 addopts = "-v --tb=short"
 

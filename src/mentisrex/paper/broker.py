@@ -25,6 +25,17 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
+from enum import Enum
+
+
+class BrokerMode(str, Enum):
+    """Supported broker execution modes (M28).
+
+    ALPACA_LIVE is intentionally absent — live execution is not supported.
+    """
+    MOCK = "MOCK"                # perfect immediate fills (local simulation)
+    SIMULATED = "SIMULATED"      # realistic fills with slippage (local simulation)
+    ALPACA_PAPER = "ALPACA_PAPER"  # real Alpaca paper account (M28)
 
 from mentisrex.backtesting.events.types import FillEvent, OrderType, Side
 from mentisrex.backtesting.portfolio.state import PortfolioState

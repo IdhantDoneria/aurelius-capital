@@ -46,6 +46,12 @@ from mentisrex.research.forward_campaign import ForwardCampaign
 from mentisrex.research.forward_campaign.runner import ForwardOperationsRunner
 from mentisrex.research.forward_campaign.benchmark import BenchmarkPortfolio, fetch_spy_price
 from mentisrex.research.forward_campaign.evidence_report import EvidenceReportBuilder
+from mentisrex.paper import (
+    AlpacaPaperBroker,
+    BrokerMode,
+    LiveTradingBlockedError,
+    PaperAccountVerificationError,
+)
 
 # Import spec and logic (co-located in this package)
 sys.path.insert(0, str(Path(__file__).parent))
@@ -547,6 +553,203 @@ def forward_evidence_report(data_dir: Path = FORWARD_CAMPAIGN_DIR):  # -> Forwar
     return report
 
 
+# ── M28 Alpaca paper broker CLI functions ─────────────────────────────────────
+
+
+def alpaca_paper_status() -> dict:
+    """Connect to Alpaca PAPER account and print non-credential status report.
+
+    REAL ALPACA PAPER ACCOUNT: YES (if credentials present)
+    LIVE EXECUTION:            NO
+    REAL CAPITAL:              NO
+
+    Required env vars:
+        ALPACA_PAPER_API_KEY
+        ALPACA_PAPER_API_SECRET
+    """
+    print()
+    print("=== ALPACA PAPER BROKER STATUS (M28) ===")
+    print(f"broker    : ALPACA")
+    print(f"mode      : PAPER (paper-api.alpaca.markets)")
+    print(f"live exec : NO")
+    print(f"real cap  : NO")
+    print()
+
+    key = Path("/dev/null").parent  # sentinel; real check below
+    missing = []
+    if not __import__("os").environ.get("ALPACA_PAPER_API_KEY", ""):
+        missing.append("ALPACA_PAPER_API_KEY")
+    if not __import__("os").environ.get("ALPACA_PAPER_API_SECRET", ""):
+        missing.append("ALPACA_PAPER_API_SECRET")
+
+    if missing:
+        print(f"ALPACA CONNECTIVITY: NOT VERIFIED")
+        print(f"REASON: Missing env vars: {', '.join(missing)}")
+        print()
+        print("To enable Alpaca paper connectivity:")
+        for var in missing:
+            print(f"    export {var}=<your-paper-{var.lower()}>")
+        print()
+        print("Paper credentials are available at https://app.alpaca.markets/paper-trading")
+        return {"connectivity": "NOT_VERIFIED", "missing_credentials": missing}
+
+    try:
+        broker = AlpacaPaperBroker(
+            strategy_id=SPEC.strategy_id,
+            strategy_fingerprint=SPEC.configuration_fingerprint,
+        )
+        report = broker.status_report()
+        broker.close()
+
+        print(f"ALPACA CONNECTIVITY:     {report.get('connectivity', 'OK')}")
+        print(f"ALPACA ENVIRONMENT:      {report.get('environment', 'PAPER')}")
+        print(f"ACCOUNT VERIFIED (PAPER): {'YES' if report.get('paper_verified') else 'NO'}")
+        print(f"account_id           : {report.get('account_id', 'N/A')}")
+        print(f"account_status       : {report.get('account_status', 'N/A')}")
+        print(f"equity               : {report.get('equity', 'N/A')}")
+        print(f"cash                 : {report.get('cash', 'N/A')}")
+        print(f"buying_power         : {report.get('buying_power', 'N/A')}")
+        print(f"open_orders          : {report.get('open_orders', 'N/A')}")
+        print()
+        print(f"LIVE EXECUTION:          {report.get('live_execution', 'NO')}")
+        print(f"REAL CAPITAL:            {report.get('real_capital', 'NO')}")
+        print(f"LIVE ENDPOINT SUPPORTED: {report.get('live_endpoint_supported', 'NO')}")
+        return report
+
+    except PaperAccountVerificationError as e:
+        print(f"ALPACA CONNECTIVITY: FAILED")
+        print(f"REASON: {e}")
+        print()
+        print("Verify ALPACA_PAPER_API_KEY and ALPACA_PAPER_API_SECRET are paper credentials.")
+        return {"connectivity": "FAILED", "error": str(e)}
+
+    except LiveTradingBlockedError as e:
+        print(f"ALPACA CONNECTIVITY: BLOCKED")
+        print(f"REASON: {e}")
+        return {"connectivity": "BLOCKED", "error": str(e)}
+
+
+def alpaca_paper_order(
+    symbol: str,
+    side: str,
+    quantity: str,
+    order_type: str = "market",
+    cycle_id: str = "smoke-test",
+) -> dict:
+    """Submit one controlled paper order to Alpaca (M28 smoke test).
+
+    REAL PAPER ORDER: YES (if credentials present)
+    LIVE EXECUTION:   NO
+    REAL CAPITAL:     NO
+
+    Cancels the order after submission if order type is market (immediate fill
+    not guaranteed). For testing purposes only.
+
+    Required env vars:
+        ALPACA_PAPER_API_KEY
+        ALPACA_PAPER_API_SECRET
+    """
+    from decimal import Decimal as _D
+
+    print()
+    print("=== ALPACA PAPER ORDER SMOKE TEST (M28) ===")
+    print(f"symbol     : {symbol}")
+    print(f"side       : {side}")
+    print(f"quantity   : {quantity}")
+    print(f"order_type : {order_type}")
+    print(f"cycle_id   : {cycle_id}")
+    print()
+
+    missing = []
+    import os as _os
+    if not _os.environ.get("ALPACA_PAPER_API_KEY", ""):
+        missing.append("ALPACA_PAPER_API_KEY")
+    if not _os.environ.get("ALPACA_PAPER_API_SECRET", ""):
+        missing.append("ALPACA_PAPER_API_SECRET")
+    if missing:
+        print(f"PAPER ORDER SUBMITTED: NOT VERIFIED")
+        print(f"REASON: Missing env vars: {', '.join(missing)}")
+        return {"submitted": False, "reason": "missing_credentials", "missing": missing}
+
+    try:
+        broker = AlpacaPaperBroker(
+            strategy_id=SPEC.strategy_id,
+            strategy_fingerprint=SPEC.configuration_fingerprint,
+        )
+
+        rec = broker.submit_order(
+            symbol=symbol,
+            side=side,
+            quantity=_D(quantity),
+            order_type=order_type,
+            cycle_id=cycle_id,
+            risk_approved=True,
+        )
+
+        print(f"PAPER ORDER SUBMITTED:    YES")
+        print(f"alpaca_order_id      : {rec.alpaca_order_id}")
+        print(f"client_order_id      : {rec.client_order_id}")
+        print(f"status               : {rec.status}")
+        print(f"broker               : {rec.broker}")
+        print(f"environment          : {rec.environment}")
+        print(f"submitted_at         : {rec.submitted_at}")
+        print()
+
+        # Poll for status
+        status_data = broker.get_order_status(rec.alpaca_order_id)
+        current_status = status_data.get("status", "?")
+        print(f"CURRENT STATUS:          {current_status}")
+
+        # Retrieve fills if filled
+        fills = broker.get_fills(rec.alpaca_order_id)
+        if fills:
+            f = fills[0]
+            print(f"FILL:                    qty={f.quantity} @ ${f.fill_price:.4f}")
+            print()
+            print(f"PAPER ORDER RECONCILED:  YES")
+        else:
+            print(f"FILLS:                   pending / none yet")
+            print()
+            print(f"PAPER ORDER RECONCILED:  PENDING (order not yet filled)")
+
+        # Cancel if still open (smoke test cleanup)
+        if current_status in ("new", "pending_new", "accepted"):
+            cancelled = broker.cancel_order(rec.alpaca_order_id)
+            print(f"ORDER CANCELLED (cleanup): {'YES' if cancelled else 'NO'}")
+
+        # Account reconciliation
+        acc = broker.get_account()
+        print()
+        print(f"ACCOUNT AFTER ORDER:")
+        print(f"  equity       : {acc['equity']}")
+        print(f"  cash         : {acc['cash']}")
+        print(f"  open_orders  : {acc['open_orders']}")
+        print()
+        print(f"LIVE EXECUTION: NO")
+        print(f"REAL CAPITAL:   NO")
+
+        broker.close()
+        return {
+            "submitted": True,
+            "alpaca_order_id": rec.alpaca_order_id,
+            "client_order_id": rec.client_order_id,
+            "status": current_status,
+            "fills": len(fills),
+            "live_execution": "NO",
+            "real_capital": "NO",
+        }
+
+    except (PaperAccountVerificationError, LiveTradingBlockedError) as e:
+        print(f"PAPER ORDER SUBMITTED: NO")
+        print(f"REASON: {e}")
+        return {"submitted": False, "reason": str(e)}
+
+    except RuntimeError as e:
+        print(f"PAPER ORDER SUBMITTED: NO")
+        print(f"REASON: {e}")
+        return {"submitted": False, "reason": str(e)}
+
+
 def _get_or_init_campaign(data_dir: Path) -> ForwardCampaign:
     """Resume if campaign exists, else init."""
     manifest_path = data_dir / "campaign_manifest.json"
@@ -620,6 +823,24 @@ def main() -> None:
                          help="Generate M27 forward evidence report")
     per.add_argument("--data-dir", default=str(FORWARD_CAMPAIGN_DIR))
 
+    # alpaca_paper_status (M28): Alpaca paper account status
+    sub.add_parser(
+        "alpaca_paper_status",
+        help="Show Alpaca PAPER account status (M28). No orders submitted.",
+    )
+
+    # alpaca_paper_order (M28): controlled paper order smoke test
+    pao = sub.add_parser(
+        "alpaca_paper_order",
+        help="Submit one controlled Alpaca PAPER order (M28 smoke test).",
+    )
+    pao.add_argument("--symbol", default="SPY", help="Security symbol (default: SPY)")
+    pao.add_argument("--side", default="buy", choices=["buy", "sell"])
+    pao.add_argument("--quantity", default="1", help="Share quantity (default: 1)")
+    pao.add_argument("--order-type", default="market", choices=["market", "limit"],
+                     dest="order_type")
+    pao.add_argument("--cycle-id", default="smoke-test", dest="cycle_id")
+
     # forward_auto (M26): cron-safe check-and-run
     pau = sub.add_parser("forward_auto",
                          help="Check if cycle due and run it (cron-safe, idempotent)")
@@ -646,6 +867,21 @@ def main() -> None:
     print(f"strategy_version    : {SPEC.version}")
     print(f"strategy_fingerprint: {SPEC.configuration_fingerprint}")
     print("=" * 60)
+
+    # ── M28 Alpaca paper broker subcommands ───────────────────────────────────
+    if args.subcommand == "alpaca_paper_status":
+        alpaca_paper_status()
+        return
+
+    if args.subcommand == "alpaca_paper_order":
+        alpaca_paper_order(
+            symbol=args.symbol,
+            side=args.side,
+            quantity=args.quantity,
+            order_type=args.order_type,
+            cycle_id=args.cycle_id,
+        )
+        return
 
     # ── PAPER_FORWARD subcommands ─────────────────────────────────────────────
     if args.subcommand == "forward_init":
