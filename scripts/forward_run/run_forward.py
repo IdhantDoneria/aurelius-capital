@@ -44,6 +44,8 @@ from mentisrex.research.strategy_deployment.registry import StrategyRegistry
 from mentisrex.research.strategy_deployment.runtime import StrategyRuntime
 from mentisrex.research.forward_campaign import ForwardCampaign
 from mentisrex.research.forward_campaign.runner import ForwardOperationsRunner
+from mentisrex.research.forward_campaign.benchmark import BenchmarkPortfolio, fetch_spy_price
+from mentisrex.research.forward_campaign.evidence_report import EvidenceReportBuilder
 
 # Import spec and logic (co-located in this package)
 sys.path.insert(0, str(Path(__file__).parent))
@@ -471,6 +473,80 @@ def forward_status(data_dir: Path = FORWARD_CAMPAIGN_DIR) -> dict:
     return st
 
 
+def forward_benchmark(as_of: date, data_dir: Path = FORWARD_CAMPAIGN_DIR, *,
+                      spy_price: float | None = None) -> None:
+    """Run benchmark evaluation for as_of using real SPY price (or supplied price).
+
+    Idempotent: if a sealed benchmark record for this cycle already exists,
+    the existing record is returned and no new record is written.
+
+    REAL MARKET DATA: YES (SPY via yfinance unless spy_price is supplied)
+    PAPER EXECUTION:  YES
+    LIVE EXECUTION:   NO
+    NO REAL CAPITAL DEPLOYED.
+    """
+    from mentisrex.research.forward_campaign.record import make_forward_cycle_id
+    cycle_id = make_forward_cycle_id(SPEC.strategy_id, SPEC.version, as_of)
+    manifest_path = data_dir / "campaign_manifest.json"
+    if not manifest_path.exists():
+        print(f"[forward_benchmark] No campaign at {data_dir}. Run forward_init first.")
+        return
+
+    manifest = json.loads(manifest_path.read_text())
+    campaign_id = manifest["campaign_id"]
+
+    # fetch SPY price
+    if spy_price is None:
+        print(f"[forward_benchmark] fetching SPY price for {as_of} …", flush=True)
+        spy_price = fetch_spy_price(as_of)
+    if spy_price is None or spy_price <= 0:
+        print(f"[forward_benchmark] WARN: could not fetch SPY price for {as_of} — skipping.")
+        return
+
+    print(f"[forward_benchmark] SPY price as_of={as_of}: ${spy_price:.2f}", flush=True)
+    bp = BenchmarkPortfolio(data_dir, inception_nav=STARTING_CAPITAL)
+    rec = bp.evaluate(cycle_id, as_of=as_of, spy_price=spy_price,
+                      campaign_id=campaign_id)
+    print()
+    print("=== BENCHMARK CYCLE RESULT ===")
+    print(f"cycle_id         : {rec.cycle_id}")
+    print(f"benchmark_symbol : {rec.benchmark_symbol}")
+    print(f"as_of            : {as_of}")
+    print(f"spy_price        : ${rec.spy_price:.2f}")
+    print(f"shares           : {rec.shares:.4f}")
+    print(f"ending_nav       : ${rec.ending_nav:,.2f}")
+    print(f"period_return    : {rec.period_return:.4%}")
+    print(f"cumulative_return: {rec.cumulative_return:.4%}")
+    print(f"sealed_at        : {rec.sealed_at}")
+    print(f"is_inception     : {rec.is_inception_cycle}")
+    print()
+    print("NOTE: Price return only.  SPY dividends are NOT captured.")
+    print("NO REAL CAPITAL DEPLOYED.")
+
+
+def forward_evidence_report(data_dir: Path = FORWARD_CAMPAIGN_DIR):  # -> ForwardEvidenceReport
+    """Generate and print the M27 forward evidence report."""
+    manifest_path = data_dir / "campaign_manifest.json"
+    if not manifest_path.exists():
+        print(f"[forward_evidence_report] No campaign at {data_dir}.")
+        return None
+    builder = EvidenceReportBuilder(
+        campaign_dir=data_dir,
+        strategy_id=SPEC.strategy_id,
+        strategy_version=SPEC.version,
+        strategy_fingerprint=SPEC.configuration_fingerprint,
+        universe=UNIVERSE,
+        initial_capital=STARTING_CAPITAL,
+    )
+    report = builder.build()
+    report.print_summary()
+    # persist report JSON
+    report_path = data_dir / "forward_evidence_report.json"
+    report_path.write_text(json.dumps(report.to_dict(), indent=2, default=str))
+    print(f"\nReport saved to: {report_path}")
+    return report
+
+
 def _get_or_init_campaign(data_dir: Path) -> ForwardCampaign:
     """Resume if campaign exists, else init."""
     manifest_path = data_dir / "campaign_manifest.json"
@@ -531,6 +607,19 @@ def main() -> None:
     ps = sub.add_parser("forward_status", help="Show PAPER_FORWARD campaign status")
     ps.add_argument("--data-dir", default=str(FORWARD_CAMPAIGN_DIR))
 
+    # forward_benchmark (M27): run benchmark evaluation for as_of
+    pbm = sub.add_parser("forward_benchmark",
+                         help="Run SPY benchmark evaluation for as_of (M27)")
+    pbm.add_argument("--as-of", default=None)
+    pbm.add_argument("--data-dir", default=str(FORWARD_CAMPAIGN_DIR))
+    pbm.add_argument("--spy-price", type=float, default=None,
+                     help="Override SPY price (offline use only)")
+
+    # forward_evidence_report (M27): generate evidence report
+    per = sub.add_parser("forward_evidence_report",
+                         help="Generate M27 forward evidence report")
+    per.add_argument("--data-dir", default=str(FORWARD_CAMPAIGN_DIR))
+
     # forward_auto (M26): cron-safe check-and-run
     pau = sub.add_parser("forward_auto",
                          help="Check if cycle due and run it (cron-safe, idempotent)")
@@ -578,6 +667,15 @@ def main() -> None:
 
     if args.subcommand == "forward_status":
         forward_status(Path(args.data_dir))
+        return
+
+    if args.subcommand == "forward_benchmark":
+        as_of = date.fromisoformat(args.as_of) if args.as_of else date.today()
+        forward_benchmark(as_of, Path(args.data_dir), spy_price=args.spy_price)
+        return
+
+    if args.subcommand == "forward_evidence_report":
+        forward_evidence_report(Path(args.data_dir))
         return
 
     if args.subcommand == "forward_auto":

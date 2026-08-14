@@ -19,8 +19,22 @@ from mentisrex.research.forward_campaign.record import (
 from mentisrex.research.forward_campaign.ledger import ForwardLedger
 from mentisrex.research.forward_campaign.campaign import ForwardCampaign, CampaignConfig
 from mentisrex.research.forward_campaign.runner import ForwardOperationsRunner, RunnerConfig
+from mentisrex.research.forward_campaign.benchmark import (
+    BenchmarkCycleRecord,
+    BenchmarkLedger,
+    BenchmarkPortfolio,
+    BenchmarkPerformanceSummary,
+    fetch_spy_price,
+)
+from mentisrex.research.forward_campaign.evidence_report import (
+    BacktestSnapshot,
+    CycleComparison,
+    ForwardEvidenceReport,
+    EvidenceReportBuilder,
+)
 
 __all__ = [
+    # M25 / M26
     "CycleStatus",
     "ForwardCycleRecord",
     "ForwardLedger",
@@ -29,4 +43,15 @@ __all__ = [
     "ForwardOperationsRunner",
     "RunnerConfig",
     "make_forward_cycle_id",
+    # M27 — benchmark
+    "BenchmarkCycleRecord",
+    "BenchmarkLedger",
+    "BenchmarkPortfolio",
+    "BenchmarkPerformanceSummary",
+    "fetch_spy_price",
+    # M27 — evidence report
+    "BacktestSnapshot",
+    "CycleComparison",
+    "ForwardEvidenceReport",
+    "EvidenceReportBuilder",
 ]
