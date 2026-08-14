@@ -269,15 +269,42 @@ uv run pytest tests/paper/test_m28_alpaca_paper_broker.py -m real_alpaca -v
 
 ## Real Paper Smoke Test
 
-**Status: NOT VERIFIED**
+**Status: VERIFIED — 2026-08-14**
 
-`ALPACA_PAPER_API_KEY` and `ALPACA_PAPER_API_SECRET` were not set in the environment at M28 implementation time (2026-08-14). The real-network test class `TestRealAlpacaPaperConnectivity` and CLI command `alpaca_paper_status` are implemented and tested against the mock layer; they require live credentials to execute end-to-end.
+### `alpaca_paper_status`
 
-**To verify:**
-1. Set `ALPACA_PAPER_API_KEY` and `ALPACA_PAPER_API_SECRET`
-2. Run: `uv run scripts/forward_run/run_forward.py alpaca_paper_status`
-3. Run: `uv run pytest tests/paper/test_m28_alpaca_paper_broker.py -m real_alpaca -v`
-4. Update this section with results.
+```
+ALPACA CONNECTIVITY:     OK
+ALPACA ENVIRONMENT:      PAPER
+ACCOUNT VERIFIED (PAPER): YES
+account_id           : 586c8f70...
+account_status       : ACTIVE
+equity               : 100000
+cash                 : 100000
+buying_power         : 400000
+open_orders          : 0
+
+LIVE EXECUTION:          NO
+REAL CAPITAL:            NO
+LIVE ENDPOINT SUPPORTED: NO
+```
+
+### `alpaca_paper_order --symbol SPY --side buy --quantity 1 --order-type market --cycle-id smoke-test`
+
+```
+PAPER ORDER SUBMITTED:    YES
+alpaca_order_id      : 47f2f5d4-fc83-431a-ab24-467af4d0f840
+client_order_id      : mr-b1efb17550bf4d7a
+status               : accepted
+broker               : ALPACA
+environment          : PAPER
+submitted_at         : 2026-08-14T06:03:25.560593+00:00
+ORDER CANCELLED (cleanup): YES
+LIVE EXECUTION: NO
+REAL CAPITAL:   NO
+```
+
+Endpoint confirmed: `https://paper-api.alpaca.markets`. Account identity verified as PAPER/ACTIVE. Order submitted and cancelled cleanly. No real capital deployed.
 
 ---
 
@@ -296,7 +323,7 @@ uv run pytest tests/paper/test_m28_alpaca_paper_broker.py -m real_alpaca -v
 
 1. **`research/PaperTradingLoop` integration** (skipped): `AlpacaPaperBroker` works with `paper/TradingEngine` but not `research/paper_trading/PaperTradingLoop` (M25 `ForwardCampaign` path). The `Broker` ABC there requires `execute_order(TradeRequest)` returning `TradeExecution`. Blocked by: `PaperTradingLoop` internal architecture. Unblocked by: adding an adapter that wraps `AlpacaPaperBroker` with the `Broker` ABC interface.
 
-2. **Real paper smoke test** (NOT VERIFIED): Credentials unavailable at implementation time. Unblocked by: setting `ALPACA_PAPER_API_KEY` / `ALPACA_PAPER_API_SECRET` and running `alpaca_paper_status`.
+2. **Real paper smoke test**: VERIFIED 2026-08-14. CLI commands confirmed. `TestRealAlpacaPaperConnectivity` pytest class requires credentials in env at test time.
 
 3. **`TradingEngine` equity curve tracking** (partial): `TradingEngine` accesses `broker.state.total_value` for equity curve. `AlpacaPaperBroker` exposes `get_account()` instead of a `PortfolioState` object. Full integration requires a lightweight `state` proxy that calls `get_account()` on demand. Unblocked by: adding a proxy class; deferred since `TradingEngine` + Alpaca integration is post-M28 scope.
 
@@ -326,7 +353,7 @@ uv run pytest tests/paper/test_m28_alpaca_paper_broker.py -m real_alpaca -v
 | `real_alpaca` pytest marker registered | COMPLETE |
 | Security audit: no credentials in diff | COMPLETE — CLEAN |
 | Documentation | COMPLETE (this file) |
-| Real Alpaca paper smoke test | NOT VERIFIED (credentials unavailable) |
+| Real Alpaca paper smoke test | VERIFIED 2026-08-14 (PAPER/ACTIVE, order submitted + cancelled) |
 | Strategy fingerprint `b69961b65bab226a500d71f45709945b` unchanged | CONFIRMED |
 | Live execution | NO |
 | Real capital at risk | NO |
