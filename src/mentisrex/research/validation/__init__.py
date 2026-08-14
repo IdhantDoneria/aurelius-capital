@@ -6,7 +6,15 @@ the pre-existing lightweight validation helpers (`legacy`) so historical imports
 this package is additive over that module, not a replacement.
 """
 
+from mentisrex.research.validation.cross_validation import (
+    purged_kfold,
+    walk_forward_purged,
+)
 from mentisrex.research.validation.engine import ResearchValidator, ValidationConfig
+from mentisrex.research.validation.hac import (
+    hac_significance,
+    hac_standard_error,
+)
 from mentisrex.research.validation.quality import check
 from mentisrex.research.validation.report import ValidationReport
 
@@ -23,6 +31,7 @@ from mentisrex.research.validation.legacy import (  # noqa: E402
 
 __all__ = [
     "ResearchValidator", "ValidationConfig", "ValidationReport", "check",
+    "hac_standard_error", "hac_significance", "purged_kfold", "walk_forward_purged",
     # legacy
     "evaluate", "parameter_sensitivity", "rolling_validation", "run_backtest",
     "select_features", "train_test", "walk_forward",

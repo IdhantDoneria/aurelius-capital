@@ -116,15 +116,23 @@ def sharpe_standard_error(returns, periods: int = TRADING_DAYS) -> float:
     return float(math.sqrt(max(var, 0.0)) * math.sqrt(periods))
 
 
-def significance(returns, periods: int = TRADING_DAYS) -> dict:
-    """t-stat, p-value, SE, mean CI, effect size, distribution diagnostics."""
+def significance(returns, periods: int = TRADING_DAYS, *, hac_lag: int | None = None) -> dict:
+    """t-stat, p-value, SE, mean CI, effect size, distribution diagnostics.
+
+    Includes additive HAC (Newey-West) fields (`hac_se`, `hac_t_stat`,
+    `hac_p_value`, `hac_lag`) alongside the IID ones so autocorrelation-robust
+    significance is available without breaking existing IID consumers.
+    """
+    from mentisrex.research.validation.hac import hac_significance
+
     r = np.asarray(returns, dtype=float)
     m = moments(returns)
     n = m["n"]
     if n < 2 or m["std"] == 0:
         return {**m, "t_stat": 0.0, "p_value": 1.0, "standard_error": 0.0,
                 "ci_low": 0.0, "ci_high": 0.0, "effect_size": 0.0,
-                "sharpe": 0.0, "sharpe_se": float("nan")}
+                "sharpe": 0.0, "sharpe_se": float("nan"),
+                **hac_significance(r, hac_lag)}
     se = m["std"] / math.sqrt(n)
     t = m["mean"] / se
     p = student_t_two_sided_p(t, n - 1)
@@ -139,6 +147,7 @@ def significance(returns, periods: int = TRADING_DAYS) -> dict:
         "effect_size": float(m["mean"] / m["std"]),   # Cohen's d
         "sharpe": sharpe(returns, periods),
         "sharpe_se": sharpe_standard_error(returns, periods),
+        **hac_significance(r, hac_lag),
     }
 
 
