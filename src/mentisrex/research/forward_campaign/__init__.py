@@ -32,6 +32,15 @@ from mentisrex.research.forward_campaign.evidence_report import (
     ForwardEvidenceReport,
     EvidenceReportBuilder,
 )
+from mentisrex.research.forward_campaign.alpaca_execution import (
+    AlpacaOrderExecution,
+    CycleExecutionSummary,
+    AlpacaCycleExecutionRecord,
+    AlpacaExecutionLedger,
+    AlpacaCycleExecutor,
+    ForwardVsBacktestComparison,
+    build_forward_vs_backtest_comparison,
+)
 
 __all__ = [
     # M25 / M26
@@ -54,4 +63,12 @@ __all__ = [
     "CycleComparison",
     "ForwardEvidenceReport",
     "EvidenceReportBuilder",
+    # M29 — Alpaca execution quality
+    "AlpacaOrderExecution",
+    "CycleExecutionSummary",
+    "AlpacaCycleExecutionRecord",
+    "AlpacaExecutionLedger",
+    "AlpacaCycleExecutor",
+    "ForwardVsBacktestComparison",
+    "build_forward_vs_backtest_comparison",
 ]

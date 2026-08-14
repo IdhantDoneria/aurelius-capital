@@ -750,6 +750,167 @@ def alpaca_paper_order(
         return {"submitted": False, "reason": str(e)}
 
 
+def forward_alpaca_cycle(
+    as_of: date,
+    data_dir: Path = FORWARD_CAMPAIGN_DIR,
+    *,
+    spot_prices: dict | None = None,
+) -> dict:
+    """Run one PAPER_FORWARD cycle and submit portfolio orders to Alpaca PAPER (M29).
+
+    Step order:
+      1. Run strategy cycle via ForwardCampaign (real market data)
+      2. Submit target portfolio orders to AlpacaPaperBroker
+      3. Poll for fills and compute execution quality
+      4. Reconcile positions and NAV vs Alpaca
+      5. Seal AlpacaCycleExecutionRecord
+
+    Idempotent: if cycle already sealed, returns existing execution record.
+    No real capital. No live execution.
+
+    Required env vars: ALPACA_PAPER_API_KEY, ALPACA_PAPER_API_SECRET
+    """
+    import os as _os
+    from mentisrex.research.forward_campaign.alpaca_execution import AlpacaCycleExecutor
+    from mentisrex.research.forward_campaign.record import CycleStatus
+
+    print()
+    print("=== ALPACA PAPER FORWARD CYCLE (M29) ===")
+    print(f"as_of      : {as_of}")
+    print(f"data_dir   : {data_dir}")
+    print()
+
+    # credentials check
+    missing = [v for v in ("ALPACA_PAPER_API_KEY", "ALPACA_PAPER_API_SECRET")
+               if not _os.environ.get(v, "")]
+    if missing:
+        print(f"ALPACA EXECUTION: NOT VERIFIED — missing: {', '.join(missing)}")
+        return {"alpaca_execution": "NOT_VERIFIED", "missing_credentials": missing}
+
+    # step 1: strategy cycle
+    campaign = _get_or_init_campaign(data_dir)
+    result = campaign.run(as_of)
+    _print_cycle_result(result, as_of)
+
+    if result.status not in (CycleStatus.SUCCESS, CycleStatus.ALREADY_SEALED):
+        print(f"ALPACA EXECUTION: SKIPPED — cycle status: {result.status}")
+        return {"alpaca_execution": "SKIPPED", "cycle_status": result.status}
+
+    cycle_rec = result.record
+    if cycle_rec is None:
+        print("ALPACA EXECUTION: SKIPPED — no cycle record")
+        return {"alpaca_execution": "SKIPPED", "reason": "no_cycle_record"}
+
+    # step 2–5: Alpaca execution
+    try:
+        broker = AlpacaPaperBroker(
+            strategy_id=SPEC.strategy_id,
+            strategy_fingerprint=SPEC.configuration_fingerprint,
+            max_order_notional=__import__("decimal").Decimal("500000"),
+        )
+        executor = AlpacaCycleExecutor(data_dir, broker)
+        exec_rec = executor.execute_cycle(cycle_rec, spot_prices=spot_prices)
+        broker.close()
+
+        print()
+        print("=== ALPACA EXECUTION RESULT ===")
+        print(f"cycle_id              : {exec_rec.cycle_id}")
+        print(f"orders_submitted      : {exec_rec.summary.get('orders_submitted', 0)}")
+        print(f"orders_filled         : {exec_rec.summary.get('orders_filled', 0)}")
+        fill_rate = exec_rec.summary.get('fill_rate', 'UNAVAILABLE')
+        print(f"fill_rate             : {fill_rate:.2%}" if isinstance(fill_rate, float)
+              else f"fill_rate             : {fill_rate}")
+        print(f"avg_slippage_bps      : {exec_rec.summary.get('avg_slippage_bps', 0):.4f}")
+        print(f"reconciliation_status : {exec_rec.reconciliation_status}")
+        print(f"positions_reconciled  : {exec_rec.positions_reconciled}")
+        print(f"nav_reconciled        : {exec_rec.nav_reconciled}")
+        print(f"nav_delta_bps         : {exec_rec.nav_delta_bps:.2f}")
+        print(f"status                : {exec_rec.status}")
+        print()
+        print(f"REAL MARKET DATA     : YES")
+        print(f"ALPACA PAPER EXEC    : YES")
+        print(f"LIVE EXECUTION       : NO")
+        print(f"REAL CAPITAL         : NO")
+        print(f"STRATEGY MODIFIED    : NO")
+
+        return {
+            "alpaca_execution": "SUCCESS",
+            "cycle_id": exec_rec.cycle_id,
+            "orders_submitted": exec_rec.summary.get("orders_submitted", 0),
+            "orders_filled": exec_rec.summary.get("orders_filled", 0),
+            "reconciliation_status": exec_rec.reconciliation_status,
+            "status": exec_rec.status,
+        }
+
+    except (PaperAccountVerificationError, LiveTradingBlockedError) as e:
+        print(f"ALPACA EXECUTION: BLOCKED — {e}")
+        return {"alpaca_execution": "BLOCKED", "reason": str(e)}
+    except Exception as e:
+        print(f"ALPACA EXECUTION: FAILED — {e}")
+        return {"alpaca_execution": "FAILED", "reason": str(e)}
+
+
+def forward_execution_quality(data_dir: Path = FORWARD_CAMPAIGN_DIR) -> dict:
+    """Print M29 execution quality report from all sealed Alpaca execution records."""
+    from mentisrex.research.forward_campaign.alpaca_execution import (
+        AlpacaExecutionLedger,
+        build_forward_vs_backtest_comparison,
+    )
+    from mentisrex.research.forward_campaign.ledger import ForwardLedger
+    from mentisrex.research.forward_campaign.evidence_report import BacktestSnapshot
+
+    print()
+    print("=== M29 EXECUTION QUALITY REPORT ===")
+
+    exec_ledger = AlpacaExecutionLedger(data_dir)
+    summary = exec_ledger.execution_quality_summary()
+    cycles = exec_ledger.list_cycles()
+
+    print(f"alpaca_execution_cycles  : {summary['n_cycles']}")
+    print(f"total_orders_submitted   : {summary.get('total_orders_submitted', 0)}")
+    print(f"total_orders_filled      : {summary.get('total_orders_filled', 0)}")
+    fr = summary.get("overall_fill_rate", "UNAVAILABLE")
+    print(f"overall_fill_rate        : {fr:.2%}" if isinstance(fr, float)
+          else f"overall_fill_rate        : {fr}")
+    sl = summary.get("avg_slippage_bps", "UNAVAILABLE")
+    print(f"avg_slippage_bps         : {sl:.4f}" if isinstance(sl, float)
+          else f"avg_slippage_bps         : {sl}")
+    lt = summary.get("avg_latency_ms", "UNAVAILABLE")
+    print(f"avg_execution_latency_ms : {lt:.1f}" if isinstance(lt, float)
+          else f"avg_execution_latency_ms : {lt}")
+    rp = summary.get("reconciliation_pass_rate", "UNAVAILABLE")
+    print(f"reconciliation_pass_rate : {rp:.2%}" if isinstance(rp, float)
+          else f"reconciliation_pass_rate : {rp}")
+
+    print()
+    if cycles:
+        print("Per-cycle execution:")
+        for c in cycles:
+            s = c.summary
+            print(f"  {c.cycle_id}  submitted={s.get('orders_submitted', 0)}"
+                  f"  filled={s.get('orders_filled', 0)}"
+                  f"  recon={c.reconciliation_status}"
+                  f"  status={c.status}")
+
+    # forward vs backtest comparison
+    fwd_ledger = ForwardLedger(data_dir)
+    fwd_summary = fwd_ledger.performance_summary()
+    backtest = BacktestSnapshot.load()
+    fvb = build_forward_vs_backtest_comparison(backtest, fwd_summary)
+    fvb.print_table()
+
+    print()
+    print("LIVE EXECUTION   : NO")
+    print("REAL CAPITAL     : NO")
+    print("STRATEGY MODIFIED: NO")
+    print()
+    if summary["n_cycles"] == 0:
+        print("NOTE: No Alpaca paper execution records yet.")
+        print("Run: forward_alpaca_cycle --as-of YYYY-MM-DD")
+
+    return summary
+
+
 def _get_or_init_campaign(data_dir: Path) -> ForwardCampaign:
     """Resume if campaign exists, else init."""
     manifest_path = data_dir / "campaign_manifest.json"
@@ -823,6 +984,22 @@ def main() -> None:
                          help="Generate M27 forward evidence report")
     per.add_argument("--data-dir", default=str(FORWARD_CAMPAIGN_DIR))
 
+    # forward_alpaca_cycle (M29): strategy cycle + Alpaca paper execution
+    pac = sub.add_parser(
+        "forward_alpaca_cycle",
+        help="Run strategy cycle + submit portfolio orders to Alpaca PAPER (M29).",
+    )
+    pac.add_argument("--as-of", default=None,
+                     help="Observation date (YYYY-MM-DD). Defaults to today.")
+    pac.add_argument("--data-dir", default=str(FORWARD_CAMPAIGN_DIR))
+
+    # forward_execution_quality (M29): execution quality + forward vs backtest report
+    peq = sub.add_parser(
+        "forward_execution_quality",
+        help="Show M29 execution quality report and forward vs backtest comparison.",
+    )
+    peq.add_argument("--data-dir", default=str(FORWARD_CAMPAIGN_DIR))
+
     # alpaca_paper_status (M28): Alpaca paper account status
     sub.add_parser(
         "alpaca_paper_status",
@@ -867,6 +1044,16 @@ def main() -> None:
     print(f"strategy_version    : {SPEC.version}")
     print(f"strategy_fingerprint: {SPEC.configuration_fingerprint}")
     print("=" * 60)
+
+    # ── M29 Alpaca execution + evidence subcommands ───────────────────────────
+    if args.subcommand == "forward_alpaca_cycle":
+        as_of = date.fromisoformat(args.as_of) if args.as_of else date.today()
+        forward_alpaca_cycle(as_of, Path(args.data_dir))
+        return
+
+    if args.subcommand == "forward_execution_quality":
+        forward_execution_quality(Path(args.data_dir))
+        return
 
     # ── M28 Alpaca paper broker subcommands ───────────────────────────────────
     if args.subcommand == "alpaca_paper_status":

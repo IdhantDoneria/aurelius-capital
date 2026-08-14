@@ -258,6 +258,20 @@ class ForwardEvidenceReport:
     strategy_modified: str = "NO"
     research_data_isolated: str = "YES"
 
+    # M29 — Alpaca execution quality
+    alpaca_execution_cycles: int = 0         # cycles with Alpaca paper execution
+    alpaca_orders_submitted: int = 0
+    alpaca_orders_filled: int = 0
+    alpaca_fill_rate: Optional[float] = None  # None if no Alpaca cycles yet
+    avg_slippage_bps: Optional[float] = None
+    avg_execution_latency_ms: Optional[float] = None
+    execution_quality_label: str = "NO_ALPACA_EXECUTION"
+    reconciliation_pass_rate: Optional[float] = None
+    execution_quality: dict = field(default_factory=dict)  # raw summary dict
+
+    # M29 — structured forward vs backtest comparison
+    forward_vs_backtest: Optional[object] = None  # ForwardVsBacktestComparison
+
     def to_dict(self) -> dict:
         import dataclasses as dc
         d = {}
@@ -428,7 +442,8 @@ class EvidenceReportBuilder:
         self._universe = list(universe)
         self._initial_capital = initial_capital
 
-    def build(self, *, load_backtest: bool = True) -> ForwardEvidenceReport:
+    def build(self, *, load_backtest: bool = True,
+              include_alpaca_execution: bool = True) -> ForwardEvidenceReport:
         """Assemble the full evidence report."""
         fwd_summary: ForwardPerformanceSummary = self._fwd_ledger.performance_summary()
         bmk_summary: BenchmarkPerformanceSummary = self._bmk_ledger.performance_summary()
@@ -528,6 +543,45 @@ class EvidenceReportBuilder:
             "comparison possible.  Economic validity not yet established."
         )
 
+        # M29 — Alpaca execution quality
+        exec_quality: dict = {}
+        exec_cycles = 0
+        exec_orders_submitted = 0
+        exec_orders_filled = 0
+        exec_fill_rate: Optional[float] = None
+        exec_avg_slippage: Optional[float] = None
+        exec_avg_latency: Optional[float] = None
+        exec_quality_label = "NO_ALPACA_EXECUTION"
+        exec_recon_pass_rate: Optional[float] = None
+        fvb_comparison = None
+
+        if include_alpaca_execution:
+            try:
+                from mentisrex.research.forward_campaign.alpaca_execution import (
+                    AlpacaExecutionLedger,
+                    build_forward_vs_backtest_comparison,
+                )
+                exec_ledger = AlpacaExecutionLedger(self._campaign_dir)
+                exec_quality = exec_ledger.execution_quality_summary()
+                exec_cycles = exec_quality.get("n_cycles", 0)
+                exec_orders_submitted = exec_quality.get("total_orders_submitted", 0)
+                exec_orders_filled = exec_quality.get("total_orders_filled", 0)
+                fr = exec_quality.get("overall_fill_rate", "UNAVAILABLE")
+                exec_fill_rate = float(fr) if isinstance(fr, (int, float)) else None
+                sl = exec_quality.get("avg_slippage_bps", "UNAVAILABLE")
+                exec_avg_slippage = float(sl) if isinstance(sl, (int, float)) else None
+                lt = exec_quality.get("avg_latency_ms", "UNAVAILABLE")
+                exec_avg_latency = float(lt) if isinstance(lt, (int, float)) else None
+                rp = exec_quality.get("reconciliation_pass_rate", "UNAVAILABLE")
+                exec_recon_pass_rate = float(rp) if isinstance(rp, (int, float)) else None
+                exec_quality_label = (
+                    "ALPACA_PAPER" if exec_cycles > 0 else "NO_ALPACA_EXECUTION"
+                )
+                fvb_comparison = build_forward_vs_backtest_comparison(
+                    backtest, fwd_summary)
+            except Exception:
+                pass
+
         return ForwardEvidenceReport(
             # A
             strategy_id=self._strategy_id,
@@ -584,6 +638,17 @@ class EvidenceReportBuilder:
             evidence_stage=stage,
             insufficient_sample=insufficient,
             statistical_status_message=stat_msg,
+            # M29
+            alpaca_execution_cycles=exec_cycles,
+            alpaca_orders_submitted=exec_orders_submitted,
+            alpaca_orders_filled=exec_orders_filled,
+            alpaca_fill_rate=exec_fill_rate,
+            avg_slippage_bps=exec_avg_slippage,
+            avg_execution_latency_ms=exec_avg_latency,
+            execution_quality_label=exec_quality_label,
+            reconciliation_pass_rate=exec_recon_pass_rate,
+            execution_quality=exec_quality,
+            forward_vs_backtest=fvb_comparison,
         )
 
 

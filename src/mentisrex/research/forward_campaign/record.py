@@ -116,6 +116,14 @@ class ForwardCycleRecord:
     mode: str = "PAPER_FORWARD"
     sealed_at: str = ""          # ISO datetime string; non-empty ↔ immutable
 
+    # ── ALPACA EXECUTION (M29) ────────────────────────────────────────────────
+    broker: str = "SIMULATED"               # "ALPACA" when Alpaca paper was used
+    alpaca_account_id_masked: str = ""      # first 8 chars + "..." only
+    reconciliation_status: str = ""         # "PASS" | "FAIL" | "NOT_VERIFIED" | ""
+    positions_reconciled: bool = False
+    nav_reconciled: bool = False
+    nav_delta_bps: float = 0.0             # Alpaca equity vs internal NAV in bps
+
     # ── public API ────────────────────────────────────────────────────────────
 
     def seal(self, status: str = CycleStatus.SUCCESS) -> None:
