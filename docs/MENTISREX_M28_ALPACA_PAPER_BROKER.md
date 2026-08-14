@@ -306,6 +306,15 @@ REAL CAPITAL:   NO
 
 Endpoint confirmed: `https://paper-api.alpaca.markets`. Account identity verified as PAPER/ACTIVE. Order submitted and cancelled cleanly. No real capital deployed.
 
+### `pytest -m real_alpaca`
+
+```
+2 passed, 80 deselected in 4.11s
+
+TestRealAlpacaPaperConnectivity::test_connectivity_and_paper_account_verified  PASSED
+TestRealAlpacaPaperConnectivity::test_submit_and_cancel_market_order           PASSED
+```
+
 ---
 
 ## Security Model
@@ -323,7 +332,7 @@ Endpoint confirmed: `https://paper-api.alpaca.markets`. Account identity verifie
 
 1. **`research/PaperTradingLoop` integration** (skipped): `AlpacaPaperBroker` works with `paper/TradingEngine` but not `research/paper_trading/PaperTradingLoop` (M25 `ForwardCampaign` path). The `Broker` ABC there requires `execute_order(TradeRequest)` returning `TradeExecution`. Blocked by: `PaperTradingLoop` internal architecture. Unblocked by: adding an adapter that wraps `AlpacaPaperBroker` with the `Broker` ABC interface.
 
-2. **Real paper smoke test**: VERIFIED 2026-08-14. CLI commands confirmed. `TestRealAlpacaPaperConnectivity` pytest class requires credentials in env at test time.
+2. **Real paper smoke test**: VERIFIED 2026-08-14. CLI commands confirmed. `TestRealAlpacaPaperConnectivity` 2/2 PASSED.
 
 3. **`TradingEngine` equity curve tracking** (partial): `TradingEngine` accesses `broker.state.total_value` for equity curve. `AlpacaPaperBroker` exposes `get_account()` instead of a `PortfolioState` object. Full integration requires a lightweight `state` proxy that calls `get_account()` on demand. Unblocked by: adding a proxy class; deferred since `TradingEngine` + Alpaca integration is post-M28 scope.
 
@@ -353,7 +362,7 @@ Endpoint confirmed: `https://paper-api.alpaca.markets`. Account identity verifie
 | `real_alpaca` pytest marker registered | COMPLETE |
 | Security audit: no credentials in diff | COMPLETE — CLEAN |
 | Documentation | COMPLETE (this file) |
-| Real Alpaca paper smoke test | VERIFIED 2026-08-14 (PAPER/ACTIVE, order submitted + cancelled) |
+| Real Alpaca paper smoke test | VERIFIED 2026-08-14 (2/2 real-network tests PASSED) |
 | Strategy fingerprint `b69961b65bab226a500d71f45709945b` unchanged | CONFIRMED |
 | Live execution | NO |
 | Real capital at risk | NO |
