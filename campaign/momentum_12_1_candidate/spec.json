@@ -1,0 +1,54 @@
+{
+  "strategy_id": "mom-12-1-india-cs",
+  "strategy_name": "Cross-Sectional 12-1 Momentum (India, long-short)",
+  "version": "1.0.0",
+  "description": "Monthly cross-sectional 12-minus-1-month price momentum on the top-300 liquid NSE names; long top quintile / short bottom quintile, equal weight. Frozen research candidate \u2014 definition locked, forward paper evidence to accrue. SURVIVORSHIP-SUSPECT until PIT universe loaded.",
+  "strategy_type": "validated_deployable",
+  "research_artifact_id": null,
+  "validation_artifact_id": null,
+  "validation_status": "ROBUST_BACKTEST_SURVIVORSHIP_SUSPECT",
+  "universe_definition": {
+    "market": "NSE",
+    "screen": "top_dollar_volume",
+    "n": 300,
+    "min_history_months": 13
+  },
+  "required_data": [
+    "close",
+    "volume"
+  ],
+  "data_requirements": {},
+  "feature_definition": {
+    "signal": "mom_12_1",
+    "formula": "close[t-1m]/close[t-12m] - 1",
+    "skip_recent_month": true
+  },
+  "signal_definition": {
+    "long": "top_quintile",
+    "short": "bottom_quintile",
+    "weight": "equal",
+    "quantiles": 5
+  },
+  "rebalance_frequency": "monthly",
+  "portfolio_construction_config": {},
+  "risk_config": {},
+  "execution_config": {},
+  "transaction_cost_assumption": {
+    "commission_bps": 1.0,
+    "spread_bps": 3.0,
+    "slippage_bps": 2.0
+  },
+  "slippage_assumption": {},
+  "benchmark": "NIFTY500",
+  "base_currency": "INR",
+  "allowed_instruments": [],
+  "capital_assumption": 0.0,
+  "capacity_assumption": {
+    "half_sharpe_capacity_inr": ">1e9",
+    "impact_coef": 0.1
+  },
+  "model_version": "1.0.0",
+  "dependency_versions": {},
+  "creation_timestamp": "2026-08-15T10:08:58.623325",
+  "configuration_fingerprint": "823e007d57305aca21a869b3f9ee799e"
+}
