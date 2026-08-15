@@ -61,6 +61,12 @@ class FactorReport:
     quantile_profile: list = field(default_factory=list)  # avg fwd return per bucket
     monotonic_fraction: float = float("nan")
     turnover: float = float("nan")       # avg fraction of long book replaced
+    ls_turnover_series: list = field(default_factory=list)  # two-way per rebalance
+    # net-of-cost (populated only when a cost_model is supplied)
+    net_ls_return_series: list = field(default_factory=list)
+    net_ls_sharpe: float = float("nan")
+    net_ls_t_stat: float = float("nan")
+    cost_bps_per_period: float = float("nan")
 
     def to_dict(self) -> dict:
         d = self.__dict__.copy()
@@ -77,14 +83,17 @@ def evaluate_factor(
     ic_method: str = "spearman",
     periods_per_year: int = 12,
     neutralize_signal: bool = False,
+    cost_model=None,
 ) -> FactorReport:
     """Evaluate a factor over a sequence of aligned cross-sections.
 
     signals[t], forward_returns[t]: dict security_id -> value for rebalance date t.
     groups[t]/covariates[t]: optional per-date neutralization inputs. When
     `neutralize_signal` is set, the signal is residualized on them before scoring
-    (sector/beta/vol-neutral factor). Long book = top quantile; turnover is the
-    average fraction of that book replaced between consecutive dates.
+    (sector/beta/vol-neutral factor). Long = top quantile, short = bottom; turnover
+    is the average one-way fraction of a book replaced between consecutive dates.
+    When `cost_model` (a TransactionCostModel) is given, a net-of-cost long-short
+    series and its Sharpe/HAC-t are also produced (linear bps × two-way turnover).
     """
     if len(signals) != len(forward_returns):
         raise ValueError("signals and forward_returns must have equal length")
@@ -98,7 +107,8 @@ def evaluate_factor(
     mono_total = 0
     breadths: list[int] = []
     prev_long: set | None = None
-    turnovers: list[float] = []
+    prev_short: set | None = None
+    ls_turnover: list[float] = []            # two-way, aligned to ls_series periods
 
     for t in range(T):
         g = groups[t] if groups is not None else None
@@ -115,8 +125,6 @@ def evaluate_factor(
             ic_series.append(ic)
 
         qs = quantile_spread(s, f, q=q)
-        if qs["long_short"] == qs["long_short"]:
-            ls_series.append(qs["long_short"])
         for i, b in enumerate(qs["buckets"]):
             if b == b:
                 bucket_acc[i] += b
@@ -125,15 +133,25 @@ def evaluate_factor(
             mono_total += 1
             mono_hits += 1 if qs["monotonic"] else 0
 
-        # long book = names in the top quantile => turnover vs previous date
+        # long = top quantile, short = bottom quantile; two-way turnover vs prev
         pr = percentile_rank(s)
         long_names = {keys[i] for i in range(len(keys))
                       if pr[i] == pr[i] and pr[i] >= (q - 1) / q}
-        if prev_long is not None and long_names:
-            replaced = 1.0 - len(long_names & prev_long) / len(long_names)
-            turnovers.append(replaced)
+        short_names = {keys[i] for i in range(len(keys))
+                       if pr[i] == pr[i] and pr[i] < 1.0 / q}
+
+        if qs["long_short"] == qs["long_short"]:
+            ls_series.append(qs["long_short"])
+            long_repl = (1.0 - len(long_names & prev_long) / len(long_names)
+                         if prev_long is not None and long_names else 1.0)
+            short_repl = (1.0 - len(short_names & prev_short) / len(short_names)
+                          if prev_short is not None and short_names else 1.0)
+            ls_turnover.append(long_repl + short_repl)   # two-way (both legs)
+
         if long_names:
             prev_long = long_names
+        if short_names:
+            prev_short = short_names
 
     ic_arr = np.array(ic_series, dtype=float)
     ls_arr = np.array(ls_series, dtype=float)
@@ -146,7 +164,8 @@ def evaluate_factor(
         quantile_profile=[float(bucket_acc[i] / bucket_cnt[i]) if bucket_cnt[i] else float("nan")
                           for i in range(q)],
         monotonic_fraction=float(mono_hits / mono_total) if mono_total else float("nan"),
-        turnover=float(np.mean(turnovers)) if turnovers else float("nan"),
+        turnover=float(np.mean([x / 2.0 for x in ls_turnover[1:]])) if len(ls_turnover) > 1 else float("nan"),
+        ls_turnover_series=ls_turnover,
     )
 
     if ic_arr.size >= 2:
@@ -162,6 +181,19 @@ def evaluate_factor(
         _ = significance(ls_arr)          # ensures HAC fields computed identically
         h = hac_significance(ls_arr)
         rep.ls_t_stat, rep.ls_p_value = h["hac_t_stat"], h["hac_p_value"]
+
+        if cost_model is not None:
+            # per-period cost = linear_bps * two-way traded fraction of gross.
+            # Assumes equal-weight long and short legs; impact term omitted (needs
+            # per-name notionals/ADV — supplied by the backtest layer, not the IC panel).
+            lin = cost_model.linear_bps() / 1e4
+            tw = np.array(ls_turnover[:ls_arr.size], dtype=float)
+            costs = lin * tw
+            net = ls_arr - costs
+            rep.net_ls_return_series = [float(x) for x in net]
+            rep.net_ls_sharpe = sharpe(net, periods=periods_per_year)
+            rep.net_ls_t_stat = hac_significance(net)["hac_t_stat"]
+            rep.cost_bps_per_period = float(costs.mean() * 1e4)
 
     return rep
 

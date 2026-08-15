@@ -88,3 +88,23 @@ def test_ic_decay_curve():
         fwd2.append(dict(zip(names, 0.2 * s + rng.standard_normal(len(names)))))
     decay = ic_decay(signals, [fwd1, fwd2])
     assert decay[1] > decay[2]                           # IC decays with horizon
+
+
+def test_net_of_cost_reduces_sharpe():
+    from mentisrex.research.factor_research import evaluate_factor
+    from mentisrex.research.portfolio.costs import TransactionCostModel
+    signals, fwd = _panels(60, 50, edge=0.8, seed=0)
+    cm = TransactionCostModel(commission_bps=1.0, spread_bps=2.0, slippage_bps=1.0)
+    rep = evaluate_factor(signals, fwd, q=5, periods_per_year=12, cost_model=cm)
+    assert rep.net_ls_return_series                       # populated
+    assert rep.cost_bps_per_period > 0
+    assert rep.net_ls_sharpe <= rep.ls_sharpe             # costs only hurt
+    assert len(rep.ls_turnover_series) == len(rep.ls_return_series)
+
+
+def test_no_cost_model_leaves_net_empty():
+    from mentisrex.research.factor_research import evaluate_factor
+    signals, fwd = _panels(30, 40, edge=0.5, seed=1)
+    rep = evaluate_factor(signals, fwd)
+    assert rep.net_ls_return_series == []
+    assert rep.net_ls_sharpe != rep.net_ls_sharpe         # NaN

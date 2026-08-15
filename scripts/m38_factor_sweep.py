@@ -18,6 +18,7 @@ import pandas as pd
 
 from mentisrex.research.ensemble import combine
 from mentisrex.research.factor_campaign import FactorCampaign
+from mentisrex.research.portfolio.costs import TransactionCostModel
 
 TOP_N = 500
 DB = "data/analytics.duckdb"
@@ -98,16 +99,20 @@ def main():
 
     camp = FactorCampaign("data/factor_library.duckdb", t_min=2.0,
                           redundancy_threshold=0.8)
+    cm = TransactionCostModel(commission_bps=1.0, spread_bps=2.0, slippage_bps=1.0)  # 3 bps linear
     factors = {"mom_12_1": mom_12_1, "rev_1m": rev_1m, "low_vol_6m": low_vol}
     for name, fn in factors.items():
         sig, fwd = build_panels(me_close, me_dv, fn)
-        res = camp.run(name, name.split("_")[0], sig, fwd, periods_per_year=12)
+        res = camp.run(name, name.split("_")[0], sig, fwd, periods_per_year=12,
+                       cost_model=cm)
         r = res.report
         print(f"\n{name}: status={res.status}  periods={r.n_periods}  "
               f"avg_breadth={r.avg_breadth:.0f}")
         print(f"  IC mean={r.ic_mean:.4f}  IC-IR={r.ic_ir:.3f}  "
               f"HAC t={r.ic_t_stat:.2f} p={r.ic_p_value:.4f}  hit={r.ic_hit_rate:.2f}")
-        print(f"  long-short Sharpe={r.ls_sharpe:.2f}  turnover={r.turnover:.2f}")
+        print(f"  gross LS Sharpe={r.ls_sharpe:.2f}  turnover={r.turnover:.2f}  "
+              f"cost={r.cost_bps_per_period:.1f}bps/mo  net LS Sharpe={r.net_ls_sharpe:.2f}  "
+              f"net HAC t={r.net_ls_t_stat:.2f}")
         if res.redundant_with:
             print(f"  REDUNDANT with {res.redundant_with}")
 
