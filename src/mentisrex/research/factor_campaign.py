@@ -183,3 +183,13 @@ class FactorCampaign:
 
     def n_trials(self, family: str) -> int:
         return self._ledger.effective_trials(family)
+
+    def return_series(self, *, status: str = "PROMISING") -> dict:
+        """{name: long-short return series} for factors at a given status — the
+        independent-edge inputs for ensembling (M37)."""
+        with self._conn() as conn:
+            rows = conn.execute(
+                "SELECT name, ls_series FROM factor_evaluations WHERE status = ?",
+                [status],
+            ).fetchall()
+        return {r[0]: json.loads(r[1] or "[]") for r in rows}
