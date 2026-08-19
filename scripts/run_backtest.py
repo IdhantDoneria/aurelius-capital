@@ -45,12 +45,13 @@ WITH base AS (
     FROM ohlcv
     WHERE frequency = '1d'
       AND CAST(timestamp AS DATE) BETWEEN DATE '{warmup}' AND DATE '{end}'
-      -- US-listed only: exclude Indian (`.NS`, `.BO`) and other suffixed symbols
+      -- US-listed only: exclude foreign suffixes and CIK-format fundamentals IDs
       AND symbol NOT LIKE '%.NS'
       AND symbol NOT LIKE '%.BO'
       AND symbol NOT LIKE '%.L'
       AND symbol NOT LIKE '%.TO'
       AND symbol NOT LIKE '%.AX'
+      AND symbol NOT LIKE 'CIK%'
 ),
 windowed AS (
     SELECT
@@ -170,7 +171,7 @@ def main() -> None:
         start_date=BACKTEST_START,
         end_date=BACKTEST_END,
         max_position_pct=Decimal("0.025"),    # 2.5% per name × 40 = 100% invested
-        max_gross_leverage=Decimal("1.1"),    # long-only, minimal leverage
+        max_gross_leverage=Decimal("1.3"),    # headroom for rebalancing without rejecting AAPL/AMZN
         commission_rate=Decimal("0.0005"),    # 5 bps per side
         spread_bps=Decimal("3"),
         max_drawdown_halt=Decimal("0.99"),    # disable circuit breaker — full 4-year run
