@@ -9,8 +9,10 @@ Factors returned (all percentile-ranked 0-1):
 
 from __future__ import annotations
 
+import json
 import math
 from datetime import date
+from pathlib import Path
 
 import numpy as np
 
@@ -18,6 +20,17 @@ from mentisrex.factors.engine import FactorEngine
 from mentisrex.market_data.fundamentals.store import FundamentalsStore
 from mentisrex.market_data.storage.duckdb_store import DuckDBStore
 from mentisrex.research.cross_sectional import percentile_rank
+
+_DEFAULT_TICKER_MAP_PATHS = (
+    Path("raw/edgar/company_tickers.json"),
+    Path("./raw/edgar/company_tickers.json"),
+)
+
+
+def _load_cik_to_ticker(path: Path) -> dict[str, str]:
+    """Load {CIK0000...: TICKER} from EDGAR company_tickers.json."""
+    data = json.loads(path.read_text())
+    return {f"CIK{int(v['cik_str']):010d}": v["ticker"].upper() for v in data.values()}
 
 
 def _rank(mapping: dict[str, float]) -> dict[str, float]:
@@ -39,9 +52,20 @@ class USFactorEngine(FactorEngine):
 
     _FACTORS = ("momentum", "book_equity", "net_income", "roe")
 
-    def __init__(self, ohlcv_db_path: str, fundamentals_db_path: str) -> None:
+    def __init__(self, ohlcv_db_path: str, fundamentals_db_path: str,
+                 ticker_map_path: str | None = None) -> None:
         self._price = DuckDBStore(ohlcv_db_path)
         self._fund = FundamentalsStore(fundamentals_db_path)
+
+        # CIK → ticker map so fundamentals (CIK-keyed) align with OHLCV (ticker-keyed).
+        # analytics.duckdb stores Alpaca bars by ticker (AAPL) not CIK (CIK0000320193)
+        # when the bulk fetch ran without a resolved CIK mapping at fetch time.
+        self._cik_to_ticker: dict[str, str] = {}
+        candidates = [Path(ticker_map_path)] if ticker_map_path else list(_DEFAULT_TICKER_MAP_PATHS)
+        for p in candidates:
+            if p.exists():
+                self._cik_to_ticker = _load_cik_to_ticker(p)
+                break
 
     # ── public API ────────────────────────────────────────────────────────────
 
@@ -110,13 +134,20 @@ class USFactorEngine(FactorEngine):
                 raw[sym] = c1 / c12 - 1.0
         return _rank(raw)
 
+    def _remap(self, cik_dict: dict[str, float]) -> dict[str, float]:
+        """Remap CIK keys → ticker keys when the mapping file is available."""
+        if not self._cik_to_ticker:
+            return cik_dict
+        return {self._cik_to_ticker[cik]: v for cik, v in cik_dict.items()
+                if cik in self._cik_to_ticker}
+
     def _fundamental(
         self, concept: str, as_of: date, knowledge_date: date | None
     ) -> dict[str, float]:
         cross = self._fund.cross_section_as_of(concept, as_of, knowledge_date=knowledge_date)
         clean = {cik: v for cik, v in cross.items()
                  if v is not None and math.isfinite(v)}
-        return _rank(clean)
+        return _rank(self._remap(clean))
 
     def _roe(self, as_of: date, knowledge_date: date | None) -> dict[str, float]:
         ni = self._fund.cross_section_as_of("NetIncomeLoss", as_of, knowledge_date=knowledge_date)
@@ -134,4 +165,4 @@ class USFactorEngine(FactorEngine):
             if denom < 1.0:  # guard near-zero equity
                 continue
             raw[cik] = n / denom
-        return _rank(raw)
+        return _rank(self._remap(raw))

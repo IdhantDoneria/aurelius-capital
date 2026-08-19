@@ -76,17 +76,20 @@ class InMemoryDataFeed(DataFeed):
         return self._symbols
 
 
-def _resolve_connection(db_path: str):
+def _resolve_connection(db_path: str, *, read_only: bool = False):
     """Return a (connection, parquet_mode) tuple.
 
     1. .duckdb exists  → file connection (caller must close)
     2. Parquet exists  → in-memory connection with ohlcv view (persistent, don't close)
     3. Neither         → FileNotFoundError
+
+    read_only=True allows concurrent connections to the same file without lock
+    contention — always use this for signal functions that run alongside a feed.
     """
     import duckdb
 
     if Path(db_path).exists():
-        return duckdb.connect(db_path), False
+        return duckdb.connect(db_path, read_only=read_only), False
 
     stem = Path(db_path).stem
     for candidate in (
@@ -151,7 +154,8 @@ class DuckDBDataFeed(DataFeed):
         if self._parquet_conn is not None:
             return self._parquet_conn, False
         import duckdb
-        return duckdb.connect(self._db_path), True
+        # read_only=True allows concurrent signal functions to open the same file
+        return duckdb.connect(self._db_path, read_only=True), True
 
     def symbols(self) -> list[str]:
         where = self._where_clause()

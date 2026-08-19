@@ -54,6 +54,7 @@ class CrossSectionalFactorStrategy(Strategy):
         self._max_positions = max_positions
 
         self._last_rebalance_period: tuple | None = None
+        self._rebalance_date: date | None = None   # only emit signals on this date
         self._current_longs: set[str] = set()
         self._current_shorts: set[str] = set()
         self._prev_held: set[str] = set()   # symbols held last period (to emit FLAT)
@@ -75,6 +76,13 @@ class CrossSectionalFactorStrategy(Strategy):
         if period != self._last_rebalance_period:
             self._rebalance(bar_date)
             self._last_rebalance_period = period
+            self._rebalance_date = bar_date
+
+        # Only emit entry/exit signals on the first bar of the rebalance period.
+        # Between rebalances return [] — the engine holds existing positions unchanged.
+        # Emitting LONG every bar would re-order on every bar, causing ~20x trade count.
+        if bar_date != self._rebalance_date:
+            return []
 
         symbol = bar.symbol
         if symbol in self._current_longs:

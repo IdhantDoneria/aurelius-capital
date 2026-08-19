@@ -31,16 +31,22 @@ def momentum_signal(as_of: date) -> dict[str, float]:
     t_minus_1m = as_of - timedelta(days=21)
     t_minus_12m = as_of - timedelta(days=252)
 
-    # Resolve connection the same way the feed does (duckdb file or Parquet)
+    # read_only=True: signal fn runs concurrently with the feed cursor on the same file
     from mentisrex.backtesting.data.feed import _resolve_connection
-    conn, parquet_mode = _resolve_connection(DB_PATH)
+    conn, parquet_mode = _resolve_connection(DB_PATH, read_only=True)
     try:
         rows = conn.execute(
             """
             WITH prices AS (
                 SELECT symbol,
-                    MAX(CASE WHEN CAST(timestamp AS DATE) <= ? THEN close END) AS close_1m,
-                    MAX(CASE WHEN CAST(timestamp AS DATE) <= ? THEN close END) AS close_12m
+                    -- arg_max returns close at the LATEST timestamp <= target date,
+                    -- not the MAX price. This is the actual 1-month-ago close.
+                    arg_max(close, timestamp) FILTER (
+                        WHERE CAST(timestamp AS DATE) <= ?
+                    ) AS close_1m,
+                    arg_max(close, timestamp) FILTER (
+                        WHERE CAST(timestamp AS DATE) <= ?
+                    ) AS close_12m
                 FROM ohlcv
                 WHERE frequency = '1d'
                   AND CAST(timestamp AS DATE) BETWEEN ? AND ?
@@ -48,7 +54,7 @@ def momentum_signal(as_of: date) -> dict[str, float]:
             )
             SELECT symbol, (close_1m - close_12m) / NULLIF(close_12m, 0) AS momentum
             FROM prices
-            WHERE close_1m IS NOT NULL AND close_12m IS NOT NULL
+            WHERE close_1m IS NOT NULL AND close_12m IS NOT NULL AND close_12m != 0
             """,
             [t_minus_1m.isoformat(), t_minus_12m.isoformat(),
              t_minus_12m.isoformat(), t_minus_1m.isoformat()],
