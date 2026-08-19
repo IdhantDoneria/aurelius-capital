@@ -37,3 +37,6 @@ data/
 
 .claude/worktrees/
 logs/
+
+# Raw data cache (EDGAR JSON, NSE bhavcopy CSVs — too large for git)
+raw/
