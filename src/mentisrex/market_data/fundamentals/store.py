@@ -91,23 +91,57 @@ _FACT_COLS = (
 )
 
 
+def _parquet_dir_for(db_path: str) -> Path | None:
+    stem = Path(db_path).stem
+    for base in (Path(db_path).parent / "parquet", Path("data/parquet")):
+        d = base / stem
+        if d.exists() and any(d.glob("*.parquet")):
+            return d
+    return None
+
+
 class FundamentalsStore:
-    """Append-only PIT fact ledger + filing metadata + ingestion log."""
+    """Append-only PIT fact ledger + filing metadata + ingestion log.
+
+    Auto-detects Parquet backend: if the .duckdb file does not exist but
+    data/parquet/fundamentals/*.parquet do, opens in-memory DuckDB with views.
+    All read/query methods work unchanged. write_facts() raises RuntimeError.
+    """
 
     def __init__(self, db_path: str = "./data/fundamentals.duckdb") -> None:
         self._path = db_path
         self._in_memory = db_path == ":memory:"
+        self._parquet_mode = False
         self._persistent_conn: duckdb.DuckDBPyConnection | None = None
-        if not self._in_memory:
-            Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-        else:
+
+        if self._in_memory:
             self._persistent_conn = duckdb.connect(":memory:")
+            with self._conn() as conn:
+                conn.execute(_CREATE)
+            return
+
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+
+        if not Path(db_path).exists():
+            parquet_dir = _parquet_dir_for(db_path)
+            if parquet_dir is not None:
+                self._parquet_mode = True
+                self._persistent_conn = duckdb.connect(":memory:")
+                for table in ("fundamental_facts", "filings", "ingestion_log"):
+                    pq = parquet_dir / f"{table}.parquet"
+                    if pq.exists():
+                        self._persistent_conn.execute(
+                            f"CREATE VIEW {table} AS SELECT * FROM read_parquet('{pq}')"
+                        )
+                logger.info("fundamentals_parquet_mode", parquet_dir=str(parquet_dir))
+                return
+
         with self._conn() as conn:
             conn.execute(_CREATE)
 
     @contextmanager
     def _conn(self) -> Generator[duckdb.DuckDBPyConnection, None, None]:
-        if self._in_memory and self._persistent_conn is not None:
+        if (self._in_memory or self._parquet_mode) and self._persistent_conn is not None:
             yield self._persistent_conn
         else:
             conn = duckdb.connect(self._path)
@@ -127,6 +161,11 @@ class FundamentalsStore:
         """Append XBRL facts. INSERT OR REPLACE on the full identity PK (which
         includes accession) is idempotent per filing but never collapses distinct
         filings of the same period — that's how restatements are preserved."""
+        if self._parquet_mode:
+            raise RuntimeError(
+                "FundamentalsStore is in read-only Parquet mode. "
+                "Delete data/parquet/fundamentals/ and re-run backfill_fundamentals.py to rebuild."
+            )
         if not facts:
             return 0
         import pandas as pd

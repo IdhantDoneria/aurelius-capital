@@ -48,26 +48,61 @@ CREATE TABLE IF NOT EXISTS ohlcv (
 """
 
 
+def _parquet_dir_for(db_path: str) -> Path | None:
+    """Return the Parquet directory for a given .duckdb path, or None if it doesn't exist."""
+    stem = Path(db_path).stem
+    # look relative to the db file's parent, then relative to cwd
+    for base in (Path(db_path).parent / "parquet", Path("data/parquet")):
+        d = base / stem
+        if d.exists() and any(d.glob("*.parquet")):
+            return d
+    return None
+
+
 class DuckDBStore:
-    """DuckDB-backed analytical store for OHLCV data."""
+    """DuckDB-backed analytical store for OHLCV data.
+
+    Auto-detects Parquet backend: if the .duckdb file does not exist but
+    data/parquet/{stem}/ohlcv.parquet does, opens an in-memory DuckDB with a
+    view over the Parquet files. All read methods work unchanged; write_bars()
+    raises RuntimeError in this mode (re-run ingest to rebuild the .duckdb, then
+    re-export with optimize_duckdb.py).
+    """
 
     def __init__(self, db_path: str = "./data/analytics.duckdb") -> None:
         self._path = db_path
         self._in_memory = db_path == ":memory:"
+        self._parquet_mode = False
         self._persistent_conn: duckdb.DuckDBPyConnection | None = None
 
-        if not self._in_memory:
-            Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-        else:
+        if self._in_memory:
             # In-memory: must reuse one connection or the schema disappears between calls
             self._persistent_conn = duckdb.connect(":memory:")
+            with self._conn() as conn:
+                conn.execute(_CREATE_OHLCV)
+            return
+
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+
+        if not Path(db_path).exists():
+            parquet_dir = _parquet_dir_for(db_path)
+            if parquet_dir is not None:
+                # Parquet backend: in-memory DuckDB + view over Parquet files
+                self._parquet_mode = True
+                self._persistent_conn = duckdb.connect(":memory:")
+                pq = parquet_dir / "ohlcv.parquet"
+                self._persistent_conn.execute(
+                    f"CREATE VIEW ohlcv AS SELECT * FROM read_parquet('{pq}')"
+                )
+                logger.info("duckdb_parquet_mode", parquet=str(pq))
+                return
 
         with self._conn() as conn:
             conn.execute(_CREATE_OHLCV)
 
     @contextmanager
     def _conn(self) -> Generator[duckdb.DuckDBPyConnection, None, None]:
-        if self._in_memory and self._persistent_conn is not None:
+        if (self._in_memory or self._parquet_mode) and self._persistent_conn is not None:
             yield self._persistent_conn
         else:
             conn = duckdb.connect(self._path)
@@ -89,10 +124,18 @@ class DuckDBStore:
     def write_bars(self, bars: list[dict]) -> int:
         """Upsert bars into DuckDB. Overwrites on (symbol, timestamp, frequency) conflict.
 
+        Raises RuntimeError in Parquet-backend mode — delete the Parquet, re-run
+        the ingest script to rebuild a writable .duckdb, then re-export.
+
         Bulk path: register the batch as a DataFrame and INSERT OR REPLACE ... SELECT.
         ~260x faster than per-row executemany (measured), so institutional-scale
         loads (tens of millions of rows) complete in minutes, not hours.
         """
+        if self._parquet_mode:
+            raise RuntimeError(
+                "DuckDBStore is in read-only Parquet mode. "
+                "To ingest new bars: delete data/parquet/analytics/ and re-run the ingest script."
+            )
         if not bars:
             return 0
         import pandas as pd
