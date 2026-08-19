@@ -116,7 +116,11 @@ class PerformanceCalculator:
         days = max((timestamps[-1] - timestamps[0]).days, 1)
         years = days / 365.25
         if years > 0:
-            metrics.cagr = (equities[-1] / equities[0]) ** (1.0 / years) - 1
+            ratio = equities[-1] / equities[0]
+            if ratio <= 0:
+                metrics.cagr = -1.0   # total wipeout
+            else:
+                metrics.cagr = ratio ** (1.0 / years) - 1
 
         # ── risk ─────────────────────────────────────────────────────────────
         if len(daily_returns) > 1:

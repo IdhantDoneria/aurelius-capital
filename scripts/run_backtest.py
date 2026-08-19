@@ -155,8 +155,8 @@ def main() -> None:
     config = BacktestConfig(
         start_date=BACKTEST_START,
         end_date=BACKTEST_END,
-        max_position_pct=Decimal("0.02"),     # 2% per name → 50 longs + 50 shorts
-        max_gross_leverage=Decimal("2.5"),    # 250% gross
+        max_position_pct=Decimal("0.01"),     # 1% per name → 50 longs + 50 shorts = 100% gross
+        max_gross_leverage=Decimal("1.5"),    # 150% gross — survivable through COVID
         commission_rate=Decimal("0.0005"),    # 5 bps per side
         spread_bps=Decimal("3"),
         max_drawdown_halt=Decimal("0.99"),    # disable circuit breaker — full 4-year run
