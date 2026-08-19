@@ -45,18 +45,30 @@ WITH base AS (
     FROM ohlcv
     WHERE frequency = '1d'
       AND CAST(timestamp AS DATE) BETWEEN DATE '{warmup}' AND DATE '{end}'
+      -- US-listed only: exclude Indian (`.NS`, `.BO`) and other suffixed symbols
+      AND symbol NOT LIKE '%.NS'
+      AND symbol NOT LIKE '%.BO'
+      AND symbol NOT LIKE '%.L'
+      AND symbol NOT LIKE '%.TO'
+      AND symbol NOT LIKE '%.AX'
 ),
 windowed AS (
     SELECT
         symbol,
         dt,
+        adj_close,
+        adj_volume,
         LAG(adj_close, 5)  OVER (PARTITION BY symbol ORDER BY dt) AS c5,
         LAG(adj_close, 25) OVER (PARTITION BY symbol ORDER BY dt) AS c25,
         LAG(adj_volume, 1) OVER (PARTITION BY symbol ORDER BY dt) AS vol_prev,
         AVG(adj_volume)    OVER (
             PARTITION BY symbol ORDER BY dt
             ROWS BETWEEN 25 PRECEDING AND 1 PRECEDING
-        )                                                 AS vol_avg20
+        )                                                 AS vol_avg20,
+        AVG(adj_close * adj_volume) OVER (
+            PARTITION BY symbol ORDER BY dt
+            ROWS BETWEEN 25 PRECEDING AND 1 PRECEDING
+        )                                                 AS avg_dollar_vol
     FROM base
 )
 SELECT
@@ -66,11 +78,14 @@ SELECT
     * LEAST(GREATEST(vol_prev / NULLIF(vol_avg20, 0), 0.5), 5.0) AS score
 FROM windowed
 WHERE dt >= DATE '{start}'
-  AND c5        IS NOT NULL
-  AND c25       IS NOT NULL
-  AND vol_prev  IS NOT NULL
-  AND vol_avg20 IS NOT NULL
-  AND c25 > 0
+  AND c5            IS NOT NULL
+  AND c25           IS NOT NULL
+  AND vol_prev      IS NOT NULL
+  AND vol_avg20     IS NOT NULL
+  AND avg_dollar_vol IS NOT NULL
+  AND c25 >= 5.0              -- minimum $5 price (no penny stocks)
+  AND adj_close >= 5.0        -- current price also >= $5
+  AND avg_dollar_vol >= 500000 -- minimum $500k avg daily dollar volume
 ORDER BY dt, symbol
 """
 
@@ -145,18 +160,17 @@ def main() -> None:
 
     strategy = CrossSectionalFactorStrategy(
         signal_fn=signal_fn,
-        rebalance_freq="daily",
-        q_long=0.15,
-        q_short=0.15,
-        long_only=False,
-        max_positions=50,
+        rebalance_freq="weekly",      # weekly: ~250 rebalances over 4y, high turnover, not HFT
+        q_long=0.20,                  # top 20% by score
+        long_only=True,               # long-only: survives momentum crashes (COVID)
+        max_positions=40,
     )
 
     config = BacktestConfig(
         start_date=BACKTEST_START,
         end_date=BACKTEST_END,
-        max_position_pct=Decimal("0.01"),     # 1% per name → 50 longs + 50 shorts = 100% gross
-        max_gross_leverage=Decimal("1.5"),    # 150% gross — survivable through COVID
+        max_position_pct=Decimal("0.025"),    # 2.5% per name × 40 = 100% invested
+        max_gross_leverage=Decimal("1.1"),    # long-only, minimal leverage
         commission_rate=Decimal("0.0005"),    # 5 bps per side
         spread_bps=Decimal("3"),
         max_drawdown_halt=Decimal("0.99"),    # disable circuit breaker — full 4-year run
