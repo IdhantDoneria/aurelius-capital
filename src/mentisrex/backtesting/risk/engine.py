@@ -63,15 +63,18 @@ class RiskEngine:
                 f"{-self._config.max_drawdown_halt:.1%}; halting"
             )
 
-        # 2. Position size check (only for new buys/new shorts — not for closes)
+        # 2. Position size check — skip for closing/reducing orders
+        current_qty = state.position(order.symbol).quantity
+        is_closing = (order.side == Side.SELL and current_qty > 0) or (
+            order.side == Side.BUY and current_qty < 0
+        )
         price = state.last_price(order.symbol)
-        if price > 0:
+        if not is_closing and price > 0:
             order_value = order.quantity * price
             nav = state.total_value
             if nav > 0:
                 projected_position_pct = order_value / nav
                 if projected_position_pct > self._config.max_position_pct * Decimal("2"):
-                    # Allow up to 2x max_position_pct to accommodate rebalancing
                     return RiskCheckResult.fail(
                         f"Order notional {order_value:.0f} ({projected_position_pct:.1%} of NAV) "
                         f"exceeds 2x max_position_pct={self._config.max_position_pct:.1%}"
