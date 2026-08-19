@@ -106,12 +106,16 @@ class TradingEngine:
                 else:
                     self._journal.record("order", symbol=req.symbol, resting=res.resting)
 
-        self.equity_curve.append(EquityPoint(tick.timestamp, float(self._broker.state.total_value)))
+        try:
+            equity = float(self._broker.account()["equity"])
+        except Exception:
+            equity = float(getattr(getattr(self._broker, "state", None), "total_value", 0))
+        self.equity_curve.append(EquityPoint(tick.timestamp, equity))
         self.health.ticks += 1
         self.health.last_tick_ts = tick.timestamp.isoformat()
         if self.health.ticks % self._heartbeat_every == 0:
             self._journal.record(
-                "heartbeat", ticks=self.health.ticks, equity=self._broker.state.total_value
+                "heartbeat", ticks=self.health.ticks, equity=equity
             )
 
     # ── run: error recovery per tick ──────────────────────────────────────────

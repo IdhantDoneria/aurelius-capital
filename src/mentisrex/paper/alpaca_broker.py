@@ -244,8 +244,8 @@ class AlpacaPaperBroker:
         _assert_no_live_trading()
 
         # 2. Validate credentials — fail closed on missing.
-        key = api_key or os.environ.get("ALPACA_PAPER_API_KEY", "")
-        secret = api_secret or os.environ.get("ALPACA_PAPER_API_SECRET", "")
+        key = api_key or os.environ.get("ALPACA_PAPER_API_KEY") or os.environ.get("ALPACA_API_KEY", "")
+        secret = api_secret or os.environ.get("ALPACA_PAPER_API_SECRET") or os.environ.get("ALPACA_API_SECRET", "")
         if not key or not secret:
             raise PaperAccountVerificationError(
                 "Missing Alpaca paper credentials. "
