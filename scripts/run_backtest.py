@@ -30,6 +30,9 @@ from mentisrex.backtesting.config import BacktestConfig
 from mentisrex.backtesting.data.feed import DuckDBDataFeed, _resolve_connection
 from mentisrex.backtesting.engine import BacktestEngine
 from mentisrex.backtesting.strategy.cross_sectional import CrossSectionalFactorStrategy
+from mentisrex.core.logging import configure_logging
+
+configure_logging(log_level="WARNING", json_logs=False)  # suppress per-fill debug noise
 
 DB_PATH = str(_ROOT / "data" / "analytics.duckdb")
 
