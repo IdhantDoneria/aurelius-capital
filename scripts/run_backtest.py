@@ -1,94 +1,167 @@
-"""End-to-end backtest example: 12-1 month momentum, long-only, 2020-2024.
+"""Volume-momentum cross-sectional strategy backtest, 2020-2024.
+
+Strategy:
+  Signal = 20d→5d price momentum × clamp(yesterday_vol / 20d_avg_vol, 0.5, 5.0)
+  Daily rebalancing. Long top 15%, short bottom 15%. 50 positions each side.
+  Position size: 2% NAV per name (100% gross long + 100% gross short = 2x leverage).
+
+Root-cause fix for 4-year cutoff:
+  All signals are pre-computed in ONE SQL query before iter_bars() starts.
+  The signal fn is then a pure dict lookup — zero DB connections during the loop.
+  This eliminates the DuckDB shared-buffer corruption that stopped the feed at
+  ~March 2020 when momentum_signal() opened a new connection per rebalance call.
 
 Usage:
     .venv/bin/python scripts/run_backtest.py
-
-Data: data/analytics.duckdb (or Parquet fallback at data/parquet/analytics/ohlcv.parquet).
 """
 
 from __future__ import annotations
 
 import sys
+from collections import defaultdict
 from datetime import date, timedelta
+from decimal import Decimal
 from pathlib import Path
 
-# Resolve project root so this runs from any cwd
 _ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(_ROOT / "src"))
 
-import duckdb
-
 from mentisrex.backtesting.config import BacktestConfig
-from mentisrex.backtesting.data.feed import DuckDBDataFeed
+from mentisrex.backtesting.data.feed import DuckDBDataFeed, _resolve_connection
 from mentisrex.backtesting.engine import BacktestEngine
 from mentisrex.backtesting.strategy.cross_sectional import CrossSectionalFactorStrategy
 
 DB_PATH = str(_ROOT / "data" / "analytics.duckdb")
 
+# ── Signal pre-computation ────────────────────────────────────────────────────
 
-def momentum_signal(as_of: date) -> dict[str, float]:
-    """12-1 month cross-sectional momentum: return from 12m ago to 1m ago."""
-    t_minus_1m = as_of - timedelta(days=21)
-    t_minus_12m = as_of - timedelta(days=252)
+_SIGNAL_SQL = """
+WITH base AS (
+    SELECT
+        symbol,
+        CAST(timestamp AS DATE)                           AS dt,
+        close * adjustment_factor                         AS adj_close,
+        volume / NULLIF(adjustment_factor, 0)             AS adj_volume
+    FROM ohlcv
+    WHERE frequency = '1d'
+      AND CAST(timestamp AS DATE) BETWEEN DATE '{warmup}' AND DATE '{end}'
+),
+windowed AS (
+    SELECT
+        symbol,
+        dt,
+        LAG(adj_close, 5)  OVER (PARTITION BY symbol ORDER BY dt) AS c5,
+        LAG(adj_close, 25) OVER (PARTITION BY symbol ORDER BY dt) AS c25,
+        LAG(adj_volume, 1) OVER (PARTITION BY symbol ORDER BY dt) AS vol_prev,
+        AVG(adj_volume)    OVER (
+            PARTITION BY symbol ORDER BY dt
+            ROWS BETWEEN 25 PRECEDING AND 1 PRECEDING
+        )                                                 AS vol_avg20
+    FROM base
+)
+SELECT
+    symbol,
+    dt,
+    (c5 - c25) / NULLIF(c25, 0)
+    * LEAST(GREATEST(vol_prev / NULLIF(vol_avg20, 0), 0.5), 5.0) AS score
+FROM windowed
+WHERE dt >= DATE '{start}'
+  AND c5        IS NOT NULL
+  AND c25       IS NOT NULL
+  AND vol_prev  IS NOT NULL
+  AND vol_avg20 IS NOT NULL
+  AND c25 > 0
+ORDER BY dt, symbol
+"""
 
-    # read_only=True: signal fn runs concurrently with the feed cursor on the same file
-    from mentisrex.backtesting.data.feed import _resolve_connection
-    conn, parquet_mode = _resolve_connection(DB_PATH, read_only=True)
+
+def precompute_signals(db_path: str, start: date, end: date) -> dict[date, dict[str, float]]:
+    """One-shot query → dict[date -> {symbol: score}]. No DB connections after this."""
+    # 60 extra calendar days so the 25-bar window is warm by backtest start
+    warmup = start - timedelta(days=60)
+    sql = _SIGNAL_SQL.format(
+        warmup=warmup.isoformat(),
+        start=start.isoformat(),
+        end=end.isoformat(),
+    )
+    conn, parquet_mode = _resolve_connection(db_path, read_only=True)
     try:
-        rows = conn.execute(
-            """
-            WITH prices AS (
-                SELECT symbol,
-                    -- arg_max returns close at the LATEST timestamp <= target date,
-                    -- not the MAX price. This is the actual 1-month-ago close.
-                    arg_max(close, timestamp) FILTER (
-                        WHERE CAST(timestamp AS DATE) <= ?
-                    ) AS close_1m,
-                    arg_max(close, timestamp) FILTER (
-                        WHERE CAST(timestamp AS DATE) <= ?
-                    ) AS close_12m
-                FROM ohlcv
-                WHERE frequency = '1d'
-                  AND CAST(timestamp AS DATE) BETWEEN ? AND ?
-                GROUP BY symbol
-            )
-            SELECT symbol, (close_1m - close_12m) / NULLIF(close_12m, 0) AS momentum
-            FROM prices
-            WHERE close_1m IS NOT NULL AND close_12m IS NOT NULL AND close_12m != 0
-            """,
-            [t_minus_1m.isoformat(), t_minus_12m.isoformat(),
-             t_minus_12m.isoformat(), t_minus_1m.isoformat()],
-        ).fetchall()
-    except Exception:
-        return {}
+        rows = conn.execute(sql).fetchall()
     finally:
         if not parquet_mode:
             conn.close()
 
-    return {row[0]: float(row[1]) for row in rows if row[1] is not None}
+    signals: dict[date, dict[str, float]] = defaultdict(dict)
+    for symbol, dt, score in rows:
+        if score is not None:
+            signals[dt][symbol] = float(score)
 
+    total_pairs = sum(len(v) for v in signals.values())
+    print(f"[precompute] {len(signals)} signal dates, {total_pairs:,} (symbol,date) pairs")
+    if signals:
+        first_dt = min(signals)
+        print(f"[precompute] first date={first_dt}, symbols on that date={len(signals[first_dt])}")
+    return dict(signals)
+
+
+def print_data_stats(db_path: str) -> None:
+    conn, parquet_mode = _resolve_connection(db_path, read_only=True)
+    try:
+        rows = conn.execute(
+            "SELECT YEAR(CAST(timestamp AS DATE)) AS yr, COUNT(*) AS bars,"
+            " COUNT(DISTINCT symbol) AS syms "
+            "FROM ohlcv WHERE frequency='1d' GROUP BY yr ORDER BY yr"
+        ).fetchall()
+    finally:
+        if not parquet_mode:
+            conn.close()
+    print("[data] OHLCV rows per year:")
+    for yr, bars, syms in rows:
+        print(f"  {yr}: {bars:>10,} bars  {syms:>6,} symbols")
+
+
+# ── Entry point ───────────────────────────────────────────────────────────────
 
 def main() -> None:
+    BACKTEST_START = date(2020, 1, 2)
+    BACKTEST_END   = date(2024, 12, 31)
+
+    print_data_stats(DB_PATH)
+    print()
+
+    print("[run] Pre-computing volume-momentum signals...")
+    signals = precompute_signals(DB_PATH, BACKTEST_START, BACKTEST_END)
+    print()
+
+    # Zero DB activity from this point on — no cursor corruption possible
+    signal_fn = lambda d: signals.get(d, {})
+
     feed = DuckDBDataFeed(
         db_path=DB_PATH,
         frequency="1d",
-        start_date=date(2019, 1, 1),   # extra year for warm-up
-        end_date=date(2024, 12, 31),
+        start_date=BACKTEST_START,
+        end_date=BACKTEST_END,
     )
 
     strategy = CrossSectionalFactorStrategy(
-        signal_fn=momentum_signal,
-        rebalance_freq="monthly",
-        q_long=0.2,
-        long_only=True,
+        signal_fn=signal_fn,
+        rebalance_freq="daily",
+        q_long=0.15,
+        q_short=0.15,
+        long_only=False,
         max_positions=50,
     )
 
     config = BacktestConfig(
-        start_date=date(2020, 1, 1),
-        end_date=date(2024, 12, 31),
+        start_date=BACKTEST_START,
+        end_date=BACKTEST_END,
+        max_position_pct=Decimal("0.02"),     # 2% per name → 50 longs + 50 shorts
+        max_gross_leverage=Decimal("2.5"),    # 250% gross
+        commission_rate=Decimal("0.0005"),    # 5 bps per side
+        spread_bps=Decimal("3"),
     )
 
+    print("[run] Starting engine...")
     engine = BacktestEngine(strategy=strategy, data_feed=feed, config=config)
     report = engine.run()
     print(report.summary())
