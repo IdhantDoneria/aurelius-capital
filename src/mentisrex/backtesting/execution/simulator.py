@@ -110,6 +110,8 @@ class ExecutionSimulator:
     def _fill_quantity(self, order_qty: Decimal, bar_volume: Decimal) -> Decimal:
         """Apply volume participation limit."""
         if bar_volume <= 0:
-            return order_qty  # no volume data — assume full fill
+            # Zero-volume bar: no liquidity. Use a minimal fallback (100 shares) rather
+            # than full fill — avoids silently executing large orders on illiquid/bad bars.
+            return min(order_qty, Decimal("100"))
         max_fill = bar_volume * self._max_fill_pct_adv
         return min(order_qty, max_fill)

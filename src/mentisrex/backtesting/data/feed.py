@@ -180,7 +180,7 @@ class DuckDBDataFeed(DataFeed):
             f"SELECT symbol, timestamp, frequency, "
             f"open * adjustment_factor, high * adjustment_factor, "
             f"low * adjustment_factor, close * adjustment_factor, "
-            f"volume / adjustment_factor, vwap "
+            f"volume / NULLIF(adjustment_factor, 0), vwap "
             f"FROM ohlcv {where} ORDER BY timestamp, symbol"
         )
         conn, owned = self._get_conn()

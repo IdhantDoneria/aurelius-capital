@@ -84,7 +84,7 @@ class PortfolioManager:
         if signal.direction == Direction.SHORT:
             target_value = -target_value
 
-        target_qty = int(target_value / price)  # integer shares
+        target_qty = int((target_value / price).to_integral_value(rounding="ROUND_DOWN"))  # floor to whole shares
         delta_qty = Decimal(str(target_qty)) - current_qty
 
         if delta_qty == 0:

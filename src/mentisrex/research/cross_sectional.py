@@ -57,7 +57,7 @@ def percentile_rank(x) -> np.ndarray:
     if k <= 1:
         out = np.full(r.shape, np.nan)
         if k == 1:
-            out[m] = 0.5
+            out[m] = 0.5  # singleton cross-section: median rank by convention
         return out
     out = np.full(r.shape, np.nan)
     out[m] = (r[m] - 1.0) / (k - 1.0)

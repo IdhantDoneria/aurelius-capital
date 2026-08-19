@@ -245,7 +245,7 @@ class FundamentalsStore:
             row = conn.execute(
                 f"""SELECT value, period_end, filing_date, accession, unit, form, fiscal_period
                     FROM fundamental_facts WHERE {' AND '.join(clauses)}
-                    ORDER BY period_end DESC, filing_date DESC LIMIT 1""",
+                    ORDER BY period_end DESC, filing_date DESC, accession DESC LIMIT 1""",
                 params,
             ).fetchone()
         if row is None:
