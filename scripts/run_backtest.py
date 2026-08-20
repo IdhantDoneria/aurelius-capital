@@ -297,20 +297,17 @@ def main() -> None:
 
     strategy = CrossSectionalFactorStrategy(
         signal_fn=signal_fn,
-        short_signal_fn=short_signal_fn,
-        regime_fn=regime_fn,
         rebalance_freq="weekly",
-        q_long=0.20,                  # top 20% by long score → ~40 longs
-        q_short=0.20,                 # bottom 20% of short universe → ~40 shorts
-        long_only=False,              # long-short with regime gate
+        q_long=0.20,                  # top 20% by JT 12M-1M score → ~40 longs
+        long_only=True,               # short book destroyed portfolio; needs fundamentals data to short correctly
         max_positions=40,
     )
 
     config = BacktestConfig(
         start_date=BACKTEST_START,
         end_date=BACKTEST_END,
-        max_position_pct=Decimal("0.025"),    # 2.5% per name
-        max_gross_leverage=Decimal("2.5"),    # 100% long + 100% short + rebalance buffer
+        max_position_pct=Decimal("0.025"),    # 2.5% per name × 40 = 100% invested
+        max_gross_leverage=Decimal("2.0"),    # rebalancing transiently exceeds 1.0x
         commission_rate=Decimal("0.0005"),    # 5 bps per side
         spread_bps=Decimal("3"),
         max_drawdown_halt=Decimal("0.99"),    # disable circuit breaker — full 4-year run
