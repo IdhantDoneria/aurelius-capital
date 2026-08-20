@@ -97,34 +97,138 @@ WHERE dt >= DATE '{start}'
 ORDER BY dt, symbol
 """
 
+# Short universe: same momentum signal, stricter liquidity (large-caps only)
+_SHORT_SIGNAL_SQL = """
+WITH base AS (
+    SELECT
+        symbol,
+        CAST(timestamp AS DATE)                           AS dt,
+        close * adjustment_factor                         AS adj_close,
+        volume / NULLIF(adjustment_factor, 0)             AS adj_volume
+    FROM ohlcv
+    WHERE frequency = '1d'
+      AND CAST(timestamp AS DATE) BETWEEN DATE '{warmup}' AND DATE '{end}'
+      AND symbol NOT LIKE '%.NS'
+      AND symbol NOT LIKE '%.BO'
+      AND symbol NOT LIKE '%.L'
+      AND symbol NOT LIKE '%.TO'
+      AND symbol NOT LIKE '%.AX'
+      AND symbol NOT LIKE 'CIK%'
+),
+windowed AS (
+    SELECT
+        symbol, dt, adj_close, adj_volume,
+        LAG(adj_close, 252) OVER (PARTITION BY symbol ORDER BY dt) AS c252,
+        LAG(adj_close, 21)  OVER (PARTITION BY symbol ORDER BY dt) AS c21,
+        LAG(adj_volume, 1)  OVER (PARTITION BY symbol ORDER BY dt) AS vol_prev,
+        AVG(adj_volume)     OVER (
+            PARTITION BY symbol ORDER BY dt
+            ROWS BETWEEN 25 PRECEDING AND 1 PRECEDING
+        )                                                  AS vol_avg20,
+        AVG(adj_close * adj_volume) OVER (
+            PARTITION BY symbol ORDER BY dt
+            ROWS BETWEEN 25 PRECEDING AND 1 PRECEDING
+        )                                                  AS avg_dollar_vol
+    FROM base
+)
+SELECT symbol, dt,
+    (c21 - c252) / NULLIF(c252, 0)
+    * LEAST(GREATEST(vol_prev / NULLIF(vol_avg20, 0), 0.5), 5.0) AS score
+FROM windowed
+WHERE dt >= DATE '{start}'
+  AND c252 IS NOT NULL AND c21 IS NOT NULL
+  AND vol_prev IS NOT NULL AND vol_avg20 IS NOT NULL
+  AND avg_dollar_vol IS NOT NULL
+  AND c252 >= 10.0              -- higher floor for shorts ($10 min)
+  AND adj_close >= 10.0
+  AND avg_dollar_vol >= 5000000  -- $5M ADV — liquid enough to borrow
+ORDER BY dt, symbol
+"""
+
+# SPY 20-day realized vol as regime indicator (proxy for VIX)
+_REGIME_SQL = """
+WITH spy AS (
+    SELECT CAST(timestamp AS DATE) AS dt,
+           close * adjustment_factor AS adj_close
+    FROM ohlcv
+    WHERE frequency = '1d'
+      AND symbol = 'SPY'
+      AND CAST(timestamp AS DATE) BETWEEN DATE '{warmup}' AND DATE '{end}'
+),
+rets AS (
+    SELECT dt,
+           ln(adj_close / NULLIF(LAG(adj_close, 1) OVER (ORDER BY dt), 0)) AS log_ret
+    FROM spy
+),
+vol AS (
+    SELECT dt,
+           STDDEV(log_ret) OVER (ORDER BY dt ROWS BETWEEN 20 PRECEDING AND 1 PRECEDING)
+           * SQRT(252) AS realized_vol
+    FROM rets
+)
+SELECT dt, realized_vol FROM vol
+WHERE dt >= DATE '{start}' AND realized_vol IS NOT NULL
+ORDER BY dt
+"""
+
 
 def precompute_signals(db_path: str, start: date, end: date) -> dict[date, dict[str, float]]:
     """One-shot query → dict[date -> {symbol: score}]. No DB connections after this."""
-    # 400 calendar days covers 252 trading-day lookback plus holiday/weekend buffer
     warmup = start - timedelta(days=400)
-    sql = _SIGNAL_SQL.format(
-        warmup=warmup.isoformat(),
-        start=start.isoformat(),
-        end=end.isoformat(),
-    )
-    conn, parquet_mode = _resolve_connection(db_path, read_only=True)
-    try:
-        rows = conn.execute(sql).fetchall()
-    finally:
-        if not parquet_mode:
-            conn.close()
-
+    sql = _SIGNAL_SQL.format(warmup=warmup.isoformat(), start=start.isoformat(), end=end.isoformat())
+    rows = _run_sql(db_path, sql)
     signals: dict[date, dict[str, float]] = defaultdict(dict)
     for symbol, dt, score in rows:
         if score is not None:
             signals[dt][symbol] = float(score)
-
     total_pairs = sum(len(v) for v in signals.values())
     print(f"[precompute] {len(signals)} signal dates, {total_pairs:,} (symbol,date) pairs")
     if signals:
         first_dt = min(signals)
         print(f"[precompute] first date={first_dt}, symbols on that date={len(signals[first_dt])}")
     return dict(signals)
+
+
+def _run_sql(db_path: str, sql: str) -> list:
+    conn, parquet_mode = _resolve_connection(db_path, read_only=True)
+    try:
+        return conn.execute(sql).fetchall()
+    finally:
+        if not parquet_mode:
+            conn.close()
+
+
+def precompute_short_signals(db_path: str, start: date, end: date) -> dict[date, dict[str, float]]:
+    warmup = start - timedelta(days=400)
+    sql = _SHORT_SIGNAL_SQL.format(warmup=warmup.isoformat(), start=start.isoformat(), end=end.isoformat())
+    rows = _run_sql(db_path, sql)
+    signals: dict[date, dict[str, float]] = defaultdict(dict)
+    for symbol, dt, score in rows:
+        if score is not None:
+            signals[dt][symbol] = float(score)
+    total = sum(len(v) for v in signals.values())
+    print(f"[precompute-short] {len(signals)} signal dates, {total:,} (symbol,date) pairs")
+    return dict(signals)
+
+
+def precompute_regime(db_path: str, start: date, end: date) -> dict[date, bool]:
+    """True = low-vol (VIX < 25%), shorts allowed. False = hostile, no shorts."""
+    warmup = start - timedelta(days=60)
+    sql = _REGIME_SQL.format(warmup=warmup.isoformat(), start=start.isoformat(), end=end.isoformat())
+    rows = _run_sql(db_path, sql)
+    # Hysteresis: enter hostile above 30%, exit hostile below 25%
+    regime: dict[date, bool] = {}
+    hostile = False
+    for dt, vol in rows:
+        if vol >= 0.30:
+            hostile = True
+        elif vol < 0.25:
+            hostile = False
+        regime[dt] = not hostile
+    low_vol_days = sum(1 for v in regime.values() if v)
+    print(f"[precompute-regime] {len(regime)} dates, {low_vol_days} low-vol (shorts OK), "
+          f"{len(regime)-low_vol_days} hostile (no shorts)")
+    return regime
 
 
 def print_data_stats(db_path: str) -> None:
@@ -152,12 +256,18 @@ def main() -> None:
     print_data_stats(DB_PATH)
     print()
 
-    print("[run] Pre-computing volume-momentum signals...")
+    print("[run] Pre-computing long signals (JT 12M-1M momentum)...")
     signals = precompute_signals(DB_PATH, BACKTEST_START, BACKTEST_END)
+    print("[run] Pre-computing short signals (large-cap only, ADV ≥ $5M)...")
+    short_signals = precompute_short_signals(DB_PATH, BACKTEST_START, BACKTEST_END)
+    print("[run] Pre-computing SPY realized-vol regime...")
+    regime = precompute_regime(DB_PATH, BACKTEST_START, BACKTEST_END)
     print()
 
     # Zero DB activity from this point on — no cursor corruption possible
-    signal_fn = lambda d: signals.get(d, {})
+    signal_fn       = lambda d: signals.get(d, {})
+    short_signal_fn = lambda d: short_signals.get(d, {})
+    regime_fn       = lambda d: regime.get(d, True)  # default True (allow shorts) if date missing
 
     feed = DuckDBDataFeed(
         db_path=DB_PATH,
@@ -168,17 +278,20 @@ def main() -> None:
 
     strategy = CrossSectionalFactorStrategy(
         signal_fn=signal_fn,
-        rebalance_freq="weekly",      # weekly: ~250 rebalances over 4y, high turnover, not HFT
-        q_long=0.20,                  # top 20% by score
-        long_only=True,               # long-only: survives momentum crashes (COVID)
+        short_signal_fn=short_signal_fn,
+        regime_fn=regime_fn,
+        rebalance_freq="weekly",
+        q_long=0.20,                  # top 20% by long score → ~40 longs
+        q_short=0.20,                 # bottom 20% of short universe → ~40 shorts
+        long_only=False,              # long-short with regime gate
         max_positions=40,
     )
 
     config = BacktestConfig(
         start_date=BACKTEST_START,
         end_date=BACKTEST_END,
-        max_position_pct=Decimal("0.025"),    # 2.5% per name × 40 = 100% invested
-        max_gross_leverage=Decimal("2.0"),    # rebalancing transiently exceeds 1.0x while exits pending
+        max_position_pct=Decimal("0.025"),    # 2.5% per name
+        max_gross_leverage=Decimal("2.5"),    # 100% long + 100% short + rebalance buffer
         commission_rate=Decimal("0.0005"),    # 5 bps per side
         spread_bps=Decimal("3"),
         max_drawdown_halt=Decimal("0.99"),    # disable circuit breaker — full 4-year run
