@@ -145,29 +145,46 @@ WHERE dt >= DATE '{start}'
 ORDER BY dt, symbol
 """
 
-# SPY 20-day realized vol as regime indicator (proxy for VIX)
+# Cross-sectional vol regime: median absolute daily return across all large-cap universe stocks.
+# When the average stock swings >2.5%/day (annualized >40%), the market is in panic mode.
+# This is a VIX proxy that works without any index data in the DB.
 _REGIME_SQL = """
-WITH spy AS (
-    SELECT CAST(timestamp AS DATE) AS dt,
-           close * adjustment_factor AS adj_close
+WITH base AS (
+    SELECT
+        symbol,
+        CAST(timestamp AS DATE) AS dt,
+        close * adjustment_factor AS adj_close,
+        AVG(close * adjustment_factor * volume / NULLIF(adjustment_factor, 0)) OVER (
+            PARTITION BY symbol ORDER BY CAST(timestamp AS DATE)
+            ROWS BETWEEN 25 PRECEDING AND 1 PRECEDING
+        ) AS avg_dollar_vol
     FROM ohlcv
     WHERE frequency = '1d'
-      AND symbol = 'SPY'
       AND CAST(timestamp AS DATE) BETWEEN DATE '{warmup}' AND DATE '{end}'
+      AND symbol NOT LIKE '%.NS'
+      AND symbol NOT LIKE '%.BO'
+      AND symbol NOT LIKE '%.L'
+      AND symbol NOT LIKE '%.TO'
+      AND symbol NOT LIKE '%.AX'
+      AND symbol NOT LIKE 'CIK%'
 ),
 rets AS (
     SELECT dt,
-           ln(adj_close / NULLIF(LAG(adj_close, 1) OVER (ORDER BY dt), 0)) AS log_ret
-    FROM spy
+           ABS(adj_close / NULLIF(LAG(adj_close, 1) OVER (PARTITION BY symbol ORDER BY dt), 0) - 1)
+               AS abs_ret
+    FROM base
+    WHERE avg_dollar_vol >= 5000000
 ),
-vol AS (
+daily_cs_vol AS (
     SELECT dt,
-           STDDEV(log_ret) OVER (ORDER BY dt ROWS BETWEEN 20 PRECEDING AND 1 PRECEDING)
-           * SQRT(252) AS realized_vol
+           AVG(abs_ret) * SQRT(252) AS cs_vol_annualized
     FROM rets
+    WHERE abs_ret IS NOT NULL AND abs_ret < 0.5
+    GROUP BY dt
+    HAVING COUNT(*) >= 50
 )
-SELECT dt, realized_vol FROM vol
-WHERE dt >= DATE '{start}' AND realized_vol IS NOT NULL
+SELECT dt, cs_vol_annualized FROM daily_cs_vol
+WHERE dt >= DATE '{start}'
 ORDER BY dt
 """
 
@@ -216,13 +233,15 @@ def precompute_regime(db_path: str, start: date, end: date) -> dict[date, bool]:
     warmup = start - timedelta(days=60)
     sql = _REGIME_SQL.format(warmup=warmup.isoformat(), start=start.isoformat(), end=end.isoformat())
     rows = _run_sql(db_path, sql)
-    # Hysteresis: enter hostile above 30%, exit hostile below 25%
+    # Cross-sect vol thresholds: hostile above 50% ann, re-enter below 40%.
+    # (Cross-sect vol >> index vol because it includes idiosyncratic moves.)
+    # COVID crash: cross-sect vol peaks ~150%+. Normal markets: 25-40%.
     regime: dict[date, bool] = {}
     hostile = False
     for dt, vol in rows:
-        if vol >= 0.30:
+        if vol >= 0.50:
             hostile = True
-        elif vol < 0.25:
+        elif vol < 0.40:
             hostile = False
         regime[dt] = not hostile
     low_vol_days = sum(1 for v in regime.values() if v)
