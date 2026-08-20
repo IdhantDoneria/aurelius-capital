@@ -1,15 +1,17 @@
-"""Volume-momentum cross-sectional strategy backtest, 2020-2024.
+"""12-month price momentum (excl. last month) × volume-confirmation backtest, 2020-2024.
 
-Strategy:
-  Signal = 20d→5d price momentum × clamp(yesterday_vol / 20d_avg_vol, 0.5, 5.0)
-  Daily rebalancing. Long top 15%, short bottom 15%. 50 positions each side.
-  Position size: 2% NAV per name (100% gross long + 100% gross short = 2x leverage).
+Signal: Jegadeesh-Titman (1993) style 12M-1M momentum amplified by volume abnormality.
+  score = (close_21d_ago - close_252d_ago) / close_252d_ago
+          × clamp(yesterday_vol / 20d_avg_vol, 0.5, 5.0)
+
+  Skipping the last 21 trading days avoids the 1-month short-term reversal effect that
+  contaminates pure trailing-return signals (Jegadeesh & Titman 1993).
+
+Portfolio: weekly rebalancing, long-only, top 20%, 40 positions, 2.5% NAV each.
 
 Root-cause fix for 4-year cutoff:
-  All signals are pre-computed in ONE SQL query before iter_bars() starts.
-  The signal fn is then a pure dict lookup — zero DB connections during the loop.
-  This eliminates the DuckDB shared-buffer corruption that stopped the feed at
-  ~March 2020 when momentum_signal() opened a new connection per rebalance call.
+  All signals pre-computed in ONE SQL query before iter_bars() starts.
+  Signal fn is pure dict lookup — zero DB connections during the backtest loop.
 
 Usage:
     .venv/bin/python scripts/run_backtest.py
@@ -62,42 +64,44 @@ windowed AS (
         dt,
         adj_close,
         adj_volume,
-        LAG(adj_close, 5)  OVER (PARTITION BY symbol ORDER BY dt) AS c5,
-        LAG(adj_close, 25) OVER (PARTITION BY symbol ORDER BY dt) AS c25,
-        LAG(adj_volume, 1) OVER (PARTITION BY symbol ORDER BY dt) AS vol_prev,
-        AVG(adj_volume)    OVER (
+        -- 12M-1M momentum: price 252 days ago and 21 days ago (skip last month)
+        LAG(adj_close, 252) OVER (PARTITION BY symbol ORDER BY dt) AS c252,
+        LAG(adj_close, 21)  OVER (PARTITION BY symbol ORDER BY dt) AS c21,
+        LAG(adj_volume, 1)  OVER (PARTITION BY symbol ORDER BY dt) AS vol_prev,
+        AVG(adj_volume)     OVER (
             PARTITION BY symbol ORDER BY dt
             ROWS BETWEEN 25 PRECEDING AND 1 PRECEDING
-        )                                                 AS vol_avg20,
+        )                                                  AS vol_avg20,
         AVG(adj_close * adj_volume) OVER (
             PARTITION BY symbol ORDER BY dt
             ROWS BETWEEN 25 PRECEDING AND 1 PRECEDING
-        )                                                 AS avg_dollar_vol
+        )                                                  AS avg_dollar_vol
     FROM base
 )
 SELECT
     symbol,
     dt,
-    (c5 - c25) / NULLIF(c25, 0)
+    -- JT-style 12M-1M momentum × volume confirmation
+    (c21 - c252) / NULLIF(c252, 0)
     * LEAST(GREATEST(vol_prev / NULLIF(vol_avg20, 0), 0.5), 5.0) AS score
 FROM windowed
 WHERE dt >= DATE '{start}'
-  AND c5            IS NOT NULL
-  AND c25           IS NOT NULL
-  AND vol_prev      IS NOT NULL
-  AND vol_avg20     IS NOT NULL
+  AND c252           IS NOT NULL
+  AND c21            IS NOT NULL
+  AND vol_prev       IS NOT NULL
+  AND vol_avg20      IS NOT NULL
   AND avg_dollar_vol IS NOT NULL
-  AND c25 >= 5.0              -- minimum $5 price (no penny stocks)
-  AND adj_close >= 5.0        -- current price also >= $5
-  AND avg_dollar_vol >= 500000 -- minimum $500k avg daily dollar volume
+  AND c252 >= 5.0              -- minimum $5 price (no penny stocks)
+  AND adj_close >= 5.0         -- current price also >= $5
+  AND avg_dollar_vol >= 500000  -- minimum $500k avg daily dollar volume
 ORDER BY dt, symbol
 """
 
 
 def precompute_signals(db_path: str, start: date, end: date) -> dict[date, dict[str, float]]:
     """One-shot query → dict[date -> {symbol: score}]. No DB connections after this."""
-    # 60 extra calendar days so the 25-bar window is warm by backtest start
-    warmup = start - timedelta(days=60)
+    # 400 calendar days covers 252 trading-day lookback plus holiday/weekend buffer
+    warmup = start - timedelta(days=400)
     sql = _SIGNAL_SQL.format(
         warmup=warmup.isoformat(),
         start=start.isoformat(),
