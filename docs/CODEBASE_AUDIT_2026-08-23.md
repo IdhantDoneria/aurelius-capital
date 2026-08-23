@@ -10,8 +10,8 @@
 
 The project has **two numbering systems layered over the same codebase**, and understanding that is the key to understanding everything else here.
 
-1. **Platform Track ("Phase 1–27")** — the original build. Feature-frozen, lives under `src/aurelius/{risk,construction,paper,assistant,knowledge,director,intelligence,lab,catalog}`. `PHASE_4_PRODUCTION_REVIEW.md` approved its backtest engine for production (Low Risk) back when it shipped. It is **not dead code** — later milestones reuse its `BacktestEngine` and `PerformanceCalculator` rather than rebuilding them.
-2. **Canonical M-line (AIDP M1–M11 → AURELIUS M12–M24 → MENTISREX M26–M41)** — a from-scratch rebuild to institutional point-in-time (PIT) standards: no look-ahead, deterministic, reproducible, additive-only (a certified milestone is never rewritten, only extended). This is the authoritative forward line and where almost all current work happens. It has never been merged to `main` — it lives on `aidp/audit-and-pit-gaps`, which is also the branch you're currently checked out on.
+1. **Platform Track ("Phase 1–27")** — the original build. Feature-frozen, lives under `src/mentisrex/{risk,construction,paper,assistant,knowledge,director,intelligence,lab,catalog}`. `PHASE_4_PRODUCTION_REVIEW.md` approved its backtest engine for production (Low Risk) back when it shipped. It is **not dead code** — later milestones reuse its `BacktestEngine` and `PerformanceCalculator` rather than rebuilding them.
+2. **Canonical M-line (AIDP M1–M11 → MENTISREX M12–M24 → MENTISREX M26–M41)** — a from-scratch rebuild to institutional point-in-time (PIT) standards: no look-ahead, deterministic, reproducible, additive-only (a certified milestone is never rewritten, only extended). This is the authoritative forward line and where almost all current work happens. It has never been merged to `main` — it lives on `aidp/audit-and-pit-gaps`, which is also the branch you're currently checked out on.
 
 **The honest state of the firm right now:** the *engineering* is unusually far along for a solo/small operation — 30 certified milestones, ~4,600+ tests across the two tracks, a full research-to-paper-trading pipeline. The *research* is bottlenecked almost entirely on **data**, not code. Every serious alpha claim (M13 low-vol, M14 attribution, the India momentum candidate) has been explicitly marked **DEFER** because the underlying data can't support the statistical claim — not because the pipeline is broken. You are data-blocked, not build-blocked.
 
@@ -53,7 +53,7 @@ Forward Validation — observational-only diagnostics, backtest-vs-paper drift  
 
 Every arrow is one-directional. Upper layers never reach into a sibling's internals — components depend on interfaces (dependency injection), not concrete engines. This is a real, consistently-applied design discipline, not aspirational.
 
-### 2.2 Package layout (`src/aurelius/`)
+### 2.2 Package layout (`src/mentisrex/`)
 
 ```
 application/interfaces/     repository interfaces (ports)
@@ -80,7 +80,7 @@ risk/                       pre-trade gate: engine, models, monitor, stress
 | Track | Milestones | Status | Notes |
 |---|---|---|---|
 | AIDP | M2–M11 | ✅ Certified, all green, unmerged to `main` | PIT identity, fundamentals, survivorship, insiders, research matrix, registry, validation, construction, simulation |
-| AURELIUS | M12–M24 | ✅ Certified, additive on AIDP core | Paper trading bridge, risk engine, EMS/OMS, post-trade ops, multi-currency, multi-asset, valuation, market data ops, open-data providers, strategy deployment, continuous paper runtime, forward validation |
+| MENTISREX | M12–M24 | ✅ Certified, additive on AIDP core | Paper trading bridge, risk engine, EMS/OMS, post-trade ops, multi-currency, multi-asset, valuation, market data ops, open-data providers, strategy deployment, continuous paper runtime, forward validation |
 | MENTISREX | M13–M15 (attribution) | 🟡 **DEFER** — certified as *correctly rejected*, not shipped | Low-vol book, factor attribution: both statistically inconclusive, data-blocked |
 | MENTISREX | M25–M33 | ✅ Certified | Real forward paper-trading infra, Alpaca paper broker, HAC errors, purged/embargoed CV, cross-sectional neutralization |
 | MENTISREX | M34–M41 | ✅ Certified (research), 🟡 forward-untested | Factor campaign → net-of-cost momentum candidate frozen, **zero forward cycles run** |
@@ -151,7 +151,7 @@ Separately, the US paper-trading track (`docs/TRADING_STRATEGY_FORMAL.md`, 2026-
 | Date | Event |
 |---|---|
 | 2026-08-06 | M13 (long-only low-vol) certified **DEFER**: removes short-leg ruin (drawdown -36% vs L/S -103%), but adjusted p=0.118 fails the 5% significance gate. M14 (factor attribution) certified **DEFER**: residual alpha insignificant (t=1.16), no factor model exists to decompose it. `Research_Roadmap_v2.md` written same day — central thesis: "information gain is data-limited." |
-| 2026-08-12/13 | M25–M26: forward paper-trading infra stood up, repo renamed Aurelius→Mentisrex, real market data wired into the paper loop |
+| 2026-08-12/13 | M25–M26: forward paper-trading infra stood up, repo renamed Mentisrex→Mentisrex, real market data wired into the paper loop |
 | 2026-08-14 | M27–M33 sprint: `AlpacaPaperBroker` built (paper-only, live-execution locked), HAC errors + purged/embargoed CV added, cross-sectional neutralization, DoF ledger |
 | 2026-08-15 | M34–M41: factor-panel adapter, signal ensembling, India factor sweep (later found mixing US/India data — fixed), net-of-cost evaluation confirms `mom_12_1` survives at Sharpe 0.62–0.67 net; `rev_1m` demoted below significance; **M41 freezes `mom-12-1-india-cs`** |
 | 2026-08-19 | Separate US backtest built from scratch (volume-momentum). **4 bugs fixed in one session**: COVID drawdown-halt bug, CAGR complex-number crash on portfolio-to-zero, foreign-stock/CIK-symbol contamination causing a spurious -101% return, closing-order leverage trap. `TRADING_STRATEGY_FORMAL.md` written. |
@@ -180,7 +180,7 @@ Separately, the US paper-trading track (`docs/TRADING_STRATEGY_FORMAL.md`, 2026-
 
 ## 6. Metrics summary
 
-- **Tests**: 114 files across 19 `tests/` subdirectories in the current `src/aurelius/` package; milestone docs separately cite 4,600+ passing tests across the certified M-line (M9 154, M10 167, M11 to 10k names, M17 1,330, M18 1,501, M19 1,707, M13 862, M14 372, M15 455, M16 595).
+- **Tests**: 114 files across 19 `tests/` subdirectories in the current `src/mentisrex/` package; milestone docs separately cite 4,600+ passing tests across the certified M-line (M9 154, M10 167, M11 to 10k names, M17 1,330, M18 1,501, M19 1,707, M13 862, M14 372, M15 455, M16 595).
 - **Data footprint**: `data/parquet/` ≈ 904MB (dozens of per-milestone research outputs); market_data + validation dirs together < 1MB — i.e. almost all stored data is *derived research output*, not raw market data. Raw price panel: 6.4M bars, 2,143 symbols, ~99.6% survivors (biased).
 - **Hypothesis backlog**: 500 structured hypotheses across 15 alpha categories, 0-10 value-scored, S/A/B/C tiered. None validated yet.
 - **Best backtest result to date**: `mom_12_1` net Sharpe 0.62–0.67, net HAC t 2.30, turnover 0.23 — survivorship-suspect, unvalidated forward.
@@ -215,4 +215,4 @@ You asked for ideas to pivot the existing strategy toward something you can pape
 
 ---
 
-*Compiled from parallel audits of `src/`, all `docs/AIDP_*`, `docs/AURELIUS_*`, `docs/MENTISREX_*`, `docs/Research_Roadmap_v2.md`, `docs/TRADING_STRATEGY_FORMAL.md`, `docs/RESEARCH_PROGRAM_AUDIT_2026-08-14.md`, `docs/HYPOTHESIS_BACKLOG.md`, `docs/DATA_ACQUISITION_BRIEF.md`, `docs/DATA_READINESS_REPORT.md`, root PHASE_4/5/6 docs, `tests/`, `scripts/`, `campaign/`, `data/`, and recent git history on `aidp/audit-and-pit-gaps`.*
+*Compiled from parallel audits of `src/`, all `docs/AIDP_*`, `docs/MENTISREX_*`, `docs/MENTISREX_*`, `docs/Research_Roadmap_v2.md`, `docs/TRADING_STRATEGY_FORMAL.md`, `docs/RESEARCH_PROGRAM_AUDIT_2026-08-14.md`, `docs/HYPOTHESIS_BACKLOG.md`, `docs/DATA_ACQUISITION_BRIEF.md`, `docs/DATA_READINESS_REPORT.md`, root PHASE_4/5/6 docs, `tests/`, `scripts/`, `campaign/`, `data/`, and recent git history on `aidp/audit-and-pit-gaps`.*

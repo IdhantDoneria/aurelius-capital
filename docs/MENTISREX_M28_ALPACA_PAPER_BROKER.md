@@ -207,7 +207,7 @@ AlpacaOrderRecord(
     mentisrex_order_id="mr-a1b2c3d4e5f6g7h8",
     alpaca_order_id="alpaca-uuid",
     client_order_id="mr-a1b2c3d4e5f6g7h8",
-    strategy_id="aurelius-m22",
+    strategy_id="mentisrex-m22",
     strategy_fingerprint="b69961b65bab226a500d71f45709945b",
     symbol="SPY",
     side="buy",

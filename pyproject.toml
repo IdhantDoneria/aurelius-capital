@@ -22,7 +22,14 @@ dependencies = [
     "jugaad-data>=2.9.0",
     "websockets>=13.0",
     "duckdb>=1.1.0",
+    "pandas>=2.2.0",
+    "numpy>=1.26.0",
+    "scipy>=1.14.0",
+    "pyarrow>=17.0.0",
 ]
+
+[project.scripts]
+mrx = "mentisrex.programme.cli:main"
 
 [project.optional-dependencies]
 ml = [

@@ -1,9 +1,16 @@
-# Mentisrex Capital — Formal Trading Strategy
+# Mentisrex Capital — Formal Trading Strategy (v1.0, superseded)
 
 **Document version:** 1.0  
 **Date:** August 19, 2026  
 **Classification:** Internal — Strategy & Research  
 **Author:** Mentisrex Research Team
+
+> **Superseded 2026-08-23.** The firm's current strategy is the ten-sleeve
+> systematic programme (v3.0) in
+> [`TRADING_STRATEGY_FORMAL_V2.md`](TRADING_STRATEGY_FORMAL_V2.md). This
+> document is kept as the historical record of the long-only volume-momentum
+> book it describes — that book is no longer the strategy in use, but nothing
+> here is factually wrong about what it was.
 
 ---
 

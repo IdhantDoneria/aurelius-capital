@@ -2,7 +2,7 @@
 
 Audit of the existing repository against the institutional research-machine
 target architecture. **Finding: the vast majority of the target is already
-built and certified across ~30 milestones (AIDP M2–M11, AURELIUS M12–M24,
+built and certified across ~30 milestones (AIDP M2–M11, MENTISREX M12–M24,
 MENTISREX M26–M30).** This program is therefore *gap-closing + breadth*, not a
 greenfield build. The frozen `ew-momentum-exp v1.0.0`
 (`b69961b65bab226a500d71f45709945b`) is untouched.

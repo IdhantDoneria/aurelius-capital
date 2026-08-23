@@ -148,7 +148,7 @@ mentisrex-capital/
 │   ├── presentation/       # FastAPI routes, middleware
 │   ├── domain/             # Domain entities + repository interfaces
 │   └── core/               # Shared errors + logging
-├── tests/                  # 315 tests across all subsystems
+├── tests/                  # 421 tests across all subsystems
 ├── scripts/                # CLI tools: ingest, generate, dashboard, validate
 ├── docs/                   # Architecture and research framework docs
 │   ├── ACCEPTANCE_TEST.md  # CTO acceptance audit (Phase 12, 2026-07-27)
@@ -182,6 +182,4 @@ Key design rules:
 
 ## Status
 
-**Phase 12 complete.** 315 tests pass. Platform readiness: 72/100 (single-asset
-research ready today; cross-sectional pending point-in-time data and survivorship-
-free universes — see `docs/ACCEPTANCE_TEST.md` §Phase 3 for the full blocker list).
+**Milestones M1–M41 complete.** 421 M-line tests + 48 programme tests pass (2893 total across the repo). **Current strategy: Mentisrex Programme v3.0** (`src/mentisrex/programme/`), a ten-sleeve core-satellite systematic US-equity book — recommended-rung backtest CAGR 28.8%, Sharpe 1.10, max DD -28.6% on this firm's own data (2017–2026). Formalized in `docs/TRADING_STRATEGY_FORMAL_V2.md`; supersedes the long-only volume-momentum book in `docs/TRADING_STRATEGY_FORMAL.md` (v1.0, historical). Separately, M41 = frozen forward research candidate `mom-12-1-india-cs` (NSE top-300 12-1M momentum, fingerprint `823e007d57305aca21a869b3f9ee799e`) from the M-line research track — not yet forward-tested. Aug 14 audit identified 2 P0 gaps: HAC/Newey-West standard errors, purged/embargoed cross-validation. Data blocker common to both tracks: no point-in-time/survivorship-free vendor feed (CRSP/Sharadar/Norgate, ~$500/yr) — highest-value unblock available to the firm.
