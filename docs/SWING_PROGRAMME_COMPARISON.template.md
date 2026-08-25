@@ -426,6 +426,19 @@ is not evidence against the index result.
 All three at the same equity, on the same window, net of all modelled costs
 and financing.
 
+**Read the Sharpe, not the CAGR.** Because the simulator credits interest on
+unencumbered cash — as it must, see §1.6 — a book that is capacity-
+constrained into holding most of its equity in Treasury bills reports a
+positive CAGR that is mostly the bill. Over 2019-2026 the average overnight
+rate was around 2.6%, and in 2023-2026 it was 4-5%. Every significance
+statistic in this document is therefore computed on the **excess** return,
+and a strategy that earns less than cash is reported as what it is, not as a
+positive number.
+
+This distinction is not academic here. Before the correction, one of these
+sleeves showed a Newey-West t-statistic of 3.29 on raw returns and -0.40 on
+excess returns. The first number was measuring the Treasury bill.
+
 <!-- TABLE:headline -->
 
 Year by year:
