@@ -239,7 +239,61 @@ thesis rests on, and it is measurable live from the first week.
 
 ## 14. Known limitations
 
-<!-- LIMITATIONS -->
+Recorded per the firm's hard rule: what was skipped, why it is impossible
+right now, and what would unblock it. The comparison document carries the
+same list with more detail; this is the subset that bears directly on
+running *this* strategy.
+
+1. **The effective spread is modelled, not measured.** There is no quote data
+   in this repository. Both standard high-low estimators were tested against
+   synthetic paths with a known injected spread and overstate by between 3x
+   and 20x at realistic levels, so the cost model uses a
+   volatility-and-volume formula calibrated to published transaction-cost
+   anchors instead. *Consequence:* the most important input to the
+   go/no-go decision is an estimate, which is why the break-even cost
+   multiple is quoted next to every performance figure. *Unblocked by:* a
+   TAQ, Databento MBP-1, or broker TCA feed — or, once live, by the
+   strategy's own fills, which is the first thing §12 monitors.
+
+2. **Auction impact for small orders is extrapolated.** The square-root law
+   is fitted to metaorders of 0.1%-10% of daily volume; this book trades well
+   below that range, where a linear regime is used instead. The crossover is
+   a parameter and is swept, but it is not measured. *Unblocked by:* live
+   fills in the closing auction.
+
+3. **True delisting returns are unobserved.** Names that stop trading are
+   force-closed at their last mark, which is roughly right for acquisitions
+   and too generous for bankruptcies. The book is dollar-neutral and holds
+   such names on both sides, which reduces but does not remove the bias.
+   *Unblocked by:* a Norgate, Sharadar or CRSP subscription carrying
+   delisting returns.
+
+4. **No sector classification.** Size, momentum and volatility loadings act
+   as a statistical sector proxy. This removes most sector exposure but is
+   not the same as neutralising to a classification, and a sector-specific
+   shock could show up as residual risk. *Unblocked by:* a GICS or similar
+   mapping.
+
+5. **Point-in-time index membership is unavailable.** The universe is a
+   point-in-time liquidity screen, which is survivorship-aware but not the
+   same thing. Index reconstitution days cannot be identified. *Unblocked
+   by:* the same vendor feeds as (3).
+
+6. **Fifteen-minute bars, regular hours only.** The data plan caps requests
+   at 200 a minute and pages at roughly 900 bars, which puts a five-minute
+   pull of this universe at about five hours. *Consequence:* intraday
+   decisions are made on a 15-minute grid and pre-market volume is
+   unavailable as a feature. Both make the simulation more conservative
+   rather than less. *Unblocked by:* an Alpaca Algo Trader Plus subscription,
+   or a Databento/Polygon flat-file download.
+
+7. **Corporate-action adjustment is trusted, not verified.** Bars are
+   requested adjusted and are believed correct; nothing here proves it.
+   *Unblocked by:* spot checks of known splits against an independent source.
+
+8. **Nothing here has traded.** No order has been placed by this code. Every
+   figure in this document is a simulation, and the first four items above
+   are all resolved by the same thing: running it small and measuring.
 
 ---
 
