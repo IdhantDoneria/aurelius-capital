@@ -33,6 +33,7 @@ class Performance:
     max_dd_days: int
     time_under_water: float
     hit_rate: float
+    """Fraction of sessions with a positive return *in excess of cash*."""
     skew: float
     kurtosis: float
     worst_day: float
@@ -126,7 +127,10 @@ def evaluate(
         calmar=float((equity.iloc[-1] ** (1.0 / yrs) - 1.0) / abs(max_dd)) if max_dd < 0 else np.nan,
         max_dd_days=max_dd_days,
         time_under_water=tuw,
-        hit_rate=float((r > 0).mean()),
+        # Fraction of sessions that beat cash, not that were merely positive.
+        # For a capacity-constrained book holding most of its equity in bills,
+        # the latter is close to 100% and says nothing about the strategy.
+        hit_rate=float((ex > 0).mean()),
         skew=float(r.skew()),
         kurtosis=float(r.kurtosis()),
         worst_day=float(r.min()),

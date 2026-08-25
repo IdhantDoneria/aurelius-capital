@@ -321,3 +321,17 @@ def test_fully_deployed_book_earns_no_cash_credit():
     dates = pd.bdate_range("2024-01-01", periods=10)
     fin = FinancingModel(cfg=CostConfig(), overnight_rate=pd.Series(0.05, index=dates))
     assert fin.daily_charge(dates[5], 100.0, 100.0, 0.0) == pytest.approx(0.0, abs=1e-12)
+
+
+def test_hit_rate_is_measured_against_cash_not_zero():
+    """A book that is mostly Treasury bills is up almost every day. A hit rate
+    that counts those days measures the bill, not the strategy."""
+    n = 1000
+    idx = pd.bdate_range("2023-01-01", periods=n)
+    rf = pd.Series(0.05, index=idx)
+    # a book earning exactly the cash rate every day, with tiny alternating noise
+    daily = 0.05 / 252
+    r = pd.Series(daily + np.where(np.arange(n) % 2 == 0, 1e-6, -1e-6), index=idx)
+    p = evaluate(r, rf=rf)
+    assert (r > 0).mean() == pytest.approx(1.0)          # positive every day
+    assert p.hit_rate == pytest.approx(0.5, abs=0.02)    # but only half beat cash
