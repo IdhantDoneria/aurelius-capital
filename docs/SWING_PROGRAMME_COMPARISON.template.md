@@ -480,11 +480,20 @@ the cost per trade at least as fast:
   turnover by roughly two-thirds and raises edge per unit turnover — and
   raises cost per unit turnover by more, because the days that survive the
   filter are the volatile ones, where impact is largest.
-- **Cap participation.** This is the only lever that works, and it works by
-  shrinking the book rather than improving it. Capping each name at a small
-  fraction of its own daily volume does bring edge per round trip above cost
-  per round trip — at a gross exposure so low that the strategy earns less
-  than the risk-free rate on the capital it is nominally managing.
+- **Cap participation.** This is the lever that works, and it works by
+  shrinking each order rather than by improving the signal. Impact is concave
+  in order size, so halving a position divides its impact by roughly the
+  square root of two while leaving the edge per unit of notional untouched:
+  the *ratio* improves even though the book gets smaller. Capping each name
+  at a small fraction of its own daily volume brings edge per round trip
+  above cost per round trip and turns net return positive.
+
+  What it costs is scale. The book that results deploys well under one times
+  equity, so the strategy's contribution to a fund is `cash rate + alpha`
+  rather than a return on fully-invested capital, and the alpha is small in
+  absolute terms. That is a capacity statement, not a validity statement, and
+  the two should not be confused — which is what the capacity table in §5.5
+  is for.
 
 **Lastlight, per-name participation cap:**
 
@@ -500,9 +509,9 @@ also makes the trade bigger relative to available liquidity.**
 
 ### 5.3 The low-volatility trap
 
-There is a second, deeper reason the two overnight books cannot pay their
-way, and it is worth stating separately because it generalises well beyond
-these two strategies.
+There is a second, deeper reason the two overnight books are small rather
+than large businesses, and it is worth stating separately because it
+generalises well beyond these two strategies.
 
 A dollar-neutral, beta-neutral, style-neutral book of roughly 450 US
 large-caps that carries **only the overnight leg** has an unlevered
@@ -518,12 +527,14 @@ strategy happens to be low-volatility. So the quantity that has to be large
 enough to pay for turnover is the book's achievable *return*, which is
 bounded by its achievable *volatility*.
 
-**Low volatility with high turnover is the worst quadrant a short-horizon
+**Low volatility with high turnover is the hardest quadrant a short-horizon
 strategy can occupy**, and it is exactly where a market-neutral overnight
-book sits: a beautiful gross Sharpe of around two on a 2%-volatility book is
-4% of gross annual return, against 250 round trips a year of absolute cost.
-The Sharpe is real and it is irrelevant, because the return it is a ratio of
-is too small in absolute terms to clear the friction.
+book sits: a gross Sharpe of around two on a 2%-volatility book is about 4%
+of gross annual return, against roughly 250 round trips a year of absolute
+cost. Whether that clears is a close-run thing decided by order size, not by
+signal quality — which is why the participation cap is the single most
+consequential parameter in either of these two sleeves, and why their
+break-even cost multiples sit close to one rather than comfortably above it.
 
 The same arithmetic explains why the intraday sleeve is structurally better
 placed even where its hit rate is poor: it trades volatile names on the days
