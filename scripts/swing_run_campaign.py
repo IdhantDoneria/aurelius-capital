@@ -271,10 +271,18 @@ def main() -> int:
         ],
     }
 
-    def make(name, params, aum):
-        ov = OverlayConfig(target_vol=0.10, gross_cap=3.0, max_weight=0.015,
-                           n_stat_factors=3,
-                           max_participation=params.get("max_participation", 0.0))
+    def make(name, params, aum, overlay=None):
+        """Build a sleeve from a parameter dict.
+
+        `overlay` overrides the overlay the parameters would imply, which is
+        what the participation and AUM sweeps need. It is a real argument and
+        not a courtesy: a wrapper that quietly swallowed it would leave those
+        sweeps reporting the same book under different labels.
+        """
+        ov = overlay or OverlayConfig(
+            target_vol=0.10, gross_cap=3.0, max_weight=0.015, n_stat_factors=3,
+            max_participation=params.get("max_participation", 0.0),
+        )
         if name == "nightfall":
             cfg = NightfallConfig(mode=params.get("mode", "overnight"),
                                   lookback=params.get("lookback", "10"))
@@ -312,7 +320,11 @@ def main() -> int:
         ("nightfall", build_nightfall), ("lastlight", build_lastlight)
     )
     for name, builder in xs_pairs:
-        builder = (lambda n: lambda d, a, **kw: make(n, xs_chosen.get(n, {}), a))(name)
+        builder = (
+            lambda n: lambda d, a, overlay=None, **kw: make(
+                n, xs_chosen.get(n, {}), a, overlay=overlay
+            )
+        )(name)
         print(f"{name}: aum sweep ...", flush=True)
         rows = {}
         for aum in (5e6, 10e6, 25e6, 50e6, 100e6, 250e6):
