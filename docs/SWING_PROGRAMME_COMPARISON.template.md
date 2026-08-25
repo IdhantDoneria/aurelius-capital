@@ -193,13 +193,29 @@ Because the spread is modelled, **every headline result is also reported at
 multiples of the modelled cost level, and each strategy's breakeven multiple
 is stated.**
 
-**Financing** is charged daily: margin interest on gross above one times
-equity at the overnight rate plus 50bps, a stock-borrow fee (40bps general
-collateral, 300bps for the least-liquid tradable quintile), and a short
-rebate credit at the overnight rate less 15bps. The overnight rate is the
-actual 13-week bill series, so the 2020-2021 zero-rate era and the 2023-2026
-high-rate era are treated differently — a fixed rate would misprice a levered
-book by several hundred basis points a year across this sample.
+**Financing** is charged daily, in four terms:
+
+- margin interest on gross above one times equity, at the overnight rate
+  plus 50bps;
+- a stock-borrow fee of 40bps annual on general collateral, 300bps on the
+  least-liquid tradable quintile;
+- a short rebate credited at the overnight rate less 15bps;
+- **interest earned on unencumbered cash**, at the overnight rate less 10bps.
+
+The last is easy to omit and omitting it is not conservative, it is wrong. A
+market-neutral book that deploys half its equity leaves the other half at the
+broker, and a return series that pays nothing on it is neither an excess
+return nor a total return. Measured against a risk-free rate afterwards, such
+a series is penalised twice for the cash it holds — which, at the 4-5% rates
+of 2023-2026 and books that run well under one times gross once
+capacity-constrained, is worth several percentage points of annual Sharpe. It
+was omitted in the first version of this study and correcting it changed the
+sign of the conclusion.
+
+The overnight rate is the actual 13-week bill series, so the 2020-2021
+zero-rate era and the 2023-2026 high-rate era are treated differently — a
+fixed rate would misprice a levered book by several hundred basis points a
+year across this sample.
 
 ---
 
