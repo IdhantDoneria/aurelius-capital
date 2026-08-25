@@ -389,21 +389,28 @@ def main() -> int:
         design = pd.Timestamp(args.design_end).date()
         fd = f[f["d"] <= design]
         bd = b[b["d"] <= design]
+        # The grid spans the four things that actually change this sleeve's
+        # economics: which way it trades a breach, how far the price has to
+        # move to count as one, how much room the stop gives it, and how wide
+        # a name it is willing to cross. The last is included because this
+        # sleeve pays the spread twice per trade, which is the single largest
+        # component of its cost.
         grid = [
             {"cone_k": k, "atr_stop_mult": m, "n_in_play": n, "vwap_trail": v,
-             "direction": dr, "cone_vol_source": cv}
+             "direction": dr, "max_spread_bps": sp, "cone_vol_source": "trailing"}
             for dr in (1, -1)
-            for k in (1.0, 1.5, 2.0, 2.5)
-            for m in (1.0, 2.0, 3.0)
+            for k in (1.0, 1.5, 2.5)
+            for m in (1.0, 3.0)
             for v in (True, False)
-            for cv in ("trailing",)
+            for sp in (8.0, 3.0)
             for n in (10, 20)
         ]
         sweep = []
         best, best_obj = None, -np.inf
         for g in grid:
             cfg = DayburnConfig(n_in_play=g["n_in_play"],
-                                cone_vol_source=g["cone_vol_source"])
+                                cone_vol_source=g["cone_vol_source"],
+                                max_spread_bps=g["max_spread_bps"])
             cfg.rules.cone_k = g["cone_k"]
             cfg.rules.atr_stop_mult = g["atr_stop_mult"]
             cfg.rules.vwap_trail = g["vwap_trail"]
@@ -428,7 +435,8 @@ def main() -> int:
         }
         b_ = best or {}
         chosen = DayburnConfig(n_in_play=b_.get("n_in_play", 20),
-                               cone_vol_source=b_.get("cone_vol_source", "blend"))
+                               cone_vol_source=b_.get("cone_vol_source", "trailing"),
+                               max_spread_bps=b_.get("max_spread_bps", 8.0))
         chosen.rules.cone_k = b_.get("cone_k", 1.0)
         chosen.rules.atr_stop_mult = b_.get("atr_stop_mult", 2.0)
         chosen.rules.vwap_trail = b_.get("vwap_trail", True)
