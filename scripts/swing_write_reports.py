@@ -76,6 +76,19 @@ def t_economics(c) -> str:
 
 def t_aum(c, key) -> str:
     s = c.get("aum_sweep", {}).get(key, {})
+    if not s:
+        return "_Not run._"
+    if key == "dayburn":
+        rows = []
+        for aum, r in sorted(s.items(), key=lambda kv: float(kv[0])):
+            rows.append([f"${aum}M", pct(r["cagr"]), num(r["sharpe"]),
+                         pct(r["max_drawdown"]), num(r.get("beta"), 3),
+                         f"{int(r.get('n_trades', 0)):,}",
+                         pct(r.get("hit_rate_trade"), 1),
+                         pct(r.get("avg_win"), 2), pct(r.get("avg_loss"), 2)])
+        return md_table(["Equity", "CAGR", "Sharpe", "Max DD", "Beta", "Trades",
+                         "Hit rate", "Avg win", "Avg loss"], rows,
+                        ":--|--:|--:|--:|--:|--:|--:|--:|--:")
     rows = []
     for aum, r in sorted(s.items(), key=lambda kv: float(kv[0])):
         rows.append([f"${aum}M", pct(r.get("gross_cagr")), pct(r["cagr"]), num(r["sharpe"]),

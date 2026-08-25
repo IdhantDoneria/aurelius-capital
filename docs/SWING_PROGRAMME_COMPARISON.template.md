@@ -351,7 +351,18 @@ Across horizons, on close-to-close returns:
 <!-- TABLE:decay_lastlight_push_fade -->
 
 The closing-displacement fade is the sharpest single-session signal measured
-in this study. Like Nightfall it is concentrated in the overnight segment,
+in this study. Measured on the intraday panel over 2020-2021, the raw signal
+has a rank IC against the next overnight return of about **-5.7%
+(t = -5.2)**; restricted to sessions where the last thirty minutes carried
+an unusually high share of the day's volume it strengthens to about **-7.9%
+(t = -6.4)**.
+
+That conditioning result is the thesis working. The signal is *supposed* to
+be stronger where closing volume concentrated, because concentrated closing
+volume is the observable signature of the mechanical, price-insensitive flow
+the strategy claims to be paid for absorbing. A fade signal that was
+indifferent to where the volume was would be a reversal factor wearing a
+microstructure costume. Like Nightfall it is concentrated in the overnight segment,
 which is consistent with both the mechanical-flow story — the concession
 unwinds when the index flow stops, i.e. immediately after the close — and
 with Lou, Polk and Skouras's finding that reversal profits are an overnight
@@ -429,6 +440,48 @@ the cost per trade at least as fast:
 The pattern is not a tuning failure. It is the structure of the problem:
 **everything that makes a cross-sectional short-horizon edge bigger per trade
 also makes the trade bigger relative to available liquidity.**
+
+### 5.3 The low-volatility trap
+
+There is a second, deeper reason the two overnight books cannot pay their
+way, and it is worth stating separately because it generalises well beyond
+these two strategies.
+
+A dollar-neutral, beta-neutral, style-neutral book of roughly 450 US
+large-caps that carries **only the overnight leg** has an unlevered
+volatility of about **1.65% a year**, measured on this sample. The same book
+held close-to-close has about 3.2%. To reach a 10% volatility target the
+overnight version would need roughly **six times gross exposure**; Reg-T
+permits about two times overnight, and portfolio margin on a fully hedged
+book perhaps six to eight, at a financing cost that scales with it.
+
+Now put that beside the cost. Turnover cost is an **absolute** drag: fees are
+per share, impact is a fraction of notional, and neither shrinks because the
+strategy happens to be low-volatility. So the quantity that has to be large
+enough to pay for turnover is the book's achievable *return*, which is
+bounded by its achievable *volatility*.
+
+**Low volatility with high turnover is the worst quadrant a short-horizon
+strategy can occupy**, and it is exactly where a market-neutral overnight
+book sits: a beautiful gross Sharpe of around two on a 2%-volatility book is
+4% of gross annual return, against 250 round trips a year of absolute cost.
+The Sharpe is real and it is irrelevant, because the return it is a ratio of
+is too small in absolute terms to clear the friction.
+
+The same arithmetic explains why the intraday sleeve is structurally better
+placed even where its hit rate is poor: it trades volatile names on the days
+they are being repriced, so its per-trade move is measured in whole percent
+rather than basis points.
+
+### 5.4 A note on reading the drawdown figures
+
+The drawdown brake in the shared overlay is not decoration in these results.
+On the overnight cross-sectional books it was active on **87% of sessions**
+and held average gross near 1.0x against a 3.0x cap. The reported drawdowns
+are therefore drawdowns of a book that was being throttled almost
+continuously; the unthrottled versions lose faster. This flatters the
+drawdown column and does not change any conclusion, but it should be
+understood before the drawdown figures are compared with anything else.
 
 ### 5.3 Capacity
 
