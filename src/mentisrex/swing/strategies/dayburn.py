@@ -185,21 +185,34 @@ def size_trades(
 def apply_daily_loss_limit(
     t: pd.DataFrame, equity: float, cfg: DayburnConfig
 ) -> pd.DataFrame:
-    """Drop trades that would have been opened after the day's loss limit was
-    already breached.
+    """Drop trades that would have been opened after the session's loss limit
+    had already been breached.
 
-    Trades are ordered by entry time and their realised P&L accumulated in
-    that order; once cumulative loss passes the limit, no further position is
-    opened that session. Positions already open are left to run to their own
-    stop or time exit, which is what a desk-level loss limit actually does --
-    it stops new risk, it does not liquidate at the moment of breach.
+    The limit is evaluated against P&L **realised by the moment of entry** --
+    that is, summed over trades that had already exited -- not over all
+    earlier entries. The difference is not cosmetic: a position entered at
+    10:00 and exited at 15:45 tells you nothing at 11:00, and counting it
+    would let the limit fire on losses the desk could not yet have seen.
+
+    Positions already open are left to run to their own stop or time exit,
+    which is what a desk-level loss limit does: it stops new risk, it does
+    not liquidate at the moment of breach.
     """
     if t.empty or cfg.daily_loss_limit <= 0:
         return t
-    o = t.sort_values("entry_mod").copy()
-    realised = (o["notional"] * o["gross_ret"]).cumsum().shift(1).fillna(0.0)
-    allowed = realised > -cfg.daily_loss_limit * equity
-    return o[allowed]
+    o = t.sort_values("entry_mod", kind="stable").copy()
+    pnl = (o["notional"] * o["gross_ret"]).to_numpy()
+    entry = o["entry_mod"].to_numpy()
+    exit_ = o["exit_mod"].to_numpy()
+
+    limit = -cfg.daily_loss_limit * equity
+    keep = np.ones(len(o), dtype=bool)
+    for i in range(len(o)):
+        realised = pnl[(exit_ <= entry[i]) & keep].sum()
+        if realised <= limit:
+            keep[i:] = False
+            break
+    return o[keep]
 
 
 def apply_costs(t: pd.DataFrame, cost: CostConfig) -> pd.Series:

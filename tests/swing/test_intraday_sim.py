@@ -180,3 +180,49 @@ def test_simulation_reads_the_first_bar_as_the_session_open():
                                    np.full(len(mods), np.nan), cone,
                                    float(o[rev][0]), np.nan, np.nan, 5.0, RULES)
     assert forward != backward
+
+
+def _blotter(rows):
+    import pandas as pd
+    return pd.DataFrame(rows)
+
+
+def test_daily_loss_limit_counts_only_pnl_realised_before_each_entry():
+    """A position entered at 10:00 and exited at 15:45 tells you nothing at
+    11:00. Counting unrealised trades would let the limit fire on losses the
+    desk could not yet have seen."""
+    from mentisrex.swing.strategies.dayburn import DayburnConfig, apply_daily_loss_limit
+
+    cfg = DayburnConfig(daily_loss_limit=0.01)
+    equity = 100.0
+    t = _blotter([
+        # a big loser that does not resolve until the end of the session
+        {"entry_mod": 600, "exit_mod": 945, "notional": 100.0, "gross_ret": -0.50},
+        # entered while the first is still open: must survive
+        {"entry_mod": 660, "exit_mod": 700, "notional": 10.0, "gross_ret": 0.01},
+    ])
+    kept = apply_daily_loss_limit(t, equity, cfg)
+    assert len(kept) == 2
+
+
+def test_daily_loss_limit_stops_new_risk_once_realised_losses_breach_it():
+    from mentisrex.swing.strategies.dayburn import DayburnConfig, apply_daily_loss_limit
+
+    cfg = DayburnConfig(daily_loss_limit=0.01)
+    equity = 100.0
+    t = _blotter([
+        {"entry_mod": 600, "exit_mod": 620, "notional": 100.0, "gross_ret": -0.05},
+        {"entry_mod": 660, "exit_mod": 700, "notional": 10.0, "gross_ret": 0.01},
+        {"entry_mod": 700, "exit_mod": 900, "notional": 10.0, "gross_ret": 0.01},
+    ])
+    kept = apply_daily_loss_limit(t, equity, cfg)
+    assert len(kept) == 1
+    assert kept["entry_mod"].tolist() == [600]
+
+
+def test_daily_loss_limit_is_a_no_op_when_disabled():
+    from mentisrex.swing.strategies.dayburn import DayburnConfig, apply_daily_loss_limit
+
+    cfg = DayburnConfig(daily_loss_limit=0.0)
+    t = _blotter([{"entry_mod": 600, "exit_mod": 620, "notional": 100.0, "gross_ret": -0.90}])
+    assert len(apply_daily_loss_limit(t, 100.0, cfg)) == 1
