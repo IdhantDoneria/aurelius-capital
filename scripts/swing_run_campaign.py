@@ -386,9 +386,9 @@ def main() -> int:
         print(f"  intraday continuation (all): {cont_all['all']}", flush=True)
 
         # ---- parameter choice on the design window only -------------------
-        design = pd.Timestamp(args.design_end).date()
-        fd = f[f["d"] <= design]
-        bd = b[b["d"] <= design]
+        design_date = pd.Timestamp(args.design_end).date()
+        fd = f[f["d"] <= design_date]
+        bd = b[b["d"] <= design_date]
         # The grid spans the four things that actually change this sleeve's
         # economics: which way it trades a breach, how far the price has to
         # move to count as one, how much room the stop gives it, and how wide
@@ -428,7 +428,7 @@ def main() -> int:
             if np.isfinite(pf.sharpe) and pf.sharpe > best_obj:
                 best_obj, best = pf.sharpe, g
         report["dayburn_parameter_sweep"] = {
-            "design_window": [args.start, str(design)],
+            "design_window": [args.start, str(design_date)],
             "grid": jsonable(pd.DataFrame(sweep)),
             "chosen": best,
             "note": "chosen on the design window only; the holdout below never informed it",
