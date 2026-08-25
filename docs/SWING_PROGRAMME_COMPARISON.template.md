@@ -632,11 +632,17 @@ here because intraday strategies have strongly autocorrelated volatility.
 <!-- TABLE:bootstrap -->
 
 The **deflated Sharpe ratio** in the headline table adjusts for the number of
-configurations examined. It uses Lo's conventional standard error rather than
-an assumed dispersion across trials — a materially harsher and more honest
-default. The same disagreement over which convention applies was flagged in
-this firm's daily-bar programme and is unresolved; the harsher choice is used
-here so that no significance claim rests on the softer one.
+configurations examined, and the trial count is stated alongside it. That
+count is each sleeve's recorded parameter grid plus a flat allowance of 25
+for configurations tried during construction and not recorded — a deliberate
+over-estimate, because the alternative is to count only the grid and quietly
+understate the search.
+
+The deflation uses Lo's conventional standard error for the Sharpe rather
+than an assumed dispersion across trials, which is materially harsher. The
+same disagreement over which convention applies was flagged in this firm's
+daily-bar programme and is unresolved; the harsher choice is used here so
+that no significance claim rests on the softer one.
 
 ### 6.6 Cross-strategy correlation
 
