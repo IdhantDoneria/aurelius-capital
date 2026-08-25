@@ -199,3 +199,38 @@ def test_rolling_beta_matches_a_direct_sum_when_the_window_fits():
     out[w:] = c[w + 1: T + 1] - c[1: T + 1 - w]
     assert np.allclose(out[w], r[1: w + 1].sum(axis=0))
     assert np.allclose(out[-1], r[T - w:].sum(axis=0))
+
+
+def test_walk_forward_breaks_ties_toward_the_simpler_configuration():
+    """With equal scores the earlier grid entry must win. Breaking toward the
+    later one makes an inert parameter look as though it were being chosen
+    deliberately in every fold -- which is exactly what happened before this
+    was pinned."""
+    dates = pd.bdate_range("2016-01-01", periods=1600)
+    grid = [{"k": 1}, {"k": 2}, {"k": 3}]
+
+    noise = pd.Series(
+        np.random.default_rng(3).normal(0.0005, 0.008, len(dates)), index=dates
+    )
+
+    def run_fn(params, idx):
+        return noise.reindex(idx)                # identical for every k
+
+    _, folds = walk_forward(run_fn, grid, dates, train_years=2, test_years=1)
+    assert len(folds) >= 2
+    assert set(folds["chosen"]) == {"{'k': 1}"}
+
+
+def test_walk_forward_still_prefers_a_genuinely_better_configuration():
+    """The parsimony tie-break must not override a real difference."""
+    dates = pd.bdate_range("2016-01-01", periods=1600)
+    grid = [{"k": 1}, {"k": 2}]
+    noise = pd.Series(
+        np.random.default_rng(9).normal(0, 0.008, len(dates)), index=dates
+    )
+
+    def run_fn(params, idx):
+        return (0.0004 * params["k"] + noise).reindex(idx)
+
+    _, folds = walk_forward(run_fn, grid, dates, train_years=2, test_years=1)
+    assert set(folds["chosen"]) == {"{'k': 2}"}

@@ -118,8 +118,13 @@ def walk_forward(
         if len(tr) < 200 or len(te) < 40:
             break
 
-        scored = [(objective(run_fn(p, tr)), i) for i, p in enumerate(grid)]
-        best_score, best_i = max(scored)
+        # Ties break toward the *earlier* grid entry. `max` over (score, index)
+        # tuples breaks toward the later one, which silently makes an inert
+        # parameter look as though it were being chosen deliberately in every
+        # fold. Grids here are ordered simplest-first, so this is a parsimony
+        # rule rather than an arbitrary one.
+        scored = [(objective(run_fn(p, tr)), -i, i) for i, p in enumerate(grid)]
+        best_score, _, best_i = max(scored)
         te_ret = run_fn(grid[best_i], te)
         oos.append(te_ret)
         folds.append(
