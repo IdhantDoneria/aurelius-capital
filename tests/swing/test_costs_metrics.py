@@ -271,3 +271,20 @@ def test_bootstrap_distribution_brackets_the_realised_sample():
     lo, hi = d["sharpe"].quantile([0.02, 0.98])
     assert lo < realised < hi
     assert (d["max_drawdown"] <= 0).all()
+
+
+def test_spread_scalar_moves_the_cost_not_only_the_estimate():
+    """A sweep multiplier that is applied only where the spread is first
+    estimated is inert for every run that reuses a loaded panel -- which is
+    every sweep. It has to bite at cost time."""
+    base = CostConfig(spread_scalar=1.0)
+    tripled = CostConfig(spread_scalar=3.0)
+    sp = np.array([0.0010])
+    a = spread_cost(sp, base, auction=False)[0]
+    b = spread_cost(sp, tripled, auction=False)[0]
+    assert b == pytest.approx(3.0 * a, rel=1e-9)
+
+
+def test_spread_scalar_is_irrelevant_at_an_auction():
+    sp = np.array([0.0010])
+    assert spread_cost(sp, CostConfig(spread_scalar=9.0), auction=True)[0] == 0.0

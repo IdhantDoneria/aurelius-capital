@@ -130,7 +130,9 @@ class CostConfig:
     spread; above that models being the impatient side of a wide book)."""
 
     spread_scalar: float = 1.0
-    """Multiplier on the modelled spread, for sensitivity analysis."""
+    """Multiplier on the modelled spread, applied at cost time so that cost
+    sweeps move it. The spread is modelled rather than measured, so every
+    headline result is re-run across this."""
 
     min_spread_bps: float = 0.5
     max_spread_bps: float = 300.0
@@ -193,10 +195,19 @@ def spread_cost(spread_frac: np.ndarray, cfg: CostConfig, *, auction: bool) -> n
     """Proportional cost of crossing, per unit of notional traded.
 
     An auction fill crosses no spread: the whole book clears at one price.
+
+    `spread_scalar` is applied here rather than where the spread is first
+    estimated, so that a cost sweep actually moves it. Applied only at
+    estimation time it would be inert for any run that reuses a
+    previously-loaded panel, which is every sweep.
     """
     if auction:
         return np.zeros_like(np.asarray(spread_frac, dtype=float))
-    s = np.clip(spread_frac, cfg.min_spread_bps / 1e4, cfg.max_spread_bps / 1e4)
+    s = np.clip(
+        np.asarray(spread_frac, dtype=float) * cfg.spread_scalar,
+        cfg.min_spread_bps / 1e4,
+        cfg.max_spread_bps / 1e4,
+    )
     return cfg.spread_capture * s
 
 

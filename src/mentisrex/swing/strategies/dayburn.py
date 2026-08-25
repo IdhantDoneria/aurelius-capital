@@ -211,7 +211,9 @@ def apply_costs(t: pd.DataFrame, cost: CostConfig) -> pd.Series:
     """
     from ..costs import fee_rate
 
-    spread = t["spread"].clip(cost.min_spread_bps / 1e4, cost.max_spread_bps / 1e4)
+    spread = (t["spread"] * cost.spread_scalar).clip(
+        cost.min_spread_bps / 1e4, cost.max_spread_bps / 1e4
+    )
     part = (t["notional"] / t["addv60"].clip(lower=1.0)).clip(0.0, 1.0)
     impact = cost.impact_eta_continuous * t["daily_vol"].fillna(0.02) * np.sqrt(part)
     fees = fee_rate(t["entry_px"].to_numpy(), cost, auction=False)
