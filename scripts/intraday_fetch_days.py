@@ -53,7 +53,7 @@ class RateLimiter:
             time.sleep(wait)
 
 
-LIMITER = RateLimiter(165)
+LIMITER = RateLimiter(190)
 _STATS = {"429": 0, "err": 0}
 
 
@@ -175,10 +175,13 @@ def main() -> int:
     outdir = DATA / args.out
     outdir.mkdir(parents=True, exist_ok=True)
 
-    # one shard per calendar month, so an interrupted run leaves whole months
+    # One shard per ISO week. Weeks rather than months so that an interrupted
+    # run leaves usable data early and progress is visible within minutes
+    # rather than half an hour.
     groups: dict[str, list[pd.Timestamp]] = {}
     for d in days:
-        groups.setdefault(d.strftime("%Y-%m"), []).append(d)
+        iso = d.isocalendar()
+        groups.setdefault(f"{iso[0]}W{iso[1]:02d}", []).append(d)
     todo = [(k, v) for k, v in sorted(groups.items()) if not (outdir / f"{k}.parquet").exists()]
     print(f"{len(todo)} month-shards to fetch ({len(groups) - len(todo)} already present)", flush=True)
 

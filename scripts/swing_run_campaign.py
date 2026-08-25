@@ -298,6 +298,29 @@ def main() -> int:
             }})
         )
 
+    # ---------------- cross-strategy correlation -------------------------
+    series = {}
+    for k in ("nightfall", "lastlight"):
+        f = out / f"{k}_daily.parquet"
+        if f.exists():
+            series[k] = pd.read_parquet(f)["ret"]
+    f = out / "dayburn_daily.parquet"
+    if f.exists():
+        series["dayburn"] = pd.read_parquet(f)["ret"]
+    if len(series) > 1:
+        M = pd.DataFrame(series).reindex(ds.dates).fillna(0.0)
+        M["benchmark"] = ds.benchmark
+        report["correlation"] = jsonable(M.corr())
+        eq = M.drop(columns=["benchmark"])
+        w = eq.std(ddof=1).rdiv(1.0)
+        w = w / w.sum()
+        combo = (eq * w).sum(axis=1)
+        report["equal_risk_combination"] = jsonable({
+            "weights": w.to_dict(),
+            **evaluate(combo, benchmark=ds.benchmark, rf=ds.rf).to_dict(),
+            "newey_west_t": newey_west_t(combo),
+        })
+
     (Path(args.out) / "campaign.json").write_text(json.dumps(jsonable(report), indent=2, default=str))
     print(f"\nwrote {Path(args.out) / 'campaign.json'}")
     return 0
