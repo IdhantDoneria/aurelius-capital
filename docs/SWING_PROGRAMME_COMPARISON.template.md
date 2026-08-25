@@ -20,7 +20,7 @@ one of them being simulated more generously than another.
 | | Strategy | Source of return | Holding period | Venue |
 |---|---|---|---|---|
 | A | **Nightfall** | Clientele segmentation across the overnight/intraday boundary | One night, flat all session | Closing and opening auctions |
-| B | **Dayburn** | Underreaction to intraday information in high-attention names | Hours, flat every night | Continuous market |
+| B | **Dayburn** | Slow intraday repricing in high-attention names | Hours, flat every night | Continuous market |
 | C | **Lastlight** | Liquidity provision against mechanical closing-auction flow | One night, flat all session | Closing and opening auctions |
 
 <!-- TABLE:headline -->
@@ -254,7 +254,7 @@ volatility is about 1.65% a year, so reaching 10% would need roughly six
 times gross. In practice it runs at the gross cap, and then well below it
 once the drawdown brake engages. See §5.3.
 
-### 2.2 Strategy B — Dayburn: volatility-cone intraday trend in names in play
+### 2.2 Strategy B — Dayburn: volatility-cone intraday continuation in names in play
 
 **Economic claim.** Information is not priced instantly; it is priced over
 hours, by participants with different mandates, attention and execution
@@ -280,8 +280,16 @@ per-name version is what the literature does, but it fits roughly two dozen
 parameters per name from about twenty observations each, and the result is
 mostly noise.
 
-Enter in the direction of the move when displacement from the open exceeds
-the cone. Fill on the next bar's open.
+Enter when displacement from the open exceeds the cone; fill on the next
+bar's open.
+
+**Whether to enter *with* the move or *against* it is measured, not
+assumed.** The literature that motivates this sleeve is an index-level result
+about two specific half-hours; the single-name, morning-to-close version is a
+different quantity, and §3.3 measures it directly before any simulation. The
+side is then fixed on the design window and never re-fitted on the holdout.
+A sleeve whose direction was assumed from a paper about a different object
+would be borrowing that paper's credibility without inheriting its evidence.
 
 **Risk management.** Stop at the opposite side of the opening range or a
 volatility-scaled distance from entry, whichever is tighter. Trailing exit
