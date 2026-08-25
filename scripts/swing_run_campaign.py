@@ -153,8 +153,11 @@ def main() -> int:
     ap.add_argument("--end", default="2026-08-24")
     ap.add_argument("--tier", default="core")
     ap.add_argument("--aum", type=float, default=50e6)
-    ap.add_argument("--n-trials", type=int, default=40,
-                    help="configurations examined, for Sharpe deflation")
+    ap.add_argument("--exploration-allowance", type=int, default=25,
+                    help=("configurations examined outside the recorded grid, added to "
+                          "each sleeve's grid size for Sharpe deflation. Counting only "
+                          "the grid understates the search; this is a deliberate, "
+                          "stated over-estimate rather than a flattering one."))
     ap.add_argument("--skip-dayburn", action="store_true")
     ap.add_argument("--only", default="all", choices=("all", "xs", "dayburn"),
                     help="run a subset of the campaign, for iteration")
@@ -278,6 +281,7 @@ def main() -> int:
                                warmup=args.warmup)
 
     xs_chosen: dict[str, dict] = {}
+    n_trials_by_sleeve: dict[str, int] = {}
     if args.only != "dayburn":
         for name, grid in xs_grids.items():
             rows, best, best_obj = [], None, -np.inf
@@ -288,6 +292,7 @@ def main() -> int:
                 if sc > best_obj:
                     best_obj, best = sc, g
             xs_chosen[name] = best or {}
+            n_trials_by_sleeve[name] = len(grid) + args.exploration_allowance
             if best is None:
                 print(f"  {name}: no configuration deployed enough capital to score",
                       flush=True)
@@ -343,7 +348,8 @@ def main() -> int:
         res, perf = run_cross_sectional(ds, builder(ds, args.aum), initial_equity=args.aum)
         res.to_parquet(out / f"{name}_daily.parquet")
         report.setdefault("headline", {})[name] = jsonable(
-            deep_dive(name, res["ret"], ds, args.n_trials, res=res,
+            deep_dive(name, res["ret"], ds,
+                      n_trials_by_sleeve.get(name, args.exploration_allowance), res=res,
                       extra={"detail": xs_record(ds, res, perf, args.aum)})
         )
 
@@ -451,6 +457,7 @@ def main() -> int:
             print(f"  grid {g} -> sharpe {pf.sharpe:.2f} trades {len(tr)}", flush=True)
             if np.isfinite(pf.sharpe) and pf.sharpe > best_obj:
                 best_obj, best = pf.sharpe, g
+        n_trials_by_sleeve["dayburn"] = len(grid) + args.exploration_allowance
         report["dayburn_parameter_sweep"] = {
             "design_window": [args.start, str(design_date)],
             "grid": jsonable(pd.DataFrame(sweep)),
@@ -514,7 +521,9 @@ def main() -> int:
         report["dayburn_execution_style"] = jsonable(pd.DataFrame(rows))
 
         report.setdefault("headline", {})["dayburn"] = jsonable(
-            deep_dive("dayburn", ret, ds, args.n_trials, res=daily, extra={"detail": {
+            deep_dive("dayburn", ret, ds,
+                      n_trials_by_sleeve.get("dayburn", args.exploration_allowance),
+                      res=daily, extra={"detail": {
                 "n_trades": int(len(trades)),
                 "trades_per_day": float(len(trades) / max(len(daily), 1)),
                 "hit_rate_trade": float((trades["gross_ret"] > 0).mean()),
@@ -547,6 +556,7 @@ def main() -> int:
                 "newey_west_t": newey_west_t(sub),
             })
     report["design_holdout"] = split
+    report["n_trials_by_sleeve"] = n_trials_by_sleeve
 
     # ---------------- cross-strategy correlation -------------------------
     series = {}

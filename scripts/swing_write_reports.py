@@ -42,12 +42,13 @@ def t_headline(c) -> str:
         rows.append([
             label, pct(p["cagr"]), pct(p["vol"]), num(p["sharpe"]), num(p["sortino"]),
             pct(p["max_drawdown"]), num(p["beta"], 3), pct(p["alpha_annual"]),
-            num(p["alpha_t"], 1), num(p["turnover_annual"], 0), num(h["deflated_sharpe"], 3),
+            num(p["alpha_t"], 1), num(p["turnover_annual"], 0),
+            num(h["deflated_sharpe"], 3), int(h.get("n_trials_assumed", 0)),
         ])
     return md_table(
         ["Strategy", "CAGR", "Vol", "Sharpe", "Sortino", "Max DD", "Beta",
-         "Alpha (ann.)", "Alpha t", "Turnover", "DSR"], rows,
-        ":--|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:",
+         "Alpha (ann.)", "Alpha t", "Turnover", "DSR", "Trials"], rows,
+        ":--|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:",
     )
 
 
