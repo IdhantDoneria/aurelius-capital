@@ -534,11 +534,24 @@ continuously; the unthrottled versions lose faster. This flatters the
 drawdown column and does not change any conclusion, but it should be
 understood before the drawdown figures are compared with anything else.
 
-### 5.3 Capacity
+### 5.5 Capacity
+
+The question a capacity table answers is not "how much can this run" but
+"below what size does it stop losing money", which for a strategy whose net
+alpha is negative at institutional size is the only version of the question
+that has an answer.
+
+<!-- TABLE:capacity -->
+
+**Nightfall**
 
 <!-- TABLE:aum_nightfall -->
 
+**Lastlight**
+
 <!-- TABLE:aum_lastlight -->
+
+**Dayburn**
 
 <!-- TABLE:aum_dayburn -->
 

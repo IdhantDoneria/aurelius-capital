@@ -313,7 +313,43 @@ def t_continuation(c) -> str:
                      "t-stat", "Rank IC", "Hit rate"], rows, ":--|--:|--:|--:|--:|--:")
 
 
+def _zero_crossing(xs, ys):
+    """Interpolate where `ys` crosses zero as `xs` increases."""
+    pts = sorted(zip(xs, ys))
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        if y0 > 0 >= y1:
+            return x0 + (x1 - x0) * y0 / (y0 - y1)
+    return pts[-1][0] if pts[-1][1] > 0 else 0.0
+
+
+def t_capacity(c) -> str:
+    """Equity at which each sleeve's net return crosses zero.
+
+    Interpolated from the AUM sweep. A capacity below the smallest size
+    tested means the sleeve is loss-making at every size examined, which is a
+    more useful statement than a number.
+    """
+    rows = []
+    for k, label in NAMES.items():
+        s = c.get("aum_sweep", {}).get(k, {})
+        if not s:
+            continue
+        xs = [float(a) for a in s]
+        ys = [s[a]["cagr"] for a in s]
+        smallest = min(xs)
+        if all(y <= 0 for y in ys):
+            cap = f"below ${smallest:.0f}m (loss-making at every size tested)"
+        else:
+            z = _zero_crossing(xs, ys)
+            cap = f"~${z:.0f}m" if z > smallest else f"below ${smallest:.0f}m"
+        best = max(zip(ys, xs))
+        rows.append([label, cap, f"${best[1]:.0f}m", pct(best[0])])
+    return md_table(["Strategy", "Break-even equity", "Best size tested",
+                     "Net CAGR at that size"], rows, ":--|--:|--:|--:")
+
+
 BUILDERS = {
+    "capacity": t_capacity,
     "dayburn_exec": t_dayburn_exec,
     "continuation": t_continuation,
     "holdout": t_holdout,
