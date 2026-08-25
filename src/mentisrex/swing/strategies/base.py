@@ -76,6 +76,7 @@ class CrossSectionalStrategy:
         self._drawdown = 0.0
         self.unit_vol = unit_vol
         self.unit_weights: list[np.ndarray] = []
+        self._cache: dict[int, np.ndarray] = {}
 
     # -- interface -----------------------------------------------------------
     def warmup(self) -> int:
@@ -91,12 +92,23 @@ class CrossSectionalStrategy:
         self._queue = []
         self._drawdown = 0.0
         self.unit_weights = []
+        self._cache = {}
 
     # -- construction --------------------------------------------------------
     def _overlay_for(self, t: int) -> OverlayConfig:
         return self.overlay
 
     def _target(self, t: int) -> np.ndarray:
+        """Sized target for date t.
+
+        Memoised because a segment-aware strategy asks for the same date
+        twice -- once at the close that sets the overnight book and again at
+        the next open that sets the intraday one. Recomputing would advance
+        the turnover-staging queue twice and quietly halve the intended
+        holding period.
+        """
+        if t in self._cache:
+            return self._cache[t]
         cfg = self._overlay_for(t)
         vol = cfg.target_vol if self.unit_vol is None else float(self.unit_vol[t])
         w = size_book(
@@ -115,6 +127,10 @@ class CrossSectionalStrategy:
             w = np.mean(np.stack(self._queue), axis=0)
         w = np.where(self.tradable[t], w, 0.0)
         self.unit_weights.append(w)
+        self._cache[t] = w
+        if len(self._cache) > 8:                       # only recent dates are reused
+            for k in sorted(self._cache)[:-4]:
+                del self._cache[k]
         return w
 
     def targets_moc(self, t: int) -> np.ndarray | None:

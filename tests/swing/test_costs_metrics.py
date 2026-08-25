@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 
 from mentisrex.swing.costs import (
-    CostConfig, FinancingModel, corwin_schultz_spread, impact_cost, modelled_spread,
-    round_trip_bps, spread_cost,
+    CostConfig, FinancingModel, corwin_schultz_spread, fee_rate, impact_cost,
+    modelled_spread, round_trip_bps, spread_cost,
 )
 from mentisrex.swing.metrics import (
     deflated_sharpe, evaluate, newey_west_t, probabilistic_sharpe, stationary_bootstrap,
@@ -90,20 +90,88 @@ def test_auction_pays_no_spread_but_continuous_does():
     assert spread_cost(sp, cfg, auction=False).sum() > 0.0
 
 
-def test_impact_is_square_root_in_participation():
+def test_impact_is_square_root_inside_the_fitted_range():
     cfg = CostConfig()
     adv = np.array([1e9]); vol = np.array([0.02])
-    small = impact_cost(np.array([1e6]), adv, vol, cfg, auction=False)[0]
-    big = impact_cost(np.array([4e6]), adv, vol, cfg, auction=False)[0]
+    small = impact_cost(np.array([1e7]), adv, vol, cfg, auction=False)[0]   # 1% of ADV
+    big = impact_cost(np.array([4e7]), adv, vol, cfg, auction=False)[0]     # 4% of ADV
     assert big / small == pytest.approx(2.0, rel=1e-6)
 
 
-def test_auction_impact_exceeds_continuous_at_equal_notional():
-    """The close is deep in absolute terms but an order is a far bigger share
-    of it, so the same notional moves it more."""
+def test_impact_is_linear_below_the_fitted_range():
+    """The square-root law is fitted on metaorders of 0.1%-10% of volume and
+    does not extrapolate down; below the crossover the Kyle-linear limit is
+    used, which decays far faster."""
+    cfg = CostConfig(impact_linear_below=0.001)
+    adv = np.array([1e9]); vol = np.array([0.02])
+    a = impact_cost(np.array([1e5]), adv, vol, cfg, auction=False)[0]   # 0.01% of ADV
+    b = impact_cost(np.array([2e5]), adv, vol, cfg, auction=False)[0]   # 0.02% of ADV
+    assert b / a == pytest.approx(2.0, rel=1e-6)
+
+
+def test_impact_is_continuous_across_the_crossover():
+    cfg = CostConfig(impact_linear_below=0.001)
+    adv = np.array([1e9]); vol = np.array([0.02])
+    lo = impact_cost(np.array([0.999e6]), adv, vol, cfg, auction=False)[0]
+    hi = impact_cost(np.array([1.001e6]), adv, vol, cfg, auction=False)[0]
+    assert lo == pytest.approx(hi, rel=2e-3)
+
+
+def test_lowering_the_crossover_raises_small_order_impact():
+    adv = np.array([1e9]); vol = np.array([0.02]); q = np.array([1e5])
+    strict = impact_cost(q, adv, vol, CostConfig(impact_linear_below=1e-9), auction=False)[0]
+    relaxed = impact_cost(q, adv, vol, CostConfig(impact_linear_below=0.001), auction=False)[0]
+    assert strict > relaxed
+
+
+def test_closing_cross_is_cheaper_than_continuous_at_equal_notional():
+    """The closing cross clears one batch against accumulated index contra
+    flow, so it moves the price less than working the same size up the book."""
     cfg = CostConfig()
     adv = np.array([1e9]); vol = np.array([0.02]); q = np.array([5e6])
-    assert impact_cost(q, adv, vol, cfg, auction=True)[0] > impact_cost(q, adv, vol, cfg, auction=False)[0]
+    assert impact_cost(q, adv, vol, cfg, auction=True)[0] < impact_cost(q, adv, vol, cfg, auction=False)[0]
+
+
+def test_impact_is_calibrated_to_ten_bps_at_one_percent_of_volume():
+    """The anchor the eta coefficients are set from: 1% of daily volume in a
+    2%-a-day name costs roughly 10bps in the continuous market."""
+    cfg = CostConfig()
+    bps = impact_cost(np.array([1e7]), np.array([1e9]), np.array([0.02]), cfg,
+                      auction=False)[0] * 1e4
+    assert 8.0 < bps < 12.0
+
+
+def test_opening_cross_is_dearer_than_the_closing_cross():
+    from mentisrex.swing.portfolio import Venue, resolve_venue
+    cfg = CostConfig()
+    assert resolve_venue(Venue.OPEN_AUCTION, cfg).eta > resolve_venue(Venue.CLOSE_AUCTION, cfg).eta
+
+
+def test_fees_are_per_share_so_cheap_stocks_cost_more_in_bps():
+    """A flat basis-point fee assumption is wrong by the price of the stock.
+    At $0.0010 a share a $15 name pays five times what a $75 name pays for
+    the same notional -- which is why this programme has a price floor."""
+    cfg = CostConfig()
+    cheap = fee_rate(np.array([15.0]), cfg, auction=True)[0]
+    dear = fee_rate(np.array([75.0]), cfg, auction=True)[0]
+    assert cheap > dear
+    per_share = (cfg.commission_cps + cfg.auction_fee_cps + 0.5 * cfg.taf_cps) / 100.0
+    assert dear == pytest.approx(per_share / 75.0 + 0.5 * cfg.sec_fee_bps / 1e4, rel=1e-9)
+
+
+def test_auction_fee_applies_only_at_an_auction():
+    cfg = CostConfig()
+    assert (
+        fee_rate(np.array([50.0]), cfg, auction=True)[0]
+        > fee_rate(np.array([50.0]), cfg, auction=False)[0]
+    )
+
+
+def test_fee_rate_at_a_typical_price_is_a_fraction_of_a_basis_point():
+    """Sanity anchor: institutional all-in fees on a $75 stock traded in the
+    closing auction should be well under half a basis point one way."""
+    bps = fee_rate(np.array([75.0]), CostConfig(), auction=True)[0] * 1e4
+    assert 0.1 < bps < 0.5
 
 
 def test_round_trip_bps_rises_with_size_and_volatility():

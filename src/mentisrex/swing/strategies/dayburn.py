@@ -141,11 +141,19 @@ def size_trades(
 
 
 def apply_costs(t: pd.DataFrame, cost: CostConfig) -> pd.Series:
-    """Round-trip continuous-market cost per trade, in currency."""
+    """Round-trip continuous-market cost per trade, in currency.
+
+    This sleeve crosses the spread on both legs -- it is not an auction
+    strategy -- which is the dominant term in its cost and the reason it
+    carries a much higher liquidity floor than the other two.
+    """
+    from ..costs import fee_rate
+
     spread = t["spread"].clip(cost.min_spread_bps / 1e4, cost.max_spread_bps / 1e4)
     part = (t["notional"] / t["addv60"].clip(lower=1.0)).clip(0.0, 1.0)
     impact = cost.impact_eta_continuous * t["daily_vol"].fillna(0.02) * np.sqrt(part)
-    one_way = cost.commission_bps / 1e4 + cost.spread_capture * spread + impact
+    fees = fee_rate(t["entry_px"].to_numpy(), cost, auction=False)
+    one_way = fees + cost.spread_capture * spread + impact
     return 2.0 * one_way * t["notional"]
 
 

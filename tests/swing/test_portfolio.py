@@ -79,7 +79,8 @@ class Flat:
 
 def test_flat_book_is_exactly_flat():
     p = make_panel()
-    bt = SegmentBacktester(p, zero_financing(p.dates), BacktestConfig(costs=CostConfig(commission_bps=0)))
+    bt = SegmentBacktester(p, zero_financing(p.dates), BacktestConfig(costs=CostConfig(commission_cps=0.0, auction_fee_cps=0.0, sec_fee_bps=0.0,
+                      taf_cps=0.0, impact_eta_auction=0.0, impact_eta_continuous=0.0)))
     r = bt.run(Flat())
     assert r["equity"].std() == pytest.approx(0.0, abs=1e-6)
     assert r["ret"].abs().max() == pytest.approx(0.0, abs=1e-12)
@@ -90,7 +91,8 @@ def test_moc_entry_earns_the_next_close_to_close_return():
     return -- never t's, which would be look-ahead."""
     p = make_panel()
     w = np.array([1.0, 0.0, 0.0, 0.0])
-    cost = CostConfig(commission_bps=0.0, auction_fee_bps=0.0, impact_eta_auction=0.0)
+    cost = CostConfig(commission_cps=0.0, auction_fee_cps=0.0, sec_fee_bps=0.0,
+                      taf_cps=0.0, impact_eta_auction=0.0, impact_eta_continuous=0.0)
     bt = SegmentBacktester(p, zero_financing(p.dates), BacktestConfig(costs=cost))
     r = bt.run(ConstantWeights(w))
     # day 1's portfolio return equals asset 0's close-to-close return over day 1
@@ -114,8 +116,8 @@ def test_moc_in_moo_out_earns_only_the_overnight_leg():
         def targets_moo(self, t):
             return np.zeros(N)
 
-    cost = CostConfig(commission_bps=0.0, auction_fee_bps=0.0,
-                      impact_eta_auction=0.0, impact_eta_continuous=0.0)
+    cost = CostConfig(commission_cps=0.0, auction_fee_cps=0.0, sec_fee_bps=0.0,
+                      taf_cps=0.0, impact_eta_auction=0.0, impact_eta_continuous=0.0)
     bt = SegmentBacktester(p, zero_financing(p.dates), BacktestConfig(costs=cost))
     r = bt.run(OvernightOnly())
     expected = p.open_[1, 0] / p.close[0, 0] - 1.0
@@ -128,22 +130,24 @@ def test_costs_reduce_equity_monotonically():
     rng = np.random.default_rng(3)
     w = rng.normal(size=N) * 0.1
 
-    def final(bps):
+    def final(cps):
         bt = SegmentBacktester(
             p, zero_financing(p.dates),
-            BacktestConfig(costs=CostConfig(commission_bps=bps, auction_fee_bps=0.0,
+            BacktestConfig(costs=CostConfig(commission_cps=cps, auction_fee_cps=0.0,
+                                            sec_fee_bps=0.0, taf_cps=0.0,
                                             impact_eta_auction=0.0)),
         )
         return bt.run(ConstantWeights(w))["equity"].iloc[-1]
 
-    a, b, c = final(0.0), final(1.0), final(5.0)
+    a, b, c = final(0.0), final(0.1), final(0.5)
     assert a > b > c
 
 
 def test_financing_charges_a_levered_book_and_not_an_unlevered_one():
     p = make_panel()
     fin = FinancingModel(cfg=CostConfig(), overnight_rate=pd.Series(0.05, index=p.dates))
-    cost = CostConfig(commission_bps=0.0, auction_fee_bps=0.0, impact_eta_auction=0.0)
+    cost = CostConfig(commission_cps=0.0, auction_fee_cps=0.0, sec_fee_bps=0.0,
+                      taf_cps=0.0, impact_eta_auction=0.0, impact_eta_continuous=0.0)
 
     lev = SegmentBacktester(p, fin, BacktestConfig(costs=cost)).run(
         ConstantWeights(np.array([1.5, 1.5, -1.5, -1.5]))
@@ -160,7 +164,8 @@ def test_untradable_name_is_force_closed_and_stops_accruing():
     p.tradable[30:, 0] = False
     p.close[30:, 0] = np.nan
     p.open_[30:, 0] = np.nan
-    cost = CostConfig(commission_bps=0.0, auction_fee_bps=0.0, impact_eta_auction=0.0)
+    cost = CostConfig(commission_cps=0.0, auction_fee_cps=0.0, sec_fee_bps=0.0,
+                      taf_cps=0.0, impact_eta_auction=0.0, impact_eta_continuous=0.0)
     bt = SegmentBacktester(p, zero_financing(p.dates), BacktestConfig(costs=cost))
     r = bt.run(ConstantWeights(np.array([1.0, 0.0, 0.0, 0.0])))
     assert r["n_pos"].iloc[35] == 0
@@ -172,7 +177,8 @@ def test_delist_haircut_is_charged_once_on_the_dead_name():
     p.tradable[30:, 0] = False
     p.close[30:, 0] = np.nan
     p.open_[30:, 0] = np.nan
-    cost = CostConfig(commission_bps=0.0, auction_fee_bps=0.0, impact_eta_auction=0.0)
+    cost = CostConfig(commission_cps=0.0, auction_fee_cps=0.0, sec_fee_bps=0.0,
+                      taf_cps=0.0, impact_eta_auction=0.0, impact_eta_continuous=0.0)
     w = np.array([1.0, 0.0, 0.0, 0.0])
 
     def final(h):
@@ -188,7 +194,8 @@ def test_delist_haircut_is_charged_once_on_the_dead_name():
 
 def test_turnover_matches_notional_traded():
     p = make_panel()
-    cost = CostConfig(commission_bps=0.0, auction_fee_bps=0.0, impact_eta_auction=0.0)
+    cost = CostConfig(commission_cps=0.0, auction_fee_cps=0.0, sec_fee_bps=0.0,
+                      taf_cps=0.0, impact_eta_auction=0.0, impact_eta_continuous=0.0)
     bt = SegmentBacktester(p, zero_financing(p.dates), BacktestConfig(costs=cost))
     w = np.array([0.5, -0.5, 0.0, 0.0])
     r = bt.run(ConstantWeights(w))

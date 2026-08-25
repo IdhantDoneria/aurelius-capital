@@ -23,7 +23,7 @@ from typing import Protocol
 import numpy as np
 import pandas as pd
 
-from .costs import CostConfig, FinancingModel, impact_cost, spread_cost
+from .costs import CostConfig, FinancingModel, fee_rate, impact_cost, spread_cost
 
 
 @dataclass
@@ -78,21 +78,17 @@ class Venue(str, Enum):
 
 @dataclass(frozen=True)
 class VenueParams:
-    adv_share: float
     eta: float
-    fee_bps: float
+    is_auction: bool
     crosses_spread: bool
 
 
 def resolve_venue(venue: Venue, cfg: CostConfig) -> VenueParams:
     if venue is Venue.CLOSE_AUCTION:
-        return VenueParams(cfg.auction_adv_share, cfg.impact_eta_auction,
-                           cfg.commission_bps + cfg.auction_fee_bps, False)
+        return VenueParams(cfg.impact_eta_auction, True, False)
     if venue is Venue.OPEN_AUCTION:
-        return VenueParams(cfg.open_auction_adv_share,
-                           cfg.impact_eta_auction * cfg.open_auction_eta_mult,
-                           cfg.commission_bps + cfg.auction_fee_bps, False)
-    return VenueParams(1.0, cfg.impact_eta_continuous, cfg.commission_bps, True)
+        return VenueParams(cfg.impact_eta_auction * cfg.open_auction_eta_mult, True, False)
+    return VenueParams(cfg.impact_eta_continuous, False, True)
 
 
 @dataclass
@@ -130,12 +126,11 @@ class SegmentBacktester:
         c = self.cfg.costs
         v = resolve_venue(venue, c)
         sp = spread_cost(self.p.spread[t], c, auction=not v.crosses_spread)
-        avail = np.nan_to_num(self.p.adv[t], nan=0.0) * v.adv_share
-        part = np.divide(
-            np.abs(delta), np.maximum(avail, 1.0), out=np.zeros_like(delta), where=True
+        imp = impact_cost(
+            delta, self.p.adv[t], self.p.daily_vol[t], c,
+            auction=v.is_auction, eta=v.eta,
         )
-        imp = v.eta * np.nan_to_num(self.p.daily_vol[t]) * np.sqrt(np.clip(part, 0.0, 1.0))
-        rate = v.fee_bps / 1e4 + sp + imp
+        rate = fee_rate(self.p.close[t], c, auction=v.is_auction) + sp + imp
         cost = float((np.abs(delta) * rate).sum())
         return pos + delta, cost, traded
 
@@ -200,6 +195,7 @@ class SegmentBacktester:
                     "pnl_overnight": pnl_on,
                     "pnl_intraday": pnl_id,
                     "cost": cost_moo + cost_moc,
+                    "pnl_gross": pnl_on + pnl_id,
                     "financing": fin,
                     "delist_loss": delist_loss,
                     "traded": traded_moo + traded_moc,

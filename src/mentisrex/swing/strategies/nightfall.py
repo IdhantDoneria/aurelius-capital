@@ -1,26 +1,36 @@
-"""Nightfall -- overnight/intraday clientele divergence.
+"""Nightfall -- harvesting the overnight/intraday tug of war.
 
 Economic claim
 --------------
-A US session is two different auctions with two different populations. The
-overnight segment (previous close to open) prices news and retail/attention
-flow, and is executed at the open where spreads are widest. The intraday
-segment (open to close) is where institutional participation algorithms
-work, spreading a decision over hours.
+A US session is two auctions with two populations. The overnight segment
+(previous close to open) prices news and retail/attention flow and is
+executed at the open, where spreads are widest. The intraday segment (open
+to close) is where institutional participation algorithms work, spreading a
+decision across hours.
 
 Lou, Polk and Skouras (2019) document that firm-level returns continue
-*within* each segment and reverse *across* them, and that the profits of a
-long list of standard strategies accrue entirely in one segment or the
-other, usually with opposite signs. That is a statement that the two
-segments carry different information, which means the difference between
-them is itself a signal rather than noise.
+*within* each segment and reverse *across* them. Measured on this firm's own
+data over 2017-2026 on the top-500 US names by dollar volume, that is
+exactly what appears -- and the cross-period effect is much the larger one:
 
-The hypothesis tested here is directional and stated before the fact: a name
-whose recent gains have been earned intraday while its overnight tape has
-been soft is under quiet institutional accumulation that has not yet shown
-up in headline close-to-close momentum, and should outperform. The reverse
--- gains earned overnight while the intraday tape leaks -- is distribution
-into attention, and should underperform.
+    signal: 10-day divergence = z(sum intraday) - z(sum overnight)
+        -> forward overnight return, 5d :  IC -2.91%,  t = -9.8
+        -> forward intraday  return, 5d :  IC +1.58%,  t = +5.8
+        -> forward close-to-close,   5d :  IC -0.06%,  t = -0.2
+
+The third line is the important one. A name whose recent gains came intraday
+while its overnight tape lagged gives almost all of that back overnight, and
+keeps drifting up intraday, and the two cancel almost exactly in
+close-to-close terms. **A close-to-close strategy on this signal earns
+nothing, however good the signal is.** The effect is real, large and
+significant, and it is invisible to any backtest that marks positions from
+one close to the next.
+
+So the sleeve trades the segments separately: short the high-divergence names
+across the overnight gap, long them across the session. `mode` selects
+whether to run one leg or both. The dual-leg version doubles turnover -- it
+flips its whole book twice a day -- which makes the cost model, not the
+signal, the thing that decides whether it is tradable.
 
 Both components are scaled by their own volatilities before differencing.
 Overnight and intraday returns have materially different variances, so a raw
@@ -39,38 +49,37 @@ from .base import CrossSectionalStrategy
 @dataclass
 class NightfallConfig:
     lookback: str = "10"
-    """Which accumulation window to difference: 5, 10, 21 or 63 sessions."""
+    """Accumulation window to difference: 5, 10, 21 or 63 sessions."""
 
-    sign: int = +1
-    """+1 = long intraday-strong / overnight-weak. The sign is a stated
-    hypothesis, not a fitted parameter; -1 exists so the opposite can be
-    reported side by side."""
+    mode: str = "overnight"
+    """`overnight` holds only across the gap, `intraday` only across the
+    session, `dual` runs both legs with opposite signs."""
+
+    overnight_sign: int = -1
+    """Short high-divergence names overnight. The sign is read off the
+    measured cross-period reversal, and is stated rather than searched."""
+
+    intraday_sign: int = +1
 
     persistence_weight: float = 0.25
     """Weight on the fraction of recent sessions with a positive intraday
-    leg. Rewards a steady drift over one large day."""
+    leg -- rewards a steady drift over one large day."""
 
     reversal_weight: float = 0.0
-    """Optional tilt on the most recent session's close-to-close return, to
-    let the sleeve carry a short-horizon reversal component."""
-
-    gate_earnings_days: int = 3
-    """Suppress names within this many sessions of a scheduled report: an
-    earnings gap contaminates the overnight leg with information rather than
-    clientele flow."""
+    """Optional tilt on the latest close-to-close return, to let the sleeve
+    carry a short-horizon reversal component."""
 
     gate_gap_z: float = 3.0
-    """Suppress names whose latest overnight gap exceeded this many
-    standard deviations, for the same reason but for unscheduled news."""
+    """Suppress names whose latest overnight gap exceeded this many standard
+    deviations: an information gap contaminates the decomposition."""
 
+    gate_earnings: bool = True
     min_price: float = 5.0
     max_amihud_pct: float = 0.80
-    """Drop the least liquid tail of the eligible universe."""
 
 
 class Nightfall(CrossSectionalStrategy):
     name = "nightfall"
-    trade_at = "moc"
 
     def __init__(self, *args, config: NightfallConfig | None = None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -87,6 +96,8 @@ class Nightfall(CrossSectionalStrategy):
         self._amihud = self.cube["amihud20"]
         self._px = self.cube["p_close"]
         self._retcc = self.cube["ret_cc"]
+        self.overnight_only = self.c.mode == "overnight"
+        self._moo_queue: list[np.ndarray] = []
 
     def raw_score(self, t: int) -> np.ndarray:
         rt = np.sqrt(self._n)
@@ -95,8 +106,7 @@ class Nightfall(CrossSectionalStrategy):
 
         divergence = rank_normal(idr) - rank_normal(on)
         persistence = cross_sectional_z(self._idup[t] - 0.5)
-        score = self.c.sign * (divergence + self.c.persistence_weight * persistence)
-
+        score = divergence + self.c.persistence_weight * persistence
         if self.c.reversal_weight:
             score = score - self.c.reversal_weight * rank_normal(self._retcc[t])
 
@@ -104,11 +114,30 @@ class Nightfall(CrossSectionalStrategy):
             np.isfinite(score)
             & (self._px[t] >= self.c.min_price)
             & (np.abs(np.nan_to_num(self._gapz[t])) <= self.c.gate_gap_z)
-            & (np.nan_to_num(self._earn_near[t]) <= 0)
         )
+        if self.c.gate_earnings:
+            keep &= np.nan_to_num(self._earn_near[t]) <= 0
         am = self._amihud[t]
         fin = np.isfinite(am)
         if fin.sum() > 50:
-            cut = np.quantile(am[fin], self.c.max_amihud_pct)
-            keep &= fin & (am <= cut)
+            keep &= fin & (am <= np.quantile(am[fin], self.c.max_amihud_pct))
         return np.where(keep, score, np.nan)
+
+    # -- segment-specific books ---------------------------------------------
+    def targets_moc(self, t: int) -> np.ndarray | None:
+        """The book carried across tonight's gap."""
+        if self.c.mode not in ("overnight", "dual"):
+            return np.zeros(self.N) if self.c.mode == "intraday" else None
+        return self.c.overnight_sign * self._target(t)
+
+    def targets_moo(self, t: int) -> np.ndarray | None:
+        """The book carried across today's session.
+
+        Scored on day t-1, because at the opening auction of day t that is
+        the most recent complete session.
+        """
+        if self.c.mode == "overnight":
+            return np.zeros(self.N)
+        if t < 1:
+            return np.zeros(self.N)
+        return self.c.intraday_sign * self._target(t - 1)
