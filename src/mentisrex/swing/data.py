@@ -102,10 +102,18 @@ def load(
     r = np.nan_to_num(data["ret_cc"])
     rb = np.nan_to_num(bench_cc.to_numpy())[:, None]
     w = beta_window
+    T = r.shape[0]
+
     def roll_sum(x):
-        c = np.cumsum(np.vstack([np.zeros((1, x.shape[1])), x]), axis=0)
+        """Trailing `w`-row sum, NaN until the window is full."""
         out = np.full_like(x, np.nan)
-        out[w:] = c[w + 1 : len(c)] - c[1 : len(c) - w]
+        if T <= w:
+            # Shorter sample than the estimation window: no beta is
+            # estimable, and returning an empty slice here silently
+            # broadcast-errors instead of saying so.
+            return out
+        c = np.cumsum(np.vstack([np.zeros((1, x.shape[1])), x]), axis=0)
+        out[w:] = c[w + 1 : T + 1] - c[1 : T + 1 - w]
         return out
 
     sxy = roll_sum(r * rb)

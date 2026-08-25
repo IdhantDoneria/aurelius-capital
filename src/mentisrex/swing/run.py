@@ -134,8 +134,9 @@ def summary_table(results: dict[str, Performance]) -> pd.DataFrame:
 # --------------------------------------------------------------------------
 
 DAYBURN_COLS = [
-    "symbol", "d", "p_open", "p_close", "addv60", "gap_z", "rvol_or30",
-    "or30_range_z", "or30_hi", "or30_lo", "rv_day", "sd_cc60", "prev_close",
+    "symbol", "d", "p_open", "p_close", "p_1000", "p_1545", "addv60",
+    "gap_z", "rvol_or30", "or30_range_z", "or30_hi", "or30_lo",
+    "rv_day", "sd_cc60", "prev_close",
 ]
 
 

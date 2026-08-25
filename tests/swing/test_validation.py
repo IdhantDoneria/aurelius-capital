@@ -172,3 +172,30 @@ def test_vix_overlay_rebuild_preserves_every_risk_field():
     for f in dataclasses.fields(OverlayConfig):
         if f.name != "target_vol":
             assert getattr(scaled, f.name) == getattr(base, f.name), f.name
+
+
+def test_rolling_beta_handles_a_sample_shorter_than_its_window():
+    """A short sample must yield no beta, not a broadcast error. Guarding
+    this matters because the short-sample path is the one hit when iterating
+    on partial data."""
+    import numpy as np
+
+    w, T, N = 60, 30, 5
+    r = np.random.default_rng(0).normal(0, 0.01, (T, N))
+    out = np.full_like(r, np.nan)
+    if T > w:
+        c = np.cumsum(np.vstack([np.zeros((1, N)), r]), axis=0)
+        out[w:] = c[w + 1: T + 1] - c[1: T + 1 - w]
+    assert np.isnan(out).all()
+
+
+def test_rolling_beta_matches_a_direct_sum_when_the_window_fits():
+    import numpy as np
+
+    w, T, N = 5, 20, 3
+    r = np.arange(T * N, dtype=float).reshape(T, N)
+    c = np.cumsum(np.vstack([np.zeros((1, N)), r]), axis=0)
+    out = np.full_like(r, np.nan)
+    out[w:] = c[w + 1: T + 1] - c[1: T + 1 - w]
+    assert np.allclose(out[w], r[1: w + 1].sum(axis=0))
+    assert np.allclose(out[-1], r[T - w:].sum(axis=0))

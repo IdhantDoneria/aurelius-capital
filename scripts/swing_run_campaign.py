@@ -153,6 +153,10 @@ def main() -> int:
     ap.add_argument("--n-trials", type=int, default=40,
                     help="configurations examined, for Sharpe deflation")
     ap.add_argument("--skip-dayburn", action="store_true")
+    ap.add_argument("--only", default="all", choices=("all", "xs", "dayburn"),
+                    help="run a subset of the campaign, for iteration")
+    ap.add_argument("--cone", default=str(DATA / "cone.parquet"))
+    ap.add_argument("--warmup", type=int, default=260)
     ap.add_argument("--design-end", default="2023-12-31",
                     help="last date of the design window; everything after is holdout")
     ap.add_argument("--out", default=str(OUT))
@@ -210,7 +214,10 @@ def main() -> int:
     report["signal_decay"] = decay
 
     # ---------------- cross-sectional sleeves ----------------------------
-    for name, builder in (("nightfall", build_nightfall), ("lastlight", build_lastlight)):
+    xs_pairs = () if args.only == "dayburn" else (
+        ("nightfall", build_nightfall), ("lastlight", build_lastlight)
+    )
+    for name, builder in xs_pairs:
         print(f"{name}: aum sweep ...", flush=True)
         rows = {}
         for aum in (5e6, 10e6, 25e6, 50e6, 100e6, 250e6):
@@ -257,10 +264,10 @@ def main() -> int:
         )
 
     # ---------------- intraday sleeve ------------------------------------
-    if not args.skip_dayburn:
+    if not args.skip_dayburn and args.only != "xs":
         print("dayburn: loading bars ...", flush=True)
-        f, b, c = dayburn_inputs(features=args.features, start=args.start, end=args.end,
-                                 tier=args.tier)
+        f, b, c = dayburn_inputs(features=args.features, cone=args.cone,
+                                 start=args.start, end=args.end, tier=args.tier)
         print(f"  {len(f):,} sessions, {len(b):,} bars, {len(c):,} cone rows", flush=True)
 
         # ---- does an intraday move continue or revert here? ---------------
