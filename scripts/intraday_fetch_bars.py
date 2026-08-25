@@ -154,6 +154,11 @@ def main() -> int:
     ap.add_argument("--chunk", type=int, default=40)
     ap.add_argument("--workers", type=int, default=12)
     ap.add_argument("--year-split", action="store_true", help="split each chunk by calendar year")
+    ap.add_argument(
+        "--year-priority",
+        default=None,
+        help="comma-separated years to fetch first, in order; implies year-major ordering",
+    )
     args = ap.parse_args()
 
     headers = creds()
@@ -171,9 +176,23 @@ def main() -> int:
     if args.year_split:
         years = pd.date_range(args.start, args.end, freq="YS").strftime("%Y-%m-%d").tolist()
         bounds = sorted(set([args.start] + years + [args.end]))
-        for ci, c in enumerate(chunks):
-            for a, b in zip(bounds[:-1], bounds[1:]):
-                jobs.append((ci, c, a, b))
+        windows = list(zip(bounds[:-1], bounds[1:]))
+        if args.year_priority:
+            # Year-major, in an explicit priority order, so that an interrupted
+            # run always leaves *complete years for the whole universe* rather
+            # than complete history for an alphabetical slice of it. A partial
+            # cross-section is useless to a cross-sectional strategy; a shorter
+            # but complete sample is not.
+            pri = [x.strip() for x in args.year_priority.split(",") if x.strip()]
+            rank = {y: i for i, y in enumerate(pri)}
+            windows.sort(key=lambda w: rank.get(w[0][:4], 999))
+            for a, b in windows:
+                for ci, c in enumerate(chunks):
+                    jobs.append((ci, c, a, b))
+        else:
+            for ci, c in enumerate(chunks):
+                for a, b in windows:
+                    jobs.append((ci, c, a, b))
     else:
         for ci, c in enumerate(chunks):
             jobs.append((ci, c, args.start, args.end))

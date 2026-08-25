@@ -38,7 +38,7 @@ import numpy as np
 import pandas as pd
 
 from ..costs import CostConfig
-from ..intraday_sim import IntradayRules
+from ..intraday_sim import BARS_PER_SESSION, IntradayRules
 
 
 @dataclass
@@ -213,7 +213,7 @@ class Dayburn:
             c = g["close"].to_numpy(dtype=float)
             vw = running_vwap(g["vwap"].to_numpy(dtype=float), g["volume"].to_numpy(dtype=float))
             p_open = float(o[0])
-            atr = rvp / np.sqrt(78.0) * p_open * 2.0
+            atr = rvp / np.sqrt(BARS_PER_SESSION) * p_open * 2.0
 
             for tr in simulate_day_symbol(
                 mods, o, h, lo, c, vw, cone_vals, p_open,

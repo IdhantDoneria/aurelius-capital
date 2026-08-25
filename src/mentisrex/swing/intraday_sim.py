@@ -21,6 +21,8 @@ import pandas as pd
 
 RTH_OPEN = 9 * 60 + 30
 RTH_CLOSE = 16 * 60
+BAR_MINUTES = 15
+BARS_PER_SESSION = (RTH_CLOSE - RTH_OPEN) // BAR_MINUTES
 
 
 @dataclass
@@ -31,7 +33,7 @@ class IntradayRules:
     their widest."""
 
     last_entry_mod: int = 15 * 60
-    exit_mod: int = 15 * 60 + 50
+    exit_mod: int = 15 * 60 + 45
     """Force flat here, before the closing auction, so the sleeve never
     carries overnight risk and never competes with a closing-auction sleeve
     for the same print."""

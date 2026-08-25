@@ -66,7 +66,7 @@ WHERE n >= 30;
 
 def build(
     *,
-    bars: str | Path = DATA / "bars5" / "*.parquet",
+    bars: str | Path = DATA / "bars15" / "*.parquet",
     panel: str | Path = DATA / "panel.parquet",
     out: str | Path = DATA / "cone.parquet",
     threads: int = 8,
@@ -83,7 +83,7 @@ def build(
     print(
         con.execute(
             "SELECT mod, avg(shape_ratio) AS avg_shape FROM shape "
-            "WHERE mod IN (585,600,630,720,840,930,955) GROUP BY 1 ORDER BY 1"
+            "WHERE mod IN (585,600,630,720,840,930,945) GROUP BY 1 ORDER BY 1"
         ).fetchdf().to_string()
     )
     return Path(out)
