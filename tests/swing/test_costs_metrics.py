@@ -288,3 +288,36 @@ def test_spread_scalar_moves_the_cost_not_only_the_estimate():
 def test_spread_scalar_is_irrelevant_at_an_auction():
     sp = np.array([0.0010])
     assert spread_cost(sp, CostConfig(spread_scalar=9.0), auction=True)[0] == 0.0
+
+
+def test_idle_cash_earns_interest():
+    """A market-neutral book that deploys half its equity leaves the rest at
+    the broker. A simulator paying nothing on it reports a series that is
+    neither an excess return nor a total return, and is then penalised twice
+    when measured against a risk-free rate."""
+    dates = pd.bdate_range("2024-01-01", periods=10)
+    fin = FinancingModel(cfg=CostConfig(), overnight_rate=pd.Series(0.05, index=dates))
+    d = dates[5]
+    charge = fin.daily_charge(d, equity=100.0, long_notional=20.0, short_notional=20.0)
+    assert charge < 0.0                                  # a net credit
+
+
+def test_idle_cash_credit_scales_with_undeployed_equity():
+    dates = pd.bdate_range("2024-01-01", periods=10)
+    fin = FinancingModel(cfg=CostConfig(), overnight_rate=pd.Series(0.05, index=dates))
+    d = dates[5]
+    a = fin.daily_charge(d, 100.0, 10.0, 0.0)
+    b = fin.daily_charge(d, 100.0, 90.0, 0.0)
+    assert a < b                                          # more idle cash, larger credit
+
+
+def test_no_cash_credit_at_zero_rates():
+    dates = pd.bdate_range("2020-01-01", periods=10)
+    fin = FinancingModel(cfg=CostConfig(), overnight_rate=pd.Series(0.0, index=dates))
+    assert fin.daily_charge(dates[5], 100.0, 0.0, 0.0) == pytest.approx(0.0)
+
+
+def test_fully_deployed_book_earns_no_cash_credit():
+    dates = pd.bdate_range("2024-01-01", periods=10)
+    fin = FinancingModel(cfg=CostConfig(), overnight_rate=pd.Series(0.05, index=dates))
+    assert fin.daily_charge(dates[5], 100.0, 100.0, 0.0) == pytest.approx(0.0, abs=1e-12)

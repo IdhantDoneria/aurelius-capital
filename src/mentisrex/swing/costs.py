@@ -182,6 +182,11 @@ class CostConfig:
     rebate_haircut_bps: float = 15.0
     """Shortfall of the short rebate versus the overnight rate."""
 
+    cash_haircut_bps: float = 10.0
+    """Shortfall of the rate earned on unencumbered cash versus the overnight
+    rate. A prime broker does not pass through the full rate on idle
+    balances, but it does pass through most of it."""
+
 
 def fee_rate(price: np.ndarray, cfg: CostConfig, *, auction: bool) -> np.ndarray:
     """Commission, exchange and statutory fees as a fraction of notional."""
@@ -295,7 +300,26 @@ class FinancingModel:
         short_notional: float,
         htb_short_notional: float = 0.0,
     ) -> float:
-        """Currency cost of carrying the book overnight from `date`."""
+        """Net currency cost of carrying the book overnight from `date`.
+
+        Four terms, and the fourth is the one that is easy to leave out:
+
+        * margin interest on gross exposure above one times equity;
+        * a stock-borrow fee on short notional;
+        * a short rebate on short proceeds;
+        * **interest earned on unencumbered cash.**
+
+        Omitting the last is not conservative, it is wrong. A market-neutral
+        book that deploys half its equity leaves the other half at the broker
+        earning the overnight rate, and a simulator that pays nothing on it
+        reports a return series that is not an excess return and not a total
+        return either. Measured against a risk-free rate afterwards, such a
+        series is penalised twice for the cash it holds -- which, at the
+        4-5% rates of 2023-2026 and a book running well under one times
+        gross, is worth several percentage points of annual Sharpe.
+
+        A negative return from this method is a net credit.
+        """
         r = float(self.overnight_rate.asof(date))
         if not np.isfinite(r):
             r = 0.0
@@ -309,4 +333,8 @@ class FinancingModel:
             + htb_short_notional * self.cfg.borrow_htb_bps / 1e4
         ) / 360.0
         rebate = short_notional * max(r - self.cfg.rebate_haircut_bps / 1e4, 0.0) / 360.0
-        return margin + borrow - rebate
+
+        idle = max(max(equity, 0.0) - long_notional, 0.0)
+        cash_interest = idle * max(r - self.cfg.cash_haircut_bps / 1e4, 0.0) / 360.0
+
+        return margin + borrow - rebate - cash_interest

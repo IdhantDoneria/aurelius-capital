@@ -143,7 +143,8 @@ def test_costs_reduce_equity_monotonically():
     assert a > b > c
 
 
-def test_financing_charges_a_levered_book_and_not_an_unlevered_one():
+def test_financing_charges_leverage_and_credits_idle_cash():
+    """A levered book pays; a book holding half its equity in cash is paid."""
     p = make_panel()
     fin = FinancingModel(cfg=CostConfig(), overnight_rate=pd.Series(0.05, index=p.dates))
     cost = CostConfig(commission_cps=0.0, auction_fee_cps=0.0, sec_fee_bps=0.0,
@@ -155,8 +156,22 @@ def test_financing_charges_a_levered_book_and_not_an_unlevered_one():
     small = SegmentBacktester(p, fin, BacktestConfig(costs=cost)).run(
         ConstantWeights(np.array([0.25, 0.25, 0.0, 0.0]))
     )
+    assert lev["financing"].mean() > 0.0
+    assert small["financing"].mean() < 0.0
     assert lev["financing"].mean() > small["financing"].mean()
-    assert small["financing"].mean() == pytest.approx(0.0, abs=1e-6)
+
+
+def test_a_flat_book_still_earns_the_cash_rate():
+    """Holding no positions is not the same as earning nothing, and treating
+    it that way makes every Sharpe in the study wrong."""
+    p = make_panel()
+    fin = FinancingModel(cfg=CostConfig(), overnight_rate=pd.Series(0.05, index=p.dates))
+    cost = CostConfig(commission_cps=0.0, auction_fee_cps=0.0, sec_fee_bps=0.0,
+                      taf_cps=0.0, impact_eta_auction=0.0, impact_eta_continuous=0.0)
+    r = SegmentBacktester(p, fin, BacktestConfig(costs=cost)).run(Flat())
+    assert r["equity"].iloc[-1] > r["equity"].iloc[0]
+    ann = (r["equity"].iloc[-1] / r["equity"].iloc[0]) ** (252 / len(r)) - 1
+    assert 0.03 < ann < 0.05
 
 
 def test_untradable_name_is_force_closed_and_stops_accruing():
