@@ -101,6 +101,25 @@ substitute, not an equivalent, and is listed among the limitations.
 
 <!-- LEVERAGE -->
 
+### 6.0 What sets size here
+
+Three limits bind in sequence, and it matters which one is doing the work on
+any given day:
+
+1. **The volatility target**, applied to a trailing estimate of this book's
+   own unit-gross volatility.
+2. **The gross cap**, which binds whenever the volatility target is
+   unreachable.
+3. **The per-name participation cap**, a fraction of each name's own daily
+   dollar volume — which for a short-horizon book is usually the binding
+   constraint and is the one that determines whether the strategy pays for
+   its own turnover.
+
+The backtester reports which is binding, in the `gross` column of its daily
+output. A book that is persistently at its gross cap is one whose volatility
+target is decorative, and should be re-specified rather than left to imply a
+risk appetite it cannot express.
+
 ### 6.1 Why leverage cannot rescue a negative-alpha book
 
 Worth stating explicitly, because it is the first lever an inexperienced
@@ -206,7 +225,37 @@ the breakeven cost multiple is stated.
 
 ## 11. Deployment plan
 
-<!-- DEPLOYMENT -->
+The ramp below is a **measurement programme, not a capital-raising
+schedule.** The single largest uncertainty in this study is the cost model —
+the spread is estimated rather than observed, and small-order auction impact
+is extrapolated below the range the square-root law was fitted on. Both
+resolve in weeks of live trading and in no other way. The ramp is therefore
+designed to buy that information at the smallest price that still produces a
+statistically usable sample.
+
+| Stage | Duration | Equity | Purpose | Gate to the next stage |
+|:--|:--|--:|:--|:--|
+| 0. Paper | 4 weeks | — | Confirm the signal pipeline reproduces the backtest book daily, and that orders reach the closing auction before the cut-off | Book matches the backtest to within rounding on 20 consecutive sessions |
+| 1. Cost discovery | 8 weeks | 5% of target | Measure realised cost per round trip against the model. Return is not the objective and should not be judged | ≥ 400 fills; realised cost within 1.5x modelled |
+| 2. Signal confirmation | 2 quarters | 25% of target | Measure realised rank IC against the backtest estimate | IC t-statistic > 2 on the live sample, and no breach of §12 |
+| 3. Half size | 2 quarters | 50% of target | First stage at which return is a legitimate criterion | Rolling excess return above zero, drawdown within model |
+| 4. Target | — | 100% | — | — |
+
+Two rules that matter more than the schedule:
+
+**Stage 1 is not judged on return.** Eight weeks of a strategy with this
+volatility carries no information about its return — the standard error on an
+eight-week Sharpe estimate is larger than the Sharpe itself. Stage 1 exists
+to measure *cost*, which converges far faster than return because every fill
+is an observation.
+
+**Size is set by participation, not by conviction.** The per-name cap is a
+fraction of each name's own daily volume, so the book grows with the
+liquidity of the names it holds rather than with the manager's confidence.
+Raising the participation cap is a separate decision from raising equity, and
+should be taken separately, with its own evidence — the participation sweep
+in the comparison document is where the cost of getting it wrong is
+quantified.
 
 ---
 
