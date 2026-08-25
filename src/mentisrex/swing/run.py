@@ -212,6 +212,21 @@ def run_dayburn(
     trades, daily = d.run()
     if daily.empty:
         raise RuntimeError("dayburn produced no trades")
+
+    # Sessions with no trade are flat days, not missing days. Dropping them
+    # shortens the series and annualises the rest as though the strategy had
+    # been in the market every session, which overstates both return and
+    # volatility -- by more, the more selective the sleeve is.
+    if benchmark is not None:
+        idx = benchmark.index
+        daily = daily.reindex(idx)
+        daily["ret"] = daily["ret"].fillna(0.0)
+        for c in ("gross", "net", "turnover", "cost", "pnl", "n_trades"):
+            if c in daily:
+                daily[c] = daily[c].fillna(0.0)
+        daily["equity"] = daily["equity"].ffill().fillna(initial_equity)
+        daily["drawdown"] = daily["equity"] / daily["equity"].cummax() - 1.0
+
     perf = evaluate(
         daily["ret"],
         benchmark=benchmark, rf=rf,

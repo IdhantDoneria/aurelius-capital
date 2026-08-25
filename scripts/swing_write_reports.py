@@ -271,13 +271,16 @@ def t_dayburn_grid(c) -> str:
         rows.append(["fade" if r.get("direction", 1) < 0 else "trend",
                      num(r["cone_k"], 2), num(r["atr_stop_mult"], 1),
                      "yes" if r.get("vwap_trail") else "no",
-                     num(r.get("max_spread_bps", 8.0), 1), int(r["n_in_play"]),
+                     num(r.get("max_spread_bps", 8.0), 1),
+                     num(r.get("risk_per_trade", 0.001) * 1e4, 1),
+                     int(r["n_in_play"]),
                      f"{int(r['n_trades']):,}", pct(r["hit_rate"], 1), pct(r["cagr"]),
                      num(r["sharpe"]), pct(r["max_dd"])])
     chosen = g.get("chosen")
     tbl = md_table(["Side", "Cone k", "Stop mult", "VWAP trail", "Max spread bps",
-                    "Names", "Trades", "Hit rate", "CAGR", "Sharpe", "Max DD"], rows,
-                   ":--|--:|--:|:--|--:|--:|--:|--:|--:|--:|--:")
+                    "Risk/trade bps", "Names", "Trades", "Hit rate", "CAGR",
+                    "Sharpe", "Max DD"], rows,
+                   ":--|--:|--:|:--|--:|--:|--:|--:|--:|--:|--:|--:")
     return tbl + f"\n\nChosen on the design window ({g['design_window'][0]} to "\
                  f"{g['design_window'][1]}): `{chosen}`."
 

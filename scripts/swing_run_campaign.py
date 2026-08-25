@@ -395,15 +395,28 @@ def main() -> int:
         # a name it is willing to cross. The last is included because this
         # sleeve pays the spread twice per trade, which is the single largest
         # component of its cost.
+        # The grid spans the five things that change this sleeve's economics:
+        # which way it trades a breach, how far the price must move to count
+        # as one, how much room the stop gives it, how wide a name it will
+        # cross, and how large each position is.
+        #
+        # The last is not redundant with leverage. For the cross-sectional
+        # books, scaling gross scales P&L and cost together and cannot change
+        # the sign of net alpha. Here it can, because impact is concave in
+        # order size: halving the position roughly divides its impact by the
+        # square root of two while leaving the edge per unit notional
+        # untouched. Position size is a cost lever, not just a risk lever.
         grid = [
             {"cone_k": k, "atr_stop_mult": m, "n_in_play": n, "vwap_trail": v,
-             "direction": dr, "max_spread_bps": sp, "cone_vol_source": "trailing"}
+             "direction": dr, "max_spread_bps": sp, "risk_per_trade": rp,
+             "cone_vol_source": "trailing"}
             for dr in (1, -1)
-            for k in (1.0, 1.5, 2.5)
+            for k in (1.5, 2.5)
             for m in (1.0, 3.0)
             for v in (True, False)
             for sp in (8.0, 3.0)
-            for n in (10, 20)
+            for rp in (0.0010, 0.0003)
+            for n in (10,)
         ]
         sweep = []
         best, best_obj = None, -np.inf
@@ -415,6 +428,7 @@ def main() -> int:
             cfg.rules.atr_stop_mult = g["atr_stop_mult"]
             cfg.rules.vwap_trail = g["vwap_trail"]
             cfg.rules.direction = g["direction"]
+            cfg.rules.risk_per_trade = g["risk_per_trade"]
             try:
                 tr, dl, pf = run_dayburn(fd, bd, c, config=cfg, initial_equity=args.aum,
                                          benchmark=ds.benchmark, rf=ds.rf)
@@ -441,6 +455,7 @@ def main() -> int:
         chosen.rules.atr_stop_mult = b_.get("atr_stop_mult", 2.0)
         chosen.rules.vwap_trail = b_.get("vwap_trail", True)
         chosen.rules.direction = b_.get("direction", 1)
+        chosen.rules.risk_per_trade = b_.get("risk_per_trade", 0.0010)
 
         rows = {}
         for aum in (10e6, 25e6, 50e6, 100e6):
@@ -464,7 +479,7 @@ def main() -> int:
         )
         trades.to_parquet(out / "dayburn_trades.parquet")
         daily.to_parquet(out / "dayburn_daily.parquet")
-        ret = daily["ret"].reindex(ds.dates).fillna(0.0)
+        ret = daily["ret"].reindex(ds.dates).fillna(0.0)  # already aligned; belt and braces
         # ---- execution-style sensitivity ---------------------------------
         # This sleeve crosses the spread twice per trade, so how much of the
         # spread it actually pays is the assumption its viability turns on.
