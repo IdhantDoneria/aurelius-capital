@@ -162,7 +162,13 @@ def main() -> int:
     ap.add_argument("--only", default="all", choices=("all", "xs", "dayburn"),
                     help="run a subset of the campaign, for iteration")
     ap.add_argument("--cone", default=str(DATA / "cone.parquet"))
-    ap.add_argument("--warmup", type=int, default=260)
+    ap.add_argument("--warmup", type=int, default=120,
+                    help=("sessions of the feature panel skipped before trading. The "
+                          "panel itself already discards the first 60 sessions of each "
+                          "name, and the longest window any live signal depends on is "
+                          "63 sessions, so 120 is comfortably sufficient. A year-long "
+                          "warm-up on top of the panel's own would silently discard the "
+                          "first year of an already short intraday sample."))
     ap.add_argument("--design-end", default="2023-12-31",
                     help="last date of the design window; everything after is holdout")
     ap.add_argument("--out", default=str(OUT))
