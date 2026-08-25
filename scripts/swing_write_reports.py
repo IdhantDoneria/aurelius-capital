@@ -135,8 +135,8 @@ def t_annual(c, key) -> str:
     for yr, r in sorted(a.items()):
         rows.append([yr[:4], pct(r["cagr"]), pct(r["vol"]), num(r["sharpe"]),
                      pct(r["max_drawdown"]), num(r["hit_rate"] * 100, 1) + "%"])
-    return md_table(["Year", "Return", "Vol", "Sharpe", "Max DD", "Hit rate"], rows,
-                    ":--|--:|--:|--:|--:|--:")
+    return md_table(["Year", "Return", "Vol", "Sharpe", "Max DD",
+                     "Days beating cash"], rows, ":--|--:|--:|--:|--:|--:")
 
 
 def t_regime(c, key) -> str:
