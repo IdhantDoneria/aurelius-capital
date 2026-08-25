@@ -97,6 +97,18 @@ def build_lastlight(ds, aum, *, overlay=None, cfg=None, push=None, warmup=260):
     return s
 
 
+def excess(ret, ds):
+    """Return in excess of the risk-free rate.
+
+    Every significance statement in this campaign is made on this series,
+    not on the raw one. Since the simulator credits interest on idle cash,
+    a raw-return t-statistic on a book that is mostly cash measures the
+    Treasury bill, not the strategy.
+    """
+    rf_d = ds.rf.reindex(ret.index).ffill().fillna(0.0) / 252.0
+    return ret - rf_d
+
+
 def xs_record(ds, res, perf, aum):
     e0 = res["equity"].shift(1).fillna(aum)
     g = res["pnl_gross"] / e0
@@ -109,7 +121,7 @@ def xs_record(ds, res, perf, aum):
         "cost_bps_per_turnover": float(res["cost_bps"].mean() / (turn / 252)),
         "cost_bps_per_day": float(res["cost_bps"].mean()),
         "financing_bps_per_day": float((res["financing"] / e0).mean() * 1e4),
-        "newey_west_t": newey_west_t(res["ret"]),
+        "newey_west_t_excess": newey_west_t(excess(res["ret"], ds)),
     }
 
 
@@ -126,7 +138,7 @@ def deep_dive(name, ret, ds, n_trials, extra=None, res=None):
     return {
         "name": name,
         "performance": perf.to_dict(),
-        "newey_west_t": newey_west_t(ret),
+        "newey_west_t_excess": newey_west_t(excess(ret, ds)),
         "deflated_sharpe": dsr,
         "deflation_benchmark_sharpe": sr0,
         "n_trials_assumed": n_trials,
@@ -577,7 +589,7 @@ def main() -> int:
             split.setdefault(k, {})[label] = jsonable({
                 **evaluate(sub, benchmark=ds.benchmark.reindex(sub.index),
                            rf=ds.rf.reindex(sub.index)).to_dict(),
-                "newey_west_t": newey_west_t(sub),
+                "newey_west_t_excess": newey_west_t(excess(sub, ds)),
             })
     report["design_holdout"] = split
     report["n_trials_by_sleeve"] = n_trials_by_sleeve
@@ -602,7 +614,7 @@ def main() -> int:
         report["equal_risk_combination"] = jsonable({
             "weights": w.to_dict(),
             **evaluate(combo, benchmark=ds.benchmark, rf=ds.rf).to_dict(),
-            "newey_west_t": newey_west_t(combo),
+            "newey_west_t_excess": newey_west_t(excess(combo, ds)),
         })
 
     (Path(args.out) / "campaign.json").write_text(json.dumps(jsonable(report), indent=2, default=str))

@@ -241,7 +241,7 @@ def t_combination(c) -> str:
         ["Sharpe", num(k["sharpe"])],
         ["Max drawdown", pct(k["max_drawdown"])],
         ["Beta to SPY", num(k["beta"], 3)],
-        ["Newey-West t", num(k["newey_west_t"], 2)],
+        ["Newey-West t (excess)", num(k.get("newey_west_t_excess"), 2)],
     ]
     return md_table(["Metric", "Value"], rows, ":--|--:")
 
@@ -257,7 +257,7 @@ def t_holdout(c) -> str:
             if not r:
                 continue
             rows.append([label, w, r["n_days"], pct(r["cagr"]), num(r["sharpe"]),
-                         pct(r["max_drawdown"]), num(r["newey_west_t"], 2)])
+                         pct(r["max_drawdown"]), num(r.get("newey_west_t_excess"), 2)])
     return md_table(["Strategy", "Window", "Days", "CAGR", "Sharpe", "Max DD", "NW t"],
                     rows, ":--|:--|--:|--:|--:|--:|--:")
 

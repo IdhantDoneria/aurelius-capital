@@ -26,7 +26,7 @@ def main() -> int:
         print(f"  {k:10s} CAGR {f(p['cagr']):>8s}  Sharpe {f(p['sharpe'],'.2f'):>6s}  "
               f"vol {f(p['vol']):>7s}  DD {f(p['max_drawdown']):>8s}  "
               f"beta {f(p['beta'],'.3f'):>6s}  aT {f(p['alpha_t'],'.1f'):>6s}  "
-              f"DSR {f(h['deflated_sharpe'],'.3f')}  NWt {f(h['newey_west_t'],'.2f')}")
+              f"DSR {f(h['deflated_sharpe'],'.3f')}  NWt(ex) {f(h.get('newey_west_t_excess'),'.2f')}")
         if "gross_cagr" in d:
             print(f"             gross {f(d['gross_cagr']):>8s}  "
                   f"edge/rt {2*d['alpha_bps_per_turnover']:.2f}bps  "
@@ -73,7 +73,7 @@ def main() -> int:
     if "equal_risk_combination" in c:
         e = c["equal_risk_combination"]
         print(f"\nEQUAL-RISK COMBO  CAGR {f(e['cagr'])}  Sharpe {f(e['sharpe'],'.2f')}  "
-              f"DD {f(e['max_drawdown'])}  beta {f(e['beta'],'.3f')}  NWt {f(e['newey_west_t'],'.2f')}")
+              f"DD {f(e['max_drawdown'])}  beta {f(e['beta'],'.3f')}  NWt(ex) {f(e.get('newey_west_t_excess'),'.2f')}")
         print(f"  weights {({k: round(v, 3) for k, v in e['weights'].items()})}")
     return 0
 
