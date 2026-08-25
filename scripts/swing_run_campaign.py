@@ -254,7 +254,13 @@ def main() -> int:
             return -np.inf
         if float(g.mean()) < MIN_DEPLOYED_GROSS:
             return -np.inf
-        return float(r.mean() / r.std(ddof=1) * np.sqrt(252))
+        # Excess of the risk-free rate, not the raw return. Now that idle
+        # cash earns interest, a total-return objective would reward a
+        # configuration for holding cash during the 2023-2026 high-rate
+        # period rather than for having a better signal.
+        rf_d = ds.rf.reindex(r.index).ffill().fillna(0.0) / 252.0
+        ex = r - rf_d
+        return float(ex.mean() / r.std(ddof=1) * np.sqrt(252))
 
     xs_grids = {
         "nightfall": [
