@@ -117,6 +117,10 @@ SELECT
   rth_vol / nullif(med_vol20, 0)              AS rvol,
   pre_vol / nullif(med_prevol20, 0)           AS pre_rvol,
   or30_vol / nullif(med_vol20, 0)             AS rvol_or30,
+  -- opening-range width relative to the name's own recent daily volatility:
+  -- a wide first half hour is the clearest same-session evidence that a name
+  -- is being repriced rather than drifting
+  ln(or30_hi / nullif(or30_lo, 0)) / nullif(sd_cc60, 0) AS or30_range_z,
   last30_vol / nullif(rth_vol, 0)             AS close_vol_share,
   last60_vol / nullif(rth_vol, 0)             AS close60_vol_share,
   rth_dollar_vol / nullif(rth_trades, 0)      AS avg_trade_dollar,

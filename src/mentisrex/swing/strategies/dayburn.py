@@ -47,11 +47,18 @@ class DayburnConfig:
     """Names traded per session. Breadth matters more than conviction here:
     the per-name hit rate is low by construction."""
 
-    w_pre_rvol: float = 0.5
-    w_gap: float = 0.3
-    w_or_rvol: float = 0.2
-    """Weights on the three components of the in-play score, all of which
-    are known before the sleeve's first permitted entry at 10:00."""
+    w_gap: float = 0.45
+    w_or_rvol: float = 0.35
+    w_or_range: float = 0.20
+    """Weights on the three components of the in-play score. All are known by
+    10:00 ET, which is the sleeve's earliest permitted entry: the overnight
+    gap is known at the bell, and the first-thirty-minute volume and range
+    are known at 10:00.
+
+    Pre-market relative volume -- the strongest single in-play measure in the
+    practitioner literature -- is **not** used, because the bars in this
+    programme are regular-hours only. See the skipped-items section of the
+    strategy document."""
 
     min_price: float = 5.0
     min_addv: float = 20_000_000.0
@@ -76,14 +83,14 @@ class DayburnConfig:
 
 
 def in_play_score(day: pd.DataFrame, cfg: DayburnConfig) -> pd.Series:
-    """Rank-combine the three attention measures into one score."""
+    """Rank-combine the attention measures into one score."""
     def rk(s: pd.Series) -> pd.Series:
         return s.rank(pct=True, na_option="bottom")
 
     return (
-        cfg.w_pre_rvol * rk(day["pre_rvol"])
-        + cfg.w_gap * rk(day["gap_z"].abs())
+        cfg.w_gap * rk(day["gap_z"].abs())
         + cfg.w_or_rvol * rk(day["rvol_or30"])
+        + cfg.w_or_range * rk(day["or30_range_z"])
     )
 
 
@@ -97,8 +104,9 @@ def select_in_play(features: pd.DataFrame, cfg: DayburnConfig) -> pd.DataFrame:
     f = features[
         (features["p_open"] >= cfg.min_price)
         & (features["addv60"] >= cfg.min_addv)
-        & features["pre_rvol"].notna()
+        & features["rvol_or30"].notna()
         & features["gap_z"].notna()
+        & features["or30_range_z"].notna()
     ].copy()
     f["play"] = f.groupby("d", group_keys=False).apply(
         lambda g: in_play_score(g, cfg), include_groups=False

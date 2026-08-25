@@ -126,3 +126,94 @@ def save(name: str, res: pd.DataFrame, perf: Performance, extra: dict | None = N
 def summary_table(results: dict[str, Performance]) -> pd.DataFrame:
     rows = {k: v.to_dict() for k, v in results.items()}
     return pd.DataFrame(rows).T
+
+
+# --------------------------------------------------------------------------
+# Dayburn: the intraday sleeve is not a cross-sectional book, so it has its
+# own loader and its own runner.
+# --------------------------------------------------------------------------
+
+DAYBURN_COLS = [
+    "symbol", "d", "p_open", "p_close", "addv60", "gap_z", "rvol_or30",
+    "or30_range_z", "or30_hi", "or30_lo", "rv_day", "sd_cc60", "prev_close",
+]
+
+
+def dayburn_inputs(
+    *,
+    features: str | Path = DATA / "features.parquet",
+    bars: str | Path = DATA / "bars_rth" / "*.parquet",
+    cone: str | Path = DATA / "cone.parquet",
+    start: str = "2020-01-01",
+    end: str = "2026-08-24",
+    tier: str = "core",
+    spread_scalar: float = 1.0,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Assemble the per-session feature table, the bar table and the cone."""
+    import duckdb
+
+    from .costs import CostConfig, modelled_spread
+
+    con = duckdb.connect()
+    con.execute("PRAGMA threads=8")
+    cols = ", ".join(DAYBURN_COLS)
+    f = con.execute(
+        f"""
+        SELECT {cols},
+               avg(rv_day) OVER (
+                   PARTITION BY symbol ORDER BY d ROWS BETWEEN 20 PRECEDING AND 1 PRECEDING
+               ) AS rv_day_prev
+        FROM parquet_scan('{features}')
+        WHERE d BETWEEN DATE '{start}' AND DATE '{end}' AND tier = '{tier}'
+        """
+    ).fetchdf()
+    f["d"] = pd.to_datetime(f["d"]).dt.date
+    f["daily_vol"] = f["sd_cc60"].fillna(f["sd_cc60"].median())
+    f["spread"] = modelled_spread(
+        f["daily_vol"].to_numpy(), f["addv60"].to_numpy(), f["p_open"].to_numpy(),
+        scalar=spread_scalar,
+    )
+
+    b = con.execute(
+        f"""
+        SELECT symbol,
+               CAST(ts AT TIME ZONE 'America/New_York' AS DATE) AS d,
+               CAST(date_part('hour', ts AT TIME ZONE 'America/New_York') AS INT) * 60
+                 + CAST(date_part('minute', ts AT TIME ZONE 'America/New_York') AS INT) AS mod,
+               open, high, low, close, volume, vwap
+        FROM parquet_scan('{bars}')
+        WHERE close > 0
+          AND CAST(ts AT TIME ZONE 'America/New_York' AS DATE)
+              BETWEEN DATE '{start}' AND DATE '{end}'
+        """
+    ).fetchdf()
+    b["d"] = pd.to_datetime(b["d"]).dt.date
+
+    c = con.execute(f"SELECT * FROM parquet_scan('{cone}')").fetchdf()
+    c["d"] = pd.to_datetime(c["d"]).dt.date
+    return f, b, c
+
+
+def run_dayburn(
+    features: pd.DataFrame,
+    bars: pd.DataFrame,
+    cone: pd.DataFrame,
+    *,
+    config=None,
+    cost: CostConfig | None = None,
+    initial_equity: float = 100_000_000.0,
+    benchmark: pd.Series | None = None,
+    rf: pd.Series | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame, Performance]:
+    from .strategies import Dayburn
+
+    d = Dayburn(features, bars, cone, config=config, cost=cost, initial_equity=initial_equity)
+    trades, daily = d.run()
+    if daily.empty:
+        raise RuntimeError("dayburn produced no trades")
+    perf = evaluate(
+        daily["ret"],
+        benchmark=benchmark, rf=rf,
+        gross=daily["gross"], net=daily["net"], turnover=daily["turnover"],
+    )
+    return trades, daily, perf

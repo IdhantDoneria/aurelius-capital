@@ -158,9 +158,13 @@ def simulate_day_symbol(
             if mods[k] >= rules.exit_mod:
                 exit_px, exit_mod, reason = close[k], mods[k], "time"
                 break
+            # The VWAP check runs from the entry bar onward. Skipping the
+            # entry bar would hold a position that closed on the wrong side of
+            # VWAP for an extra bar purely to avoid a same-bar round trip,
+            # which flatters the exit rather than making it conservative --
+            # the fill is still the *next* bar's open either way.
             if (
                 rules.vwap_trail
-                and k > j
                 and np.isfinite(vwap_run[k])
                 and ((side > 0 and close[k] < vwap_run[k]) or (side < 0 and close[k] > vwap_run[k]))
             ):
