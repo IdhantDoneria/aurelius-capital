@@ -30,7 +30,7 @@ the session, so its risk never overlaps an intraday sleeve.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 
@@ -86,39 +86,37 @@ class Lastlight(CrossSectionalStrategy):
         self._px = self.cube["p_close"]
 
     def _overlay_for(self, t: int) -> OverlayConfig:
+        """Scale the volatility target with the VIX.
+
+        Rebuilt with `dataclasses.replace` rather than field by field: an
+        overlay reconstructed by hand silently drops any field added later,
+        which is exactly how a risk limit stops being applied without
+        anything failing.
+        """
         if not self.c.vix_scaling or self.vix is None:
             return self.overlay
         v = float(self.vix[t])
         if not np.isfinite(v) or v <= 0:
             return self.overlay
         k = min((v / self.c.vix_ref) ** self.c.vix_beta, self.c.vix_scalar_cap)
-        o = self.overlay
-        return OverlayConfig(
-            target_vol=o.target_vol * k,
-            vol_lookback=o.vol_lookback,
-            vol_floor=o.vol_floor,
-            max_leverage_scalar=o.max_leverage_scalar,
-            gross_cap=o.gross_cap,
-            max_weight=o.max_weight,
-            beta_neutral=o.beta_neutral,
-            dollar_neutral=o.dollar_neutral,
-            n_stat_factors=o.n_stat_factors,
-            dd_brake_start=o.dd_brake_start,
-            dd_brake_full=o.dd_brake_full,
-            dd_brake_floor=o.dd_brake_floor,
-        )
+        return replace(self.overlay, target_vol=self.overlay.target_vol * k)
 
     def raw_score(self, t: int) -> np.ndarray:
         push = self._push[t]
         share = self._share[t]
 
         # fade the displacement, weighted up where closing volume concentrated
-        score = -rank_normal(push) * (1.0 + self.c.close_share_weight * rank_normal(share))
+        score = -rank_normal(push)
+        if np.isfinite(share).any():
+            score = score * (1.0 + self.c.close_share_weight * rank_normal(share))
 
+        # The closing-volume-share filter needs intraday bars. When the panel
+        # was built from daily bars it is absent, and the filter is dropped
+        # rather than silently passed -- a degraded sleeve, flagged as one.
+        have_share = np.isfinite(share).any()
         keep = (
             np.isfinite(push)
-            & np.isfinite(share)
-            & (share >= self.c.min_close_vol_share)
+            & (share >= self.c.min_close_vol_share if have_share else True)
             & (np.nan_to_num(self._rvol[t], nan=99.0) <= self.c.max_rvol)
             & (np.abs(np.nan_to_num(self._gapz[t])) <= self.c.max_gap_z)
             & (np.nan_to_num(self._earn_near[t]) <= 0)
@@ -129,6 +127,10 @@ class Lastlight(CrossSectionalStrategy):
         if fin.sum() > 50:
             keep &= fin & (am <= np.quantile(am[fin], self.c.max_amihud_pct))
         return np.where(keep, score, np.nan)
+
+    def targets_moc(self, t: int) -> np.ndarray:
+        """The book carried across tonight's gap."""
+        return self._target(t)
 
     def targets_moo(self, t: int) -> np.ndarray:
         """Flat at every open: the sleeve carries only the overnight leg."""

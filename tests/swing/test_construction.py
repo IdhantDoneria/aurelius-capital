@@ -151,3 +151,33 @@ def test_neutralize_removes_projection():
     r = neutralize(w, load)
     assert abs((r * load[:, 1]).sum()) < 1e-8
     assert abs(r.sum()) < 1e-8
+
+
+def test_participation_cap_binds_on_a_thin_name():
+    """The weight cap cannot substitute for a participation cap: impact
+    depends on size relative to the *name's* volume, not to the fund."""
+    n = 100
+    adv = np.full(n, 1e8)
+    adv[0] = 1e6                                   # one thin name
+    cfg = OverlayConfig(target_vol=0.10, gross_cap=2.0, max_weight=0.05,
+                        max_participation=0.001, beta_neutral=False, dollar_neutral=False)
+    score = rng.normal(size=n)
+    score[0] = 10.0                                # and the signal loves it
+    w = size_book(score, beta=np.ones(n), factor_loadings=None, realised_vol=0.10,
+                  drawdown=0.0, cfg=cfg, tradable=np.ones(n, bool),
+                  adv_dollar=adv, equity=1e8)
+    assert abs(w[0]) <= 0.001 * 1e6 / 1e8 + 1e-12
+    assert abs(w[0]) < cfg.max_weight
+
+
+def test_participation_cap_disabled_by_zero():
+    n = 50
+    cfg_off = OverlayConfig(max_participation=0.0, max_weight=0.05)
+    cfg_on = OverlayConfig(max_participation=1e-9, max_weight=0.05)
+    score = rng.normal(size=n)
+    kw = dict(beta=np.ones(n), factor_loadings=None, realised_vol=0.10, drawdown=0.0,
+              tradable=np.ones(n, bool), adv_dollar=np.full(n, 1e8), equity=1e8)
+    off = np.abs(size_book(score, cfg=cfg_off, **kw)).sum()
+    on = np.abs(size_book(score, cfg=cfg_on, **kw)).sum()
+    assert off > 0.5
+    assert on < 1e-6 * off

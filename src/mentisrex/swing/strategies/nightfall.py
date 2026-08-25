@@ -42,7 +42,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from ..construction import cross_sectional_z, rank_normal
+from ..construction import cross_sectional_z, rank_normal, select_tails
 from .base import CrossSectionalStrategy
 
 
@@ -77,6 +77,17 @@ class NightfallConfig:
     min_price: float = 5.0
     max_amihud_pct: float = 0.80
 
+    tail_pct: float = 1.0
+    """Fraction of the cross-section actually traded, split between the two
+    tails. Below one the book concentrates on conviction, which raises the
+    edge per name and the impact per name at the same time."""
+
+    min_dispersion_pct: float = 0.0
+    """Trade only on days whose cross-sectional signal dispersion is above
+    this trailing percentile. Turnover is the binding constraint on this
+    sleeve, so skipping low-information days is the most direct lever on the
+    ratio of edge to cost."""
+
 
 class Nightfall(CrossSectionalStrategy):
     name = "nightfall"
@@ -97,7 +108,7 @@ class Nightfall(CrossSectionalStrategy):
         self._px = self.cube["p_close"]
         self._retcc = self.cube["ret_cc"]
         self.overnight_only = self.c.mode == "overnight"
-        self._moo_queue: list[np.ndarray] = []
+        self._disp_history: list[float] = []
 
     def raw_score(self, t: int) -> np.ndarray:
         rt = np.sqrt(self._n)
@@ -121,7 +132,21 @@ class Nightfall(CrossSectionalStrategy):
         fin = np.isfinite(am)
         if fin.sum() > 50:
             keep &= fin & (am <= np.quantile(am[fin], self.c.max_amihud_pct))
-        return np.where(keep, score, np.nan)
+        out = np.where(keep, score, np.nan)
+
+        if self.c.min_dispersion_pct > 0.0:
+            live = out[np.isfinite(out)]
+            disp = float(live.std(ddof=1)) if live.size > 20 else 0.0
+            self._disp_history.append(disp)
+            if len(self._disp_history) > 260:
+                self._disp_history.pop(0)
+            if len(self._disp_history) >= 120:
+                # trailing percentile, computed on history strictly before today
+                cut = float(np.quantile(self._disp_history[:-1], self.c.min_dispersion_pct))
+                if disp < cut:
+                    return np.full_like(out, np.nan)
+
+        return select_tails(out, self.c.tail_pct)
 
     # -- segment-specific books ---------------------------------------------
     def targets_moc(self, t: int) -> np.ndarray | None:

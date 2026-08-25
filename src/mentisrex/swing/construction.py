@@ -73,6 +73,27 @@ def _erfinv(y: np.ndarray) -> np.ndarray:
     return np.sign(y) * np.sqrt(np.sqrt(t1 * t1 - ln1 / a) - t1)
 
 
+def select_tails(score: np.ndarray, pct: float) -> np.ndarray:
+    """Keep only the extremes of a cross-section, blanking the middle.
+
+    `pct` is the *total* fraction retained, split evenly between the two
+    tails: 0.2 keeps the top and bottom decile. Concentrating raises the
+    average edge per name but also raises impact, because the same capital is
+    spread over fewer names -- which of those wins is an empirical question
+    and the reason this is a parameter.
+    """
+    if pct >= 1.0:
+        return score
+    m = np.isfinite(score) & (score != 0)
+    n = int(m.sum())
+    if n < 20:
+        return score
+    half = max(pct / 2.0, 1.0 / n)
+    lo, hi = np.quantile(score[m], [half, 1.0 - half])
+    keep = m & ((score <= lo) | (score >= hi))
+    return np.where(keep, score, np.nan)
+
+
 def neutralize(w: np.ndarray, loadings: np.ndarray) -> np.ndarray:
     """Residualise weights against a set of exposures.
 
@@ -115,6 +136,17 @@ class OverlayConfig:
     set, and the leading components of a daily equity return matrix are
     dominated by sector structure."""
 
+    max_participation: float = 0.0
+    """Per-name cap as a fraction of the name's trailing daily dollar volume.
+    Zero disables it.
+
+    This is the control that actually governs impact, and it is the one a
+    weight cap cannot substitute for: impact depends on order size relative
+    to the *name's* volume, not relative to the fund. Concentrating a book
+    into fewer names raises the edge per name and the impact per name
+    together, and only a participation cap lets the first happen without the
+    second -- at the price of a smaller book."""
+
     dd_brake_start: float = 0.08
     dd_brake_full: float = 0.20
     """Linear de-risking between these two drawdown levels; at `dd_brake_full`
@@ -131,6 +163,8 @@ def size_book(
     drawdown: float,
     cfg: OverlayConfig,
     tradable: np.ndarray,
+    adv_dollar: np.ndarray | None = None,
+    equity: float | None = None,
 ) -> np.ndarray:
     """Turn a raw cross-sectional score into target weights.
 
@@ -176,13 +210,18 @@ def size_book(
     # the two are alternated a few times; the final clip is what guarantees
     # the cap holds, and any residual net exposure after it is reported by
     # the backtester rather than assumed to be zero.
+    cap = np.full_like(w, cfg.max_weight)
+    if cfg.max_participation > 0.0 and adv_dollar is not None and equity:
+        part_cap = cfg.max_participation * np.nan_to_num(adv_dollar, nan=0.0) / max(equity, 1.0)
+        cap = np.minimum(cap, np.where(np.isfinite(part_cap), part_cap, 0.0))
+
     exposures = np.column_stack(cols) if cols else None
     for _ in range(3):
-        w = np.clip(w, -cfg.max_weight, cfg.max_weight)
+        w = np.clip(w, -cap, cap)
         if exposures is not None:
             w = np.where(tradable, neutralize(w, exposures), 0.0)
         g = np.abs(w).sum()
         if g <= 0:
             return np.zeros_like(s)
         w = w * (target_gross / g)
-    return np.clip(w, -cfg.max_weight, cfg.max_weight)
+    return np.clip(w, -cap, cap)

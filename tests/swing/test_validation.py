@@ -145,3 +145,30 @@ def test_signal_decay_reports_no_ic_for_pure_noise():
     fwd = rng.normal(0, 0.02, size=(T, N))
     t = signal_decay(score, fwd, horizons=(1, 5))
     assert t["mean_ic"].abs().max() < 0.05
+
+
+def test_vix_overlay_rebuild_preserves_every_risk_field():
+    """A hand-rebuilt config silently drops fields added later, which is how
+    a risk limit stops being applied without anything failing."""
+    import dataclasses
+    import numpy as np
+    from mentisrex.swing.construction import OverlayConfig
+    from mentisrex.swing.strategies import Lastlight, LastlightConfig
+    from mentisrex.swing.strategies.base import FeatureCube, StagingConfig
+
+    T, N = 5, 40
+    zeros = np.zeros((T, N))
+    cols = ["close_push", "close_push_daily", "close_vol_share", "rvol", "gap_z",
+            "earn_near", "amihud20", "p_close"]
+    cube = FeatureCube(dates=pd.bdate_range("2020-01-01", periods=T),
+                       symbols=np.arange(N), data={c: zeros.copy() for c in cols})
+    base = OverlayConfig(target_vol=0.10, max_participation=0.0007, gross_cap=2.2,
+                         max_weight=0.011, dd_brake_floor=0.31)
+    s = Lastlight(cube, base, StagingConfig(hold_days=1, stage=False),
+                  beta=np.ones((T, N)), tradable=np.ones((T, N), bool),
+                  config=LastlightConfig(), vix=np.full(T, 30.0))
+    scaled = s._overlay_for(0)
+    assert scaled.target_vol > base.target_vol
+    for f in dataclasses.fields(OverlayConfig):
+        if f.name != "target_vol":
+            assert getattr(scaled, f.name) == getattr(base, f.name), f.name

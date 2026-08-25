@@ -58,6 +58,8 @@ class CrossSectionalStrategy:
         beta: np.ndarray,
         factor_loadings: np.ndarray | None = None,
         tradable: np.ndarray | None = None,
+        adv_dollar: np.ndarray | None = None,
+        equity: float | None = None,
         trade_at: str | None = None,
         warmup_days: int = 260,
         unit_vol: np.ndarray | None = None,
@@ -69,6 +71,8 @@ class CrossSectionalStrategy:
         self.factor_loadings = factor_loadings
         self.T, self.N = cube.data[next(iter(cube.data))].shape
         self.tradable = tradable if tradable is not None else np.ones((self.T, self.N), bool)
+        self.adv_dollar = adv_dollar
+        self.equity = equity
         if trade_at is not None:
             self.trade_at = trade_at
         self._warmup = warmup_days
@@ -119,6 +123,8 @@ class CrossSectionalStrategy:
             drawdown=self._drawdown,
             cfg=cfg,
             tradable=self.tradable[t],
+            adv_dollar=None if self.adv_dollar is None else self.adv_dollar[t],
+            equity=self.equity,
         )
         if self.staging.stage and self.staging.hold_days > 1:
             self._queue.append(w)

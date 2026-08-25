@@ -24,7 +24,7 @@ DATA = Path("/Users/idhantdoneria/mentisrex-capital/data/intraday")
 PIVOT_COLS = [
     "p_open", "p_close", "p_1545", "prev_close", "hi", "lo", "addv60",
     "ret_on", "ret_id", "ret_cc", "rvol", "pre_rvol", "rvol_or30",
-    "close_vol_share", "close_push", "close_vs_vwap", "gap_z", "id_z",
+    "close_vol_share", "close_push", "close_push_daily", "close_vs_vwap", "gap_z", "id_z",
     "son5", "sid5", "son10", "sid10", "son21", "sid21", "son63", "sid63",
     "idup10", "onup10", "sd_on60", "sd_id60", "sd_cc20", "sd_cc60",
     "amihud20", "mom21", "mom63", "mom252", "rv_day", "rv_ratio", "clv",

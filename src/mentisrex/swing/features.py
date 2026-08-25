@@ -125,7 +125,13 @@ SELECT
   ln(p_close / nullif(vwap_day, 0))           AS close_vs_vwap,
   ln(p_1545  / nullif(vwap_day, 0))           AS p1545_vs_vwap,
   ln(p_close / nullif(vwap_pm, 0))            AS close_vs_vwap_pm,
-  ln(p_close / nullif(vwap_pm, 0)) / nullif(rv_day / sqrt(78), 0) AS close_push,
+  ln(p_close / nullif(vwap_pm, 0)) / nullif(rv_day / sqrt(26), 0) AS close_push,
+  -- daily-only fallback: displacement from the *session* VWAP scaled by
+  -- close-to-close volatility. A weaker instrument than close_push -- it
+  -- cannot see whether the move happened in the last half hour -- and it is
+  -- kept as a separate column rather than blended, so the two are never
+  -- silently confused for one another.
+  ln(p_close / nullif(vwap_day, 0)) / nullif(sd_cc60, 0) AS close_push_daily,
   -- normalised gap
   ret_on / nullif(sd_on60, 0)                 AS gap_z,
   ret_id / nullif(sd_id60, 0)                 AS id_z,
