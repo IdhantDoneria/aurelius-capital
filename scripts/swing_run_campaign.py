@@ -281,11 +281,20 @@ def main() -> int:
             for lb in ("5", "10", "21")
             for md in ("overnight",)
         ],
+        # `min_close_vol_share` is in the grid because the signal diagnostic
+        # says it should be: the fade's rank IC against the next overnight
+        # return is about -5.7% unconditionally and about -7.9% restricted to
+        # sessions where the last half hour carried an unusually high share of
+        # the day's volume. A filter is a stronger instrument than the weight
+        # the sleeve already applies, and with the participation cap binding it
+        # reduces gross without raising per-name impact.
         "lastlight": [
-            {"max_participation": mp, "vix_beta": vb, "max_rvol": mr}
-            for mp in (0.0, 0.0003, 0.0001)
+            {"max_participation": mp, "vix_beta": vb, "max_rvol": mr,
+             "min_close_vol_share": cs}
+            for mp in (0.0003, 0.0001)
             for vb in (0.0, 0.5)
             for mr in (2.0, 3.0)
+            for cs in (0.06, 0.15, 0.20)
         ],
     }
 
@@ -305,10 +314,13 @@ def main() -> int:
             cfg = NightfallConfig(mode=params.get("mode", "overnight"),
                                   lookback=params.get("lookback", "10"))
             return build_nightfall(ds, aum, overlay=ov, cfg=cfg, warmup=args.warmup)
-        cfg = LastlightConfig(push_source=push_col,
-                              vix_beta=params.get("vix_beta", 0.5),
-                              vix_scaling=params.get("vix_beta", 0.5) > 0,
-                              max_rvol=params.get("max_rvol", 3.0))
+        cfg = LastlightConfig(
+            push_source=push_col,
+            vix_beta=params.get("vix_beta", 0.5),
+            vix_scaling=params.get("vix_beta", 0.5) > 0,
+            max_rvol=params.get("max_rvol", 3.0),
+            min_close_vol_share=params.get("min_close_vol_share", 0.06),
+        )
         return build_lastlight(ds, aum, overlay=ov, cfg=cfg, push=push_col,
                                warmup=args.warmup)
 
