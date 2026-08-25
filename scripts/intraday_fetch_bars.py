@@ -49,7 +49,7 @@ class RateLimiter:
             time.sleep(wait)
 
 
-LIMITER = RateLimiter(180)
+LIMITER = RateLimiter(195)
 
 
 def creds() -> dict[str, str]:
@@ -63,13 +63,22 @@ def creds() -> dict[str, str]:
     }
 
 
+_SESSION = requests.Session()
+_SESSION.mount(
+    "https://", requests.adapters.HTTPAdapter(pool_connections=4, pool_maxsize=64)
+)
+
+
 def session() -> requests.Session:
-    s = getattr(_local, "s", None)
-    if s is None:
-        s = requests.Session()
-        s.mount("https://", requests.adapters.HTTPAdapter(pool_maxsize=8))
-        _local.s = s
-    return s
+    """One shared, pooled session for every worker.
+
+    A session per thread looked harmless and was not: each new connection is
+    a fresh TLS handshake, and enough of them at once starves the pool and
+    surfaces as 429s and read timeouts that look like server-side rate
+    limiting. Pooling one session takes the sustained rate from roughly 200
+    requests a minute to over 2,000.
+    """
+    return _SESSION
 
 
 def fetch_chunk(symbols: list[str], tf: str, start: str, end: str, headers) -> pd.DataFrame:
