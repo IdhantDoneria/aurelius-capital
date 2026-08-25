@@ -229,9 +229,14 @@ Overnight and intraday returns have materially different variances, so a raw
 difference would be an overnight signal wearing a spread's clothing.
 
 **Construction and execution.** Dollar- and beta-neutral, style-neutral,
-volatility-targeted at 10% annualised, gross capped at 3.0x, per-name cap
-1.5% of equity. Enter in the closing auction, exit in the next opening
-auction. Flat during every session.
+volatility target 10% annualised, gross capped at 3.0x, per-name cap 1.5% of
+equity. Enter in the closing auction, exit in the next opening auction. Flat
+during every session.
+
+The volatility target is nominal rather than binding: this book's unlevered
+volatility is about 1.65% a year, so reaching 10% would need roughly six
+times gross. In practice it runs at the gross cap, and then well below it
+once the drawdown brake engages. See §5.3.
 
 ### 2.2 Strategy B — Dayburn: volatility-cone intraday trend in names in play
 
@@ -307,11 +312,12 @@ done.
 **Volatility conditioning.** Exposure is scaled by `(VIX / 18)^0.5`, capped at
 2x, following Nagel: the book should lean in when it is being paid more.
 
-**Construction and execution.** Same overlay as Nightfall. Enter in the
-closing auction, exit in the next opening auction. Holding only the overnight
-leg is deliberate — Lou, Polk and Skouras find reversal profits accrue
-overnight, and it keeps the book flat during the session so its risk never
-overlaps the intraday sleeve.
+**Construction and execution.** Same overlay as Nightfall, and the same
+observation about the volatility target being nominal rather than binding
+applies. Enter in the closing auction, exit in the next opening auction.
+Holding only the overnight leg is deliberate — Lou, Polk and Skouras find
+reversal profits accrue overnight, and it keeps the book flat during the
+session so its risk never overlaps the intraday sleeve.
 
 ---
 
