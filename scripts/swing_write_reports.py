@@ -95,12 +95,12 @@ def t_aum(c, key) -> str:
                         ":--|--:|--:|--:|--:|--:|--:|--:|--:")
     rows = []
     for aum, r in sorted(s.items(), key=lambda kv: float(kv[0])):
-        rows.append([f"${aum}M", pct(r.get("gross_cagr")), pct(r["cagr"]), num(r["sharpe"]),
-                     pct(r["max_drawdown"]), num(r.get("cost_bps_per_day"), 2),
-                     num(r.get("turnover_annual"), 0)])
-    return md_table(["Equity", "Gross CAGR", "Net CAGR", "Sharpe", "Max DD",
-                     "Cost (bps/day)", "Turnover"], rows,
-                    ":--|--:|--:|--:|--:|--:|--:")
+        rows.append([f"${aum}M", pct(r.get("gross_cagr")), pct(r["cagr"]),
+                     pct(_excess(r)), num(r["sharpe"]), pct(r["max_drawdown"]),
+                     num(r.get("cost_bps_per_day"), 2), num(r.get("turnover_annual"), 0)])
+    return md_table(["Equity", "Gross CAGR", "Net CAGR", "Excess of cash", "Sharpe",
+                     "Max DD", "Cost (bps/day)", "Turnover"], rows,
+                    ":--|--:|--:|--:|--:|--:|--:|--:")
 
 
 def t_participation(c, key) -> str:
@@ -108,11 +108,12 @@ def t_participation(c, key) -> str:
     rows = []
     for part, r in sorted(s.items(), key=lambda kv: -float(kv[0])):
         lbl = "uncapped" if float(part) == 0 else f"{float(part) * 100:.3f}% of ADV"
-        rows.append([lbl, pct(r.get("gross_cagr")), pct(r["cagr"]), num(r["sharpe"]),
-                     pct(r["max_drawdown"]), num(r.get("avg_gross"), 2),
-                     num(r.get("turnover_annual"), 0)])
-    return md_table(["Per-name cap", "Gross CAGR", "Net CAGR", "Sharpe", "Max DD",
-                     "Avg gross", "Turnover"], rows, ":--|--:|--:|--:|--:|--:|--:")
+        rows.append([lbl, pct(r.get("gross_cagr")), pct(r["cagr"]), pct(_excess(r)),
+                     num(r["sharpe"]), pct(r["max_drawdown"]),
+                     num(r.get("avg_gross"), 2), num(r.get("turnover_annual"), 0)])
+    return md_table(["Per-name cap", "Gross CAGR", "Net CAGR", "Excess of cash",
+                     "Sharpe", "Max DD", "Avg gross", "Turnover"], rows,
+                    ":--|--:|--:|--:|--:|--:|--:|--:")
 
 
 def t_cost(c, key) -> str:
@@ -326,12 +327,19 @@ def _zero_crossing(xs, ys):
     return pts[-1][0] if pts[-1][1] > 0 else 0.0
 
 
-def t_capacity(c) -> str:
-    """Equity at which each sleeve's net return crosses zero.
+def _excess(r):
+    """Annualised mean excess return: Sharpe x volatility."""
+    sh, v = r.get("sharpe"), r.get("vol")
+    return None if (sh is None or not v) else sh * v
 
-    Interpolated from the AUM sweep. A capacity below the smallest size
-    tested means the sleeve is loss-making at every size examined, which is a
-    more useful statement than a number.
+
+def t_capacity(c) -> str:
+    """Equity at which each sleeve stops beating cash.
+
+    Measured on **excess** return, not CAGR. A capacity table built on CAGR
+    would credit a capacity-constrained book for the Treasury bills it is
+    forced to hold and report a break-even size for a strategy that never
+    beats cash at any size.
     """
     rows = []
     for k, label in NAMES.items():
@@ -339,17 +347,18 @@ def t_capacity(c) -> str:
         if not s:
             continue
         xs = [float(a) for a in s]
-        ys = [s[a]["cagr"] for a in s]
+        ys = [(_excess(s[a]) if _excess(s[a]) is not None else -1.0) for a in s]
         smallest = min(xs)
         if all(y <= 0 for y in ys):
-            cap = f"below ${smallest:.0f}m (loss-making at every size tested)"
+            cap = "none (below cash at every size tested)"
         else:
             z = _zero_crossing(xs, ys)
             cap = f"~${z:.0f}m" if z > smallest else f"below ${smallest:.0f}m"
         best = max(zip(ys, xs))
         rows.append([label, cap, f"${best[1]:.0f}m", pct(best[0])])
-    return md_table(["Strategy", "Break-even equity", "Best size tested",
-                     "Net CAGR at that size"], rows, ":--|--:|--:|--:")
+    return md_table(["Strategy", "Size at which it stops beating cash",
+                     "Best size tested", "Excess of cash at that size"], rows,
+                    ":--|--:|--:|--:")
 
 
 BUILDERS = {
