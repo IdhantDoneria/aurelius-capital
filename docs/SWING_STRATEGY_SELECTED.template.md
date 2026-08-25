@@ -143,7 +143,22 @@ is where two of the three candidates sat.
 
 ### 7.1 Position and exposure limits
 
-<!-- LIMITS -->
+| Limit | Value | Enforced where | Why this one |
+|:--|:--|:--|:--|
+| Per-name weight | 1.5% of equity | Overlay, final clip | A hard ceiling on single-name error, applied to the *sized* book so volatility targeting cannot lift a name through it |
+| Per-name participation | fraction of the name's own trailing dollar volume | Overlay, jointly with the weight cap | The control that actually governs impact. A weight cap limits exposure to the fund; only a participation cap limits exposure to the *name's liquidity* |
+| Gross exposure | 3.0x equity | Overlay, after volatility targeting | Binds whenever the volatility target is unreachable, which for this book is most of the time |
+| Net exposure | dollar-neutral by construction | Overlay, neutralisation | Residual net after the final per-name clip is reported, not assumed to be zero |
+| Market beta | neutralised on a 60-session trailing estimate | Overlay, neutralisation | Beta estimated only from returns strictly before the decision date |
+| Style exposure | size, momentum, volatility neutralised | Overlay, neutralisation | Stands in for a sector classification, which this data set does not have |
+| Price floor | $5.00 | Universe screen | Fees are per share; below this the tick floor alone can exceed the edge |
+| Drawdown | linear de-risking, floored at 25% of target size | Overlay, daily | See §7.2 |
+
+The order of enforcement matters and is fixed: caps and neutralisation are
+alternated for three passes, and the **final** operation is the per-name clip.
+That guarantees the cap holds exactly and leaves neutrality approximate,
+which is the right way round — a book with 20 basis points of residual net
+exposure is a nuisance; a book with an uncapped position is a headline.
 
 ### 7.2 Drawdown brake
 
