@@ -33,10 +33,16 @@ class IntradayRules:
     their widest."""
 
     last_entry_mod: int = 15 * 60
-    exit_mod: int = 15 * 60 + 45
-    """Force flat here, before the closing auction, so the sleeve never
-    carries overnight risk and never competes with a closing-auction sleeve
-    for the same print."""
+    exit_mod: int = 15 * 60 + 30
+    """Bar at which the position is forced flat. A bar stamped `m` closes at
+    `m + BAR_MINUTES`, so 15:30 means the exit fills at the 15:45 print --
+    genuinely in the continuous market, before the closing auction.
+
+    Stamping this 15:45 instead would exit at the 16:00 print, which is the
+    closing auction: a different venue, at a different cost, and one that
+    competes with the closing-auction sleeve for the same print. The sleeve
+    would then be charged continuous-market spread for an auction fill, which
+    is the wrong cost in the wrong direction."""
 
     cone_k: float = 1.0
     """Entry threshold in units of the time-of-day expected move."""

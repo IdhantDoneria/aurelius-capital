@@ -254,3 +254,15 @@ def test_a_valid_atr_stop_is_used_when_the_range_stop_is_unusable():
                               100.0, or_hi=130.0, or_lo=125.0, atr=4.0, rules=rules)
     assert len(out) == 1
     assert out[0][5] == pytest.approx(106.0)      # entry 110 less one ATR
+
+
+def test_time_exit_fills_before_the_closing_auction():
+    """A bar stamped m closes at m + BAR_MINUTES. The default exit must land
+    on the 15:45 print, not the 16:00 one -- the latter is the closing
+    auction, a different venue at a different cost."""
+    from mentisrex.swing.intraday_sim import BAR_MINUTES, RTH_CLOSE
+
+    rules = IntradayRules()
+    assert rules.exit_mod + BAR_MINUTES == RTH_CLOSE - 15
+    assert rules.exit_mod + BAR_MINUTES < RTH_CLOSE
+    assert rules.last_entry_mod < rules.exit_mod
