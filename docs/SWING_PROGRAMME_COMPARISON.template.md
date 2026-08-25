@@ -783,6 +783,39 @@ until it does not.
 
 ## 8. Verdict
 
+### 8.1 How the choice is being made
+
+Stated before the results, so that the criteria are not reverse-engineered
+from the winner. Seven tests, in descending order of how much weight they
+carry:
+
+1. **Is the signal real?** Rank information coefficient against the forward
+   segment the strategy actually holds, and its t-statistic. A signal that
+   cannot clear this is not a candidate whatever its backtest says.
+2. **Is it tradable?** Edge per round trip against cost per round trip. This
+   is the test that eliminated the most promising signal in the study from
+   its most obvious implementation.
+3. **How much margin is there for the cost model being wrong?** The breakeven
+   cost multiple. The spread here is modelled, not measured, so a strategy
+   that breaks even at 1.1x has no margin at all and one that breaks even at
+   3x has real margin.
+4. **Does it survive out of sample?** The design/holdout split and the
+   walk-forward, weighted by the *stability of the chosen parameters* rather
+   than by the out-of-sample return, because six years cannot resolve a
+   return difference this small but can show whether a parameter means
+   anything.
+5. **How much capital does it support?** Measured in excess of cash, not in
+   CAGR.
+6. **What does failure look like?** A slow bleed is recoverable and
+   detectable; a concentrated tail from adverse selection is neither.
+7. **What does it cost to run?** Auction-only execution is operationally far
+   simpler, and far cheaper to get wrong, than continuous intraday trading
+   across twenty names a day.
+
+Criteria 1 and 2 are close to necessary conditions. The rest are weighed.
+
+### 8.2 The choice
+
 <!-- VERDICT -->
 
 ---
