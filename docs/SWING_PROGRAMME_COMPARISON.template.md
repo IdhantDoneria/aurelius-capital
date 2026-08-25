@@ -31,10 +31,12 @@ The result that decides the comparison is not in that table. It is this one:
 
 **A short-horizon strategy lives or dies on the ratio of its edge per round
 trip to its cost per round trip, and nothing else in this study matters as
-much.** Two of the three strategies rest on signals that are real, large and
-statistically overwhelming — and are still not tradable, because the edge
-they carry per trade is smaller than what the round trip costs. The third
-trades a rarer, larger dislocation and therefore clears the same cost.
+much.** A signal can be real, large and statistically overwhelming and still
+be untradable, if the edge it carries per trade is smaller than what the
+round trip costs. Most of this document is about establishing which of the
+three are in that position and why.
+
+<!-- SUMMARY_FINDING -->
 
 The full argument, the evidence for each claim, and the honest list of what
 this study could not establish are below.
@@ -370,6 +372,31 @@ phenomenon.
 
 <!-- TABLE:decayh_lastlight_push_fade -->
 
+### 3.3 Dayburn: does an intraday move continue, or revert?
+
+The intraday sleeve rests on a premise that a backtest would confound with
+execution, so it is measured directly first. For every eligible session, take
+the vol-scaled move from the open to 10:00 and the vol-scaled move from 10:00
+to 15:45, and compute the mean of `sign(morning) x afternoon` — the average
+follow-through of a morning move, in units of the name's own daily
+volatility.
+
+<!-- TABLE:continuation -->
+
+A positive number means intraday moves continue and the sleeve should trade
+breakouts in their own direction. A negative number means they revert and it
+should fade them. The direction is fixed from the design window and never
+re-fitted on the holdout.
+
+It is worth being precise about what this does and does not test against the
+literature. Gao, Han, Li and Zhou document intraday momentum **on the S&P 500
+index**, between two specific half-hours. The quantity measured here is a
+**single-name, morning-to-close** follow-through, which is a different
+statistic about a different object. Single-name intraday reversal is itself
+well documented — it is short-horizon reversal at intraday frequency, the
+same liquidity-provision return Nagel analyses — so a negative reading here
+is not evidence against the index result.
+
 ---
 
 ## 4. Headline results
@@ -392,6 +419,24 @@ Year by year:
 **Lastlight**
 
 <!-- TABLE:annual_lastlight -->
+
+### 4.1 Dayburn's trade distribution
+
+An intraday breakout book should have a hit rate well under half and a much
+larger average winner. That convexity is the design; a version of this
+strategy with a high hit rate would be one that had quietly removed its
+stops. The number that matters is whether the payoff ratio clears
+`(1 - hit) / hit`, which is the breakeven ratio at that hit rate before any
+costs.
+
+<!-- TABLE:dayburn_trades -->
+
+### 4.2 Design window versus holdout
+
+Parameters for all three sleeves were chosen on the window ending
+2023-12-31. Everything after it never informed a single choice.
+
+<!-- TABLE:holdout -->
 
 ---
 
@@ -435,7 +480,13 @@ the cost per trade at least as fast:
   per round trip — at a gross exposure so low that the strategy earns less
   than the risk-free rate on the capital it is nominally managing.
 
+**Lastlight, per-name participation cap:**
+
 <!-- TABLE:participation_lastlight -->
+
+**Nightfall, per-name participation cap:**
+
+<!-- TABLE:participation_nightfall -->
 
 The pattern is not a tuning failure. It is the structure of the problem:
 **everything that makes a cross-sectional short-horizon edge bigger per trade
@@ -513,7 +564,28 @@ estimate have to be for the answer to change".
 
 <!-- TABLE:cost_lastlight -->
 
-### 6.2 Volatility regimes
+### 6.2 Dayburn's parameter surface
+
+The number that matters in a parameter sweep is not the best cell but the
+spread across cells. A strategy whose result collapses off one setting has
+been fitted; one whose result is broadly ordered by an economically
+meaningful axis — here, which side it trades and how wide a name it is
+willing to cross — has been designed.
+
+<!-- TABLE:dayburn_grid -->
+
+### 6.3 Dayburn's dependence on execution style
+
+This sleeve crosses the spread on both legs in the continuous market, so how
+much of the spread it actually pays is the assumption its viability turns on.
+A fade strategy can in principle be worked passively and **earn** the spread
+rather than paying it, which is a different and much better business — but
+fill probability cannot be validated without quote data, so the dependence is
+reported rather than assumed away.
+
+<!-- TABLE:dayburn_exec -->
+
+### 6.4 Volatility regimes
 
 Regime labels use *expanding* quantiles of the VIX, so a session is
 classified using only the history available on that session. Full-sample
@@ -531,7 +603,7 @@ quantiles would leak the future into the label.
 
 <!-- TABLE:regime_lastlight -->
 
-### 6.3 Sampling uncertainty
+### 6.5 Sampling uncertainty
 
 A stationary (Politis-Romano) block bootstrap with geometric block lengths,
 4,000 paths, mean block ten sessions. Geometric blocks preserve the
@@ -547,7 +619,7 @@ default. The same disagreement over which convention applies was flagged in
 this firm's daily-bar programme and is unresolved; the harsher choice is used
 here so that no significance claim rests on the softer one.
 
-### 6.4 Cross-strategy correlation
+### 6.6 Cross-strategy correlation
 
 <!-- TABLE:correlation -->
 
