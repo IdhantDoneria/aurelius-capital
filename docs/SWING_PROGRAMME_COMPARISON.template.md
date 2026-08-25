@@ -737,13 +737,19 @@ that no significance claim rests on the softer one.
 Each strategy has a specific way of dying, and they are not the same way.
 
 **Nightfall** dies of friction, and it dies slowly and invisibly. Its signal
-is among the strongest measured in this study; its problem is that it must
-trade twice a day to isolate a segment, and the segment it isolates is worth
-less than the two auction crossings it takes to reach. There is no market
-event that kills it — it simply bleeds. The specific risk to watch, if it
-were ever run, is a regime where opening auctions widen: its exit leg is
-priced at twice its entry leg already, and a market-structure change that
-widened the open further would deepen the loss without any change in signal.
+carries the highest t-statistic measured anywhere in this study; its problem
+is that it must trade twice a day to isolate a segment, and once sized to
+clear the two auction crossings that takes, what is left is thin. There is no
+market event that kills it — it simply stops covering its costs, and does so
+without any visible break in the signal.
+
+Two specific things to watch, if it were ever run. The first is a regime
+where opening auctions widen: its exit leg is already priced at twice its
+entry leg, and a market-structure change at the open would deepen the drag
+without any change in signal. The second is subtler and more dangerous —
+because the strategy is right at the boundary where edge and cost meet, a
+modest deterioration in either is enough to flip the sign, and neither would
+look like a failure while it was happening.
 
 **Dayburn** dies of two things. The first is a low-volatility, mean-reverting
 regime: breakouts that fail cost a full stop each, the cone is crossed often
