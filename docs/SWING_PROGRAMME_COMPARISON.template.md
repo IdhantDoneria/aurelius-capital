@@ -681,7 +681,28 @@ quantiles would leak the future into the label.
 
 <!-- TABLE:regime_lastlight -->
 
-### 6.5 Sampling uncertainty
+### 6.5 A note on what these robustness tests can and cannot rule out
+
+Each of the checks above rules out a specific failure. None of them rules out
+the one that matters most.
+
+The cost sweep rules out being wrong about costs by less than the breakeven
+multiple. The regime split rules out a single volatility state carrying the
+record. The bootstrap rules out a lucky ordering of the same returns. The
+walk-forward rules out parameters chosen with hindsight, and the
+design/holdout split rules out the coarser version of the same thing.
+
+What none of them rules out is **that the sample itself is one draw**. Six
+years is roughly six independent observations of an annual return, and every
+one of the strategies here has a volatility low enough that six observations
+cannot separate a Sharpe of 0.3 from a Sharpe of zero. That is not a defect
+in the testing; it is the amount of information a six-year sample contains,
+and no amount of resampling creates more of it. The honest consequence is
+that the deployment plan in the companion document is built around measuring
+cost, which converges in weeks, rather than around measuring return, which
+would take a decade.
+
+### 6.6 Sampling uncertainty
 
 A stationary (Politis-Romano) block bootstrap with geometric block lengths,
 4,000 paths, mean block ten sessions. Geometric blocks preserve the
@@ -703,7 +724,7 @@ same disagreement over which convention applies was flagged in this firm's
 daily-bar programme and is unresolved; the harsher choice is used here so
 that no significance claim rests on the softer one.
 
-### 6.6 Cross-strategy correlation
+### 6.7 Cross-strategy correlation
 
 <!-- TABLE:correlation -->
 
