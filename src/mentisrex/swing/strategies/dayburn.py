@@ -251,28 +251,44 @@ class Dayburn:
         from ..intraday_sim import running_vwap, simulate_day_symbol
 
         sel = select_in_play(self.features, self.cfg)
-        shape = self.cone.set_index(["d", "mod"])["shape_ratio"]
-        bars = self.bars.sort_values(["d", "symbol", "mod"])
+        if sel.empty:
+            return pd.DataFrame(), pd.DataFrame()
 
-        meta_cols = ["symbol", "d", "or30_hi", "or30_lo", "rv_day_prev", "addv60", "spread", "daily_vol"]
-        meta = sel[meta_cols].set_index(["d", "symbol"])
-        wanted = set(map(tuple, sel[["d", "symbol"]].to_numpy()))
-
+        # Pre-index everything by (date, symbol) once. The inner simulation is
+        # cheap; repeated pandas lookups inside the loop are not, and a
+        # parameter sweep runs this whole method dozens of times.
+        cone_by_day = {
+            d: g.set_index("mod")["shape_ratio"]
+            for d, g in self.cone.groupby("d", sort=False)
+        }
+        meta = {
+            (r.d, r.symbol): r
+            for r in sel[
+                ["symbol", "d", "or30_hi", "or30_lo", "rv_day_prev", "addv60",
+                 "spread", "daily_vol"]
+            ].itertuples(index=False)
+        }
+        # Sorted by time within each session. The simulation walks bars in
+        # order and reads `mods[0]` as the session open, so an unsorted frame
+        # -- which is what a SQL result set is unless it says otherwise --
+        # silently produces a different, wrong backtest rather than an error.
+        bars = self.bars[
+            (self.bars["mod"] >= RTH_OPEN) & (self.bars["mod"] < RTH_CLOSE)
+        ].sort_values(["d", "symbol", "mod"], kind="stable")
         rules = self.cfg.rules
         trades: list[dict] = []
+
         for (d, sym), g in bars.groupby(["d", "symbol"], sort=True):
-            if (d, sym) not in wanted:
+            m = meta.get((d, sym))
+            if m is None or len(g) < MIN_SESSION_BARS:
                 continue
-            m = meta.loc[(d, sym)]
-            g = g[(g["mod"] >= RTH_OPEN) & (g["mod"] < RTH_CLOSE)]
-            if len(g) < MIN_SESSION_BARS:
+            shape = cone_by_day.get(d)
+            if shape is None:
                 continue
+
             mods = g["mod"].to_numpy()
-            try:
-                sh = shape.loc[d].reindex(mods).to_numpy(dtype=float)
-            except KeyError:
-                continue
-            sigma = self._cone_sigma(m, shape, d)
+            sh = shape.reindex(mods).to_numpy(dtype=float)
+            sigma = self._cone_sigma(m, shape)
             if sigma is None:
                 continue
             cone_vals = sh * sigma
@@ -281,46 +297,42 @@ class Dayburn:
             h = g["high"].to_numpy(dtype=float)
             lo = g["low"].to_numpy(dtype=float)
             c = g["close"].to_numpy(dtype=float)
-            vw = running_vwap(g["vwap"].to_numpy(dtype=float), g["volume"].to_numpy(dtype=float))
+            vw = running_vwap(g["vwap"].to_numpy(dtype=float),
+                              g["volume"].to_numpy(dtype=float))
             p_open = float(o[0])
             atr = sigma / np.sqrt(BARS_PER_SESSION) * p_open * 2.0
 
             for tr in simulate_day_symbol(
                 mods, o, h, lo, c, vw, cone_vals, p_open,
-                float(m["or30_hi"]), float(m["or30_lo"]), atr, rules,
+                float(m.or30_hi), float(m.or30_lo), atr, rules,
             ):
                 side, emod, epx, xmod, xpx, spx, reason, riskf, gret = tr
-                trades.append(
-                    {
-                        "d": d, "symbol": sym, "side": side,
-                        "entry_mod": emod, "entry_px": epx,
-                        "exit_mod": xmod, "exit_px": xpx, "stop_px": spx,
-                        "reason": reason, "risk_frac": riskf, "gross_ret": gret,
-                        "addv60": float(m["addv60"]), "spread": float(m["spread"]),
-                        "daily_vol": float(m["daily_vol"]),
-                    }
-                )
+                trades.append({
+                    "d": d, "symbol": sym, "side": side,
+                    "entry_mod": emod, "entry_px": epx,
+                    "exit_mod": xmod, "exit_px": xpx, "stop_px": spx,
+                    "reason": reason, "risk_frac": riskf, "gross_ret": gret,
+                    "addv60": float(m.addv60), "spread": float(m.spread),
+                    "daily_vol": float(m.daily_vol),
+                })
 
         tdf = pd.DataFrame(trades)
         if tdf.empty:
             return tdf, pd.DataFrame()
         return tdf, self._accumulate(tdf)
 
-    def _cone_sigma(self, meta_row, shape, d) -> float | None:
+    def _cone_sigma(self, meta_row, shape) -> float | None:
         """Volatility level for the cone, in daily log-return units."""
-        trailing = float(meta_row["rv_day_prev"])
+        trailing = float(meta_row.rv_day_prev)
         if self.cfg.cone_vol_source == "trailing":
             return trailing if np.isfinite(trailing) and trailing > 0 else None
 
-        hi, lo = float(meta_row["or30_hi"]), float(meta_row["or30_lo"])
+        hi, lo = float(meta_row.or30_hi), float(meta_row.or30_lo)
         today = np.nan
         if np.isfinite(hi) and np.isfinite(lo) and lo > 0 and hi > lo:
-            try:
-                anchor = float(shape.loc[(d, ENTRY_ANCHOR_MOD)])
-            except (KeyError, TypeError):
-                anchor = np.nan
+            anchor = shape.get(ENTRY_ANCHOR_MOD, np.nan)
             if np.isfinite(anchor) and anchor > 0:
-                today = (np.log(hi / lo) / self.cfg.parkinson_factor) / anchor
+                today = (np.log(hi / lo) / self.cfg.parkinson_factor) / float(anchor)
 
         if self.cfg.cone_vol_source == "today":
             return float(today) if np.isfinite(today) and today > 0 else None

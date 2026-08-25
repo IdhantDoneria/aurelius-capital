@@ -164,3 +164,19 @@ def test_running_vwap_handles_a_zero_volume_open():
     got = running_vwap(np.array([np.nan, 20.0]), np.array([0.0, 1.0]))
     assert np.isnan(got[0])
     assert got[1] == pytest.approx(20.0)
+
+
+def test_simulation_reads_the_first_bar_as_the_session_open():
+    """`mods[0]` is taken as the open, so bars must reach the simulator in
+    time order. This pins the assumption that the caller is responsible for
+    sorting -- an unsorted frame produces a different backtest, not an error.
+    """
+    mods, o, h, l, c = _day([100, 110, 110, 110])
+    cone = np.full(len(mods), 0.01)
+    forward = simulate_day_symbol(mods, o, h, l, c, np.full(len(mods), np.nan),
+                                  cone, float(o[0]), np.nan, np.nan, 5.0, RULES)
+    rev = slice(None, None, -1)
+    backward = simulate_day_symbol(mods[rev], o[rev], h[rev], l[rev], c[rev],
+                                   np.full(len(mods), np.nan), cone,
+                                   float(o[rev][0]), np.nan, np.nan, 5.0, RULES)
+    assert forward != backward

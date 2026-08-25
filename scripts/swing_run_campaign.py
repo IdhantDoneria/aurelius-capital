@@ -390,11 +390,11 @@ def main() -> int:
             {"cone_k": k, "atr_stop_mult": m, "n_in_play": n, "vwap_trail": v,
              "direction": dr, "cone_vol_source": cv}
             for dr in (1, -1)
-            for k in (1.0, 1.5)
+            for k in (1.0, 1.5, 2.0, 2.5)
             for m in (1.0, 2.0)
             for v in (True, False)
-            for cv in ("trailing", "blend")
-            for n in (20,)
+            for cv in ("trailing",)
+            for n in (10, 20)
         ]
         sweep = []
         best, best_obj = None, -np.inf
