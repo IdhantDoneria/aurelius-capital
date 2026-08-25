@@ -38,7 +38,14 @@ import numpy as np
 import pandas as pd
 
 from ..costs import CostConfig
-from ..intraday_sim import BARS_PER_SESSION, IntradayRules
+from ..intraday_sim import BARS_PER_SESSION, RTH_CLOSE, RTH_OPEN, IntradayRules
+
+
+MIN_SESSION_BARS = max(BARS_PER_SESSION * 3 // 4, 4)
+"""Minimum bars for a session to be tradable, derived from the bar interval
+rather than hardcoded. A literal count written for one interval silently
+rejects every session at another -- which is how this sleeve produced zero
+trades on its first run against fifteen-minute bars."""
 
 
 @dataclass
@@ -210,8 +217,8 @@ class Dayburn:
             if (d, sym) not in wanted:
                 continue
             m = meta.loc[(d, sym)]
-            g = g[(g["mod"] >= 570) & (g["mod"] < 960)]
-            if len(g) < 40:
+            g = g[(g["mod"] >= RTH_OPEN) & (g["mod"] < RTH_CLOSE)]
+            if len(g) < MIN_SESSION_BARS:
                 continue
             mods = g["mod"].to_numpy()
             try:

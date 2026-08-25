@@ -232,7 +232,41 @@ def t_combination(c) -> str:
     return md_table(["Metric", "Value"], rows, ":--|--:")
 
 
+def t_holdout(c) -> str:
+    d = c.get("design_holdout", {})
+    if not d:
+        return "_No design/holdout split available._"
+    rows = []
+    for k, label in NAMES.items():
+        for w in ("design", "holdout"):
+            r = d.get(k, {}).get(w)
+            if not r:
+                continue
+            rows.append([label, w, r["n_days"], pct(r["cagr"]), num(r["sharpe"]),
+                         pct(r["max_drawdown"]), num(r["newey_west_t"], 2)])
+    return md_table(["Strategy", "Window", "Days", "CAGR", "Sharpe", "Max DD", "NW t"],
+                    rows, ":--|:--|--:|--:|--:|--:|--:")
+
+
+def t_dayburn_grid(c) -> str:
+    g = c.get("dayburn_parameter_sweep")
+    if not g:
+        return "_Dayburn parameter sweep not run._"
+    rows = []
+    for _, r in sorted(g["grid"].items(), key=lambda kv: (kv[1]["cone_k"], kv[1]["atr_stop_mult"])):
+        rows.append([num(r["cone_k"], 2), num(r["atr_stop_mult"], 1), int(r["n_in_play"]),
+                     f"{int(r['n_trades']):,}", pct(r["hit_rate"], 1), pct(r["cagr"]),
+                     num(r["sharpe"]), pct(r["max_dd"])])
+    chosen = g.get("chosen")
+    tbl = md_table(["Cone k", "Stop mult", "Names", "Trades", "Hit rate", "CAGR",
+                    "Sharpe", "Max DD"], rows, "--:|--:|--:|--:|--:|--:|--:|--:")
+    return tbl + f"\n\nChosen on the design window ({g['design_window'][0]} to "\
+                 f"{g['design_window'][1]}): `{chosen}`."
+
+
 BUILDERS = {
+    "holdout": t_holdout,
+    "dayburn_grid": t_dayburn_grid,
     "correlation": t_correlation,
     "combination": t_combination,
     "headline": t_headline,

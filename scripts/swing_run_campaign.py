@@ -153,6 +153,8 @@ def main() -> int:
     ap.add_argument("--n-trials", type=int, default=40,
                     help="configurations examined, for Sharpe deflation")
     ap.add_argument("--skip-dayburn", action="store_true")
+    ap.add_argument("--design-end", default="2023-12-31",
+                    help="last date of the design window; everything after is holdout")
     ap.add_argument("--out", default=str(OUT))
     args = ap.parse_args()
 
@@ -260,10 +262,50 @@ def main() -> int:
         f, b, c = dayburn_inputs(features=args.features, start=args.start, end=args.end,
                                  tier=args.tier)
         print(f"  {len(f):,} sessions, {len(b):,} bars, {len(c):,} cone rows", flush=True)
+
+        # ---- parameter choice on the design window only -------------------
+        design = pd.Timestamp(args.design_end).date()
+        fd = f[f["d"] <= design]
+        bd = b[b["d"] <= design]
+        grid = [
+            {"cone_k": k, "atr_stop_mult": m, "n_in_play": n}
+            for k in (0.75, 1.0, 1.5, 2.0)
+            for m in (1.0, 2.0)
+            for n in (20,)
+        ]
+        sweep = []
+        best, best_obj = None, -np.inf
+        for g in grid:
+            cfg = DayburnConfig(n_in_play=g["n_in_play"])
+            cfg.rules.cone_k = g["cone_k"]
+            cfg.rules.atr_stop_mult = g["atr_stop_mult"]
+            try:
+                tr, dl, pf = run_dayburn(fd, bd, c, config=cfg, initial_equity=args.aum,
+                                         benchmark=ds.benchmark, rf=ds.rf)
+            except RuntimeError:
+                continue
+            row = {**g, "cagr": pf.cagr, "sharpe": pf.sharpe, "max_dd": pf.max_drawdown,
+                   "n_trades": int(len(tr)),
+                   "hit_rate": float((tr["gross_ret"] > 0).mean())}
+            sweep.append(row)
+            print(f"  grid {g} -> sharpe {pf.sharpe:.2f} trades {len(tr)}", flush=True)
+            if np.isfinite(pf.sharpe) and pf.sharpe > best_obj:
+                best_obj, best = pf.sharpe, g
+        report["dayburn_parameter_sweep"] = {
+            "design_window": [args.start, str(design)],
+            "grid": jsonable(pd.DataFrame(sweep)),
+            "chosen": best,
+            "note": "chosen on the design window only; the holdout below never informed it",
+        }
+        chosen = DayburnConfig(n_in_play=(best or {}).get("n_in_play", 20))
+        chosen.rules.cone_k = (best or {}).get("cone_k", 1.0)
+        chosen.rules.atr_stop_mult = (best or {}).get("atr_stop_mult", 1.0)
+
         rows = {}
         for aum in (10e6, 25e6, 50e6, 100e6):
             trades, daily, perf = run_dayburn(
-                f, b, c, initial_equity=aum, benchmark=ds.benchmark, rf=ds.rf
+                f, b, c, config=chosen, initial_equity=aum,
+                benchmark=ds.benchmark, rf=ds.rf,
             )
             rows[f"{aum/1e6:.0f}"] = jsonable({
                 **perf.to_dict(),
@@ -276,7 +318,8 @@ def main() -> int:
         report.setdefault("aum_sweep", {})["dayburn"] = rows
 
         trades, daily, perf = run_dayburn(
-            f, b, c, initial_equity=args.aum, benchmark=ds.benchmark, rf=ds.rf
+            f, b, c, config=chosen, initial_equity=args.aum,
+            benchmark=ds.benchmark, rf=ds.rf,
         )
         trades.to_parquet(out / "dayburn_trades.parquet")
         daily.to_parquet(out / "dayburn_daily.parquet")
@@ -297,6 +340,26 @@ def main() -> int:
                                           / len(daily) * 1e4),
             }})
         )
+
+    # ---------------- design / holdout split -----------------------------
+    # Reported for every sleeve, not only the one with fitted parameters, so
+    # that the holdout numbers are comparable across the three.
+    design = pd.Timestamp(args.design_end)
+    split = {}
+    for k in ("nightfall", "lastlight", "dayburn"):
+        fp = out / f"{k}_daily.parquet"
+        if not fp.exists():
+            continue
+        r = pd.read_parquet(fp)["ret"]
+        for label, sub in (("design", r[r.index <= design]), ("holdout", r[r.index > design])):
+            if len(sub) < 40:
+                continue
+            split.setdefault(k, {})[label] = jsonable({
+                **evaluate(sub, benchmark=ds.benchmark.reindex(sub.index),
+                           rf=ds.rf.reindex(sub.index)).to_dict(),
+                "newey_west_t": newey_west_t(sub),
+            })
+    report["design_holdout"] = split
 
     # ---------------- cross-strategy correlation -------------------------
     series = {}
