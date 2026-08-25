@@ -361,7 +361,44 @@ def t_capacity(c) -> str:
                     ":--|--:|--:|--:")
 
 
+def t_walkforward(c) -> str:
+    w = c.get("walk_forward")
+    if not w:
+        return "_Walk-forward not run._"
+    rows = []
+    for k, label in NAMES.items():
+        r = w.get(k)
+        if not r:
+            continue
+        exc = (r["sharpe"] * r["vol"]) if (r["sharpe"] is not None and r["vol"]) else None
+        rows.append([label, len(r.get("folds", {})), r["n_days"], pct(r["cagr"]),
+                     pct(exc), num(r["sharpe"]), pct(r["max_drawdown"]),
+                     num(r.get("newey_west_t_excess"), 2)])
+    return md_table(["Strategy", "Folds", "OOS days", "CAGR", "Excess of cash",
+                     "Sharpe", "Max DD", "NW t (excess)"], rows,
+                    ":--|--:|--:|--:|--:|--:|--:|--:")
+
+
+def t_walkforward_folds(c) -> str:
+    w = c.get("walk_forward") or {}
+    rows = []
+    for k, label in NAMES.items():
+        f = (w.get(k) or {}).get("folds") or {}
+        for _, r in sorted(f.items(), key=lambda kv: str(kv[1].get("test_start"))):
+            rows.append([label, str(r["train_start"]), str(r["train_end"]),
+                         str(r["test_start"]), str(r["test_end"]),
+                         num(r["train_obj"], 2), num(r["test_obj"], 2),
+                         str(r["chosen"])])
+    if not rows:
+        return "_No folds._"
+    return md_table(["Strategy", "Train from", "Train to", "Test from", "Test to",
+                     "Train Sharpe", "Test Sharpe", "Chosen"], rows,
+                    ":--|:--|:--|:--|:--|--:|--:|:--")
+
+
 BUILDERS = {
+    "walkforward": t_walkforward,
+    "walkforward_folds": t_walkforward_folds,
     "capacity": t_capacity,
     "dayburn_exec": t_dayburn_exec,
     "continuation": t_continuation,

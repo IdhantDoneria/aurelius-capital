@@ -35,7 +35,7 @@ from mentisrex.swing.strategies import (  # noqa: E402
 from mentisrex.swing.strategies.dayburn import prepare_bars, prepare_cone  # noqa: E402
 from mentisrex.swing.strategies.base import StagingConfig  # noqa: E402
 from mentisrex.swing.validation import (  # noqa: E402
-    breakeven_cost_multiple, regime_split, signal_decay, subperiods,
+    breakeven_cost_multiple, regime_split, signal_decay, subperiods, walk_forward,
 )
 
 DATA = Path("/Users/idhantdoneria/mentisrex-capital/data/intraday")
@@ -247,6 +247,23 @@ def main() -> int:
 
     MIN_DEPLOYED_GROSS = 0.25
 
+    def design_score(res):
+        """Excess-return Sharpe over the design window, subject to deploying.
+
+        Excess rather than raw: now that idle cash earns interest, a
+        total-return objective would reward a configuration for holding cash
+        through the 2023-2026 high-rate period rather than for having a
+        better signal. Subject to a deployment floor, because without one the
+        optimum is degenerate -- when net alpha is negative, the highest
+        Sharpe belongs to whichever configuration trades least.
+        """
+        r = res["ret"][res.index <= design]
+        g = res["gross"][res.index <= design]
+        if len(r) < 100 or r.std(ddof=1) <= 0 or float(g.mean()) < MIN_DEPLOYED_GROSS:
+            return -np.inf
+        rf_d = ds.rf.reindex(r.index).ffill().fillna(0.0) / 252.0
+        return float((r - rf_d).mean() / r.std(ddof=1) * np.sqrt(252))
+
     def score_on_design(strategy_factory, aum):
         """Design-window Sharpe, subject to actually deploying capital.
 
@@ -326,11 +343,20 @@ def main() -> int:
 
     xs_chosen: dict[str, dict] = {}
     n_trials_by_sleeve: dict[str, int] = {}
+    # One full-period run per configuration, cached. A walk-forward fold is
+    # then a slice of an already-computed series rather than another backtest,
+    # which makes proper walk-forward validation nearly free instead of
+    # quadratic in the grid.
+    series_cache: dict[str, dict[str, pd.Series]] = {}
     if args.only != "dayburn":
         for name, grid in xs_grids.items():
             rows, best, best_obj = [], None, -np.inf
+            series_cache[name] = {}
             for g in grid:
-                sc = score_on_design(lambda a, n=name, gg=g: make(n, gg, a), args.aum)
+                strat = make(name, g, args.aum)
+                res, _ = run_cross_sectional(ds, strat, initial_equity=args.aum)
+                series_cache[name][json.dumps(g, sort_keys=True)] = res["ret"]
+                sc = design_score(res)
                 rows.append({**g, "design_sharpe": sc})
                 print(f"  {name} grid {g} -> design sharpe {sc:.2f}", flush=True)
                 if sc > best_obj:
@@ -345,6 +371,35 @@ def main() -> int:
                 "grid": jsonable(pd.DataFrame(rows)),
                 "chosen": best,
             })
+
+    # ---------------- walk-forward on the cached series ------------------
+    # Stronger than the single anchored split: parameters are re-chosen in
+    # every fold and each fold is scored only on the year that follows the
+    # window that chose them.
+    def excess_sharpe(r):
+        if len(r) < 40 or r.std(ddof=1) <= 0:
+            return -np.inf
+        rf_d = ds.rf.reindex(r.index).ffill().fillna(0.0) / 252.0
+        return float((r - rf_d).mean() / r.std(ddof=1) * np.sqrt(252))
+
+    for name, cached in series_cache.items():
+        grid = xs_grids[name]
+
+        def run_fn(params, idx, _c=cached):
+            return _c[json.dumps(params, sort_keys=True)].reindex(idx).dropna()
+
+        oos, folds = walk_forward(
+            run_fn, grid, ds.dates, train_years=2, test_years=1, objective=excess_sharpe
+        )
+        if len(oos) > 60:
+            report.setdefault("walk_forward", {})[name] = jsonable({
+                "folds": folds,
+                **evaluate(oos, benchmark=ds.benchmark.reindex(oos.index),
+                           rf=ds.rf.reindex(oos.index)).to_dict(),
+                "newey_west_t_excess": newey_west_t(excess(oos, ds)),
+            })
+            print(f"  {name} walk-forward: {len(folds)} folds, "
+                  f"OOS sharpe {excess_sharpe(oos):.2f}", flush=True)
 
     xs_pairs = () if args.only == "dayburn" else (
         ("nightfall", build_nightfall), ("lastlight", build_lastlight)

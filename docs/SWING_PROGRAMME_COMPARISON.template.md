@@ -473,6 +473,25 @@ Parameters for all three sleeves were chosen on the window ending
 
 <!-- TABLE:holdout -->
 
+### 4.3 Walk-forward
+
+A single anchored split answers one question once. Walk-forward answers it
+repeatedly: parameters are re-chosen at the start of every fold, on the
+history available at that point, and scored only on the year that follows.
+The spliced result is a return series in which no session was ever used to
+choose the parameters that traded it.
+
+<!-- TABLE:walkforward -->
+
+Fold by fold, with what each one chose:
+
+<!-- TABLE:walkforward_folds -->
+
+The diagnostic value is in the *stability* of the chosen column. A
+walk-forward that picks a different corner of the grid every year is telling
+you the grid is noise; one that keeps landing on the same region is telling
+you the parameter means something.
+
 ---
 
 ## 5. The comparison that decides it
