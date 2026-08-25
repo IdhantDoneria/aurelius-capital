@@ -26,6 +26,32 @@ URL = "https://data.alpaca.markets/v2/stocks/bars"
 _local = threading.local()
 
 
+class RateLimiter:
+    """Token bucket shared across worker threads.
+
+    Alpaca answers a burst above its per-minute ceiling with 429s, and the
+    pagination loop cannot distinguish a rate-limited response from the end
+    of a result set without extra care. Staying under the ceiling by
+    construction is cheaper than recovering from it.
+    """
+
+    def __init__(self, per_minute: int) -> None:
+        self.interval = 60.0 / max(per_minute, 1)
+        self._lock = threading.Lock()
+        self._next = 0.0
+
+    def acquire(self) -> None:
+        with self._lock:
+            now = time.monotonic()
+            wait = max(self._next - now, 0.0)
+            self._next = max(self._next, now) + self.interval
+        if wait > 0:
+            time.sleep(wait)
+
+
+LIMITER = RateLimiter(180)
+
+
 def creds() -> dict[str, str]:
     for line in (ROOT / ".env.development").read_text().splitlines():
         if "=" in line and not line.startswith("#"):
@@ -63,19 +89,27 @@ def fetch_chunk(symbols: list[str], tf: str, start: str, end: str, headers) -> p
         }
         if token:
             params["page_token"] = token
-        for attempt in range(6):
+
+        payload = None
+        last_err: Exception | None = None
+        for attempt in range(8):
             try:
+                LIMITER.acquire()
                 r = s.get(URL, params=params, headers=headers, timeout=120)
                 if r.status_code == 429:
-                    time.sleep(2 * (attempt + 1))
+                    time.sleep(float(r.headers.get("Retry-After", 0)) or min(2 ** attempt, 30))
+                    last_err = RuntimeError("429 rate limited")
                     continue
                 r.raise_for_status()
+                payload = r.json()
                 break
-            except Exception:
-                if attempt == 5:
-                    raise
-                time.sleep(2 * (attempt + 1))
-        payload = r.json()
+            except Exception as exc:  # noqa: BLE001 - retried, then re-raised
+                last_err = exc
+                time.sleep(min(2 ** attempt, 30))
+        if payload is None:
+            # Never fall through to "no more pages" on a failed request: that
+            # is how a rate-limited shard silently becomes a truncated one.
+            raise RuntimeError(f"exhausted retries for {symbols[0]}..{symbols[-1]} {start}: {last_err}")
         for sym, bars in (payload.get("bars") or {}).items():
             for b in bars:
                 rows.append(
@@ -143,10 +177,20 @@ def main() -> int:
 
     def run(job):
         ci, c, a, b = job
-        df = fetch_chunk(c, args.timeframe, a, b, headers)
+        path = outdir / f"c{ci:04d}_{a}_{b}.parquet"
+        if path.exists():                     # resume: a completed shard is final
+            return -1
+        try:
+            df = fetch_chunk(c, args.timeframe, a, b, headers)
+        except Exception as exc:  # noqa: BLE001 - reported, shard left absent for resume
+            print(f"FAILED c{ci:04d} {a}: {exc}", flush=True)
+            return 0
         if len(df):
-            tag = f"c{ci:04d}_{a}_{b}"
-            df.to_parquet(outdir / f"{tag}.parquet", index=False)
+            tmp = path.with_suffix(".parquet.tmp")
+            df.to_parquet(tmp, index=False)
+            tmp.rename(path)                  # atomic, so a kill never leaves a torn shard
+        else:
+            path.touch()
         return len(df)
 
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
@@ -155,7 +199,7 @@ def main() -> int:
             n = f.result()
             with lock:
                 done += 1
-                total_rows += n
+                total_rows += max(n, 0)
                 if done % 25 == 0 or done == len(jobs):
                     el = time.time() - t0
                     print(
