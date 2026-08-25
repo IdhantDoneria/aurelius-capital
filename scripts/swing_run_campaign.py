@@ -214,10 +214,90 @@ def main() -> int:
     report["signal_decay"] = decay
 
     # ---------------- cross-sectional sleeves ----------------------------
+    # ---------------- design-window parameter choice, all sleeves --------
+    # Dayburn has fitted parameters, so the other two are given the same
+    # courtesy on the same window. Tuning one book and not the others would
+    # make the comparison a statement about tuning rather than about signal.
+    design = pd.Timestamp(args.design_end)
+    design_mask = ds.dates <= design
+
+    MIN_DEPLOYED_GROSS = 0.25
+
+    def score_on_design(strategy_factory, aum):
+        """Design-window Sharpe, subject to actually deploying capital.
+
+        Without the deployment floor the optimiser has a degenerate optimum:
+        when a sleeve's net alpha is negative, the highest-Sharpe
+        configuration is the one that trades least, because Sharpe is
+        measured against cash. That is a true statement about the sleeve and
+        a useless one about its parameters, so configurations that leave the
+        book essentially flat are excluded and the finding is reported in
+        prose instead.
+        """
+        strat = strategy_factory(aum)
+        res, perf = run_cross_sectional(ds, strat, initial_equity=aum)
+        r = res["ret"][res.index <= design]
+        g = res["gross"][res.index <= design]
+        if len(r) < 100 or r.std(ddof=1) <= 0:
+            return -np.inf
+        if float(g.mean()) < MIN_DEPLOYED_GROSS:
+            return -np.inf
+        return float(r.mean() / r.std(ddof=1) * np.sqrt(252))
+
+    xs_grids = {
+        "nightfall": [
+            {"max_participation": mp, "lookback": lb, "mode": md}
+            for mp in (0.0, 0.0003, 0.0001)
+            for lb in ("5", "10", "21")
+            for md in ("overnight",)
+        ],
+        "lastlight": [
+            {"max_participation": mp, "vix_beta": vb, "max_rvol": mr}
+            for mp in (0.0, 0.0003, 0.0001)
+            for vb in (0.0, 0.5)
+            for mr in (2.0, 3.0)
+        ],
+    }
+
+    def make(name, params, aum):
+        ov = OverlayConfig(target_vol=0.10, gross_cap=3.0, max_weight=0.015,
+                           n_stat_factors=3,
+                           max_participation=params.get("max_participation", 0.0))
+        if name == "nightfall":
+            cfg = NightfallConfig(mode=params.get("mode", "overnight"),
+                                  lookback=params.get("lookback", "10"))
+            return build_nightfall(ds, aum, overlay=ov, cfg=cfg)
+        cfg = LastlightConfig(push_source=push_col,
+                              vix_beta=params.get("vix_beta", 0.5),
+                              vix_scaling=params.get("vix_beta", 0.5) > 0,
+                              max_rvol=params.get("max_rvol", 3.0))
+        return build_lastlight(ds, aum, overlay=ov, cfg=cfg, push=push_col)
+
+    xs_chosen: dict[str, dict] = {}
+    if args.only != "dayburn":
+        for name, grid in xs_grids.items():
+            rows, best, best_obj = [], None, -np.inf
+            for g in grid:
+                sc = score_on_design(lambda a, n=name, gg=g: make(n, gg, a), args.aum)
+                rows.append({**g, "design_sharpe": sc})
+                print(f"  {name} grid {g} -> design sharpe {sc:.2f}", flush=True)
+                if sc > best_obj:
+                    best_obj, best = sc, g
+            xs_chosen[name] = best or {}
+            if best is None:
+                print(f"  {name}: no configuration deployed enough capital to score",
+                      flush=True)
+            report.setdefault("xs_parameter_sweep", {})[name] = jsonable({
+                "design_window": [args.start, str(design.date())],
+                "grid": jsonable(pd.DataFrame(rows)),
+                "chosen": best,
+            })
+
     xs_pairs = () if args.only == "dayburn" else (
         ("nightfall", build_nightfall), ("lastlight", build_lastlight)
     )
     for name, builder in xs_pairs:
+        builder = (lambda n: lambda d, a, **kw: make(n, xs_chosen.get(n, {}), a))(name)
         print(f"{name}: aum sweep ...", flush=True)
         rows = {}
         for aum in (5e6, 10e6, 25e6, 50e6, 100e6, 250e6):
@@ -411,9 +491,7 @@ def main() -> int:
         )
 
     # ---------------- design / holdout split -----------------------------
-    # Reported for every sleeve, not only the one with fitted parameters, so
-    # that the holdout numbers are comparable across the three.
-    design = pd.Timestamp(args.design_end)
+    # Reported for every sleeve, so the holdout numbers are comparable.
     split = {}
     for k in ("nightfall", "lastlight", "dayburn"):
         fp = out / f"{k}_daily.parquet"
