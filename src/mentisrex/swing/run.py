@@ -205,10 +205,14 @@ def run_dayburn(
     initial_equity: float = 100_000_000.0,
     benchmark: pd.Series | None = None,
     rf: pd.Series | None = None,
+    prepared_bars: dict | None = None,
+    prepared_cone: dict | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, Performance]:
     from .strategies import Dayburn
 
-    d = Dayburn(features, bars, cone, config=config, cost=cost, initial_equity=initial_equity)
+    d = Dayburn(features, bars, cone, config=config, cost=cost,
+                initial_equity=initial_equity,
+                prepared_bars=prepared_bars, prepared_cone=prepared_cone)
     trades, daily = d.run()
     if daily.empty:
         raise RuntimeError("dayburn produced no trades")

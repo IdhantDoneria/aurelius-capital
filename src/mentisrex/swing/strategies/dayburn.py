@@ -234,6 +234,44 @@ def apply_costs(t: pd.DataFrame, cost: CostConfig) -> pd.Series:
     return 2.0 * one_way * t["notional"]
 
 
+def prepare_bars(bars: pd.DataFrame) -> dict:
+    """Group the bar table into per-session numpy arrays, once.
+
+    A parameter sweep runs the simulation dozens of times over the same bars,
+    and a groupby over ten million rows costs far more than the simulation
+    it feeds. Building this once and reusing it across configurations is the
+    difference between a sweep that finishes and one that does not.
+
+    Returns `{(date, symbol): (mods, open, high, low, close, running_vwap)}`,
+    with bars sorted in time within each session -- the simulator reads the
+    first bar as the session open, so ordering is not optional.
+    """
+    from ..intraday_sim import running_vwap
+
+    b = bars[(bars["mod"] >= RTH_OPEN) & (bars["mod"] < RTH_CLOSE)].sort_values(
+        ["d", "symbol", "mod"], kind="stable"
+    )
+    out: dict = {}
+    for key, g in b.groupby(["d", "symbol"], sort=False):
+        if len(g) < MIN_SESSION_BARS:
+            continue
+        out[key] = (
+            g["mod"].to_numpy(),
+            g["open"].to_numpy(dtype=float),
+            g["high"].to_numpy(dtype=float),
+            g["low"].to_numpy(dtype=float),
+            g["close"].to_numpy(dtype=float),
+            running_vwap(g["vwap"].to_numpy(dtype=float),
+                         g["volume"].to_numpy(dtype=float)),
+        )
+    return out
+
+
+def prepare_cone(cone: pd.DataFrame) -> dict:
+    """Cone shape profile as one Series per session."""
+    return {d: g.set_index("mod")["shape_ratio"] for d, g in cone.groupby("d", sort=False)}
+
+
 class Dayburn:
     """Runner for the intraday sleeve.
 
@@ -254,6 +292,8 @@ class Dayburn:
         config: DayburnConfig | None = None,
         cost: CostConfig | None = None,
         initial_equity: float = 100_000_000.0,
+        prepared_bars: dict | None = None,
+        prepared_cone: dict | None = None,
     ) -> None:
         self.cfg = config or DayburnConfig()
         self.cost = cost or CostConfig()
@@ -261,59 +301,39 @@ class Dayburn:
         self.features = features
         self.bars = bars
         self.cone = cone
+        self.prepared_bars = prepared_bars
+        self.prepared_cone = prepared_cone
 
     def run(self) -> tuple[pd.DataFrame, pd.DataFrame]:
-        from ..intraday_sim import running_vwap, simulate_day_symbol
+        from ..intraday_sim import simulate_day_symbol
 
         sel = select_in_play(self.features, self.cfg)
         if sel.empty:
             return pd.DataFrame(), pd.DataFrame()
 
-        # Pre-index everything by (date, symbol) once. The inner simulation is
-        # cheap; repeated pandas lookups inside the loop are not, and a
-        # parameter sweep runs this whole method dozens of times.
-        cone_by_day = {
-            d: g.set_index("mod")["shape_ratio"]
-            for d, g in self.cone.groupby("d", sort=False)
-        }
-        meta = {
-            (r.d, r.symbol): r
-            for r in sel[
-                ["symbol", "d", "or30_hi", "or30_lo", "rv_day_prev", "addv60",
-                 "spread", "daily_vol"]
-            ].itertuples(index=False)
-        }
-        # Sorted by time within each session. The simulation walks bars in
-        # order and reads `mods[0]` as the session open, so an unsorted frame
-        # -- which is what a SQL result set is unless it says otherwise --
-        # silently produces a different, wrong backtest rather than an error.
-        bars = self.bars[
-            (self.bars["mod"] >= RTH_OPEN) & (self.bars["mod"] < RTH_CLOSE)
-        ].sort_values(["d", "symbol", "mod"], kind="stable")
+        bar_index = self.prepared_bars if self.prepared_bars is not None else prepare_bars(self.bars)
+        cone_by_day = self.prepared_cone if self.prepared_cone is not None else prepare_cone(self.cone)
+
         rules = self.cfg.rules
         trades: list[dict] = []
 
-        for (d, sym), g in bars.groupby(["d", "symbol"], sort=True):
-            m = meta.get((d, sym))
-            if m is None or len(g) < MIN_SESSION_BARS:
+        for m in sel[
+            ["symbol", "d", "or30_hi", "or30_lo", "rv_day_prev", "addv60",
+             "spread", "daily_vol"]
+        ].itertuples(index=False):
+            entry = bar_index.get((m.d, m.symbol))
+            if entry is None:
                 continue
-            shape = cone_by_day.get(d)
+            shape = cone_by_day.get(m.d)
             if shape is None:
                 continue
 
-            mods = g["mod"].to_numpy()
-            sh = shape.reindex(mods).to_numpy(dtype=float)
+            mods, o, h, lo, c, vw = entry
             sigma = self._cone_sigma(m, shape)
             if sigma is None:
                 continue
-            cone_vals = sh * sigma
+            cone_vals = shape.reindex(mods).to_numpy(dtype=float) * sigma
 
-            o = g["open"].to_numpy(dtype=float)
-            h = g["high"].to_numpy(dtype=float)
-            lo = g["low"].to_numpy(dtype=float)
-            c = g["close"].to_numpy(dtype=float)
-            vw = running_vwap(g["vwap"].to_numpy(dtype=float),
-                              g["volume"].to_numpy(dtype=float))
             p_open = float(o[0])
             atr = sigma / np.sqrt(BARS_PER_SESSION) * p_open * 2.0
 
@@ -323,7 +343,7 @@ class Dayburn:
             ):
                 side, emod, epx, xmod, xpx, spx, reason, riskf, gret = tr
                 trades.append({
-                    "d": d, "symbol": sym, "side": side,
+                    "d": m.d, "symbol": m.symbol, "side": side,
                     "entry_mod": emod, "entry_px": epx,
                     "exit_mod": xmod, "exit_px": xpx, "stop_px": spx,
                     "reason": reason, "risk_frac": riskf, "gross_ret": gret,
@@ -334,6 +354,7 @@ class Dayburn:
         tdf = pd.DataFrame(trades)
         if tdf.empty:
             return tdf, pd.DataFrame()
+        tdf = tdf.sort_values(["d", "entry_mod"], kind="stable").reset_index(drop=True)
         return tdf, self._accumulate(tdf)
 
     def _cone_sigma(self, meta_row, shape) -> float | None:

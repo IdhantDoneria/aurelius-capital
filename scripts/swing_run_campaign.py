@@ -32,6 +32,7 @@ from mentisrex.swing.run import (  # noqa: E402
 from mentisrex.swing.strategies import (  # noqa: E402
     DayburnConfig, Lastlight, LastlightConfig, Nightfall, NightfallConfig,
 )
+from mentisrex.swing.strategies.dayburn import prepare_bars, prepare_cone  # noqa: E402
 from mentisrex.swing.strategies.base import StagingConfig  # noqa: E402
 from mentisrex.swing.validation import (  # noqa: E402
     breakeven_cost_multiple, regime_split, signal_decay, subperiods,
@@ -352,6 +353,12 @@ def main() -> int:
         f, b, c = dayburn_inputs(features=args.features, cone=args.cone,
                                  start=args.start, end=args.end, tier=args.tier)
         print(f"  {len(f):,} sessions, {len(b):,} bars, {len(c):,} cone rows", flush=True)
+        # Built once and reused by every configuration below: a groupby over
+        # this many rows costs far more than the simulation it feeds.
+        t_prep = time.time()
+        pb_all, pc_all = prepare_bars(b), prepare_cone(c)
+        pb_design = {k: v for k, v in pb_all.items() if k[0] <= pd.Timestamp(args.design_end).date()}
+        print(f"  prepared {len(pb_all):,} sessions in {time.time() - t_prep:.0f}s", flush=True)
 
         # ---- does an intraday move continue or revert here? ---------------
         # Measured before any simulation, because it is the premise the whole
@@ -430,8 +437,11 @@ def main() -> int:
             cfg.rules.direction = g["direction"]
             cfg.rules.risk_per_trade = g["risk_per_trade"]
             try:
-                tr, dl, pf = run_dayburn(fd, bd, c, config=cfg, initial_equity=args.aum,
-                                         benchmark=ds.benchmark, rf=ds.rf)
+                tr, dl, pf = run_dayburn(
+                    fd, bd, c, config=cfg, initial_equity=args.aum,
+                    benchmark=ds.benchmark[ds.benchmark.index <= design],
+                    rf=ds.rf, prepared_bars=pb_design, prepared_cone=pc_all,
+                )
             except RuntimeError:
                 continue
             row = {**g, "cagr": pf.cagr, "sharpe": pf.sharpe, "max_dd": pf.max_drawdown,
@@ -462,6 +472,7 @@ def main() -> int:
             trades, daily, perf = run_dayburn(
                 f, b, c, config=chosen, initial_equity=aum,
                 benchmark=ds.benchmark, rf=ds.rf,
+                prepared_bars=pb_all, prepared_cone=pc_all,
             )
             rows[f"{aum/1e6:.0f}"] = jsonable({
                 **perf.to_dict(),
@@ -476,6 +487,7 @@ def main() -> int:
         trades, daily, perf = run_dayburn(
             f, b, c, config=chosen, initial_equity=args.aum,
             benchmark=ds.benchmark, rf=ds.rf,
+            prepared_bars=pb_all, prepared_cone=pc_all,
         )
         trades.to_parquet(out / "dayburn_trades.parquet")
         daily.to_parquet(out / "dayburn_daily.parquet")
@@ -490,9 +502,11 @@ def main() -> int:
         for cap in (1.0, 0.5, 0.25, 0.0):
             cost = CostConfig(spread_capture=cap)
             try:
-                tr2, dl2, pf2 = run_dayburn(f, b, c, config=chosen, cost=cost,
-                                            initial_equity=args.aum,
-                                            benchmark=ds.benchmark, rf=ds.rf)
+                tr2, dl2, pf2 = run_dayburn(
+                    f, b, c, config=chosen, cost=cost, initial_equity=args.aum,
+                    benchmark=ds.benchmark, rf=ds.rf,
+                    prepared_bars=pb_all, prepared_cone=pc_all,
+                )
             except RuntimeError:
                 continue
             rows.append({"spread_capture": cap, "cagr": pf2.cagr, "sharpe": pf2.sharpe,
