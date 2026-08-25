@@ -146,6 +146,17 @@ def simulate_day_symbol(
             stops.append(or_lo if side > 0 else or_hi)
         if np.isfinite(atr) and atr > 0:
             stops.append(entry_px - side * rules.atr_stop_mult * atr)
+        # A stop must sit on the losing side of the entry. The opening-range
+        # stop normally does by construction, but a gap between the signal bar
+        # and the fill can put it on the wrong side -- and a "stop" above a
+        # long's entry does not protect the trade, it books a guaranteed
+        # profit the moment the bar is touched, which is how a backtest
+        # invents money.
+        stops = [
+            s
+            for s in stops
+            if np.isfinite(s) and ((side > 0 and s < entry_px) or (side < 0 and s > entry_px))
+        ]
         if not stops:
             i += 1
             continue

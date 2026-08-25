@@ -226,3 +226,31 @@ def test_daily_loss_limit_is_a_no_op_when_disabled():
     cfg = DayburnConfig(daily_loss_limit=0.0)
     t = _blotter([{"entry_mod": 600, "exit_mod": 620, "notional": 100.0, "gross_ret": -0.90}])
     assert len(apply_daily_loss_limit(t, 100.0, cfg)) == 1
+
+
+def test_a_stop_on_the_wrong_side_of_entry_is_rejected():
+    """A gap between the signal bar and the fill can put the opening-range
+    stop above a long's entry. Such a 'stop' does not protect the trade, it
+    books a guaranteed profit the moment it is touched."""
+    mods, o, h, l, c = _day([100, 110, 110, 110])
+    cone = np.full(len(mods), 0.01)
+    rules = IntradayRules(entry_from_mod=570, last_entry_mod=930, exit_mod=945,
+                          cone_k=1.0, vwap_trail=False, atr_stop_mult=1.0,
+                          use_opening_range_stop=True)
+    # opening-range low sits *above* the fill price, and no ATR stop is
+    # available either
+    out = simulate_day_symbol(mods, o, h, l, c, np.full(len(mods), np.nan), cone,
+                              100.0, or_hi=130.0, or_lo=125.0, atr=np.nan, rules=rules)
+    assert out == []
+
+
+def test_a_valid_atr_stop_is_used_when_the_range_stop_is_unusable():
+    mods, o, h, l, c = _day([100, 110, 110, 110])
+    cone = np.full(len(mods), 0.01)
+    rules = IntradayRules(entry_from_mod=570, last_entry_mod=930, exit_mod=945,
+                          cone_k=1.0, vwap_trail=False, atr_stop_mult=1.0,
+                          use_opening_range_stop=True)
+    out = simulate_day_symbol(mods, o, h, l, c, np.full(len(mods), np.nan), cone,
+                              100.0, or_hi=130.0, or_lo=125.0, atr=4.0, rules=rules)
+    assert len(out) == 1
+    assert out[0][5] == pytest.approx(106.0)      # entry 110 less one ATR
