@@ -48,6 +48,17 @@ class IntradayRules:
     benchmark institutional algorithms are measured against, so losing it is
     evidence the flow that started the move has stopped."""
 
+    direction: int = +1
+    """+1 trades the breakout in its own direction, -1 fades it.
+
+    Gao, Han, Li and Zhou (2018) document intraday *momentum* on the S&P 500
+    index: the first half-hour's move predicts the last half-hour's. That is
+    an index-level claim about a specific pair of half-hours. The
+    single-name, morning-to-close version is a different quantity, and in
+    this universe it is measured directly rather than assumed -- see the
+    intraday continuation diagnostic in the campaign output. The sign is
+    fixed on the design window and never re-fitted on the holdout."""
+
     max_entries_per_day: int = 1
     risk_per_trade: float = 0.0010
     """Fraction of equity risked between entry and initial stop."""
@@ -120,6 +131,7 @@ def simulate_day_symbol(
         if side == 0:
             i += 1
             continue
+        side *= rules.direction
 
         # fill on the next bar's open -- the signal was only known at this
         # bar's close

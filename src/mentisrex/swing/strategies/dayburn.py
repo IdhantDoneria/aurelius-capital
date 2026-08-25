@@ -41,6 +41,10 @@ from ..costs import CostConfig
 from ..intraday_sim import BARS_PER_SESSION, RTH_CLOSE, RTH_OPEN, IntradayRules
 
 
+ENTRY_ANCHOR_MOD = 10 * 60 - 15
+"""Bar whose close is the 10:00 ET price -- the point at which the opening
+range is complete and the sleeve may first act."""
+
 MIN_SESSION_BARS = max(BARS_PER_SESSION * 3 // 4, 4)
 """Minimum bars for a session to be tradable, derived from the bar interval
 rather than hardcoded. A literal count written for one interval silently
@@ -69,6 +73,11 @@ class DayburnConfig:
 
     min_price: float = 5.0
     min_addv: float = 20_000_000.0
+    max_spread_bps: float = 8.0
+    """Only trade names whose modelled spread is inside this. This sleeve
+    crosses the spread on both legs in the continuous market, so the spread
+    is its single largest cost and a name that is wide is untradable by it
+    regardless of how attractive the signal looks."""
     """Higher liquidity floor than the cross-sectional sleeves: this book
     crosses the spread twice a day in the continuous market, so it can only
     live in names where that is cheap."""
@@ -78,6 +87,23 @@ class DayburnConfig:
     """Breakouts cluster directionally -- on a strong trend day nearly every
     in-play name breaks the same way. That is a real beta exposure, so it is
     capped and reported rather than assumed away."""
+
+    cone_vol_source: str = "blend"
+    """How the cone's volatility level is set: `trailing` uses the name's own
+    twenty-day average realised volatility, `today` infers it from the width
+    of the opening range, `blend` takes the larger of the two.
+
+    This matters more than it looks. The sleeve deliberately selects names
+    whose volatility today is abnormal, so a cone scaled by trailing
+    volatility is systematically too narrow for exactly the names being
+    traded, and the strategy enters on noise. The opening range is a
+    same-session estimate available at 10:00, which is before the sleeve's
+    first permitted entry, so using it introduces no look-ahead."""
+
+    parkinson_factor: float = 1.6
+    """Expected ratio of a random walk's range to its absolute displacement
+    over the same interval, used to convert the opening-range width into a
+    displacement-scaled volatility."""
 
     rules: IntradayRules = field(default_factory=IntradayRules)
     daily_loss_limit: float = 0.02
@@ -114,6 +140,7 @@ def select_in_play(features: pd.DataFrame, cfg: DayburnConfig) -> pd.DataFrame:
         & features["rvol_or30"].notna()
         & features["gap_z"].notna()
         & features["or30_range_z"].notna()
+        & (features["spread"] * 1e4 <= cfg.max_spread_bps)
     ].copy()
     f["play"] = f.groupby("d", group_keys=False).apply(
         lambda g: in_play_score(g, cfg), include_groups=False
@@ -153,6 +180,26 @@ def size_trades(
         if side_gross > 0:
             t.loc[mask, "notional"] *= max(1.0 - excess / side_gross, 0.0)
     return t
+
+
+def apply_daily_loss_limit(
+    t: pd.DataFrame, equity: float, cfg: DayburnConfig
+) -> pd.DataFrame:
+    """Drop trades that would have been opened after the day's loss limit was
+    already breached.
+
+    Trades are ordered by entry time and their realised P&L accumulated in
+    that order; once cumulative loss passes the limit, no further position is
+    opened that session. Positions already open are left to run to their own
+    stop or time exit, which is what a desk-level loss limit actually does --
+    it stops new risk, it does not liquidate at the moment of breach.
+    """
+    if t.empty or cfg.daily_loss_limit <= 0:
+        return t
+    o = t.sort_values("entry_mod").copy()
+    realised = (o["notional"] * o["gross_ret"]).cumsum().shift(1).fillna(0.0)
+    allowed = realised > -cfg.daily_loss_limit * equity
+    return o[allowed]
 
 
 def apply_costs(t: pd.DataFrame, cost: CostConfig) -> pd.Series:
@@ -225,10 +272,10 @@ class Dayburn:
                 sh = shape.loc[d].reindex(mods).to_numpy(dtype=float)
             except KeyError:
                 continue
-            rvp = float(m["rv_day_prev"])
-            if not np.isfinite(rvp) or rvp <= 0:
+            sigma = self._cone_sigma(m, shape, d)
+            if sigma is None:
                 continue
-            cone_vals = sh * rvp
+            cone_vals = sh * sigma
 
             o = g["open"].to_numpy(dtype=float)
             h = g["high"].to_numpy(dtype=float)
@@ -236,7 +283,7 @@ class Dayburn:
             c = g["close"].to_numpy(dtype=float)
             vw = running_vwap(g["vwap"].to_numpy(dtype=float), g["volume"].to_numpy(dtype=float))
             p_open = float(o[0])
-            atr = rvp / np.sqrt(BARS_PER_SESSION) * p_open * 2.0
+            atr = sigma / np.sqrt(BARS_PER_SESSION) * p_open * 2.0
 
             for tr in simulate_day_symbol(
                 mods, o, h, lo, c, vw, cone_vals, p_open,
@@ -259,6 +306,27 @@ class Dayburn:
             return tdf, pd.DataFrame()
         return tdf, self._accumulate(tdf)
 
+    def _cone_sigma(self, meta_row, shape, d) -> float | None:
+        """Volatility level for the cone, in daily log-return units."""
+        trailing = float(meta_row["rv_day_prev"])
+        if self.cfg.cone_vol_source == "trailing":
+            return trailing if np.isfinite(trailing) and trailing > 0 else None
+
+        hi, lo = float(meta_row["or30_hi"]), float(meta_row["or30_lo"])
+        today = np.nan
+        if np.isfinite(hi) and np.isfinite(lo) and lo > 0 and hi > lo:
+            try:
+                anchor = float(shape.loc[(d, ENTRY_ANCHOR_MOD)])
+            except (KeyError, TypeError):
+                anchor = np.nan
+            if np.isfinite(anchor) and anchor > 0:
+                today = (np.log(hi / lo) / self.cfg.parkinson_factor) / anchor
+
+        if self.cfg.cone_vol_source == "today":
+            return float(today) if np.isfinite(today) and today > 0 else None
+        candidates = [x for x in (trailing, today) if np.isfinite(x) and x > 0]
+        return float(max(candidates)) if candidates else None
+
     def _accumulate(self, tdf: pd.DataFrame) -> pd.DataFrame:
         """Walk the trade blotter forward, sizing each day against the equity
         actually available and against a causal volatility estimate."""
@@ -276,6 +344,9 @@ class Dayburn:
             scalar = min(self.cfg.target_vol / max(vol, 0.02), self.cfg.max_leverage_scalar)
 
             sized = size_trades(g, equity, self.cfg, scalar)
+            sized = apply_daily_loss_limit(sized, equity, self.cfg)
+            if sized.empty:
+                continue
             cost = apply_costs(sized, self.cost)
             pnl = float((sized["notional"] * sized["gross_ret"]).sum() - cost.sum())
             gross = float(sized["notional"].sum())

@@ -253,18 +253,52 @@ def t_dayburn_grid(c) -> str:
     if not g:
         return "_Dayburn parameter sweep not run._"
     rows = []
-    for _, r in sorted(g["grid"].items(), key=lambda kv: (kv[1]["cone_k"], kv[1]["atr_stop_mult"])):
-        rows.append([num(r["cone_k"], 2), num(r["atr_stop_mult"], 1), int(r["n_in_play"]),
+    for _, r in sorted(g["grid"].items(),
+                       key=lambda kv: (kv[1]["cone_k"], kv[1]["atr_stop_mult"],
+                                       not kv[1].get("vwap_trail", True))):
+        rows.append([num(r["cone_k"], 2), num(r["atr_stop_mult"], 1),
+                     "yes" if r.get("vwap_trail") else "no", int(r["n_in_play"]),
                      f"{int(r['n_trades']):,}", pct(r["hit_rate"], 1), pct(r["cagr"]),
                      num(r["sharpe"]), pct(r["max_dd"])])
     chosen = g.get("chosen")
-    tbl = md_table(["Cone k", "Stop mult", "Names", "Trades", "Hit rate", "CAGR",
-                    "Sharpe", "Max DD"], rows, "--:|--:|--:|--:|--:|--:|--:|--:")
+    tbl = md_table(["Cone k", "Stop mult", "VWAP trail", "Names", "Trades", "Hit rate",
+                    "CAGR", "Sharpe", "Max DD"], rows,
+                   "--:|--:|:--|--:|--:|--:|--:|--:|--:")
     return tbl + f"\n\nChosen on the design window ({g['design_window'][0]} to "\
                  f"{g['design_window'][1]}): `{chosen}`."
 
 
+def t_dayburn_exec(c) -> str:
+    d = c.get("dayburn_execution_style")
+    if not d:
+        return "_Not run._"
+    rows = []
+    for _, r in sorted(d.items(), key=lambda kv: -kv[1]["spread_capture"]):
+        lbl = {1.0: "full spread (fully aggressive)", 0.5: "half spread (marketable)",
+               0.25: "quarter spread (mixed)", 0.0: "no spread (fully passive)"}.get(
+                   r["spread_capture"], str(r["spread_capture"]))
+        rows.append([lbl, pct(r["cagr"]), num(r["sharpe"]), pct(r["max_dd"])])
+    return md_table(["Execution style", "CAGR", "Sharpe", "Max DD"], rows, ":--|--:|--:|--:")
+
+
+def t_continuation(c) -> str:
+    d = c.get("intraday_continuation")
+    if not d:
+        return "_Not computed._"
+    rows = []
+    for k, r in d.items():
+        if r is None:
+            continue
+        rows.append([k.replace("_", " "), f"{int(r['n']):,}",
+                     num(r["mean_signed_move"], 4), num(r["t_stat"], 1),
+                     num(r["rank_ic"], 4), pct(r["hit_rate"], 1)])
+    return md_table(["Slice", "Observations", "Mean signed follow-through",
+                     "t-stat", "Rank IC", "Hit rate"], rows, ":--|--:|--:|--:|--:|--:")
+
+
 BUILDERS = {
+    "dayburn_exec": t_dayburn_exec,
+    "continuation": t_continuation,
     "holdout": t_holdout,
     "dayburn_grid": t_dayburn_grid,
     "correlation": t_correlation,

@@ -263,22 +263,61 @@ def main() -> int:
                                  tier=args.tier)
         print(f"  {len(f):,} sessions, {len(b):,} bars, {len(c):,} cone rows", flush=True)
 
+        # ---- does an intraday move continue or revert here? ---------------
+        # Measured before any simulation, because it is the premise the whole
+        # sleeve rests on and a backtest would confound it with execution.
+        dd = f[(f["p_open"] > 0) & (f["p_1000"] > 0) & (f["p_1545"] > 0) & (f["sd_cc60"] > 0)].copy()
+        dd["x"] = np.log(dd["p_1000"] / dd["p_open"]) / dd["sd_cc60"]
+        dd["y"] = np.log(dd["p_1545"] / dd["p_1000"]) / dd["sd_cc60"]
+        dd["signed"] = np.sign(dd["x"]) * dd["y"]
+
+        def cont(g):
+            if len(g) < 50:
+                return None
+            s_ = g["signed"]
+            return {
+                "n": int(len(g)),
+                "mean_signed_move": float(s_.mean()),
+                "t_stat": float(s_.mean() / (s_.std(ddof=1) / np.sqrt(len(s_)))),
+                "rank_ic": float(g["x"].rank().corr(g["y"].rank())),
+                "hit_rate": float((s_ > 0).mean()),
+            }
+
+        cont_all = {"all": cont(dd)}
+        dd["q"] = pd.qcut(dd["x"].abs(), 5, labels=False, duplicates="drop")
+        for q in sorted(dd["q"].dropna().unique()):
+            cont_all[f"move_quintile_{int(q) + 1}"] = cont(dd[dd["q"] == q])
+        dd["year"] = pd.to_datetime(dd["d"]).dt.year
+        for y in sorted(dd["year"].unique()):
+            cont_all[f"year_{y}"] = cont(dd[dd["year"] == y])
+        report["intraday_continuation"] = jsonable(
+            {k: v for k, v in cont_all.items() if v is not None}
+        )
+        print(f"  intraday continuation (all): {cont_all['all']}", flush=True)
+
         # ---- parameter choice on the design window only -------------------
         design = pd.Timestamp(args.design_end).date()
         fd = f[f["d"] <= design]
         bd = b[b["d"] <= design]
         grid = [
-            {"cone_k": k, "atr_stop_mult": m, "n_in_play": n}
-            for k in (0.75, 1.0, 1.5, 2.0)
+            {"cone_k": k, "atr_stop_mult": m, "n_in_play": n, "vwap_trail": v,
+             "direction": dr, "cone_vol_source": cv}
+            for dr in (1, -1)
+            for k in (1.0, 1.5)
             for m in (1.0, 2.0)
+            for v in (True, False)
+            for cv in ("trailing", "blend")
             for n in (20,)
         ]
         sweep = []
         best, best_obj = None, -np.inf
         for g in grid:
-            cfg = DayburnConfig(n_in_play=g["n_in_play"])
+            cfg = DayburnConfig(n_in_play=g["n_in_play"],
+                                cone_vol_source=g["cone_vol_source"])
             cfg.rules.cone_k = g["cone_k"]
             cfg.rules.atr_stop_mult = g["atr_stop_mult"]
+            cfg.rules.vwap_trail = g["vwap_trail"]
+            cfg.rules.direction = g["direction"]
             try:
                 tr, dl, pf = run_dayburn(fd, bd, c, config=cfg, initial_equity=args.aum,
                                          benchmark=ds.benchmark, rf=ds.rf)
@@ -297,9 +336,13 @@ def main() -> int:
             "chosen": best,
             "note": "chosen on the design window only; the holdout below never informed it",
         }
-        chosen = DayburnConfig(n_in_play=(best or {}).get("n_in_play", 20))
-        chosen.rules.cone_k = (best or {}).get("cone_k", 1.0)
-        chosen.rules.atr_stop_mult = (best or {}).get("atr_stop_mult", 1.0)
+        b_ = best or {}
+        chosen = DayburnConfig(n_in_play=b_.get("n_in_play", 20),
+                               cone_vol_source=b_.get("cone_vol_source", "blend"))
+        chosen.rules.cone_k = b_.get("cone_k", 1.0)
+        chosen.rules.atr_stop_mult = b_.get("atr_stop_mult", 2.0)
+        chosen.rules.vwap_trail = b_.get("vwap_trail", True)
+        chosen.rules.direction = b_.get("direction", 1)
 
         rows = {}
         for aum in (10e6, 25e6, 50e6, 100e6):
@@ -324,6 +367,25 @@ def main() -> int:
         trades.to_parquet(out / "dayburn_trades.parquet")
         daily.to_parquet(out / "dayburn_daily.parquet")
         ret = daily["ret"].reindex(ds.dates).fillna(0.0)
+        # ---- execution-style sensitivity ---------------------------------
+        # This sleeve crosses the spread twice per trade, so how much of the
+        # spread it actually pays is the assumption its viability turns on.
+        # A fade strategy can in principle work passively and earn the spread
+        # instead, but fill probability cannot be validated without quote
+        # data, so the dependence is reported rather than assumed away.
+        rows = []
+        for cap in (1.0, 0.5, 0.25, 0.0):
+            cost = CostConfig(spread_capture=cap)
+            try:
+                tr2, dl2, pf2 = run_dayburn(f, b, c, config=chosen, cost=cost,
+                                            initial_equity=args.aum,
+                                            benchmark=ds.benchmark, rf=ds.rf)
+            except RuntimeError:
+                continue
+            rows.append({"spread_capture": cap, "cagr": pf2.cagr, "sharpe": pf2.sharpe,
+                         "max_dd": pf2.max_drawdown})
+        report["dayburn_execution_style"] = jsonable(pd.DataFrame(rows))
+
         report.setdefault("headline", {})["dayburn"] = jsonable(
             deep_dive("dayburn", ret, ds, args.n_trials, res=daily, extra={"detail": {
                 "n_trades": int(len(trades)),
