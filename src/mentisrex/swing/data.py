@@ -15,7 +15,7 @@ import duckdb
 import numpy as np
 import pandas as pd
 
-from .costs import corwin_schultz_spread
+from .costs import corwin_schultz_spread, modelled_spread
 from .portfolio import MarketPanel
 from .strategies.base import FeatureCube
 
@@ -62,6 +62,7 @@ def load(
     benchmark_symbol: str = "SPY",
     earnings_window: int = 3,
     beta_window: int = 60,
+    spread_scalar: float = 1.0,
 ) -> Dataset:
     con = duckdb.connect()
     con.execute("PRAGMA threads=8")
@@ -136,16 +137,8 @@ def load(
     factor_loadings = np.stack([size, mom, vol], axis=2)
 
     # ---- market panel ------------------------------------------------------
-    spread = np.full_like(data["p_close"], np.nan)
-    for j in range(len(symbols)):
-        hi = pd.Series(data["hi"][:, j], index=dates)
-        lo = pd.Series(data["lo"][:, j], index=dates)
-        s = corwin_schultz_spread(hi, lo).rolling(21, min_periods=5).median()
-        spread[:, j] = s.to_numpy()
-    med = np.nanmedian(spread)
-    spread = np.where(np.isfinite(spread), spread, med)
-
     daily_vol = np.nan_to_num(data["sd_cc60"], nan=float(np.nanmedian(data["sd_cc60"])))
+    spread = modelled_spread(daily_vol, data["addv60"], data["p_close"], scalar=spread_scalar)
     tradable = (
         np.isfinite(data["p_close"])
         & np.isfinite(data["p_open"])

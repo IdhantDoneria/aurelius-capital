@@ -153,15 +153,11 @@ def size_book(
         s = neutralize(s, np.column_stack(cols))
     s = np.where(tradable, s, 0.0)
 
+
     gross = np.abs(s).sum()
     if gross <= 0:
         return np.zeros_like(s)
     w = s / gross                                       # unit gross
-
-    w = np.clip(w, -cfg.max_weight, cfg.max_weight)     # per-name cap
-    g = np.abs(w).sum()
-    if g > 0:
-        w = w / g                                       # renormalise to unit gross
 
     vol = max(realised_vol, cfg.vol_floor)
     scalar = min(cfg.target_vol / vol, cfg.max_leverage_scalar)
@@ -171,8 +167,22 @@ def size_book(
         frac = min(max((-drawdown - cfg.dd_brake_start) / max(span, 1e-9), 0.0), 1.0)
         scalar *= 1.0 - (1.0 - cfg.dd_brake_floor) * frac
 
-    w = w * scalar
-    g = np.abs(w).sum()
-    if g > cfg.gross_cap:
-        w = w * (cfg.gross_cap / g)
-    return w
+    target_gross = min(scalar, cfg.gross_cap)
+    w = w * target_gross
+
+    # The per-name cap is a limit on equity, so it has to be applied to the
+    # sized book, not to a unit-gross one -- capping first and renormalising
+    # afterwards simply undoes the cap. Capping does perturb neutrality, so
+    # the two are alternated a few times; the final clip is what guarantees
+    # the cap holds, and any residual net exposure after it is reported by
+    # the backtester rather than assumed to be zero.
+    exposures = np.column_stack(cols) if cols else None
+    for _ in range(3):
+        w = np.clip(w, -cfg.max_weight, cfg.max_weight)
+        if exposures is not None:
+            w = np.where(tradable, neutralize(w, exposures), 0.0)
+        g = np.abs(w).sum()
+        if g <= 0:
+            return np.zeros_like(s)
+        w = w * (target_gross / g)
+    return np.clip(w, -cfg.max_weight, cfg.max_weight)

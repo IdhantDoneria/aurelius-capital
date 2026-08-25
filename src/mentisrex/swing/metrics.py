@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 
+import math
+
 import numpy as np
 import pandas as pd
 
@@ -157,7 +159,7 @@ def newey_west_t(x: pd.Series, lags: int = 5) -> float:
 
 
 def _norm_cdf(x: float) -> float:
-    return 0.5 * (1.0 + np.math.erf(x / np.sqrt(2.0)))
+    return 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
 
 
 def _norm_ppf(p: float) -> float:
@@ -213,7 +215,7 @@ def deflated_sharpe(
 
     e = 0.5772156649015329
     m = max(int(n_trials), 2)
-    sr0 = v * ((1 - e) * _norm_ppf(1 - 1.0 / m) + e * _norm_ppf(1 - 1.0 / (m * np.e)))
+    sr0 = v * ((1 - e) * _norm_ppf(1 - 1.0 / m) + e * _norm_ppf(1 - 1.0 / (m * math.e)))
     dsr = probabilistic_sharpe(sr_p, n, float(r.skew()), float(r.kurtosis()) + 3.0, sr0)
     return dsr, float(sr0 * np.sqrt(periods))
 

@@ -17,6 +17,7 @@ Ordering within day t:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Protocol
 
 import numpy as np
@@ -61,19 +62,37 @@ class Strategy(Protocol):
     def targets_moo(self, t: int) -> np.ndarray | None: ...
 
 
-@dataclass
-class VenueConfig:
-    """How a given auction behaves for cost purposes."""
+class Venue(str, Enum):
+    """Where an order is worked.
 
+    The three venues differ in what fraction of the day's volume they give
+    access to and in whether they cross a spread, and those differences are
+    resolved from `CostConfig` rather than hardcoded here -- a second copy of
+    the cost parameters would silently override every cost sensitivity sweep.
+    """
+
+    CLOSE_AUCTION = "close_auction"
+    OPEN_AUCTION = "open_auction"
+    CONTINUOUS = "continuous"
+
+
+@dataclass(frozen=True)
+class VenueParams:
     adv_share: float
     eta: float
     fee_bps: float
     crosses_spread: bool
 
 
-CLOSE_AUCTION = VenueConfig(adv_share=0.10, eta=0.30, fee_bps=0.50, crosses_spread=False)
-OPEN_AUCTION = VenueConfig(adv_share=0.025, eta=0.55, fee_bps=0.50, crosses_spread=False)
-CONTINUOUS = VenueConfig(adv_share=1.00, eta=0.60, fee_bps=0.20, crosses_spread=True)
+def resolve_venue(venue: Venue, cfg: CostConfig) -> VenueParams:
+    if venue is Venue.CLOSE_AUCTION:
+        return VenueParams(cfg.auction_adv_share, cfg.impact_eta_auction,
+                           cfg.commission_bps + cfg.auction_fee_bps, False)
+    if venue is Venue.OPEN_AUCTION:
+        return VenueParams(cfg.open_auction_adv_share,
+                           cfg.impact_eta_auction * cfg.open_auction_eta_mult,
+                           cfg.commission_bps + cfg.auction_fee_bps, False)
+    return VenueParams(1.0, cfg.impact_eta_continuous, cfg.commission_bps, True)
 
 
 @dataclass
@@ -99,7 +118,7 @@ class SegmentBacktester:
         pos: np.ndarray,
         target_notional: np.ndarray,
         t: int,
-        venue: VenueConfig,
+        venue: Venue,
     ) -> tuple[np.ndarray, float, float]:
         """Move the book to `target_notional`; return (new pos, cost, traded)."""
         delta = target_notional - pos
@@ -109,13 +128,14 @@ class SegmentBacktester:
             return pos, 0.0, 0.0
 
         c = self.cfg.costs
-        sp = spread_cost(self.p.spread[t], c, auction=not venue.crosses_spread)
-        avail = np.nan_to_num(self.p.adv[t], nan=0.0) * venue.adv_share
+        v = resolve_venue(venue, c)
+        sp = spread_cost(self.p.spread[t], c, auction=not v.crosses_spread)
+        avail = np.nan_to_num(self.p.adv[t], nan=0.0) * v.adv_share
         part = np.divide(
             np.abs(delta), np.maximum(avail, 1.0), out=np.zeros_like(delta), where=True
         )
-        imp = venue.eta * np.nan_to_num(self.p.daily_vol[t]) * np.sqrt(np.clip(part, 0.0, 1.0))
-        rate = (c.commission_bps + venue.fee_bps) / 1e4 + sp + imp
+        imp = v.eta * np.nan_to_num(self.p.daily_vol[t]) * np.sqrt(np.clip(part, 0.0, 1.0))
+        rate = v.fee_bps / 1e4 + sp + imp
         cost = float((np.abs(delta) * rate).sum())
         return pos + delta, cost, traded
 
@@ -147,7 +167,7 @@ class SegmentBacktester:
             if t >= warm:
                 tgt = strategy.targets_moo(t)
                 if tgt is not None:
-                    pos, cost_moo, traded_moo = self._trade(pos, tgt * equity, t, OPEN_AUCTION)
+                    pos, cost_moo, traded_moo = self._trade(pos, tgt * equity, t, Venue.OPEN_AUCTION)
                     equity -= cost_moo
 
             # --- 3. intraday leg --------------------------------------------------
@@ -159,7 +179,7 @@ class SegmentBacktester:
             if t >= warm:
                 tgt = strategy.targets_moc(t)
                 if tgt is not None:
-                    pos, cost_moc, traded_moc = self._trade(pos, tgt * equity, t, CLOSE_AUCTION)
+                    pos, cost_moc, traded_moc = self._trade(pos, tgt * equity, t, Venue.CLOSE_AUCTION)
                     equity -= cost_moc
 
             # --- 5. financing on the carried book ---------------------------------
