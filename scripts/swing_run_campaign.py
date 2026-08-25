@@ -60,7 +60,7 @@ def jsonable(o):
 
 
 # ---------------------------------------------------------------- builders
-def build_nightfall(ds, aum, *, overlay=None, cfg=None, hold=1):
+def build_nightfall(ds, aum, *, overlay=None, cfg=None, hold=1, warmup=260):
     return Nightfall(
         ds.cube,
         overlay or OverlayConfig(target_vol=0.10, gross_cap=3.0, max_weight=0.015,
@@ -69,6 +69,7 @@ def build_nightfall(ds, aum, *, overlay=None, cfg=None, hold=1):
         beta=ds.beta, factor_loadings=ds.factor_loadings, tradable=ds.panel.tradable,
         adv_dollar=ds.cube["addv60"], equity=aum,
         config=cfg or NightfallConfig(mode="overnight"),
+        warmup_days=warmup,
     )
 
 
@@ -79,7 +80,7 @@ def lastlight_push_column(ds) -> str:
     return "close_push" if np.isfinite(ds.cube["close_push"]).any() else "close_push_daily"
 
 
-def build_lastlight(ds, aum, *, overlay=None, cfg=None, push=None):
+def build_lastlight(ds, aum, *, overlay=None, cfg=None, push=None, warmup=260):
     push = push or lastlight_push_column(ds)
     s = Lastlight(
         ds.cube,
@@ -89,6 +90,7 @@ def build_lastlight(ds, aum, *, overlay=None, cfg=None, push=None):
         beta=ds.beta, factor_loadings=ds.factor_loadings, tradable=ds.panel.tradable,
         adv_dollar=ds.cube["addv60"], equity=aum,
         config=cfg or LastlightConfig(push_source=push), vix=ds.vix,
+        warmup_days=warmup,
     )
     s.overnight_only = True
     return s
@@ -266,12 +268,13 @@ def main() -> int:
         if name == "nightfall":
             cfg = NightfallConfig(mode=params.get("mode", "overnight"),
                                   lookback=params.get("lookback", "10"))
-            return build_nightfall(ds, aum, overlay=ov, cfg=cfg)
+            return build_nightfall(ds, aum, overlay=ov, cfg=cfg, warmup=args.warmup)
         cfg = LastlightConfig(push_source=push_col,
                               vix_beta=params.get("vix_beta", 0.5),
                               vix_scaling=params.get("vix_beta", 0.5) > 0,
                               max_rvol=params.get("max_rvol", 3.0))
-        return build_lastlight(ds, aum, overlay=ov, cfg=cfg, push=push_col)
+        return build_lastlight(ds, aum, overlay=ov, cfg=cfg, push=push_col,
+                               warmup=args.warmup)
 
     xs_chosen: dict[str, dict] = {}
     if args.only != "dayburn":
@@ -391,7 +394,7 @@ def main() -> int:
              "direction": dr, "cone_vol_source": cv}
             for dr in (1, -1)
             for k in (1.0, 1.5, 2.0, 2.5)
-            for m in (1.0, 2.0)
+            for m in (1.0, 2.0, 3.0)
             for v in (True, False)
             for cv in ("trailing",)
             for n in (10, 20)
