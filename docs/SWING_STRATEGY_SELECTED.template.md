@@ -115,10 +115,16 @@ any given day:
    constraint and is the one that determines whether the strategy pays for
    its own turnover.
 
-The backtester reports which is binding, in the `gross` column of its daily
-output. A book that is persistently at its gross cap is one whose volatility
-target is decorative, and should be re-specified rather than left to imply a
-risk appetite it cannot express.
+Which one is binding can be read off the simulator's daily output: gross
+pinned at the cap means the volatility target is unreachable, gross well
+below it with the drawdown brake inactive means the participation cap is
+doing the work, and gross moving with realised volatility means the target is
+actually binding.
+
+A book persistently at its gross cap has a decorative volatility target, and
+should be re-specified rather than left to imply a risk appetite it cannot
+express. That is the case for the overnight sleeves here, and §6.1 says so
+rather than quoting a 10% target the book has never reached.
 
 ### 6.1 Why leverage cannot rescue a negative-alpha book
 
