@@ -25,6 +25,7 @@ import pandas as pd
 
 from .construction import OverlayConfig
 from .data import load
+from .execution import AlpacaSwingBroker, build_orders
 from .strategies import Lastlight, LastlightConfig, Nightfall, NightfallConfig
 from .strategies.base import StagingConfig
 
@@ -127,6 +128,48 @@ def cmd_targets(args) -> int:
     return 0
 
 
+def cmd_submit(args) -> int:
+    """Diff a target book (CSV from `targets`) against the live paper account
+    and submit market-on-close orders for the delta.
+
+    Always prints the order preview. Orders are only sent to Alpaca when
+    `--confirm` is passed -- without it this is a dry run: it authenticates
+    and reads the account (so credential and connectivity problems surface
+    early) but places nothing.
+    """
+    book = pd.read_csv(args.book)
+    if book.empty:
+        print("target book is empty; nothing to do")
+        return 0
+    strategy = str(book["strategy"].iloc[0])
+    as_of = pd.Timestamp(book["date"].iloc[0])
+
+    broker = AlpacaSwingBroker(strategy_id=f"swing-{strategy}")
+    nav = broker.nav()
+    current = broker.positions()
+
+    order_set = build_orders(book, current, nav, strategy=strategy, as_of=as_of)
+
+    print(f"as_of={order_set.as_of.date()} strategy={order_set.strategy} nav=${nav:,.2f}")
+    print(f"orders={len(order_set.orders)} suppressed={len(order_set.suppressed)} "
+          f"missing_price={len(order_set.missing_price)} gross={order_set.gross:.3f} net={order_set.net:.3f}")
+    for o in order_set.orders:
+        print(f"  {o.side:4s} {abs(o.quantity):>8d} {o.symbol:<8s} notional=${o.notional:,.2f} "
+              f"target_weight={o.target_weight:+.4f}")
+
+    if not order_set.orders:
+        print("no orders to submit")
+        return 0
+
+    if not args.confirm:
+        print("\nDRY RUN -- no orders submitted. Re-run with --confirm to send these to Alpaca paper.")
+        return 0
+
+    order_ids = broker.submit_moc(order_set.orders)
+    print(f"\nsubmitted {len(order_ids)}/{len(order_set.orders)} orders")
+    return 0 if len(order_ids) == len(order_set.orders) else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="mentisrex.swing.cli")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -146,6 +189,11 @@ def main(argv: list[str] | None = None) -> int:
     t.add_argument("--warmup", type=int, default=120)
     t.add_argument("--out", default=None, help="CSV path; prints to stdout if omitted")
     t.set_defaults(func=cmd_targets)
+
+    s = sub.add_parser("submit", help="diff a target book against the live paper account and submit MOC orders")
+    s.add_argument("--book", required=True, help="CSV produced by `targets --out ...`")
+    s.add_argument("--confirm", action="store_true", help="actually submit; omit for a dry run")
+    s.set_defaults(func=cmd_submit)
 
     args = ap.parse_args(argv)
     return args.func(args)
