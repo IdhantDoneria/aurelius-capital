@@ -28,7 +28,7 @@ PIVOT_COLS = [
     "son5", "sid5", "son10", "sid10", "son21", "sid21", "son63", "sid63",
     "idup10", "onup10", "sd_on60", "sd_id60", "sd_cc20", "sd_cc60",
     "amihud20", "mom21", "mom63", "mom252", "rv_day", "rv_ratio", "clv",
-    "range_pos20", "hi2", "lo2", "is_earn_day", "earn_surprise", "liq_rank",
+    "range_pos20", "hi2", "lo2", "is_earn_day", "earn_surprise", "liq_rank", "is_fund",
 ]
 
 
@@ -63,6 +63,7 @@ def load(
     earnings_window: int = 3,
     beta_window: int = 60,
     spread_scalar: float = 1.0,
+    exclude_funds: bool = True,
 ) -> Dataset:
     con = duckdb.connect()
     con.execute("PRAGMA threads=8")
@@ -154,7 +155,15 @@ def load(
         & (np.nan_to_num(data["p_close"]) > 0)
         & np.isfinite(data["liq_rank"])
     )
-    tradable[:, b] = tradable[:, b]  # benchmark stays tradable for hedging
+    if exclude_funds:
+        # Every claim these strategies rest on is about a single company:
+        # clientele segmentation across its sessions, its repricing after
+        # news, mechanical index flow into its closing auction. An index
+        # product satisfies none of them, and left in a liquidity-ranked
+        # universe it outranks every operating company -- an intraday
+        # "stock in play" screen otherwise returns SPY, gold and a T-bill
+        # fund.
+        tradable &= np.nan_to_num(data["is_fund"], nan=0.0) < 0.5
 
     htb = np.zeros_like(tradable)
     am = data["amihud20"]

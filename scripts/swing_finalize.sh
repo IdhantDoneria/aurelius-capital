@@ -15,6 +15,9 @@ AUM=${AUM:-50e6}
 
 cd "$ROOT"
 
+echo "== security class =="
+$PY "$WT/scripts/intraday_build_security_class.py"
+
 echo "== panel =="
 # 6GB, not the default: this machine has 16GB of RAM and about 11GB of free
 # disk, so a larger limit trades a swap storm for a spill that could fill the

@@ -22,6 +22,7 @@ CREATE OR REPLACE VIEW dly AS SELECT * FROM parquet_scan('{daily}');
 CREATE OR REPLACE VIEW uni AS SELECT * FROM parquet_scan('{universe}');
 CREATE OR REPLACE VIEW earn AS SELECT symbol, CAST(date AS DATE) AS d, surprise_pct, eps, eps_forecast
                                 FROM parquet_scan('{earnings}');
+CREATE OR REPLACE VIEW seccls AS SELECT symbol, is_fund FROM parquet_scan('{secclass}');
 
 -- Universe membership expanded to a daily grid. A rank date's cohort is
 -- eligible from the following session until the next rank date.
@@ -144,9 +145,11 @@ SELECT
   -- realised-vol ratio: is today unusually wide?
   rv_day / nullif(avg_rv20, 0)                AS rv_ratio,
   e.surprise_pct                              AS earn_surprise,
-  CASE WHEN e.d IS NOT NULL THEN 1 ELSE 0 END AS is_earn_day
+  CASE WHEN e.d IS NOT NULL THEN 1 ELSE 0 END AS is_earn_day,
+  coalesce(sc.is_fund, FALSE)                 AS is_fund
 FROM w
 LEFT JOIN earn e ON e.symbol = w.symbol AND e.d = w.d
+LEFT JOIN seccls sc ON sc.symbol = w.symbol
 WHERE prev_close IS NOT NULL AND bar_idx > 60;
 """
 
@@ -157,6 +160,7 @@ def build(
     daily: str | Path = DATA / "daily_clean.parquet",
     universe: str | Path = DATA / "universe.parquet",
     earnings: str | Path = DATA / "earnings.parquet",
+    secclass: str | Path = DATA / "security_class.parquet",
     out: str | Path = DATA / "features.parquet",
     threads: int = 8,
     memory: str = "12GB",
@@ -165,7 +169,9 @@ def build(
     con.execute(f"PRAGMA threads={threads}")
     con.execute(f"PRAGMA memory_limit='{memory}'")
     con.execute(f"PRAGMA temp_directory='{DATA / 'duckdb_tmp'}'")
-    sql = FEATURE_SQL.format(panel=panel, daily=daily, universe=universe, earnings=earnings)
+    sql = FEATURE_SQL.format(
+        panel=panel, daily=daily, universe=universe, earnings=earnings, secclass=secclass
+    )
     for stmt in [s for s in sql.split(";") if s.strip()]:
         con.execute(stmt)
     con.execute(f"COPY feat TO '{out}' (FORMAT PARQUET)")

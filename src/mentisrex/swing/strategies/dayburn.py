@@ -141,6 +141,7 @@ def select_in_play(features: pd.DataFrame, cfg: DayburnConfig) -> pd.DataFrame:
         & features["gap_z"].notna()
         & features["or30_range_z"].notna()
         & (features["spread"] * 1e4 <= cfg.max_spread_bps)
+        & (~features["is_fund"].fillna(False).astype(bool))
     ].copy()
     f["play"] = f.groupby("d", group_keys=False).apply(
         lambda g: in_play_score(g, cfg), include_groups=False
