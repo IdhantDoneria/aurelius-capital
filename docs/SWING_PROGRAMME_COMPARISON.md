@@ -90,9 +90,24 @@ stated.
 | Layer | Source | Coverage |
 |---|---|---|
 | Daily bars | Alpaca SIP (consolidated tape), split- and dividend-adjusted | 12,232 symbols, 2016-01-04 to 2026-08-24, 17.45m rows |
-| Intraday bars | Alpaca SIP, 15-minute, regular hours only | 301 symbols, 2020-01-01 to 2026-08-24 |
+| Intraday bars | Alpaca SIP, 15-minute, **regular hours only** | 301 symbols requested, **2020-01-02 to 2025-01-17**, 9.87m bars |
+| Security classification | Alpaca asset descriptions | fund vs operating company, 12,687 symbols |
 | Earnings calendar | Nasdaq, historical, with reported EPS, consensus and surprise | 4,691 symbols, 2016 to 2026, ~128k events |
 | Volatility, rates | CBOE VIX, 13-week Treasury bill | Daily, 2015-12 to 2026-08 |
+
+**The intraday layer stops at 2025-01-17 and the daily layer does not.** The
+15-minute pull was still running when the connection degraded badly enough
+that throughput fell by more than an order of magnitude, and it was stopped
+at the last gap-free week rather than left to limp. Every result in this
+document that uses intraday data therefore covers **5.05 years**, not the
+full daily history. This is a data-collection outcome, not a design choice,
+and it is listed among the limitations in §9.
+
+**Index products are excluded from the tradable universe.** Of the 295
+symbols that survive into the feature panel, 76 are ETFs, ETNs or commodity
+trusts; the remaining **219 operating companies** are what the strategies
+trade, with a median of about 200 eligible on any session. The reasons are in
+§1.3.
 
 The asset list was pulled including Alpaca's **inactive** assets, which is
 what allows a point-in-time universe to contain names that later died. Of the
@@ -1164,7 +1179,20 @@ that changes the answer is measuring it, not looking for a better signal.
 Recorded per the project's hard rule: what was skipped, why it is impossible
 right now, and what would unblock it.
 
-1. **Five-minute bars.** *Skipped.* The intraday panel is 15-minute, not
+1. **The intraday sample ends 2025-01-17, not 2026-08.** *Truncated.* *Why:*
+   the 15-minute pull was still running when network throughput collapsed by
+   more than an order of magnitude with rising connection errors; it was
+   stopped at the last gap-free week rather than left to limp for a day.
+   *Consequence:* every intraday result covers 5.05 years rather than the
+   6.6 available in daily data, and the most recent nineteen months are
+   untested for the two auction sleeves. Given the Dayburn finding — that
+   single-name intraday continuation inverted during 2024 — the missing
+   period is exactly the one most likely to contain a regime change.
+   *Unblocked by:* re-running `intraday_fetch_days.py`, which resumes from
+   the existing weekly shards and needs roughly two more hours on a healthy
+   connection.
+
+2. **Five-minute bars.** *Skipped.* The intraday panel is 15-minute, not
    5-minute. *Why:* the data plan is capped at 200 requests a minute and
    pages at roughly 900 bars or 30 symbols, whichever binds first; a
    five-minute pull of this universe measures at roughly five hours of
@@ -1175,7 +1203,7 @@ right now, and what would unblock it.
    Alpaca Algo Trader Plus subscription (10,000 requests a minute), or a
    Databento/Polygon flat-file download.
 
-2. **Pre-market and post-market bars.** *Skipped.* The intraday pull is
+3. **Pre-market and post-market bars.** *Skipped.* The intraday pull is
    regular hours only. *Why:* the same page limits — restricting each request
    to the session window is what makes the day-slice fetch shape roughly ten
    times more efficient than a per-symbol one. *Consequence:* Dayburn's
@@ -1184,7 +1212,7 @@ right now, and what would unblock it.
    the overnight gap, opening-range volume and opening-range width instead.
    *Unblocked by:* the same subscription upgrade.
 
-3. **Quoted spreads.** *Not available.* There is no quote or trade-level data
+4. **Quoted spreads.** *Not available.* There is no quote or trade-level data
    in this repository, so the effective spread is modelled rather than
    measured. Both standard high-low estimators were tested and are biased
    upward by between 3x and 20x at realistic spread levels — the test is in
@@ -1194,14 +1222,14 @@ right now, and what would unblock it.
    Everything is therefore reported across a cost sweep and with a breakeven
    multiple. *Unblocked by:* a TAQ, Databento MBP-1, or broker TCA feed.
 
-4. **Realised auction fills.** *Not available.* Closing-auction impact is
+5. **Realised auction fills.** *Not available.* Closing-auction impact is
    modelled, and the model's small-order branch is a fitted extrapolation,
    not a measurement. This is the parameter the cross-sectional verdicts are
    most sensitive to, which is why it is swept rather than fixed. *Unblocked
    by:* live paper or production fills through this firm's existing Alpaca
    broker integration.
 
-5. **True delisting returns.** *Not available.* Names that stop trading are
+6. **True delisting returns.** *Not available.* Names that stop trading are
    force-closed at the last available mark. Acquisitions are handled roughly
    correctly by that convention; bankruptcies are not, since the true
    terminal return is worse than the last print. A haircut parameter exists
@@ -1211,36 +1239,77 @@ right now, and what would unblock it.
    not eliminate it. *Unblocked by:* a Norgate, Sharadar or CRSP subscription
    carrying delisting returns.
 
-6. **Point-in-time index membership.** *Not available.* The universe is
+7. **Point-in-time index membership.** *Not available.* The universe is
    constructed from a point-in-time liquidity screen, which is survivorship-
    aware but is not the same thing as historical index membership. Index
    reconstitution days — which are precisely the days Lastlight's mechanical-
    flow thesis is strongest — cannot be identified. *Unblocked by:* the same
    vendor feeds.
 
-7. **Corporate-action adjustment is trusted, not verified.** Bars are
+8. **Corporate-action adjustment is trusted, not verified.** Bars are
    requested with `adjustment=all` and are believed correct; nothing in this
    study proves it. *Unblocked by:* spot checks of known splits against an
    independent source.
 
-8. **No live or paper execution.** Nothing in this programme has placed an
+9. **No live or paper execution.** Nothing in this programme has placed an
    order. Every figure here is a simulation.
 
 ---
 
 ## 10. Reproduction
 
+`uv run` does not work in this repository — dependency resolution fails on a
+transitive pin — so the interpreter is invoked directly. That is a
+pre-existing repository issue, not one this programme introduced, but a
+reproduction section that cannot be pasted is worse than none.
+
 ```bash
-export PYTHONPATH=src
-uv run python scripts/intraday_fetch_assets.py
-uv run python scripts/intraday_fetch_bars.py --timeframe 1Day --out daily --chunk 60 --workers 16
-uv run python scripts/intraday_fetch_earnings.py
-uv run python scripts/intraday_build_universe.py
-uv run python scripts/intraday_fetch_days.py --timeframe 15Min --start 2020-01-01 --out bars_rth --workers 5
-uv run python scripts/intraday_build_panel.py --glob 'data/intraday/bars_rth/*.parquet' --interval 15
-uv run python -m mentisrex.swing.features
-uv run python -m mentisrex.swing.cone
-uv run python scripts/swing_run_campaign.py --start 2020-01-01 --end 2026-08-24
-uv run python scripts/swing_write_reports.py --templates docs/*.template.md
-uv run pytest tests/swing/ -q
+cd /Users/idhantdoneria/mentisrex-capital
+export PYTHONPATH=.claude/worktrees/swing-trading-strategy-d9b2f0/src
+PY=.venv/bin/python
+WT=.claude/worktrees/swing-trading-strategy-d9b2f0
 ```
+
+**Data acquisition** (once; the daily and earnings pulls take ~10 and ~30
+minutes, the intraday pull several hours and is the step that was truncated):
+
+```bash
+$PY $WT/scripts/intraday_fetch_assets.py
+$PY $WT/scripts/intraday_fetch_bars.py --timeframe 1Day --out daily --chunk 60 --workers 16
+$PY $WT/scripts/intraday_fetch_earnings.py
+$PY $WT/scripts/intraday_build_universe.py
+$PY $WT/scripts/intraday_fetch_days.py --timeframe 15Min --start 2020-01-01 --end 2025-01-17 --out bars_rth --workers 5
+```
+
+**Everything downstream**, in one entry point — security classification,
+panel, features, volatility cone, campaign and both documents:
+
+```bash
+START=2020-01-01 END=2025-01-17 DESIGN_END=2023-03-31 AUM=50e6 \
+    bash $WT/scripts/swing_finalize.sh
+```
+
+**Individually**, if a stage needs re-running on its own:
+
+```bash
+$PY $WT/scripts/intraday_build_security_class.py
+$PY $WT/scripts/intraday_build_panel.py --glob 'data/intraday/bars_rth/*.parquet' \
+    --interval 15 --memory 6GB --out data/intraday/panel.parquet
+$PY -c "from mentisrex.swing.features import build; build(threads=6, memory='6GB')"
+$PY -c "from mentisrex.swing.cone import build; build(threads=6, memory='6GB')"
+$PY $WT/scripts/swing_run_campaign.py --start 2020-01-01 --end 2025-01-17 \
+    --design-end 2023-03-31 --aum 50e6
+$PY $WT/scripts/swing_write_reports.py --templates $WT/docs/*.template.md
+$PY $WT/scripts/swing_summary.py                      # console summary
+$PY -m pytest $WT/tests/swing/ -q                     # 99 tests
+```
+
+**A live target book**, which is the seam to an execution system:
+
+```bash
+$PY -m mentisrex.swing.cli targets --strategy nightfall --equity 50e6 \
+    --max-participation 0.0001 --out /tmp/book.csv
+```
+
+Expect the campaign to take about 50 minutes end to end on a 16GB machine,
+of which roughly 16 are spent indexing the intraday bars.

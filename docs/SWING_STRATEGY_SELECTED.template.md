@@ -785,7 +785,14 @@ running *this* strategy.
    requested adjusted and are believed correct; nothing here proves it.
    *Unblocked by:* spot checks of known splits against an independent source.
 
-8. **Nothing here has traded.** No order has been placed by this code. Every
+8. **The intraday sample stops at 2025-01-17.** *Truncated,* because network
+   throughput collapsed mid-pull and the fetch was stopped at the last
+   gap-free week rather than left to limp. Results cover 5.05 years rather
+   than the 6.6 available in daily bars, and the most recent nineteen months
+   are untested. *Unblocked by:* re-running `intraday_fetch_days.py`, which
+   resumes from the existing weekly shards.
+
+9. **Nothing here has traded.** No order has been placed by this code. Every
    figure in this document is a simulation, and the first four items above
    are all resolved by the same thing: running it small and measuring.
 
@@ -793,13 +800,36 @@ running *this* strategy.
 
 ## 15. Reproduction
 
+`uv run` does not work in this repository — dependency resolution fails on a
+transitive pin — so the interpreter is invoked directly.
+
 ```bash
-export PYTHONPATH=src
-uv run pytest tests/swing/ -q
-uv run python scripts/swing_run_campaign.py --start 2020-01-01 --end 2026-08-24 \
-    --design-end 2023-12-31 --aum 50e6
-uv run python scripts/swing_write_reports.py --templates docs/*.template.md
+cd /Users/idhantdoneria/mentisrex-capital
+WT=.claude/worktrees/swing-trading-strategy-d9b2f0
+PY=.venv/bin/python
+export PYTHONPATH=$WT/src
+
+# tests
+$PY -m pytest $WT/tests/swing/ -q                       # 99 passing
+
+# the full campaign that produced every figure in this document
+$PY $WT/scripts/swing_run_campaign.py --start 2020-01-01 --end 2025-01-17 \
+    --design-end 2023-03-31 --aum 50e6
+
+# re-render this document and the comparison from campaign.json
+$PY $WT/scripts/swing_write_reports.py --templates $WT/docs/*.template.md
+
+# console summary of the results
+$PY $WT/scripts/swing_summary.py
+
+# tonight's book, for the execution system
+$PY -m mentisrex.swing.cli targets --strategy nightfall --equity 50e6 \
+    --max-participation 0.0001 --out /tmp/nightfall_book.csv
 ```
 
-Full data-acquisition pipeline, universe construction and validation
-procedure: see §10 of the companion comparison document.
+Data acquisition, universe construction and the one-shot pipeline
+(`swing_finalize.sh`) are in §10 of the companion comparison document.
+
+**Note on the window.** Results cover 2020-03-30 to 2025-01-17. The intraday
+data collection was stopped short of the full daily history when network
+throughput collapsed; see limitation 1 in §14 of the comparison document.
