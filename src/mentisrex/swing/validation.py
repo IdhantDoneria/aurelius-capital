@@ -169,12 +169,19 @@ def cost_sensitivity(
     return pd.DataFrame(rows)
 
 
-def breakeven_cost_multiple(table: pd.DataFrame, metric: str = "cagr") -> float:
-    """Linear interpolation of where the strategy's edge reaches zero.
+def breakeven_cost_multiple(table: pd.DataFrame, metric: str = "sharpe") -> float:
+    """Cost multiple at which the strategy stops beating cash.
 
-    Reported alongside every headline number: a strategy that breaks even at
-    1.4x modelled costs has no margin for the model being wrong, which for a
-    modelled spread is the relevant question.
+    Defaults to the **Sharpe** column, not CAGR. Since the simulator credits
+    interest on unencumbered cash, a CAGR-based breakeven asks the wrong
+    question: it finds the point at which the book stops making money at all,
+    which for a capacity-constrained sleeve holding mostly Treasury bills is
+    far beyond the point at which it stopped being worth running. Sharpe
+    crosses zero exactly where excess return does.
+
+    Reported alongside every headline number: a strategy that only beats cash
+    below a third of modelled costs has no margin for the cost model being
+    wrong, which for a modelled spread is the relevant question.
     """
     t = table.sort_values("cost_multiple")
     x, y = t["cost_multiple"].to_numpy(), t[metric].to_numpy()

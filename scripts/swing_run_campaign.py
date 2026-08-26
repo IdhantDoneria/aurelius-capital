@@ -441,7 +441,7 @@ def main() -> int:
                 ds, builder(ds, args.aum), initial_equity=args.aum, cost=cost
             )
             rows.append({"cost_multiple": m, "cagr": perf.cagr, "sharpe": perf.sharpe,
-                         "max_dd": perf.max_drawdown})
+                         "excess": perf.sharpe * perf.vol, "max_dd": perf.max_drawdown})
         t = pd.DataFrame(rows)
         report.setdefault("cost_sweep", {})[name] = {
             "table": jsonable(t), "breakeven_multiple": breakeven_cost_multiple(t),

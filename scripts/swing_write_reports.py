@@ -120,9 +120,10 @@ def t_cost(c, key) -> str:
     s = c.get("cost_sweep", {}).get(key, {}).get("table", {})
     rows = []
     for _, r in sorted(s.items(), key=lambda kv: r_key(kv[1])):
-        rows.append([f"{r['cost_multiple']:.2f}x", pct(r["cagr"]), num(r["sharpe"]),
-                     pct(r["max_dd"])])
-    return md_table(["Cost multiple", "CAGR", "Sharpe", "Max DD"], rows, ":--|--:|--:|--:")
+        rows.append([f"{r['cost_multiple']:.2f}x", pct(r["cagr"]),
+                     pct(r.get("excess")), num(r["sharpe"]), pct(r["max_dd"])])
+    return md_table(["Cost multiple", "CAGR", "Excess of cash", "Sharpe", "Max DD"],
+                    rows, ":--|--:|--:|--:|--:")
 
 
 def r_key(r):

@@ -117,15 +117,29 @@ def test_cost_sensitivity_is_monotonically_worse():
 
 
 def test_breakeven_multiple_interpolates_the_crossing():
-    t = pd.DataFrame({"cost_multiple": [1.0, 2.0, 3.0, 4.0], "cagr": [0.10, 0.04, -0.02, -0.08]})
+    t = pd.DataFrame({"cost_multiple": [1.0, 2.0, 3.0, 4.0],
+                      "sharpe": [0.10, 0.04, -0.02, -0.08]})
     be = breakeven_cost_multiple(t)
     assert 2.0 < be < 3.0
     assert be == pytest.approx(2.0 + 1.0 * 0.04 / 0.06, rel=1e-6)
 
 
 def test_breakeven_multiple_when_never_profitable():
-    t = pd.DataFrame({"cost_multiple": [1.0, 2.0], "cagr": [-0.01, -0.05]})
+    t = pd.DataFrame({"cost_multiple": [1.0, 2.0], "sharpe": [-0.01, -0.05]})
     assert breakeven_cost_multiple(t) == 1.0
+
+
+def test_breakeven_defaults_to_beating_cash_not_merely_making_money():
+    """A CAGR-based breakeven asks the wrong question of a book that holds
+    Treasury bills: it finds where the book stops making money at all, far
+    beyond where it stopped being worth running."""
+    t = pd.DataFrame({
+        "cost_multiple": [0.0, 0.5, 1.0, 2.0],
+        "cagr": [0.030, 0.023, 0.016, 0.003],     # positive throughout
+        "sharpe": [0.33, -0.19, -0.70, -1.70],    # but below cash from 0.5x
+    })
+    assert breakeven_cost_multiple(t) < 0.5
+    assert breakeven_cost_multiple(t, metric="cagr") > 2.0
 
 
 def test_signal_decay_recovers_a_planted_one_day_signal():
