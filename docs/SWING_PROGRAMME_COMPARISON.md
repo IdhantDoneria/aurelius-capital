@@ -33,8 +33,8 @@ The result that decides the comparison is not in that table. It is this one:
 
 | Strategy | Gross CAGR | Edge per round trip (bps) | Cost per round trip (bps) | Edge / cost | Breakeven cost multiple |
 |:--|--:|--:|--:|--:|--:|
-| Nightfall | 1.33% | 1.65 | 1.69 | 0.98 | 2.24 |
-| Lastlight | 0.96% | 1.20 | 1.69 | 0.71 | 1.96 |
+| Nightfall | 1.33% | 1.65 | 1.69 | 0.98 | 0.32 |
+| Lastlight | 0.96% | 1.20 | 1.69 | 0.71 | 0.06 |
 | Dayburn | n/a | n/a | n/a | n/a | n/a |
 
 **A short-horizon strategy lives or dies on the ratio of its edge per round
@@ -44,7 +44,27 @@ be untradable, if the edge it carries per trade is smaller than what the
 round trip costs. Most of this document is about establishing which of the
 three are in that position and why.
 
-<!-- SUMMARY_FINDING -->
+**On this evidence, none of the three beats cash, and they fail for three
+different reasons — which is the useful part.**
+
+*Nightfall* has the tightest economics of the three and still comes up
+fractionally short: 1.65bps of edge per round trip against 1.69bps of cost, a
+ratio of 0.98. Its signal is real and its cancellation across segments
+reproduces exactly as the literature predicts. It loses to cash by 0.92% a
+year.
+
+*Lastlight* carries the strongest signal measured anywhere in this study — a
+rank information coefficient of +4.64% against the next overnight return,
+t = +9.6 — and the worst ratio of edge to cost of the two overnight books, at
+0.71. The signal is not in doubt. The ability to reach it through two auction
+crossings is.
+
+*Dayburn* is rejected outright, and not on cost. **The effect it trades has
+decayed to nothing and then inverted over the sample**: single-name intraday
+continuation runs +0.0137 (t = +5.5) in 2020, +0.0006 (t = +0.2) in 2022, and
+−0.0056 (t = −2.2) in 2024 on 69,349 observations. Priced at *zero* spread —
+a fully passive execution that does not exist — it still loses 3.07% a year.
+That is not a friction problem, it is the disappearance of the phenomenon.
 
 The full argument, the evidence for each claim, and the honest list of what
 this study could not establish are below.
@@ -611,8 +631,8 @@ you the parameter means something.
 
 | Strategy | Gross CAGR | Edge per round trip (bps) | Cost per round trip (bps) | Edge / cost | Breakeven cost multiple |
 |:--|--:|--:|--:|--:|--:|
-| Nightfall | 1.33% | 1.65 | 1.69 | 0.98 | 2.24 |
-| Lastlight | 0.96% | 1.20 | 1.69 | 0.71 | 1.96 |
+| Nightfall | 1.33% | 1.65 | 1.69 | 0.98 | 0.32 |
+| Lastlight | 0.96% | 1.20 | 1.69 | 0.71 | 0.06 |
 | Dayburn | n/a | n/a | n/a | n/a | n/a |
 
 This single table is the study. A strategy that fully refreshes its book
@@ -782,30 +802,30 @@ estimate have to be for the answer to change".
 
 **Nightfall**
 
-| Cost multiple | CAGR | Sharpe | Max DD |
-|:--|--:|--:|--:|
-| 0.00x | 3.03% | 0.33 | -2.10% |
-| 0.25x | 2.67% | 0.07 | -2.35% |
-| 0.50x | 2.32% | -0.19 | -2.61% |
-| 1.00x | 1.63% | -0.70 | -3.56% |
-| 2.00x | 0.30% | -1.70 | -5.93% |
-| 4.00x | -2.19% | -3.61 | -12.04% |
+| Cost multiple | CAGR | Excess of cash | Sharpe | Max DD |
+|:--|--:|--:|--:|--:|
+| 0.00x | 3.03% | n/a | 0.33 | -2.10% |
+| 0.25x | 2.67% | n/a | 0.07 | -2.35% |
+| 0.50x | 2.32% | n/a | -0.19 | -2.61% |
+| 1.00x | 1.63% | n/a | -0.70 | -3.56% |
+| 2.00x | 0.30% | n/a | -1.70 | -5.93% |
+| 4.00x | -2.19% | n/a | -3.61 | -12.04% |
 
 **Dayburn**
 
-| Cost multiple | CAGR | Sharpe | Max DD |
-|:--|--:|--:|--:|
+| Cost multiple | CAGR | Excess of cash | Sharpe | Max DD |
+|:--|--:|--:|--:|--:|
 
 **Lastlight**
 
-| Cost multiple | CAGR | Sharpe | Max DD |
-|:--|--:|--:|--:|
-| 0.00x | 2.65% | 0.04 | -3.25% |
-| 0.25x | 2.30% | -0.13 | -3.48% |
-| 0.50x | 1.95% | -0.29 | -3.70% |
-| 1.00x | 1.27% | -0.62 | -4.14% |
-| 2.00x | -0.05% | -1.25 | -5.46% |
-| 4.00x | -2.51% | -2.46 | -12.70% |
+| Cost multiple | CAGR | Excess of cash | Sharpe | Max DD |
+|:--|--:|--:|--:|--:|
+| 0.00x | 2.65% | n/a | 0.04 | -3.25% |
+| 0.25x | 2.30% | n/a | -0.13 | -3.48% |
+| 0.50x | 1.95% | n/a | -0.29 | -3.70% |
+| 1.00x | 1.27% | n/a | -0.62 | -4.14% |
+| 2.00x | -0.05% | n/a | -1.25 | -5.46% |
+| 4.00x | -2.51% | n/a | -2.46 | -12.70% |
 
 ### 6.2 Dayburn's parameter surface
 
@@ -866,25 +886,25 @@ quantiles would leak the future into the label.
 
 | VIX regime | Days | Return (ann.) | Vol | Sharpe | NW t |
 |:--|--:|--:|--:|--:|--:|
-| low vol | 614 | 2.90% | 1.10% | 2.64 | 4.03 |
-| mid vol | 220 | 2.93% | 1.42% | 2.06 | 2.28 |
-| high vol | 126 | 0.94% | 2.18% | 0.43 | 0.34 |
+| low vol | 614 | -0.66% | 1.09% | -0.61 | -0.97 |
+| mid vol | 220 | 0.01% | 1.42% | 0.01 | 0.01 |
+| high vol | 126 | -0.90% | 2.18% | -0.42 | -0.33 |
 
 **Dayburn**
 
 | VIX regime | Days | Return (ann.) | Vol | Sharpe | NW t |
 |:--|--:|--:|--:|--:|--:|
-| low vol | 614 | -4.90% | 1.72% | -2.84 | -4.93 |
-| mid vol | 220 | -3.19% | 1.58% | -2.02 | -2.24 |
-| high vol | 126 | -4.03% | 1.76% | -2.29 | -1.42 |
+| low vol | 614 | -8.47% | 1.73% | -4.89 | -8.23 |
+| mid vol | 220 | -6.11% | 1.58% | -3.85 | -4.17 |
+| high vol | 126 | -5.87% | 1.76% | -3.33 | -2.04 |
 
 **Lastlight**
 
 | VIX regime | Days | Return (ann.) | Vol | Sharpe | NW t |
 |:--|--:|--:|--:|--:|--:|
-| low vol | 614 | 0.81% | 1.60% | 0.50 | 0.79 |
-| mid vol | 220 | 3.42% | 2.27% | 1.51 | 1.47 |
-| high vol | 126 | 1.69% | 3.95% | 0.43 | 0.26 |
+| low vol | 614 | -2.76% | 1.60% | -1.73 | -2.77 |
+| mid vol | 220 | 0.50% | 2.27% | 0.22 | 0.21 |
+| high vol | 126 | -0.15% | 3.94% | -0.04 | -0.02 |
 
 ### 6.5 A note on what these robustness tests can and cannot rule out
 
@@ -914,11 +934,11 @@ A stationary (Politis-Romano) block bootstrap with geometric block lengths,
 short-horizon autocorrelation that an iid bootstrap destroys, which matters
 here because intraday strategies have strongly autocorrelated volatility.
 
-| Strategy | Realised Sharpe | 5th pct | Median | 95th pct | P(Sharpe<0) | Median max DD | 5th pct max DD |
+| Strategy | Realised excess Sharpe | 5th pct | Median | 95th pct | P(excess Sharpe<0) | Median max DD | 5th pct max DD |
 |:--|--:|--:|--:|--:|--:|--:|--:|
-| Nightfall | -0.70 | 0.43 | 1.23 | 2.05 | 0.6% | -1.76% | -3.18% |
-| Lastlight | -0.62 | -0.13 | 0.62 | 1.34 | 8.8% | -3.25% | -6.18% |
-| Dayburn | -4.23 | -3.41 | -2.62 | -1.83 | 100.0% | -18.21% | -22.89% |
+| Nightfall | -0.70 | -1.42 | -0.72 | -0.02 | 95.5% | -5.59% | -9.10% |
+| Lastlight | -0.62 | -1.37 | -0.63 | 0.11 | 91.8% | -8.19% | -13.68% |
+| Dayburn | -4.23 | -5.10 | -4.20 | -3.33 | 100.0% | -27.43% | -32.12% |
 
 The **deflated Sharpe ratio** in the headline table adjusts for the number of
 configurations examined, and the trial count is stated alongside it. That
@@ -1030,7 +1050,112 @@ Criteria 1 and 2 are close to necessary conditions. The rest are weighed.
 
 ### 8.2 The choice
 
-<!-- VERDICT -->
+**Ranked: Nightfall first, Lastlight second, Dayburn rejected. None is
+recommended for capital deployment. Nightfall is recommended for a
+cost-measurement programme**, for the reason given below.
+
+#### Dayburn is rejected
+
+It fails the first criterion, which is close to a necessary condition, and it
+fails it in the most conclusive way available: the effect is gone.
+
+| Year | Observations | Signed follow-through | t |
+|:--|--:|--:|--:|
+| 2020 | 49,095 | +0.0137 | +5.5 |
+| 2021 | 65,980 | +0.0076 | +3.0 |
+| 2022 | 67,700 | +0.0006 | +0.2 |
+| 2023 | 67,563 | +0.0042 | +1.7 |
+| 2024 | 69,349 | −0.0056 | −2.2 |
+
+A monotone decay to zero and then through it. The 2024 reading is on nearly
+seventy thousand observations and is significantly *negative* — single-name
+intraday moves in that year reverted rather than continued.
+
+The execution-style sweep closes off the escape route. Charged **no spread at
+all** — a fully passive fill that does not exist for a breakout strategy,
+since a passive order is precisely the one a breakout does not fill — it
+still returns −3.07% a year at a Sharpe of −3.61. Dayburn is not a good
+strategy priced badly; it is a strategy whose premise stopped being true
+partway through the sample.
+
+The obvious hypothesis is crowding. Opening-range-breakout strategies on
+"stocks in play" were the subject of widely-circulated practitioner research
+in 2023, and an effect that is easy to describe, easy to implement and
+requires no unusual data is exactly the kind that gets arbitraged. This study
+cannot prove that mechanism. It can show the effect is no longer there.
+
+#### Lastlight has the best signal and the worst implementation
+
+The displacement fade is the strongest result in this study by a clear
+margin: **IC +4.64% against the next overnight return, t = +9.6**, and unlike
+Nightfall it retains information close-to-close (+1.52%, t = +3.2) rather
+than cancelling. Its conditioning behaves as the mechanical-flow thesis
+requires — the walk-forward selected the 20%-closing-volume-share filter in
+two of three folds and the 15% filter in the third, never the permissive
+setting.
+
+And it converts the least of the three into net return: 1.20bps of edge per
+round trip against 1.69bps of cost, a ratio of **0.71**, and a breakeven cost
+multiple of **0.06x**. Costs would have to be roughly one-sixteenth of the
+modelled level for it to beat cash. No plausible error in the cost model is
+that large.
+
+The gap between a t = +9.6 signal and an unfundable strategy is the single
+most important lesson in this document, and it is worth stating plainly:
+**signal quality and strategy quality are different things, and the second
+is mostly about the size of the move relative to the cost of reaching it.**
+A displacement of a fraction of a session's volatility, faded across two
+auctions, is a real and highly significant effect that is simply too small to
+collect.
+
+#### Nightfall is the one to carry forward
+
+Not because it makes money — it loses 0.92% a year to cash — but because it
+is the only one of the three whose failure is *within the error bars of the
+one input this study could not measure*.
+
+| | |
+|:--|--:|
+| Edge per round trip | 1.65bps |
+| Cost per round trip | 1.69bps |
+| Ratio | **0.98** |
+| Cost multiple at which it stops beating cash | **0.32x** |
+
+It is short by two hundredths. And the term it is short by — auction impact
+for orders well under a tenth of a percent of daily volume — is modelled by
+extrapolating the square-root law below the range it was fitted on, which is
+the weakest assumption in the entire study. If real closing-auction impact
+for orders this size is a third of what the model charges, Nightfall clears.
+If it is not, Nightfall does not. **Nothing in a backtest can settle that;
+two months of live fills can.**
+
+That is the recommendation: not capital, but a measurement. The companion
+document specifies the strategy in full and the deployment plan in §11 is
+built around exactly this — an eight-week stage whose objective is cost
+discovery and where return is explicitly not a criterion, because eight weeks
+of a 1.3%-volatility book carries no information about return and a great
+deal about cost.
+
+#### What the combination shows
+
+The three are close to independent — pairwise correlations of 0.124, 0.033
+and −0.076, and betas to the market of 0.001 to 0.009. That independence is
+real and would be valuable if any of the components were positive. Combined
+at equal risk they return −0.40% with a Sharpe of −3.12: three uncorrelated
+ways of losing to cash combine into a more reliable way of losing to cash.
+Diversification multiplies an edge; it does not create one.
+
+#### The honest summary
+
+Two of the three strategies rest on effects that are real, large and
+significant on this firm's own data, and neither can be converted into a book
+that beats a Treasury bill at any size tested. The third rests on an effect
+that was real in 2020 and is not real now.
+
+If this programme is to produce a fundable strategy, the binding constraint
+is not signal research. It is execution cost — the actual, measured cost of
+reaching a closing auction with a small order — and the next piece of work
+that changes the answer is measuring it, not looking for a better signal.
 
 ---
 

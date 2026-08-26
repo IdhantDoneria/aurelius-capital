@@ -482,13 +482,138 @@ the breakeven cost multiple is stated.
 
 ## 9. Expected performance and its decomposition
 
-<!-- PERFORMANCE -->
+### 9.1 The headline, stated against the right benchmark
+
+| | Value |
+|:--|--:|
+| Window | 2020-03-30 to 2025-01-17 (1,209 sessions) |
+| Net CAGR | 1.63% |
+| **Excess of cash** | **−0.92%** |
+| Volatility | 1.31% |
+| **Sharpe** | **−0.70** |
+| Max drawdown | −3.56% |
+| Time under water | 78.7% |
+| Longest drawdown | 627 sessions |
+| Beta to SPY | 0.001 |
+| Alpha t-statistic | −1.6 |
+| Newey-West t on excess | −1.67 |
+| Skew / excess kurtosis | +0.22 / 12.9 |
+| Turnover | 161x a year |
+| Average gross | 0.32x |
+
+**The strategy earns 1.63% and loses to cash.** Over this window the average
+Treasury bill yielded more than that, and the simulator credits interest on
+the roughly two-thirds of equity the participation cap leaves undeployed —
+so the CAGR is mostly the bill. The number that matters is −0.92%.
+
+### 9.2 Alpha and beta
+
+Beta to the market is **0.001** and the R-squared against SPY is effectively
+zero. This is a genuinely market-neutral book, by construction rather than by
+accident: the overlay neutralises an intercept, a 60-session trailing market
+beta, and size, momentum and volatility loadings before sizing.
+
+Annualised alpha is **−0.94%** with a t-statistic of −1.6. There is no
+positive alpha to report. What there is, is a *gross* return of 1.33% a year
+on a book with 1.31% volatility — a gross information ratio near one — that
+does not survive its own turnover.
+
+### 9.3 Where the return goes
+
+| Component | Per day, on equity | Annualised |
+|:--|--:|--:|
+| Gross signal P&L | +0.53bps | +1.33% on equity, +4.14% on deployed gross |
+| Trading cost | −0.54bps | — |
+| Financing, net of interest on idle cash | +0.66bps credit | — |
+| **Edge per round trip** | **1.65bps** | |
+| **Cost per round trip** | **1.69bps** | |
+| **Ratio** | **0.98** | |
+
+The first two rows are the strategy in miniature: half a basis point of
+signal a day against half a basis point of trading cost. The third row — the
+credit on the two-thirds of equity the participation cap leaves in cash — is
+larger than either, which is why the CAGR is positive and the excess return
+is not.
+
+Read the last three rows. Two auction crossings cost 1.69 basis points, and
+the overnight segment they buy access to is worth 1.65. Everything else in
+this document is commentary on that.
+
+### 9.4 Year by year
+
+| Year | Return | Excess Sharpe |
+|:--|--:|--:|
+| 2020 (from March) | −1.83% | −2.23 |
+| 2021 | −1.04% | −0.90 |
+| 2022 | +0.97% | −0.61 |
+| 2023 | +4.30% | −0.85 |
+| 2024 | +5.29% | **+0.14** |
+
+The improving *return* column is mostly the rising bill rate. The Sharpe
+column is the strategy, and it beat cash in one year of five.
+
+### 9.5 Sampling uncertainty
+
+A stationary block bootstrap of the **excess** series, 4,000 paths, mean
+block ten sessions:
+
+| | Excess Sharpe |
+|:--|--:|
+| Realised | −0.70 |
+| Bootstrap 5th percentile | −1.42 |
+| Bootstrap median | −0.72 |
+| Bootstrap 95th percentile | −0.02 |
+| **P(excess Sharpe < 0)** | **95.5%** |
+
+The 95th percentile does not reach zero. On its own sampling distribution,
+this strategy is below cash in nineteen of twenty resamples.
+
+The deflated Sharpe, adjusted for 34 configurations examined, is **0.0001**
+against a deflation benchmark of 1.08 — which is the arithmetic saying what
+the table above already says.
+
+### 9.6 Regimes and out-of-sample
+
+| VIX regime | Sessions | Excess (ann.) | Sharpe | NW t |
+|:--|--:|--:|--:|--:|
+| low | 614 | −0.66% | −0.61 | −0.97 |
+| mid | 220 | +0.01% | +0.01 | +0.01 |
+| high | 126 | −0.90% | −0.42 | −0.33 |
+
+No regime rescues it. The Nagel prediction — that liquidity-provision returns
+rise with volatility — is **not** visible here; the high-VIX bucket is no
+better than the low. That is a genuine disagreement between this data and the
+hypothesis, and it is reported rather than buried.
+
+Walk-forward, three folds, parameters re-chosen each year: **excess −1.31% a
+year, Sharpe −1.00**, with fold Sharpes of −1.52, −2.35 and +0.48. The
+participation cap was selected identically in all three folds.
 
 ---
 
 ## 10. Capacity
 
-<!-- CAPACITY -->
+| Equity | Net CAGR | Excess of cash | Sharpe |
+|:--|--:|--:|--:|
+| $5m | −1.85% | −4.34% | −1.07 |
+| $10m | +0.27% | −2.24% | −0.73 |
+| $25m | +1.16% | −1.38% | −0.72 |
+| **$50m** | **+1.63%** | **−0.92%** | **−0.70** |
+| $100m | +1.50% | −1.06% | −1.25 |
+| $250m | +1.71% | −0.86% | −1.93 |
+
+**Capacity in excess of cash: none at any size tested.**
+
+The shape is worth understanding, because it is not the usual one. Excess
+return *improves* from $5m to $50m and then deteriorates. At small size the
+participation cap does not bind, the book runs at full gross, and it pays
+full impact on every name. At $50m the cap binds hard, the book deploys about
+a third of equity, and cost per unit of turnover falls faster than edge. Past
+$100m the cap binds so hard that what is left is a rounding error on a large
+cash balance, and the Sharpe deteriorates because the strategy is a smaller
+and smaller share of a portfolio measured against the bill.
+
+There is therefore a genuine optimum near $50m, and it is a loss.
 
 ---
 
@@ -551,7 +676,58 @@ thesis rests on, and it is measurable live from the first week.
 
 ## 13. What would falsify this
 
-<!-- FALSIFY -->
+The strategy is already, on this evidence, below cash. So the useful question
+is inverted: **what would have to be true for it to work, and how would we
+know?**
+
+### 13.1 The one thing that would vindicate it
+
+**Realised closing- and opening-auction cost, for orders under 0.01% of a
+name's daily volume, coming in at roughly a third of the modelled level.**
+
+That is the whole of it. The break-even is 0.32x modelled costs. The modelled
+figure rests on extrapolating the square-root impact law below the
+participation range it was fitted on — the weakest assumption in the study,
+and one that a fortnight of live fills measures directly.
+
+This is falsifiable in the strong sense: Stage 1 of the deployment plan
+produces at least 400 fills in eight weeks, and the realised cost per round
+trip is then a measurement, not a model. If it lands above 0.5x modelled, the
+strategy is dead and should be stopped.
+
+### 13.2 What would kill it outright
+
+**The segment decomposition stops holding.** The whole design rests on
+overnight and intraday carrying opposite-signed information. If the measured
+IC of divergence against the next overnight return loses significance on a
+trailing year — the §12 monitor is a t-statistic below 2 — the premise is
+gone and no amount of cost improvement helps.
+
+**Opening auctions widen further.** The exit leg is already priced at twice
+the entry leg. A market-structure change that made the open more expensive
+would deepen the shortfall with no change in signal, and this strategy has no
+margin to absorb it.
+
+**Closing-auction share keeps rising.** More index flow at the close is more
+of the mechanical flow this strategy's cousin trades — but for *this*
+strategy it means more competition for the same print and worse fills. The
+NYSE series in §8.1 is worth watching for exactly that reason.
+
+### 13.3 What would not change the answer
+
+**A better signal.** The gross information ratio is already near one. Raising
+it by a quarter moves edge per round trip from 1.65bps to about 2.06bps
+against a 1.69bps cost — which would clear, but the same quarter-improvement
+is worth far less than establishing whether the 1.69 is really 0.55.
+
+**More leverage.** Gross P&L and traded notional both scale with gross, so
+net return is `G x (alpha_rate − cost_rate)`. The bracket is negative.
+Leverage makes the loss larger.
+
+**A longer backtest.** Five years is roughly five independent annual
+observations of a 1.31%-volatility book. Ten more years of history would not
+resolve a difference this small, and would not answer the cost question at
+all.
 
 ---
 
