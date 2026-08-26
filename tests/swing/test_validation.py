@@ -139,7 +139,10 @@ def test_breakeven_defaults_to_beating_cash_not_merely_making_money():
         "sharpe": [0.33, -0.19, -0.70, -1.70],    # but below cash from 0.5x
     })
     assert breakeven_cost_multiple(t) < 0.5
-    assert breakeven_cost_multiple(t, metric="cagr") > 2.0
+    # On CAGR the metric never crosses zero inside the tested range, so the
+    # function returns the highest multiple tested -- "at least this much",
+    # which is exactly the misleadingly comfortable answer.
+    assert breakeven_cost_multiple(t, metric="cagr") >= 2.0
 
 
 def test_signal_decay_recovers_a_planted_one_day_signal():
