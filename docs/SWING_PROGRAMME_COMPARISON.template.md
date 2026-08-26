@@ -36,7 +36,27 @@ be untradable, if the edge it carries per trade is smaller than what the
 round trip costs. Most of this document is about establishing which of the
 three are in that position and why.
 
-<!-- SUMMARY_FINDING -->
+**On this evidence, none of the three beats cash, and they fail for three
+different reasons — which is the useful part.**
+
+*Nightfall* has the tightest economics of the three and still comes up
+fractionally short: 1.65bps of edge per round trip against 1.69bps of cost, a
+ratio of 0.98. Its signal is real and its cancellation across segments
+reproduces exactly as the literature predicts. It loses to cash by 0.92% a
+year.
+
+*Lastlight* carries the strongest signal measured anywhere in this study — a
+rank information coefficient of +4.64% against the next overnight return,
+t = +9.6 — and the worst ratio of edge to cost of the two overnight books, at
+0.71. The signal is not in doubt. The ability to reach it through two auction
+crossings is.
+
+*Dayburn* is rejected outright, and not on cost. **The effect it trades has
+decayed to nothing and then inverted over the sample**: single-name intraday
+continuation runs +0.0137 (t = +5.5) in 2020, +0.0006 (t = +0.2) in 2022, and
+−0.0056 (t = −2.2) in 2024 on 69,349 observations. Priced at *zero* spread —
+a fully passive execution that does not exist — it still loses 3.07% a year.
+That is not a friction problem, it is the disappearance of the phenomenon.
 
 The full argument, the evidence for each claim, and the honest list of what
 this study could not establish are below.
@@ -816,7 +836,112 @@ Criteria 1 and 2 are close to necessary conditions. The rest are weighed.
 
 ### 8.2 The choice
 
-<!-- VERDICT -->
+**Ranked: Nightfall first, Lastlight second, Dayburn rejected. None is
+recommended for capital deployment. Nightfall is recommended for a
+cost-measurement programme**, for the reason given below.
+
+#### Dayburn is rejected
+
+It fails the first criterion, which is close to a necessary condition, and it
+fails it in the most conclusive way available: the effect is gone.
+
+| Year | Observations | Signed follow-through | t |
+|:--|--:|--:|--:|
+| 2020 | 49,095 | +0.0137 | +5.5 |
+| 2021 | 65,980 | +0.0076 | +3.0 |
+| 2022 | 67,700 | +0.0006 | +0.2 |
+| 2023 | 67,563 | +0.0042 | +1.7 |
+| 2024 | 69,349 | −0.0056 | −2.2 |
+
+A monotone decay to zero and then through it. The 2024 reading is on nearly
+seventy thousand observations and is significantly *negative* — single-name
+intraday moves in that year reverted rather than continued.
+
+The execution-style sweep closes off the escape route. Charged **no spread at
+all** — a fully passive fill that does not exist for a breakout strategy,
+since a passive order is precisely the one a breakout does not fill — it
+still returns −3.07% a year at a Sharpe of −3.61. Dayburn is not a good
+strategy priced badly; it is a strategy whose premise stopped being true
+partway through the sample.
+
+The obvious hypothesis is crowding. Opening-range-breakout strategies on
+"stocks in play" were the subject of widely-circulated practitioner research
+in 2023, and an effect that is easy to describe, easy to implement and
+requires no unusual data is exactly the kind that gets arbitraged. This study
+cannot prove that mechanism. It can show the effect is no longer there.
+
+#### Lastlight has the best signal and the worst implementation
+
+The displacement fade is the strongest result in this study by a clear
+margin: **IC +4.64% against the next overnight return, t = +9.6**, and unlike
+Nightfall it retains information close-to-close (+1.52%, t = +3.2) rather
+than cancelling. Its conditioning behaves as the mechanical-flow thesis
+requires — the walk-forward selected the 20%-closing-volume-share filter in
+two of three folds and the 15% filter in the third, never the permissive
+setting.
+
+And it converts the least of the three into net return: 1.20bps of edge per
+round trip against 1.69bps of cost, a ratio of **0.71**, and a breakeven cost
+multiple of **0.06x**. Costs would have to be roughly one-sixteenth of the
+modelled level for it to beat cash. No plausible error in the cost model is
+that large.
+
+The gap between a t = +9.6 signal and an unfundable strategy is the single
+most important lesson in this document, and it is worth stating plainly:
+**signal quality and strategy quality are different things, and the second
+is mostly about the size of the move relative to the cost of reaching it.**
+A displacement of a fraction of a session's volatility, faded across two
+auctions, is a real and highly significant effect that is simply too small to
+collect.
+
+#### Nightfall is the one to carry forward
+
+Not because it makes money — it loses 0.92% a year to cash — but because it
+is the only one of the three whose failure is *within the error bars of the
+one input this study could not measure*.
+
+| | |
+|:--|--:|
+| Edge per round trip | 1.65bps |
+| Cost per round trip | 1.69bps |
+| Ratio | **0.98** |
+| Cost multiple at which it stops beating cash | **0.32x** |
+
+It is short by two hundredths. And the term it is short by — auction impact
+for orders well under a tenth of a percent of daily volume — is modelled by
+extrapolating the square-root law below the range it was fitted on, which is
+the weakest assumption in the entire study. If real closing-auction impact
+for orders this size is a third of what the model charges, Nightfall clears.
+If it is not, Nightfall does not. **Nothing in a backtest can settle that;
+two months of live fills can.**
+
+That is the recommendation: not capital, but a measurement. The companion
+document specifies the strategy in full and the deployment plan in §11 is
+built around exactly this — an eight-week stage whose objective is cost
+discovery and where return is explicitly not a criterion, because eight weeks
+of a 1.3%-volatility book carries no information about return and a great
+deal about cost.
+
+#### What the combination shows
+
+The three are close to independent — pairwise correlations of 0.124, 0.033
+and −0.076, and betas to the market of 0.001 to 0.009. That independence is
+real and would be valuable if any of the components were positive. Combined
+at equal risk they return −0.40% with a Sharpe of −3.12: three uncorrelated
+ways of losing to cash combine into a more reliable way of losing to cash.
+Diversification multiplies an edge; it does not create one.
+
+#### The honest summary
+
+Two of the three strategies rest on effects that are real, large and
+significant on this firm's own data, and neither can be converted into a book
+that beats a Treasury bill at any size tested. The third rests on an effect
+that was real in 2020 and is not real now.
+
+If this programme is to produce a fundable strategy, the binding constraint
+is not signal research. It is execution cost — the actual, measured cost of
+reaching a closing auction with a small order — and the next piece of work
+that changes the answer is measuring it, not looking for a better signal.
 
 ---
 

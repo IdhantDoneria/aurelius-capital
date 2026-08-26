@@ -15,13 +15,92 @@
 
 ## 1. Recommendation
 
-<!-- RECOMMENDATION -->
+**Strategy: Nightfall** — a dollar- and beta-neutral US equity book that
+holds a cross-sectional position across the overnight gap and is flat during
+every session, selected from three candidates on the evidence in the
+companion comparison document.
+
+**Recommendation: fund a cost-measurement programme, not a return-seeking
+book.**
+
+That distinction is the whole of this document's advice and it is not
+hedging. On five years of this firm's own data the strategy earns 1.65 basis
+points of edge per round trip against 1.69 basis points of modelled cost — a
+ratio of 0.98 — and loses to cash by 0.92% a year. It is short by two
+hundredths of the number it needs.
+
+The term it is short by is the weakest measurement in the study. Auction
+impact for orders below a tenth of a percent of a name's daily volume is
+modelled by extrapolating the square-root law beneath the range it was fitted
+on. If true closing-auction impact at that size is about a third of what the
+model charges, this strategy clears; if it is not, it does not. The
+break-even is at **0.32x modelled costs**, and no backtest can resolve which
+side of that line reality sits on. Eight weeks of live fills can.
+
+| | |
+|:--|--:|
+| Window tested | 2020-03-30 to 2025-01-17, 1,209 sessions |
+| Universe | 219 US operating companies, point-in-time, ~200 tradable per session |
+| Net CAGR at $50m | 1.63% |
+| **Excess of cash** | **−0.92%** |
+| Volatility | 1.31% |
+| Sharpe | −0.70 |
+| Max drawdown | −3.56% |
+| Beta to SPY | 0.001 |
+| Turnover | 161x a year |
+| Edge / cost per round trip | 1.65bps / 1.69bps = **0.98** |
+| Cost multiple at which it stops beating cash | **0.32x** |
+
+**Do not deploy this at target size on the strength of these numbers.** They
+do not support it. What they support is spending a small, bounded amount to
+measure the one input that decides the question.
 
 ---
 
 ## 2. Economic thesis
 
-<!-- THESIS -->
+A US trading session is two auctions with two different populations, and the
+boundary between them is where this strategy lives.
+
+The **overnight segment** — previous close to next open — prices news and
+attention. It is where earnings land, where retail order flow accumulates,
+and it clears in an opening auction with the widest spreads of the day. The
+**intraday segment** — open to close — is where institutional participation
+algorithms work, spreading a single decision across hours against a VWAP
+benchmark.
+
+Lou, Polk and Skouras (2019, *Journal of Financial Economics* 134:192–213)
+document that firm-level returns **continue within each segment and reverse
+across them**, and that the profits of a long list of standard strategies
+accrue entirely in one segment or the other, usually with opposite signs.
+Their interpretation is a tug of war between clienteles that trade at
+different times of day.
+
+Measured on this firm's own data over 2020–2025, on 219 US operating
+companies, the pattern reproduces:
+
+| Ten-day divergence (intraday minus overnight) predicts | Rank IC | t |
+|:--|--:|--:|
+| the next **overnight** return | −2.18% | −4.1 |
+| the next **intraday** return | +0.73% | +1.6 |
+| the next **close-to-close** return | **−0.07%** | **−0.2** |
+
+Read the third line. A name whose recent gains were earned intraday while its
+overnight tape lagged gives most of that back overnight and keeps drifting up
+during the session, and **the two legs cancel almost exactly**. The effect is
+large and significant in the segments and invisible in their sum.
+
+The practical consequence dictates the entire design: **a close-to-close
+strategy on this signal earns nothing, however good the signal is.** Any
+backtest that marks positions from one close to the next would report this
+signal as worthless. It is not worthless — it is segment-specific, and
+capturing it means holding one segment and not the other. That is why this
+book enters in the closing auction, exits in the next opening auction, and is
+flat during every session.
+
+It is also the source of the strategy's central difficulty. Isolating a
+segment means trading twice a day, and the segment it isolates is worth about
+the same as the two auction crossings it takes to reach.
 
 ---
 
@@ -43,19 +122,121 @@ well as its active one, so names that were liquid in 2021 and delisted in
 2023 are in the 2021 universe: 184 of the 2,144 names that ever entered the
 ranked universe stopped trading before the end of the sample.
 
-<!-- UNIVERSE_EXTRA -->
+**Index products are excluded.** Every claim above is about a single company
+— clientele segmentation across *its* overnight and intraday sessions. An ETF
+satisfies none of it, and an ETF tracking the index the book is neutralised
+against is a hedge wearing a stock's clothing. Left in, they also distort
+selection: a screen ranked by dollar volume promotes large ETFs ahead of
+every operating company.
+
+Detection is positive — match the fund, not the company. Keeping only names
+the broker describes as "Common Stock" fails, because that suffix is applied
+inconsistently: Apple has it, Boeing and Bank of America do not. Of the 295
+names in the intraday panel, 76 are index products and are dropped, leaving
+**219 operating companies** and a median of about 200 tradable on any
+session.
+
+That cross-section is thinner than is ideal for a market-neutral book. It is
+a direct consequence of the intraday data limits in §14 and not a design
+choice.
 
 ---
 
 ## 4. Signal specification
 
-<!-- SIGNAL -->
+### 4.1 The two segment returns
+
+For name *i* on session *t*, from split- and dividend-adjusted prices:
+
+```
+overnight_i,t  =  ln( open_i,t  /  close_i,t-1 )
+intraday_i,t   =  ln( close_i,t /  open_i,t   )
+```
+
+These are the two primitives. Everything else is built from them.
+
+### 4.2 Accumulation and scaling
+
+Accumulate each over a lookback of `L` sessions (L = 5 selected on the design
+window; 5, 10 and 21 were tested), and scale each by its own trailing
+volatility:
+
+```
+ON_i,t  =  ( sum over L of overnight_i )  /  ( sigma_overnight,i  *  sqrt(L) )
+ID_i,t  =  ( sum over L of intraday_i  )  /  ( sigma_intraday,i   *  sqrt(L) )
+```
+
+where the sigmas are 60-session standard deviations of the respective
+segment returns, computed strictly before *t*.
+
+**Scaling each component by its own volatility before differencing is not
+cosmetic.** Overnight and intraday returns have materially different
+variances, and a raw difference of the two is dominated by whichever is
+noisier — an overnight signal wearing a spread's clothing.
+
+### 4.3 The score
+
+```
+divergence_i,t  =  rank_normal( ID_i,t )  -  rank_normal( ON_i,t )
+persistence_i,t =  z( fraction of the last 10 sessions with intraday_i > 0 )
+
+score_i,t       =  divergence_i,t  +  0.25 * persistence_i,t
+```
+
+`rank_normal` maps the cross-section to approximately standard-normal scores
+by rank. It is used in preference to a raw z-score because both accumulations
+have fat tails, and a single outlier would otherwise take over the book.
+
+The persistence term rewards a steady drift over one large day: a name whose
+intraday leg was positive on eight of the last ten sessions is a different
+proposition from one that had a single large session and nine flat ones.
+
+### 4.4 Direction
+
+**The book is short high divergence and long low divergence, held overnight.**
+That sign is read directly off the measured cross-period reversal in §2
+(IC −2.18%, t = −4.1), stated in advance, and never fitted.
+
+### 4.5 Eligibility gates
+
+A name is suppressed on session *t* if any of the following holds:
+
+| Gate | Threshold | Why |
+|:--|:--|:--|
+| Scheduled earnings | within 3 sessions | An earnings gap fills the overnight leg with information rather than clientele flow, which is the opposite of what the signal is trying to read |
+| Overnight gap | \|gap\| > 3 trailing standard deviations | The same contamination from unscheduled news |
+| Price | < $5.00 | Fees are per share; the tick floor alone can exceed the edge |
+| Illiquidity | top 20% by Amihud measure | The book cannot reach these names at the participation cap |
+| Security type | any index product | §3 |
+
+The earnings gate needs a **forward-looking** calendar. In backtest the last
+three sessions of the sample are conservatively suppressed because that
+lookahead is unavailable at the end of a historical file; in live use the
+forward calendar exists and this does not arise. The signal-generation CLI
+refuses to emit a book in that window rather than returning an empty one that
+looks like a flat signal.
 
 ---
 
 ## 5. Portfolio construction
 
-<!-- CONSTRUCTION -->
+The score from §4 becomes a book through the shared overlay below. Three
+settings are specific to this strategy and were chosen on the design window
+(2020-03-30 to 2023-03-31), never on the period after it:
+
+| Parameter | Value | Note |
+|:--|--:|:--|
+| Lookback `L` | 5 sessions | 5, 10 and 21 tested |
+| Per-name participation cap | **0.01% of the name's trailing daily dollar volume** | The binding constraint; see §6 |
+| Per-name weight cap | 1.5% of equity | Rarely binds once the participation cap is applied |
+| Volatility target | 10% annualised | Nominal, not binding — see §6.0 |
+| Gross cap | 3.0x | |
+| Holding | 1 session, no staging | The signal refreshes daily, so staging would hold stale positions |
+
+The walk-forward chose the 0.01% participation cap in **all three folds**,
+and the lookback varied only between 5 and 10. Parameter stability of that
+kind is the useful diagnostic — a walk-forward that lands on a different
+corner of the grid each year is reporting noise.
 
 ### 5.1 The shared overlay, in order
 
@@ -99,7 +280,39 @@ substitute, not an equivalent, and is listed among the limitations.
 
 ## 6. Leverage policy
 
-<!-- LEVERAGE -->
+### 6.1 What binds, and why it matters more than the target
+
+The 10% volatility target on this book is **decorative, and the document says
+so rather than quoting it as if it were achieved.**
+
+A dollar-neutral, beta-neutral, style-neutral book of roughly 200 US
+large-caps that carries only the overnight leg has an unlevered volatility of
+about **1.65% a year**. Reaching a 10% target would require roughly **six
+times gross exposure**. Reg-T permits about two times overnight. The target
+is unreachable by a factor of three before the participation cap is even
+considered.
+
+What actually sets size is the **participation cap**, and it is the single
+most consequential parameter in the strategy. Its effect is not the obvious
+one:
+
+| Per-name cap | Gross CAGR | Excess of cash | Avg gross | Turnover |
+|:--|--:|--:|--:|--:|
+| uncapped | higher | materially negative | ~1.0x | ~500x |
+| 0.10% of ADV | higher | materially negative | ~1.0x | ~500x |
+| **0.01% of ADV** | lower | **least negative** | ~0.5x | 161x |
+
+Capping *reduces* gross alpha and *improves* net return, because market
+impact is **concave in order size**. Halving a position divides its impact by
+roughly the square root of two while leaving the edge per unit of notional
+untouched, so the ratio improves as the book shrinks. This is the opposite of
+the intuition that a good signal should be traded harder, and it is why
+Nightfall is viable-adjacent at 0.01% of ADV and clearly loss-making
+uncapped.
+
+The price is scale. At the cap the book deploys about half its equity, so its
+contribution to a fund is `cash rate + alpha` rather than a return on
+fully-invested capital.
 
 ### 6.0 What sets size here
 
@@ -198,7 +411,42 @@ sample by several hundred basis points a year.
 
 ## 8. Execution
 
-<!-- EXECUTION -->
+### 8.0 The daily cycle
+
+| Time (ET) | Action |
+|:--|:--|
+| 15:40 | Signal computed from data through 15:45; targets emitted by `python -m mentisrex.swing.cli targets --strategy nightfall --equity <E>` |
+| 15:45–15:50 | Book reconciled against current positions; deltas sized; MOC orders staged |
+| 15:50 | **MOC cut-off.** Orders must be in. Anything missed is not chased in the continuous market |
+| 16:00 | Fills at the closing print |
+| overnight | Position held. This is the entire return-generating window |
+| 09:28 | MOO orders submitted to flatten the **whole** book |
+| 09:30 | Fills at the opening print. Flat until 15:50 |
+
+Two rules that are part of the strategy, not of the operations:
+
+**Nothing is chased.** A missed MOC leaves that name unheld overnight. The
+alternative — crossing the spread in the continuous market at 15:55 — costs
+several times what the auction does and turns a missed position into a
+guaranteed loss.
+
+**The book is flattened completely at the open, every day.** There is no
+carry-over. The signal refreshes daily and the intraday segment has the
+opposite expected sign, so holding through a session is not a smaller version
+of the strategy — it is the cancellation described in §2.
+
+### 8.1 Why both legs are auctions
+
+The closing auction is the cheapest liquidity in the US market — NYSE
+reported it matching $55.5bn a day in Q2 2024, 9.44% of consolidated notional
+— and an auction fill crosses no spread. On this firm's own intraday data,
+**18.1% of regular-hours volume prints in the final thirty minutes.**
+
+The opening auction is not cheap. It is a far smaller event with none of the
+close's index contra flow and the widest spreads of the day, and the cost
+model charges it **twice** the closing cross's impact coefficient
+deliberately. That asymmetry is a real risk to this strategy and is called
+out in §13: its exit leg is already the expensive one.
 
 ### 8.1 Timing discipline
 

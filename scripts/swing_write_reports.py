@@ -162,10 +162,10 @@ def t_bootstrap(c) -> str:
         b = h["bootstrap"]
         rows.append([label, num(h["performance"]["sharpe"]), num(b["sharpe_p05"]),
                      num(b["sharpe_median"]), num(b["sharpe_p95"]),
-                     pct(b["prob_sharpe_below_zero"], 1), pct(b["maxdd_median"]),
+                     pct(b.get("prob_excess_sharpe_below_zero", b.get("prob_sharpe_below_zero")), 1), pct(b["maxdd_median"]),
                      pct(b["maxdd_p05"])])
-    return md_table(["Strategy", "Realised Sharpe", "5th pct", "Median", "95th pct",
-                     "P(Sharpe<0)", "Median max DD", "5th pct max DD"], rows,
+    return md_table(["Strategy", "Realised excess Sharpe", "5th pct", "Median", "95th pct",
+                     "P(excess Sharpe<0)", "Median max DD", "5th pct max DD"], rows,
                     ":--|--:|--:|--:|--:|--:|--:|--:")
 
 

@@ -132,8 +132,14 @@ def deep_dive(name, ret, ds, n_trials, extra=None, res=None):
         net=None if res is None else res.get("net"),
         turnover=None if res is None else res.get("turnover"),
     )
-    boot = stationary_bootstrap(ret, n_paths=4000, mean_block=10)
-    dsr, sr0 = deflated_sharpe(perf.sharpe, ret, n_trials=n_trials)
+    # Bootstrap, regime split and Sharpe deflation all run on the **excess**
+    # series. Resampling raw returns reports the distribution of a book that
+    # is mostly Treasury bills: on this data it produced a median bootstrap
+    # Sharpe of +1.23 and a 0.6% chance of being below zero, next to a
+    # headline Sharpe of -0.70. Same returns, opposite conclusion.
+    ex = excess(ret, ds)
+    boot = stationary_bootstrap(ex, n_paths=4000, mean_block=10)
+    dsr, sr0 = deflated_sharpe(perf.sharpe, ex, n_trials=n_trials)
     vix = pd.Series(ds.vix, index=ds.dates)
     return {
         "name": name,
@@ -146,14 +152,15 @@ def deep_dive(name, ret, ds, n_trials, extra=None, res=None):
             "sharpe_p05": float(boot["sharpe"].quantile(0.05)),
             "sharpe_median": float(boot["sharpe"].median()),
             "sharpe_p95": float(boot["sharpe"].quantile(0.95)),
-            "prob_sharpe_below_zero": float((boot["sharpe"] < 0).mean()),
+            "prob_excess_sharpe_below_zero": float((boot["sharpe"] < 0).mean()),
             "maxdd_median": float(boot["max_drawdown"].median()),
             "maxdd_p05": float(boot["max_drawdown"].quantile(0.05)),
         },
         "annual": jsonable(subperiods(ret, benchmark=ds.benchmark, rf=ds.rf)),
         "vix_regime": jsonable(
-            regime_split(ret, vix, n_buckets=3, labels=("low_vol", "mid_vol", "high_vol"))
+            regime_split(ex, vix, n_buckets=3, labels=("low_vol", "mid_vol", "high_vol"))
         ),
+        "bootstrap_basis": "excess of cash",
         **(extra or {}),
     }
 
