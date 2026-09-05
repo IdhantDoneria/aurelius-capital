@@ -62,10 +62,24 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "N", "UP", "B", "C4", "PT", "RUF"]
-ignore = ["B008", "E501"]  # FastAPI Depends() in function defaults + Line too long
+ignore = [
+    "B008",   # FastAPI Depends() in function defaults
+    "E501",   # Line too long
+    # Math notation, not sloppy naming: this is a quant-research codebase where
+    # formula docstrings use Greek letters / proper minus signs (RUF001-003:
+    # "ambiguous unicode character") and code mirrors paper notation with
+    # single-letter names like H (horizon), N (count), T (periods) (N803/805/
+    # 806/812/814: non-lowercase / non-snake_case naming). Both categories were
+    # spot-checked before disabling -- e.g. svi.py's "w(k) = a + b*(rho*(k - m)
+    # + sqrt(...))" and test_hac_and_purged_cv.py's `H` matching the actual
+    # `label_horizon` parameter it's passed as -- and are intentional
+    # throughout src/ and tests/, not isolated mistakes.
+    "RUF001", "RUF002", "RUF003",
+    "N803", "N805", "N806", "N812", "N814",
+]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["E501", "RUF043", "RUF003", "PT011"]
+"tests/**/*.py" = ["E501", "RUF043", "PT011"]
 
 [tool.mypy]
 python_version = "3.12"
