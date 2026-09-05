@@ -137,9 +137,9 @@ class DuckDBDataFeed(DataFeed):
         # For file-based mode, _parquet_conn stays None and we open per call.
         conn, parquet_mode = _resolve_connection(db_path)
         if parquet_mode:
-            self._parquet_conn = conn   # keep alive
+            self._parquet_conn = conn  # keep alive
         else:
-            conn.close()                # file-based: open fresh per call
+            conn.close()  # file-based: open fresh per call
             self._parquet_conn = None
 
     def __del__(self) -> None:
@@ -154,6 +154,7 @@ class DuckDBDataFeed(DataFeed):
         if self._parquet_conn is not None:
             return self._parquet_conn, False
         import duckdb
+
         # read_only=True allows concurrent signal functions to open the same file
         return duckdb.connect(self._db_path, read_only=True), True
 
