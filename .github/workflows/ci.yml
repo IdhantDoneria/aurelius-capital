@@ -57,8 +57,16 @@ jobs:
       # Run the whole suite except integration (which needs live DB/Redis and
       # runs in its own job). `tests/unit/ -m unit` selected nothing — no test
       # carries the `unit` marker — so coverage was 0. This runs the real suite.
+      #
+      # This -m flag REPLACES (not merges with) pyproject.toml's addopts -m
+      # filter -- pytest's -m is a single-value option, so passing our own
+      # here silently drops the real_alpaca/real_data exclusion. Spelling it
+      # out explicitly rather than relying on that composition. (A second,
+      # -m-flag-independent guard also lives in tests/conftest.py, so this
+      # line is belt-and-suspenders, not the only thing standing between CI
+      # and a live network call.)
       - name: Run unit tests
-        run: pytest tests/ -m "not integration" --cov=src/mentisrex --cov-report=xml -v
+        run: pytest tests/ -m "not integration and not real_alpaca and not real_data" --cov=src/mentisrex --cov-report=xml -v
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4

@@ -19,7 +19,6 @@ dependencies = [
     "structlog>=24.4.0",
     "python-json-logger>=3.2.0",
     "yfinance>=0.2.40",
-    "jugaad-data>=2.9.0",
     "websockets>=13.0",
     "duckdb>=1.1.0",
     "pandas>=2.2.0",
@@ -34,6 +33,15 @@ mrx = "mentisrex.programme.cli:main"
 [project.optional-dependencies]
 ml = [
     "sentence-transformers>=3.0.0",
+]
+# Only used by scripts/fetch_nse_bhavcopy.py, which already handles it being
+# absent (prints an install hint and exits rather than crashing). Kept out of
+# core `dependencies` because jugaad-data has never released a 2.x version --
+# the prior ">=2.9.0" pin was unsatisfiable on PyPI (real ceiling: 0.35.x) and
+# broke `pip install ".[dev]"` for everyone, including CI, from the first
+# resolve.
+india = [
+    "jugaad-data",
 ]
 dev = [
     "pytest>=8.3.0",
