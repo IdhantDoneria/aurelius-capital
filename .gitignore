@@ -33,13 +33,19 @@ htmlcov/
 .DS_Store
 
 # Local research data (DuckDB files; not committed)
-data/
+# Anchored to repo root (leading /) -- an unanchored `data/` here previously
+# matched ANY directory named "data" anywhere in the tree, silently excluding
+# src/mentisrex/backtesting/data/__init__.py from every commit ever made. That
+# package installed as a broken namespace package on any fresh checkout
+# (ImportError on InMemoryDataFeed) -- undetected until CI ran tests for the
+# first time. See git history for the recovery commit.
+/data/
 
 .claude/worktrees/
-logs/
+/logs/
 
 # Raw data cache (EDGAR JSON, NSE bhavcopy CSVs — too large for git)
-raw/
+/raw/
 
 # Runtime state written by CLI runs (mentisrex.programme, etc.) — local, not source
-state/
+/state/
