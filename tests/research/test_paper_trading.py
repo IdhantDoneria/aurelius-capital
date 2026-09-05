@@ -9,6 +9,7 @@ fills — which is the correct behaviour, so the loop tests assert clean state).
 from __future__ import annotations
 
 from datetime import date, timedelta
+from typing import ClassVar
 
 import pytest
 
@@ -399,8 +400,8 @@ def test_registry_attach(tmp_path):
 
     class _Exp:
         experiment_id = "e1"
-        metrics: dict = {}
-        artifacts: list = []
+        metrics: ClassVar[dict] = {}
+        artifacts: ClassVar[list] = []
         notes = ""
 
     class _Reg:

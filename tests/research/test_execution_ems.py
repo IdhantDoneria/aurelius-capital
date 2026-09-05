@@ -9,6 +9,8 @@ diagnostics/fingerprint, registry attachment, failure handling, determinism, edg
 
 from __future__ import annotations
 
+from dataclasses import FrozenInstanceError
+
 import pytest
 
 from mentisrex.research.execution import ems as E
@@ -271,7 +273,7 @@ def test_audit_seq_monotonic_global():
 def test_audit_events_are_frozen():
     oms = _oms_with(E.market_order("o", "AAA", 10))
     ev = oms.history("o")[0]
-    with pytest.raises(Exception):
+    with pytest.raises(FrozenInstanceError):
         ev.kind = "hacked"
 
 

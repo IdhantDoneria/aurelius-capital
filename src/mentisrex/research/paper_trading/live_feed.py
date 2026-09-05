@@ -236,8 +236,8 @@ class LiveFeedBuilder:
         """
         try:
             import yfinance as yf
-        except ImportError:
-            raise RuntimeError("yfinance not installed — pip install yfinance")
+        except ImportError as err:
+            raise RuntimeError("yfinance not installed — pip install yfinance") from err
 
         window = self._config.fetch_window_days
         start = (as_of - timedelta(days=window)).isoformat()

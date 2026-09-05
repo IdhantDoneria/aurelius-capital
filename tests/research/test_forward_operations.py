@@ -619,8 +619,8 @@ class TestCheckpointRecovery:
         runner2 = ForwardOperationsRunner(
             spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL, campaign_id="corrupt-ckpt"
         )
+        runner2._get_campaign()._loop = None
         with pytest.raises(RuntimeError, match="corrupted"):
-            runner2._get_campaign()._loop = None
             runner2._get_campaign()._get_loop()
 
 

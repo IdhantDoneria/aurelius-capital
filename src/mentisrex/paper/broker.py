@@ -27,6 +27,13 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from enum import StrEnum
 
+from mentisrex.backtesting.events.types import FillEvent, OrderType, Side
+from mentisrex.backtesting.portfolio.state import PortfolioState
+from mentisrex.core.logging import get_logger
+from mentisrex.risk import OrderContext, RiskDecision, RiskEngine
+
+logger = get_logger(__name__)
+
 
 class BrokerMode(StrEnum):
     """Supported broker execution modes (M28).
@@ -37,14 +44,6 @@ class BrokerMode(StrEnum):
     MOCK = "MOCK"  # perfect immediate fills (local simulation)
     SIMULATED = "SIMULATED"  # realistic fills with slippage (local simulation)
     ALPACA_PAPER = "ALPACA_PAPER"  # real Alpaca paper account (M28)
-
-
-from mentisrex.backtesting.events.types import FillEvent, OrderType, Side
-from mentisrex.backtesting.portfolio.state import PortfolioState
-from mentisrex.core.logging import get_logger
-from mentisrex.risk import OrderContext, RiskDecision, RiskEngine
-
-logger = get_logger(__name__)
 
 
 @dataclass(frozen=True)

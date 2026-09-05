@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import ClassVar
 
 from mentisrex.research.paper_trading.models import (
     DeploymentReadinessReport,
@@ -124,5 +125,5 @@ def validate_session(session, *, validator=None, experiment=None) -> PaperTradin
 class _StubExp:
     experiment_id = "paper-session"
     name = "paper-session"
-    metrics: dict = {}
-    parameters: dict = {}
+    metrics: ClassVar[dict] = {}
+    parameters: ClassVar[dict] = {}

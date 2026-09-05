@@ -8,6 +8,7 @@ registry / M9 integration.
 from __future__ import annotations
 
 from datetime import date, timedelta
+from typing import ClassVar
 
 import numpy as np
 import pytest
@@ -493,10 +494,10 @@ class _Exp:
     fingerprint = "f"
     git_commit = "c"
     random_seed = 1
-    dataset_versions = {"feature_registry_version": "fr1"}
-    features = ["market_cap"]
-    artifacts: list = []
-    metrics: dict = {}
+    dataset_versions: ClassVar[dict] = {"feature_registry_version": "fr1"}
+    features: ClassVar[list] = ["market_cap"]
+    artifacts: ClassVar[list] = []
+    metrics: ClassVar[dict] = {}
 
 
 def _stub_exp():

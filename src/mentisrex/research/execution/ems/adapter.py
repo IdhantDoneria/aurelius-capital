@@ -12,6 +12,8 @@ one adapter vocabulary.
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from mentisrex.research.execution.ems.broker import ExecutionBroker
 
 
@@ -21,7 +23,7 @@ class BrokerAdapter(ExecutionBroker):
     router can constrain algo/order-type choices per venue."""
 
     venue = "generic"
-    capabilities = {"native_algos": (), "order_types": ("market", "limit")}
+    capabilities: ClassVar[dict] = {"native_algos": (), "order_types": ("market", "limit")}
 
     def __init__(self, *, credentials=None, endpoint: str | None = None) -> None:
         self._credentials = credentials
@@ -54,7 +56,7 @@ class BrokerAdapter(ExecutionBroker):
 
 class InteractiveBrokersAdapter(BrokerAdapter):
     venue = "interactive_brokers"
-    capabilities = {
+    capabilities: ClassVar[dict] = {
         "native_algos": ("twap", "vwap", "pov"),
         "order_types": ("market", "limit", "stop"),
     }
@@ -62,14 +64,17 @@ class InteractiveBrokersAdapter(BrokerAdapter):
 
 class AlpacaAdapter(BrokerAdapter):
     venue = "alpaca"
-    capabilities = {"native_algos": (), "order_types": ("market", "limit", "stop")}
+    capabilities: ClassVar[dict] = {"native_algos": (), "order_types": ("market", "limit", "stop")}
 
 
 class ZerodhaAdapter(BrokerAdapter):
     venue = "zerodha"
-    capabilities = {"native_algos": (), "order_types": ("market", "limit")}
+    capabilities: ClassVar[dict] = {"native_algos": (), "order_types": ("market", "limit")}
 
 
 class FIXAdapter(BrokerAdapter):
     venue = "fix"
-    capabilities = {"native_algos": ("twap", "vwap"), "order_types": ("market", "limit", "stop")}
+    capabilities: ClassVar[dict] = {
+        "native_algos": ("twap", "vwap"),
+        "order_types": ("market", "limit", "stop"),
+    }

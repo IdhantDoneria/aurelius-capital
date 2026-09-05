@@ -62,8 +62,8 @@ class YahooFinanceSourceAdapter(SourceAdapter):
         """Fetch from Yahoo Finance via yfinance. Requires yfinance installed and network access."""
         try:
             import yfinance as yf  # noqa: F401 — imported but result unused here
-        except ImportError:
-            raise NotImplementedError("yfinance not installed — pip install yfinance")
+        except ImportError as err:
+            raise NotImplementedError("yfinance not installed — pip install yfinance") from err
         if self._state.value == "disconnected":
             self.connect()
         tickers = list(security_ids or self._subscriptions)

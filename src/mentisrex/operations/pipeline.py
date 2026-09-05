@@ -19,7 +19,7 @@ from mentisrex.operations.extractor import compute_hash, extract_metadata, extra
 from mentisrex.operations.healer import SelfHealer
 from mentisrex.operations.journal import PipelineJournal
 from mentisrex.operations.models import (
-    IngestTimeout,
+    IngestTimeoutError,
     JobStatus,
     PermanentIngestError,
     PipelineJob,
@@ -88,7 +88,7 @@ class PipelineOrchestrator:
                 )
                 self._reject(job, f"Permanent failure at '{stage_name}': {exc}")
                 break
-            except IngestTimeout as exc:
+            except IngestTimeoutError as exc:
                 logger.error(
                     "ingest_timeout",
                     job_id=job.id,
@@ -279,7 +279,7 @@ class PipelineOrchestrator:
     def _run_stage(self, job: PipelineJob, name: str, fn, deadline: float) -> bool:
         while True:
             if time.monotonic() > deadline:
-                raise IngestTimeout(
+                raise IngestTimeoutError(
                     f"exceeded {self._cfg.per_file_timeout_seconds:.0f}s before stage '{name}'"
                 )
             try:
@@ -288,7 +288,7 @@ class PipelineOrchestrator:
                 job.stages.append(result)
                 self._journal.record_stage(job.id, name, "success")
                 return True
-            except (PermanentIngestError, IngestTimeout) as exc:
+            except (PermanentIngestError, IngestTimeoutError) as exc:
                 # Permanent failure — record diagnostics and reject immediately, no retry.
                 job.stages.append(StageResult(stage=name, status="failed", message=str(exc)))
                 self._journal.record_stage(job.id, name, "failed", str(exc))
@@ -304,7 +304,7 @@ class PipelineOrchestrator:
                 if self._healer.should_retry(job, name, exc):
                     remaining = deadline - time.monotonic()
                     if remaining <= 0:
-                        raise IngestTimeout(f"exceeded during retry of '{name}'") from exc
+                        raise IngestTimeoutError(f"exceeded during retry of '{name}'") from exc
                     job.retry_count += 1
                     self._healer.wait_before_retry(job, max_wait=remaining)
                     continue

@@ -14,14 +14,6 @@ from pathlib import Path
 
 import duckdb
 
-
-def _parse_dt(v: object) -> datetime:
-    """DuckDB TIMESTAMPTZ returns datetime objects; strings come from tests/manual inserts."""
-    if isinstance(v, datetime):
-        return v
-    return datetime.fromisoformat(str(v))
-
-
 from mentisrex.catalog.models import (
     DatasetRecord,
     DataVersion,
@@ -32,6 +24,14 @@ from mentisrex.catalog.models import (
 from mentisrex.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+def _parse_dt(v: object) -> datetime:
+    """DuckDB TIMESTAMPTZ returns datetime objects; strings come from tests/manual inserts."""
+    if isinstance(v, datetime):
+        return v
+    return datetime.fromisoformat(str(v))
+
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS datasets (

@@ -15,6 +15,7 @@ translation.
 from __future__ import annotations
 
 from datetime import date
+from typing import ClassVar
 
 from mentisrex.research.market_data.models import (
     CanonicalObservation,
@@ -29,7 +30,7 @@ class VendorAdapter(MarketDataSource):
     only differ by `FIELD_MAP`/`source`; the live `fetch` is left unimplemented on purpose."""
 
     source = "vendor"
-    FIELD_MAP: dict = {}  # vendor field name -> (canonical field, ObservationType)
+    FIELD_MAP: ClassVar[dict] = {}  # vendor field name -> (canonical field, ObservationType)
 
     def to_canonical(self, raw: dict, *, as_of: date) -> CanonicalObservation:
         """Translate one vendor record into a canonical observation (no network — pure mapping)."""
@@ -67,7 +68,7 @@ class VendorAdapter(MarketDataSource):
 
 class BloombergAdapter(VendorAdapter):
     source = "bloomberg"
-    FIELD_MAP = {
+    FIELD_MAP: ClassVar[dict] = {
         "PX_LAST": ("close", ObservationType.CLOSE),
         "PX_BID": ("bid", ObservationType.QUOTE),
         "PX_ASK": ("ask", ObservationType.QUOTE),
@@ -80,7 +81,7 @@ class BloombergAdapter(VendorAdapter):
 
 class RefinitivAdapter(VendorAdapter):
     source = "refinitiv"
-    FIELD_MAP = {
+    FIELD_MAP: ClassVar[dict] = {
         "TRDPRC_1": ("close", ObservationType.CLOSE),
         "BID": ("bid", ObservationType.QUOTE),
         "ASK": ("ask", ObservationType.QUOTE),
@@ -91,7 +92,7 @@ class RefinitivAdapter(VendorAdapter):
 
 class ExchangeFeedAdapter(VendorAdapter):
     source = "exchange"
-    FIELD_MAP = {
+    FIELD_MAP: ClassVar[dict] = {
         "last": ("close", ObservationType.TRADE),
         "bid": ("bid", ObservationType.QUOTE),
         "ask": ("ask", ObservationType.QUOTE),
@@ -102,7 +103,7 @@ class ExchangeFeedAdapter(VendorAdapter):
 
 class BrokerFeedAdapter(VendorAdapter):
     source = "broker"
-    FIELD_MAP = {
+    FIELD_MAP: ClassVar[dict] = {
         "mark": ("close", ObservationType.CLOSE),
         "bid": ("bid", ObservationType.QUOTE),
         "ask": ("ask", ObservationType.QUOTE),

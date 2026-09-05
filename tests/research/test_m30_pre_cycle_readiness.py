@@ -308,7 +308,7 @@ class TestDataQualityMissingSymbols(unittest.TestCase):
     def test_missing_symbol_reduces_coverage(self):
         snap = _fake_snapshot(missing=["TSLA"])
         report = check_snapshot_quality(snap, UNIVERSE, DRY_RUN_DATE)
-        self.assertAlmostEqual(report.coverage_fraction, 0.9)
+        assert abs(report.coverage_fraction - 0.9) < 1e-7
 
     def test_below_threshold_marks_unhealthy(self):
         snap = _fake_snapshot(missing=["TSLA", "NVDA", "META"])

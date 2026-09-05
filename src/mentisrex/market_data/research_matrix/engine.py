@@ -21,6 +21,7 @@ from __future__ import annotations
 import hashlib
 import statistics
 from datetime import UTC, date, datetime
+from typing import ClassVar
 
 import pandas as pd
 
@@ -179,7 +180,7 @@ class ResearchMatrixEngine:
             "debt_to_equity": div(debt, equity),
         }
 
-    _EMPTY_INSIDER = {
+    _EMPTY_INSIDER: ClassVar[dict] = {
         "buy_value": 0.0,
         "sell_value": 0.0,
         "net_value": 0.0,

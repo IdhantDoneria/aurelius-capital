@@ -55,8 +55,9 @@ Covers:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import FrozenInstanceError, dataclass, field
 from datetime import date
+from typing import ClassVar
 
 import pytest
 
@@ -256,7 +257,7 @@ def test_spec_construction():
 
 def test_spec_is_frozen():
     spec = _base_spec()
-    with pytest.raises(Exception):  # frozen dataclass → FrozenInstanceError
+    with pytest.raises(FrozenInstanceError):
         spec.strategy_id = "mutated"  # type: ignore[misc]
 
 
@@ -980,7 +981,7 @@ def test_snapshot_missing_as_of_raises():
 
     class NoDateSnapshot:
         as_of = None
-        spots = {"AAPL": 190.0}
+        spots: ClassVar[dict] = {"AAPL": 190.0}
 
         def fingerprint(self):
             return "x"

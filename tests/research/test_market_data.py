@@ -491,7 +491,7 @@ def test_normalize_duplicate_logged():
     ]
     r = md.Normalizer().normalize(raw, as_of=REF)
     assert r.observations[0].value == 1.0
-    assert any("duplicate" in l for l in r.transform_log)
+    assert any("duplicate" in msg for msg in r.transform_log)
 
 
 # ══════════════════════════════════════════════════════════════════════════════

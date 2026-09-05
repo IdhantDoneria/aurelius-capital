@@ -27,7 +27,7 @@ class PermanentIngestError(Exception):
     """
 
 
-class IngestTimeout(Exception):
+class IngestTimeoutError(Exception):
     """Per-file wall-clock timeout exceeded during ingestion."""
 
 

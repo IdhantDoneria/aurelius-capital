@@ -64,7 +64,7 @@ class MarketDataQualityEngine:
         for obs in observations:
             found: list[QualityDiagnostic] = []
 
-            def add(code, sev, msg):
+            def add(code, sev, msg, found=found, obs=obs):
                 found.append(QualityDiagnostic(code, sev, msg, obs.security_id, obs.field))
 
             # PIT — look-ahead is always fatal for valuation

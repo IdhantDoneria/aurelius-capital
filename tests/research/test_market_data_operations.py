@@ -10,6 +10,7 @@ adversarial fault cases.
 
 from __future__ import annotations
 
+from dataclasses import FrozenInstanceError
 from datetime import date, datetime, timedelta
 
 import pytest
@@ -1367,8 +1368,8 @@ def test_invariant_replay_equals_full_reconstruction_multi_date():
 
 def test_invariant_sealed_snapshot_immutable():
     s = ops.seal(_rec())
-    with pytest.raises(Exception):
-        s.snapshot_id = "x"  # frozen dataclass → cannot mutate
+    with pytest.raises(FrozenInstanceError):
+        s.snapshot_id = "x"
 
 
 def test_invariant_zero_observations_empty_snapshot():

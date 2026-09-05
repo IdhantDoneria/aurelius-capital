@@ -889,8 +889,8 @@ class TestCheckpointBehavior:
             campaign_id="corrupt-test",
         )
         (tmp_dir / "campaign_checkpoint.json").write_text("NOT JSON {{{")
+        campaign._loop = None  # force re-load
         with pytest.raises(RuntimeError, match="corrupted"):
-            campaign._loop = None  # force re-load
             campaign._get_loop()
 
 

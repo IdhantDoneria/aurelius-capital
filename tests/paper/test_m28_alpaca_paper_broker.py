@@ -715,7 +715,7 @@ class TestNavReconciliation:
                 },
             )
             if "v2/account" in path and "orders" not in path and "positions" not in path
-            else (_mock_response(200, []) if "positions" in path else _mock_response(200, []))
+            else _mock_response(200, [])
         )
         return AlpacaPaperBroker(api_key="K", api_secret="S", _http=http)
 

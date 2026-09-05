@@ -8,6 +8,7 @@ validation failures, hooks, and a real backtest through the platform.
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from typing import ClassVar
 
 import pytest
 
@@ -213,8 +214,8 @@ def test_registry_integration(runner, tmp_path):
 def test_matrix_integration(tmp_path):
     class FakeMatrix:
         universe_size = 3
-        directions = {"market_cap": "higher", "roe": "higher"}
-        metadata = {"data_versions": {"feature_registry": "fr1"}}
+        directions: ClassVar[dict] = {"market_cap": "higher", "roe": "higher"}
+        metadata: ClassVar[dict] = {"data_versions": {"feature_registry": "fr1"}}
 
     class FakeMatrixEngine:
         def __init__(self):

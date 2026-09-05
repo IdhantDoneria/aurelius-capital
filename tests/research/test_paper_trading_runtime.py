@@ -27,7 +27,7 @@ Coverage:
 from __future__ import annotations
 
 import tempfile
-from dataclasses import dataclass, field
+from dataclasses import FrozenInstanceError, dataclass, field
 from datetime import date, datetime
 from pathlib import Path
 
@@ -431,7 +431,7 @@ class TestCycleRecord:
 
     def test_immutable(self):
         r = self._make()
-        with pytest.raises(Exception):
+        with pytest.raises(FrozenInstanceError):
             r.cycle_id = "x"  # type: ignore
 
     def test_to_dict_from_dict_round_trip(self):

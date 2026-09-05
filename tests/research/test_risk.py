@@ -8,6 +8,7 @@ estimators, monitoring, validation, registry, serialization, and edge cases.
 from __future__ import annotations
 
 from datetime import date, timedelta
+from typing import ClassVar
 
 import numpy as np
 import pytest
@@ -573,8 +574,8 @@ def test_registry_attach(tmp_path):
 
     class _Exp:
         experiment_id = "e1"
-        metrics: dict = {}
-        artifacts: list = []
+        metrics: ClassVar[dict] = {}
+        artifacts: ClassVar[list] = []
         notes = ""
 
     class _Reg:

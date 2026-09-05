@@ -20,13 +20,13 @@ from mentisrex.research.valuation.diagnostics import (  # noqa: F401
 )
 
 
-def bad_ohlc(o: float, h: float, l: float, c: float) -> str | None:
+def bad_ohlc(o: float, h: float, lo: float, c: float) -> str | None:
     """Open/high/low/close must satisfy low <= {open,close} <= high and high >= low."""
-    if h < l:
-        return f"high {h} < low {l}"
+    if h < lo:
+        return f"high {h} < low {lo}"
     for name, v in (("open", o), ("close", c)):
-        if v < l - 1e-12 or v > h + 1e-12:
-            return f"{name} {v} outside [low {l}, high {h}]"
+        if v < lo - 1e-12 or v > h + 1e-12:
+            return f"{name} {v} outside [low {lo}, high {h}]"
     return None
 
 

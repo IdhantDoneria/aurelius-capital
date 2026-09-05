@@ -35,6 +35,10 @@ from mentisrex.research.paper_trading.checkpoint import (
 )
 from mentisrex.research.paper_trading.loop import LoopConfig, PaperTradingLoop
 from mentisrex.research.strategy_deployment.models import (
+    FeatureSet,
+    SignalRecord,
+    SignalSet,
+    StrategySpecification,
     StrategyState,
     StrategyType,
     make_manifest,
@@ -86,13 +90,6 @@ SNAPSHOTS = [_snap(d, 1.005**i) for i, d in enumerate(DATES)]
 
 
 # ── strategy logic (local test double; same pattern as EqualWeightMomentumLogic) ─
-
-from mentisrex.research.strategy_deployment.models import (
-    FeatureSet,
-    SignalRecord,
-    SignalSet,
-    StrategySpecification,
-)
 
 
 class _EWLogic(StrategyLogic):
@@ -356,7 +353,6 @@ class TestCheckpointRestartIntegrity:
         loop = _make_loop(spec)
         for snap in SNAPSHOTS[:4]:
             loop.process_snapshot(snap)
-        loop.strategy_records(spec.strategy_id)[-1].nav
 
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             path = f.name

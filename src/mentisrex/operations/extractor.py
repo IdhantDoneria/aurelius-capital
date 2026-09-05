@@ -122,7 +122,7 @@ def extract_text(path: Path) -> str:
 
 def extract_metadata(path: Path, raw_text: str) -> dict[str, Any]:
     """Parse raw text into structured paper metadata."""
-    lines = [l.strip() for l in raw_text.split("\n") if l.strip()]
+    lines = [ln.strip() for ln in raw_text.split("\n") if ln.strip()]
     meta: dict[str, Any] = {
         "title": _extract_title(path, lines),
         "authors": _extract_authors(lines),

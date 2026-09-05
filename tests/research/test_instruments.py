@@ -493,7 +493,7 @@ def test_swap_cash_flows_via_provider():
 
 def test_swap_leg_pay_receive():
     s = ins.interest_rate_swap("IRS", notional=1_000_000, fixed_rate=0.03, pay_fixed=True)
-    fixed = next(l for l in s.metadata["legs"] if l["kind"] == "fixed")
+    fixed = next(leg for leg in s.metadata["legs"] if leg["kind"] == "fixed")
     assert fixed["pay"] is True
 
 
