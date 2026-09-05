@@ -23,8 +23,15 @@ class PostTradeAccounting:
         self.state = PortfolioState(initial_capital)
 
     # ── trade booking (pure M11) ────────────────────────────────────────────────
-    def book(self, security_id: str, quantity: float, price: float, cost: float,
-             *, when: date | None = None) -> float:
+    def book(
+        self,
+        security_id: str,
+        quantity: float,
+        price: float,
+        cost: float,
+        *,
+        when: date | None = None,
+    ) -> float:
         """Book a fill. Returns realized P&L on this fill (M11)."""
         return self.state.apply_fill(security_id, quantity, price, cost, when=when)
 
@@ -57,8 +64,13 @@ class PostTradeAccounting:
         if h is None or ratio <= 0:
             return
         self.state.holdings[security_id] = Holding(
-            security_id=security_id, shares=h.shares * ratio, cost_basis=h.cost_basis / ratio,
-            price=h.price / ratio, realized_pnl=h.realized_pnl, opened_at=h.opened_at)
+            security_id=security_id,
+            shares=h.shares * ratio,
+            cost_basis=h.cost_basis / ratio,
+            price=h.price / ratio,
+            realized_pnl=h.realized_pnl,
+            opened_at=h.opened_at,
+        )
 
     def add_shares(self, security_id: str, extra_shares: float) -> None:
         """Stock dividend: extra shares at zero incremental cost (cost basis diluted)."""
@@ -68,16 +80,26 @@ class PostTradeAccounting:
         new_shares = h.shares + extra_shares
         new_cb = (h.cost_basis * h.shares) / new_shares if new_shares else 0.0
         self.state.holdings[security_id] = Holding(
-            security_id=security_id, shares=new_shares, cost_basis=new_cb,
-            price=h.price, realized_pnl=h.realized_pnl, opened_at=h.opened_at)
+            security_id=security_id,
+            shares=new_shares,
+            cost_basis=new_cb,
+            price=h.price,
+            realized_pnl=h.realized_pnl,
+            opened_at=h.opened_at,
+        )
 
     def rename(self, old_id: str, new_id: str) -> None:
         h = self.state.holdings.pop(old_id, None)
         if h is None:
             return
         self.state.holdings[new_id] = Holding(
-            security_id=new_id, shares=h.shares, cost_basis=h.cost_basis, price=h.price,
-            realized_pnl=h.realized_pnl, opened_at=h.opened_at)
+            security_id=new_id,
+            shares=h.shares,
+            cost_basis=h.cost_basis,
+            price=h.price,
+            realized_pnl=h.realized_pnl,
+            opened_at=h.opened_at,
+        )
 
     def close_position(self, security_id: str, price: float, *, when: date | None = None) -> float:
         """Liquidate a position at `price` (delisting/merger cash-out) via an M11 fill,

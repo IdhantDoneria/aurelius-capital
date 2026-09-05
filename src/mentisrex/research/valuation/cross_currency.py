@@ -30,27 +30,45 @@ class CrossCurrencyLeg:
 
 def _leg_pv(leg: CrossCurrencyLeg, disc_curve) -> float:
     """PV of a fixed leg in its own currency, including principal exchange if set."""
-    spec = _swaps.SwapSpec(leg.notional, leg.rate, leg.pay_dates, leg.start,
-                           day_count=leg.day_count, currency=leg.currency)
+    spec = _swaps.SwapSpec(
+        leg.notional,
+        leg.rate,
+        leg.pay_dates,
+        leg.start,
+        day_count=leg.day_count,
+        currency=leg.currency,
+    )
     pv = _swaps.fixed_leg_pv(spec, disc_curve)
     if leg.exchange_principal and leg.pay_dates:
         t_mat = year_fraction(disc_curve.ref_date, leg.pay_dates[-1], disc_curve.day_count)
-        pv += leg.notional * disc_curve.discount(t_mat)     # principal redemption at maturity
-        pv -= leg.notional * disc_curve.discount(0.0)       # principal paid at start (t≈0)
+        pv += leg.notional * disc_curve.discount(t_mat)  # principal redemption at maturity
+        pv -= leg.notional * disc_curve.discount(0.0)  # principal paid at start (t≈0)
     return pv
 
 
-def value(recv_leg: CrossCurrencyLeg, pay_leg: CrossCurrencyLeg, recv_curve, pay_curve,
-          fx_provider, base_currency: str, *, as_of: date | None = None) -> dict:
+def value(
+    recv_leg: CrossCurrencyLeg,
+    pay_leg: CrossCurrencyLeg,
+    recv_curve,
+    pay_curve,
+    fx_provider,
+    base_currency: str,
+    *,
+    as_of: date | None = None,
+) -> dict:
     """Base-currency NPV of the XCCY swap plus per-currency PVs and FX exposure."""
-    pv_recv = _leg_pv(recv_leg, recv_curve)                 # in recv currency
-    pv_pay = _leg_pv(pay_leg, pay_curve)                    # in pay currency
+    pv_recv = _leg_pv(recv_leg, recv_curve)  # in recv currency
+    pv_pay = _leg_pv(pay_leg, pay_curve)  # in pay currency
     recv_base = pv_recv * fx_provider.rate(recv_leg.currency, base_currency, as_of=as_of)
     pay_base = pv_pay * fx_provider.rate(pay_leg.currency, base_currency, as_of=as_of)
     return {
         "base_npv": recv_base - pay_base,
-        "recv_pv": pv_recv, "recv_currency": recv_leg.currency, "recv_base": recv_base,
-        "pay_pv": pv_pay, "pay_currency": pay_leg.currency, "pay_base": pay_base,
+        "recv_pv": pv_recv,
+        "recv_currency": recv_leg.currency,
+        "recv_base": recv_base,
+        "pay_pv": pv_pay,
+        "pay_currency": pay_leg.currency,
+        "pay_base": pay_base,
         # FX exposure: base-value sensitivity is the notional PV in each foreign currency
         "fx_exposure": {recv_leg.currency: recv_base, pay_leg.currency: -pay_base},
     }

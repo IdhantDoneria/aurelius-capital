@@ -32,10 +32,18 @@ class CurveBootstrapError(ValueError):
 
 
 def _trial_curve(curve_id, ref_date, tenors, zeros, mat, z, compounding, day_count, currency):
-    ts = tenors + [mat]
-    zs = zeros + [z]
-    return ZeroCurve(curve_id, ref_date, tuple(ts), tuple(zs), compounding, day_count,
-                     Extrapolation.FLAT, currency)
+    ts = [*tenors, mat]
+    zs = [*zeros, z]
+    return ZeroCurve(
+        curve_id,
+        ref_date,
+        tuple(ts),
+        tuple(zs),
+        compounding,
+        day_count,
+        Extrapolation.FLAT,
+        currency,
+    )
 
 
 def _residual(inst: RateInstrument, curve: ZeroCurve) -> float:
@@ -64,7 +72,7 @@ def _residual(inst: RateInstrument, curve: ZeroCurve) -> float:
 def _bisect(f, lo: float, hi: float, *, tol: float = 1e-12, max_iter: int = 200) -> float:
     flo, fhi = f(lo), f(hi)
     tries = 0
-    while flo * fhi > 0 and tries < 40:          # widen bracket if needed
+    while flo * fhi > 0 and tries < 40:  # widen bracket if needed
         lo -= 0.5
         hi += 0.5
         flo, fhi = f(lo), f(hi)
@@ -87,20 +95,26 @@ def _bisect(f, lo: float, hi: float, *, tol: float = 1e-12, max_iter: int = 200)
 class BootstrapResult:
     curve: ZeroCurve
     report: CurveCalibrationReport
-    residuals: tuple = ()                        # (instrument_name, residual)
+    residuals: tuple = ()  # (instrument_name, residual)
 
 
 class CurveBootstrapper:
-    def __init__(self, *, compounding: Compounding = Compounding.CONTINUOUS,
-                 day_count: DayCount = DayCount.ACT_365, reprice_tol: float = _REPRICE_TOL,
-                 strict: bool = True) -> None:
+    def __init__(
+        self,
+        *,
+        compounding: Compounding = Compounding.CONTINUOUS,
+        day_count: DayCount = DayCount.ACT_365,
+        reprice_tol: float = _REPRICE_TOL,
+        strict: bool = True,
+    ) -> None:
         self.compounding = compounding
         self.day_count = day_count
         self.reprice_tol = reprice_tol
         self.strict = strict
 
-    def bootstrap(self, instruments, ref_date: date, *, curve_id: str = "bootstrapped",
-                  currency: str = "USD") -> BootstrapResult:
+    def bootstrap(
+        self, instruments, ref_date: date, *, curve_id: str = "bootstrapped", currency: str = "USD"
+    ) -> BootstrapResult:
         insts = sorted(instruments, key=lambda i: i.maturity_years())
         if not insts:
             raise CurveBootstrapError("no instruments to bootstrap")
@@ -112,24 +126,47 @@ class CurveBootstrapper:
                 raise CurveBootstrapError(f"non-increasing maturity {mat} for {inst.name()}")
 
             def f(z, _inst=inst, _mat=mat):
-                c = _trial_curve(curve_id, ref_date, tenors, zeros, _mat, z,
-                                 self.compounding, self.day_count, currency)
+                c = _trial_curve(
+                    curve_id,
+                    ref_date,
+                    tenors,
+                    zeros,
+                    _mat,
+                    z,
+                    self.compounding,
+                    self.day_count,
+                    currency,
+                )
                 return _residual(_inst, c)
 
             z = _bisect(f, -0.99, 2.0)
             tenors.append(mat)
             zeros.append(z)
 
-        curve = ZeroCurve(curve_id, ref_date, tuple(tenors), tuple(zeros),
-                          self.compounding, self.day_count, Extrapolation.FLAT, currency)
+        curve = ZeroCurve(
+            curve_id,
+            ref_date,
+            tuple(tenors),
+            tuple(zeros),
+            self.compounding,
+            self.day_count,
+            Extrapolation.FLAT,
+            currency,
+        )
         residuals = tuple((inst.name(), _residual(inst, curve)) for inst in insts)
         max_res = max((abs(r) for _, r in residuals), default=0.0)
-        problems = tuple(f"{name}: repricing residual {r:.2e}"
-                         for name, r in residuals if abs(r) > self.reprice_tol)
+        problems = tuple(
+            f"{name}: repricing residual {r:.2e}"
+            for name, r in residuals
+            if abs(r) > self.reprice_tol
+        )
         problems += tuple(curve.validate())
         report = CurveCalibrationReport(
-            curve_id, CalibrationDiagnostics(max_res, len(insts), not problems),
-            tuple(i.name() for i in insts), problems)
+            curve_id,
+            CalibrationDiagnostics(max_res, len(insts), not problems),
+            tuple(i.name() for i in insts),
+            problems,
+        )
         if self.strict and problems:
             raise CurveBootstrapError(f"curve {curve_id} failed to calibrate: {problems[0]}")
         return BootstrapResult(curve, report, residuals)

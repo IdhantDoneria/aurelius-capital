@@ -50,5 +50,5 @@ class TrackingErrorSolver(Solver):
         b = np.asarray(b, dtype=float)
         tilt = pinv(cov) @ mu
         denom = np.sqrt(max(tilt @ cov @ tilt, 1e-16))
-        w = b + te_budget * tilt / denom       # active tilt scaled to the TE budget
+        w = b + te_budget * tilt / denom  # active tilt scaled to the TE budget
         return l1_normalize(w)

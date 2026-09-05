@@ -1,6 +1,7 @@
 """Tests for the paper priority scorer."""
 
 import pytest
+
 from mentisrex.operations.scorer import score_paper
 
 

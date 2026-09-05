@@ -58,8 +58,16 @@ class BacktestResult:
 #: chain is the residual-momentum sleeve, which needs a 252-day rolling market
 #: model on top of a 231-day formation window.
 SLEEVE_WARMUP_DAYS = {
-    "S1": 252, "S2": 63, "S3": 504 + 200, "S4": 63,
-    "S5": 231, "S6": 252 + 231, "S7": 231, "S8": 21 + 63, "S9": 252, "S10": 63,
+    "S1": 252,
+    "S2": 63,
+    "S3": 504 + 200,
+    "S4": 63,
+    "S5": 231,
+    "S6": 252 + 231,
+    "S7": 231,
+    "S8": 21 + 63,
+    "S9": 252,
+    "S10": 63,
 }
 
 
@@ -227,7 +235,9 @@ def summary_stats(
         "cagr": cagr,
         "vol": vol,
         "sharpe": _sharpe(net),
-        "sortino": float(net.mean() * TRADING_DAYS / downside_dev) if downside_dev else float("nan"),
+        "sortino": float(net.mean() * TRADING_DAYS / downside_dev)
+        if downside_dev
+        else float("nan"),
         "max_drawdown": max_dd,
         "calmar": cagr / abs(max_dd) if max_dd else float("nan"),
         "beta": beta,
@@ -258,7 +268,9 @@ def summary_stats(
     return stats
 
 
-def sleeve_table(sleeves_built: dict[str, Sleeve], panel: Any, config: ProgrammeConfig) -> pd.DataFrame:
+def sleeve_table(
+    sleeves_built: dict[str, Sleeve], panel: Any, config: ProgrammeConfig
+) -> pd.DataFrame:
     """The specification's Table 3: each sleeve standalone at 1.0x gross.
 
     `t_stat` is the classical `sharpe * sqrt(years)`. Read it before the Sharpe
@@ -488,14 +500,30 @@ def _phi_inv(p: float) -> float:
     """
     if not 0.0 < p < 1.0:
         return float("nan")
-    a = [-3.969683028665376e01, 2.209460984245205e02, -2.759285104469687e02,
-         1.383577518672690e02, -3.066479806614716e01, 2.506628277459239e00]
-    b = [-5.447609879822406e01, 1.615858368580409e02, -1.556989798598866e02,
-         6.680131188771972e01, -1.328068155288572e01]
-    c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e00,
-         -2.549732539343734e00, 4.374664141464968e00, 2.938163982698783e00]
-    d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e00,
-         3.754408661907416e00]
+    a = [
+        -3.969683028665376e01,
+        2.209460984245205e02,
+        -2.759285104469687e02,
+        1.383577518672690e02,
+        -3.066479806614716e01,
+        2.506628277459239e00,
+    ]
+    b = [
+        -5.447609879822406e01,
+        1.615858368580409e02,
+        -1.556989798598866e02,
+        6.680131188771972e01,
+        -1.328068155288572e01,
+    ]
+    c = [
+        -7.784894002430293e-03,
+        -3.223964580411365e-01,
+        -2.400758277161838e00,
+        -2.549732539343734e00,
+        4.374664141464968e00,
+        2.938163982698783e00,
+    ]
+    d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e00, 3.754408661907416e00]
     plow, phigh = 0.02425, 1.0 - 0.02425
     if p < plow:
         q = math.sqrt(-2.0 * math.log(p))
@@ -509,8 +537,10 @@ def _phi_inv(p: float) -> float:
         )
     q = p - 0.5
     r = q * q
-    return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (
-        ((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1.0
+    return (
+        (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5])
+        * q
+        / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1.0)
     )
 
 

@@ -21,12 +21,17 @@ def settlement_by_currency(book, *, as_of: date | None = None) -> SettlementCurr
     total_pending_base = 0.0
     for ccy, eng in book.books.items():
         rep = eng.settlement.report(as_of)
-        by[ccy] = {"pending": rep.n_pending, "completed": rep.n_completed,
-                   "failed": rep.n_failed, "pending_cash": rep.pending_cash,
-                   "exposure": rep.settlement_exposure}
+        by[ccy] = {
+            "pending": rep.n_pending,
+            "completed": rep.n_completed,
+            "failed": rep.n_failed,
+            "pending_cash": rep.pending_cash,
+            "exposure": rep.settlement_exposure,
+        }
         total_pending_base += abs(rep.pending_cash) * book.base_rate(ccy, as_of)
-    return SettlementCurrencyReport(base_currency=book.base_currency, by_currency=by,
-                                    total_pending_base=total_pending_base)
+    return SettlementCurrencyReport(
+        base_currency=book.base_currency, by_currency=by, total_pending_base=total_pending_base
+    )
 
 
 def obligations_by_currency(book) -> dict:
@@ -38,8 +43,9 @@ def obligations_by_currency(book) -> dict:
     return out
 
 
-def fund_settlement(book, currency: str, trade_id: str, from_currency: str, *,
-                    when: date | None = None):
+def fund_settlement(
+    book, currency: str, trade_id: str, from_currency: str, *, when: date | None = None
+):
     """Convert exactly the pending outflow obligation for `trade_id` (settling in
     `currency`) out of `from_currency`. Raises if the rate is unavailable → caller fails
     the settlement (failed FX funding)."""
@@ -49,6 +55,11 @@ def fund_settlement(book, currency: str, trade_id: str, from_currency: str, *,
     if inst is None:
         raise ValueError(f"no settlement instruction for trade {trade_id} in {currency}")
     if inst.cash_amount >= 0:
-        return None                      # net inflow — nothing to fund
-    return book.convert(needed_to=abs(inst.cash_amount), from_currency=from_currency,
-                        to_currency=currency, when=when, reason="settlement_funding")
+        return None  # net inflow — nothing to fund
+    return book.convert(
+        needed_to=abs(inst.cash_amount),
+        from_currency=from_currency,
+        to_currency=currency,
+        when=when,
+        reason="settlement_funding",
+    )

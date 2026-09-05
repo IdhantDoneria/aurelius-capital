@@ -35,13 +35,9 @@ from __future__ import annotations
 
 import dataclasses
 import json
-import tempfile
-from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal
 from pathlib import Path
-from typing import Optional
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -50,20 +46,18 @@ from mentisrex.research.forward_campaign.alpaca_execution import (
     AlpacaCycleExecutor,
     AlpacaExecutionLedger,
     AlpacaOrderExecution,
-    CycleExecutionSummary,
-    ForwardVsBacktestComparison,
     _compute_execution_summary,
     build_forward_vs_backtest_comparison,
 )
-from mentisrex.research.forward_campaign.record import ForwardCycleRecord
 from mentisrex.research.forward_campaign.evidence_report import (
     BacktestSnapshot,
     EvidenceReportBuilder,
 )
 from mentisrex.research.forward_campaign.ledger import ForwardPerformanceSummary
-
+from mentisrex.research.forward_campaign.record import ForwardCycleRecord
 
 # ── fixtures ──────────────────────────────────────────────────────────────────
+
 
 def _order(
     symbol: str = "SPY",
@@ -108,9 +102,9 @@ def _fwd_summary(
     n_successful: int = 1,
     cumulative_return: float = 0.01,
     max_drawdown: float = 0.005,
-    annualized_return: Optional[float] = None,
-    volatility: Optional[float] = None,
-    sharpe: Optional[float] = None,
+    annualized_return: float | None = None,
+    volatility: float | None = None,
+    sharpe: float | None = None,
 ) -> ForwardPerformanceSummary:
     return ForwardPerformanceSummary(
         n_forward_cycles=n_successful,
@@ -124,13 +118,9 @@ def _fwd_summary(
             "ESTIMATED" if annualized_return is not None else "INSUFFICIENT_SAMPLE"
         ),
         volatility=volatility,
-        volatility_label=(
-            "ESTIMATED" if volatility is not None else "INSUFFICIENT_SAMPLE"
-        ),
+        volatility_label=("ESTIMATED" if volatility is not None else "INSUFFICIENT_SAMPLE"),
         sharpe=sharpe,
-        sharpe_label=(
-            "ESTIMATED" if sharpe is not None else "INSUFFICIENT_SAMPLE"
-        ),
+        sharpe_label=("ESTIMATED" if sharpe is not None else "INSUFFICIENT_SAMPLE"),
         max_drawdown=max_drawdown,
         total_orders=5,
         total_fills=5,
@@ -215,6 +205,7 @@ def _mock_broker(
 
 # ── T01: AlpacaOrderExecution construction + governance fields ────────────────
 
+
 class TestAlpacaOrderExecutionConstruction:
     def test_all_required_fields_present(self):
         o = _order()
@@ -246,6 +237,7 @@ class TestAlpacaOrderExecutionConstruction:
 
 # ── T02: CycleExecutionSummary calculation ────────────────────────────────────
 
+
 class TestCycleExecutionSummaryCalculation:
     def test_empty_orders(self):
         s = _compute_execution_summary([], cycle_id="test")
@@ -275,6 +267,7 @@ class TestCycleExecutionSummaryCalculation:
 
 # ── T03: Slippage calculation — buy side ─────────────────────────────────────
 
+
 class TestSlippageBuySide:
     def test_buy_slippage_positive_when_fill_above_ref(self):
         # ref=500, fill=500.50 → buy side hurts, slip > 0
@@ -289,24 +282,28 @@ class TestSlippageBuySide:
     def test_slippage_dollars_calculation(self):
         # 10 shares * (500.50 - 500) = 5.00
         o = _order(
-            intended_qty="10", filled_qty="10",
-            ref_price="500.00", fill_price="500.50",
-            slippage_bps="10.0", slippage_dollars="5.0",
+            intended_qty="10",
+            filled_qty="10",
+            ref_price="500.00",
+            fill_price="500.50",
+            slippage_bps="10.0",
+            slippage_dollars="5.0",
         )
         assert abs(float(o.slippage_dollars) - 5.0) < 0.01
 
 
 # ── T04: Slippage calculation — sell side ────────────────────────────────────
 
+
 class TestSlippageSellSide:
     def test_sell_slippage_positive_when_fill_below_ref(self):
         # sell at 499.50 vs ref 500: sell side hurts, slip > 0
-        o = _order(side="sell", ref_price="500.00", fill_price="499.50",
-                   slippage_bps="10.0")
+        o = _order(side="sell", ref_price="500.00", fill_price="499.50", slippage_bps="10.0")
         assert float(o.slippage_bps) > 0
 
 
 # ── T05: Fill rate calculation ────────────────────────────────────────────────
+
 
 class TestFillRateCalculation:
     def test_fill_rate_100_pct(self):
@@ -327,6 +324,7 @@ class TestFillRateCalculation:
 
 # ── T06: Turnover calculation ─────────────────────────────────────────────────
 
+
 class TestTurnoverCalculation:
     def test_turnover_computed_from_notional(self):
         orders = [_order(filled_qty="10", fill_price="500.00")]  # 5000 notional
@@ -341,6 +339,7 @@ class TestTurnoverCalculation:
 
 
 # ── T07: UNAVAILABLE sentinel ─────────────────────────────────────────────────
+
 
 class TestUnavailableSentinel:
     def test_unavailable_slippage_recorded(self):
@@ -366,6 +365,7 @@ class TestUnavailableSentinel:
 
 # ── T08: AlpacaCycleExecutionRecord sealing ──────────────────────────────────
 
+
 class TestAlpacaCycleExecutionRecordSealing:
     def test_seal_sets_sealed_at(self):
         rec = AlpacaCycleExecutionRecord(cycle_id="test")
@@ -383,14 +383,14 @@ class TestAlpacaCycleExecutionRecordSealing:
         assert rec.status == "SUCCESS"
 
     def test_fail_not_silently_success(self):
-        rec = AlpacaCycleExecutionRecord(cycle_id="test",
-                                          reconciliation_status="FAIL")
+        rec = AlpacaCycleExecutionRecord(cycle_id="test", reconciliation_status="FAIL")
         rec.seal("FAILED")
         assert rec.status == "FAILED"
         assert rec.reconciliation_status == "FAIL"
 
 
 # ── T09: AlpacaCycleExecutionRecord serialization roundtrip ──────────────────
+
 
 class TestAlpacaCycleExecutionRecordSerialization:
     def test_to_dict_from_dict_roundtrip(self):
@@ -420,6 +420,7 @@ class TestAlpacaCycleExecutionRecordSerialization:
 
 # ── T10: AlpacaExecutionLedger — empty ───────────────────────────────────────
 
+
 class TestAlpacaExecutionLedgerEmpty:
     def test_empty_dir_returns_empty(self, tmp_path):
         ledger = AlpacaExecutionLedger(tmp_path)
@@ -442,18 +443,24 @@ class TestAlpacaExecutionLedgerEmpty:
 
 # ── T11: AlpacaExecutionLedger — single record ───────────────────────────────
 
+
 class TestAlpacaExecutionLedgerSingleRecord:
-    def _write_record(self, tmp_path: Path, cycle_id: str,
-                      status: str = "SUCCESS") -> AlpacaCycleExecutionRecord:
+    def _write_record(
+        self, tmp_path: Path, cycle_id: str, status: str = "SUCCESS"
+    ) -> AlpacaCycleExecutionRecord:
         rec = AlpacaCycleExecutionRecord(
             cycle_id=cycle_id,
             evaluation_date=date(2026, 8, 1),
             reconciliation_status="PASS",
             positions_reconciled=True,
             nav_reconciled=True,
-            summary={"orders_submitted": 3, "orders_filled": 3,
-                     "fill_rate": 1.0, "avg_slippage_bps": 5.0,
-                     "avg_execution_latency_ms": 100.0},
+            summary={
+                "orders_submitted": 3,
+                "orders_filled": 3,
+                "fill_rate": 1.0,
+                "avg_slippage_bps": 5.0,
+                "avg_execution_latency_ms": 100.0,
+            },
         )
         rec.seal(status)
         edir = tmp_path / "alpaca_executions"
@@ -485,6 +492,7 @@ class TestAlpacaExecutionLedgerSingleRecord:
 
 # ── T12: execution_quality_summary ───────────────────────────────────────────
 
+
 class TestExecutionQualitySummary:
     def test_summary_aggregates_across_cycles(self, tmp_path):
         edir = tmp_path / "alpaca_executions"
@@ -497,9 +505,13 @@ class TestExecutionQualitySummary:
                 cycle_id=cycle_id,
                 evaluation_date=date(2026, int(cycle_id[-2:]), 1),
                 reconciliation_status="PASS",
-                summary={"orders_submitted": orders_sub, "orders_filled": orders_fill,
-                         "fill_rate": orders_fill / orders_sub, "avg_slippage_bps": 6.0,
-                         "avg_execution_latency_ms": 90.0},
+                summary={
+                    "orders_submitted": orders_sub,
+                    "orders_filled": orders_fill,
+                    "fill_rate": orders_fill / orders_sub,
+                    "avg_slippage_bps": 6.0,
+                    "avg_execution_latency_ms": 90.0,
+                },
             )
             rec.seal("SUCCESS")
             (edir / f"{cycle_id}.json").write_text(json.dumps(rec.to_dict()))
@@ -514,6 +526,7 @@ class TestExecutionQualitySummary:
 
 # ── T13: idempotency ─────────────────────────────────────────────────────────
 
+
 class TestIdempotency:
     def test_existing_sealed_record_returned_without_network_call(self, tmp_path):
         edir = tmp_path / "alpaca_executions"
@@ -524,8 +537,7 @@ class TestIdempotency:
             positions_reconciled=True,
         )
         rec.seal("SUCCESS")
-        (edir / "ew-momentum-exp__2026_08.json").write_text(
-            json.dumps(rec.to_dict()))
+        (edir / "ew-momentum-exp__2026_08.json").write_text(json.dumps(rec.to_dict()))
 
         broker = MagicMock()
         executor = AlpacaCycleExecutor(tmp_path, broker)
@@ -542,23 +554,21 @@ class TestIdempotency:
         executor = AlpacaCycleExecutor(tmp_path, broker)
         cycle_rec = _cycle_record()
 
-        r1 = executor.execute_cycle(cycle_rec,
-                                     spot_prices={"SPY": 500.0, "AAPL": 180.0})
-        r2 = executor.execute_cycle(cycle_rec,
-                                     spot_prices={"SPY": 500.0, "AAPL": 180.0})
+        r1 = executor.execute_cycle(cycle_rec, spot_prices={"SPY": 500.0, "AAPL": 180.0})
+        r2 = executor.execute_cycle(cycle_rec, spot_prices={"SPY": 500.0, "AAPL": 180.0})
         assert r1.cycle_id == r2.cycle_id
         assert r1.sealed_at == r2.sealed_at
 
 
 # ── T14: reconciliation PASS ──────────────────────────────────────────────────
 
+
 class TestReconciliationPass:
     def test_reconciliation_pass_recorded(self, tmp_path):
         broker = _mock_broker(pos_ok=True, nav_ok=True)
         executor = AlpacaCycleExecutor(tmp_path, broker)
         cycle_rec = _cycle_record()
-        result = executor.execute_cycle(cycle_rec,
-                                         spot_prices={"SPY": 500.0, "AAPL": 180.0})
+        result = executor.execute_cycle(cycle_rec, spot_prices={"SPY": 500.0, "AAPL": 180.0})
         assert result.reconciliation_status == "PASS"
         assert result.positions_reconciled
         assert result.nav_reconciled
@@ -566,13 +576,13 @@ class TestReconciliationPass:
 
 # ── T15: reconciliation FAIL not silently converted to PASS ──────────────────
 
+
 class TestReconciliationFailNotSilenced:
     def test_fail_stays_fail(self, tmp_path):
         broker = _mock_broker(pos_ok=False, nav_ok=False)
         executor = AlpacaCycleExecutor(tmp_path, broker)
         cycle_rec = _cycle_record()
-        result = executor.execute_cycle(cycle_rec,
-                                         spot_prices={"SPY": 500.0, "AAPL": 180.0})
+        result = executor.execute_cycle(cycle_rec, spot_prices={"SPY": 500.0, "AAPL": 180.0})
         assert result.reconciliation_status == "FAIL"
         assert result.status == "SUCCESS"  # execution succeeded; reconciliation failed
 
@@ -580,13 +590,13 @@ class TestReconciliationFailNotSilenced:
         broker = _mock_broker(pos_ok=False, nav_ok=True)
         executor = AlpacaCycleExecutor(tmp_path, broker)
         cycle_rec = _cycle_record()
-        result = executor.execute_cycle(cycle_rec,
-                                         spot_prices={"SPY": 500.0, "AAPL": 180.0})
+        result = executor.execute_cycle(cycle_rec, spot_prices={"SPY": 500.0, "AAPL": 180.0})
         # positions failed, nav ok → FAIL (either failing = FAIL)
         assert result.reconciliation_status == "FAIL"
 
 
 # ── T16: partial fills ────────────────────────────────────────────────────────
+
 
 class TestPartialFills:
     def test_partial_fill_counted_separately(self):
@@ -603,11 +613,17 @@ class TestPartialFills:
 
 # ── T17: rejected orders ──────────────────────────────────────────────────────
 
+
 class TestRejectedOrders:
     def test_rejection_reason_recorded(self):
-        o = _order(status="rejected", rejection_reason="insufficient_funds",
-                   fill_price="UNAVAILABLE", filled_qty="0",
-                   slippage_bps="UNAVAILABLE", slippage_dollars="UNAVAILABLE")
+        o = _order(
+            status="rejected",
+            rejection_reason="insufficient_funds",
+            fill_price="UNAVAILABLE",
+            filled_qty="0",
+            slippage_bps="UNAVAILABLE",
+            slippage_dollars="UNAVAILABLE",
+        )
         assert o.order_status == "rejected"
         assert o.rejection_reason == "insufficient_funds"
         assert o.avg_fill_price == "UNAVAILABLE"
@@ -622,6 +638,7 @@ class TestRejectedOrders:
 
 # ── T18: cancelled orders ─────────────────────────────────────────────────────
 
+
 class TestCancelledOrders:
     def test_cancelled_counted(self):
         orders = [_order(status="canceled")]
@@ -631,6 +648,7 @@ class TestCancelledOrders:
 
 
 # ── T19: ForwardVsBacktestComparison — insufficient sample ───────────────────
+
 
 class TestForwardVsBacktestInsufficientSample:
     def test_insufficient_sample_label_when_n_lt_12(self):
@@ -658,6 +676,7 @@ class TestForwardVsBacktestInsufficientSample:
 
 
 # ── T20: ForwardVsBacktestComparison structure ────────────────────────────────
+
 
 class TestForwardVsBacktestStructure:
     def test_diff_computed_when_forward_available(self):
@@ -690,6 +709,7 @@ class TestForwardVsBacktestStructure:
 
 # ── T21: ForwardCycleRecord M29 backward compatibility ───────────────────────
 
+
 class TestForwardCycleRecordM29Fields:
     def test_new_fields_have_defaults(self):
         rec = ForwardCycleRecord(cycle_id="test")
@@ -716,6 +736,7 @@ class TestForwardCycleRecordM29Fields:
 
 # ── T22: research isolation ───────────────────────────────────────────────────
 
+
 class TestResearchIsolation:
     def test_executor_has_no_train_method(self):
         assert not hasattr(AlpacaCycleExecutor, "train")
@@ -739,15 +760,19 @@ class TestResearchIsolation:
 
 # ── T23: ForwardEvidenceReport M29 fields populated ──────────────────────────
 
+
 class TestForwardEvidenceReportM29Fields:
     def test_no_alpaca_execution_label_when_no_records(self, tmp_path):
         """Builder produces NO_ALPACA_EXECUTION label when ledger is empty."""
         # create a minimal campaign dir with just a manifest
         manifest = {
-            "campaign_id": "TEST", "strategy_id": "ew-momentum-exp",
+            "campaign_id": "TEST",
+            "strategy_id": "ew-momentum-exp",
             "strategy_version": "1.0.0",
             "strategy_fingerprint": "b69961b65bab226a500d71f45709945b",
-            "starting_capital": 1_000_000.0, "universe": ["SPY"], "account_id": "test",
+            "starting_capital": 1_000_000.0,
+            "universe": ["SPY"],
+            "account_id": "test",
         }
         (tmp_path / "campaign_manifest.json").write_text(json.dumps(manifest))
         (tmp_path / "cycles").mkdir()
@@ -776,18 +801,25 @@ class TestForwardEvidenceReportM29Fields:
             cycle_id="ew-momentum-exp__2026_08",
             evaluation_date=date(2026, 8, 1),
             reconciliation_status="PASS",
-            summary={"orders_submitted": 5, "orders_filled": 5,
-                     "fill_rate": 1.0, "avg_slippage_bps": 8.0,
-                     "avg_execution_latency_ms": 95.0},
+            summary={
+                "orders_submitted": 5,
+                "orders_filled": 5,
+                "fill_rate": 1.0,
+                "avg_slippage_bps": 8.0,
+                "avg_execution_latency_ms": 95.0,
+            },
         )
         rec.seal("SUCCESS")
         (edir / "ew-momentum-exp__2026_08.json").write_text(json.dumps(rec.to_dict()))
 
         manifest = {
-            "campaign_id": "TEST", "strategy_id": "ew-momentum-exp",
+            "campaign_id": "TEST",
+            "strategy_id": "ew-momentum-exp",
             "strategy_version": "1.0.0",
             "strategy_fingerprint": "b69961b65bab226a500d71f45709945b",
-            "starting_capital": 1_000_000.0, "universe": ["SPY"], "account_id": "test",
+            "starting_capital": 1_000_000.0,
+            "universe": ["SPY"],
+            "account_id": "test",
         }
         (tmp_path / "campaign_manifest.json").write_text(json.dumps(manifest))
 
@@ -806,6 +838,7 @@ class TestForwardEvidenceReportM29Fields:
 
 
 # ── T24: duplicate cycle protection ──────────────────────────────────────────
+
 
 class TestDuplicateCycleProtection:
     def test_persist_does_not_overwrite(self, tmp_path):
@@ -832,6 +865,7 @@ class TestDuplicateCycleProtection:
 
 # ── T25: no credentials in AlpacaOrderExecution ──────────────────────────────
 
+
 class TestNoCredentialsInExecution:
     def test_order_dict_contains_no_credential_keys(self):
         o = _order()
@@ -842,8 +876,7 @@ class TestNoCredentialsInExecution:
         assert "secret" not in d_str
 
     def test_cycle_execution_record_no_credentials(self):
-        rec = AlpacaCycleExecutionRecord(cycle_id="test",
-                                          alpaca_account_id_masked="586c8f70...")
+        rec = AlpacaCycleExecutionRecord(cycle_id="test", alpaca_account_id_masked="586c8f70...")
         d = json.dumps(rec.to_dict())
         assert "api_key" not in d.lower()
         assert "secret" not in d.lower()
@@ -853,15 +886,19 @@ class TestNoCredentialsInExecution:
 
 # ── Real Alpaca tests (offline suite excluded) ────────────────────────────────
 
+
 @pytest.mark.real_alpaca
 class TestRealAlpacaExecution:
     """Requires ALPACA_PAPER_API_KEY and ALPACA_PAPER_API_SECRET."""
 
     def test_execute_cycle_with_real_broker(self, tmp_path):
         import os
+
         from mentisrex.paper import AlpacaPaperBroker
-        if not (os.environ.get("ALPACA_PAPER_API_KEY") and
-                os.environ.get("ALPACA_PAPER_API_SECRET")):
+
+        if not (
+            os.environ.get("ALPACA_PAPER_API_KEY") and os.environ.get("ALPACA_PAPER_API_SECRET")
+        ):
             pytest.skip("ALPACA_PAPER_API_KEY / ALPACA_PAPER_API_SECRET not set")
 
         broker = AlpacaPaperBroker(

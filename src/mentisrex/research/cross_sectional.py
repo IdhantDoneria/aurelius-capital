@@ -43,7 +43,7 @@ def rankdata(x) -> np.ndarray:
         j = i
         while j + 1 < sv.size and sv[j + 1] == sv[i]:
             j += 1
-        ranks[order[i:j + 1]] = (i + j) / 2.0 + 1.0  # average rank, 1-based
+        ranks[order[i : j + 1]] = (i + j) / 2.0 + 1.0  # average rank, 1-based
         i = j + 1
     out[m] = ranks
     return out
@@ -85,7 +85,7 @@ def _design(n, groups, covariates) -> np.ndarray:
     cols = [np.ones(n)]
     if groups is not None:
         g = np.asarray(groups)
-        levels = [lv for lv in dict.fromkeys(g.tolist())][1:]  # drop first => baseline
+        levels = list(dict.fromkeys(g.tolist()))[1:]  # drop first => baseline
         for lv in levels:
             cols.append((g == lv).astype(float))
     if covariates is not None:
@@ -174,8 +174,14 @@ def quantile_spread(signal, fwd_returns, *, q: int = 5) -> dict:
 # ── signal redundancy ─────────────────────────────────────────────────────────
 
 
-def is_disguised(new_signal, existing_signal, fwd_returns, *,
-                 corr_threshold: float = 0.7, ic_retention_floor: float = 0.3) -> dict:
+def is_disguised(
+    new_signal,
+    existing_signal,
+    fwd_returns,
+    *,
+    corr_threshold: float = 0.7,
+    ic_retention_floor: float = 0.3,
+) -> dict:
     """Is `new_signal` a disguised version of `existing_signal`?
 
     Two independent tests, disguised if EITHER fires:
@@ -200,8 +206,9 @@ def is_disguised(new_signal, existing_signal, fwd_returns, *,
     }
 
 
-def redundancy_report(new_signal, existing: dict, fwd_returns=None, *,
-                      corr_threshold: float = 0.7) -> dict:
+def redundancy_report(
+    new_signal, existing: dict, fwd_returns=None, *, corr_threshold: float = 0.7
+) -> dict:
     """Screen a new signal against a library of existing signals (name -> vector).
 
     Flags any existing signal it duplicates. When `fwd_returns` is given, uses the
@@ -216,7 +223,12 @@ def redundancy_report(new_signal, existing: dict, fwd_returns=None, *,
         else:
             c = spearman(new_signal, vec)
             if c == c and abs(c) >= corr_threshold:
-                hits.append({"signal": name, "correlation": float(c),
-                             "disguised": True, "reason": "high_correlation"})
-    return {"redundant": bool(hits), "matches": hits,
-            "n_compared": len(existing)}
+                hits.append(
+                    {
+                        "signal": name,
+                        "correlation": float(c),
+                        "disguised": True,
+                        "reason": "high_correlation",
+                    }
+                )
+    return {"redundant": bool(hits), "matches": hits, "n_compared": len(existing)}

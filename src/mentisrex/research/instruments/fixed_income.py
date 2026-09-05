@@ -17,16 +17,28 @@ from mentisrex.research.instruments.models import (
 )
 
 
-def bond(instrument_id: str, *, face: float = 100.0, coupon: float = 0.0,
-         maturity: date | None = None, frequency: int = 2, currency: str = "USD",
-         **metadata) -> Instrument:
+def bond(
+    instrument_id: str,
+    *,
+    face: float = 100.0,
+    coupon: float = 0.0,
+    maturity: date | None = None,
+    frequency: int = 2,
+    currency: str = "USD",
+    **metadata,
+) -> Instrument:
     """A bond quoted per 100 face. `coupon` is the annual rate (0.04 = 4%)."""
     md = dict(metadata)
     md.update(coupon=coupon, face=face, frequency=frequency)
     return Instrument(
-        instrument_id=instrument_id, type=InstrumentType.BOND, currency=currency,
-        contract_size=face / 100.0, expiry=maturity,
-        cash_convention=CashConvention.PRINCIPAL, metadata=md)
+        instrument_id=instrument_id,
+        type=InstrumentType.BOND,
+        currency=currency,
+        contract_size=face / 100.0,
+        expiry=maturity,
+        cash_convention=CashConvention.PRINCIPAL,
+        metadata=md,
+    )
 
 
 def coupon_schedule(inst: Instrument, *, issue: date) -> list:

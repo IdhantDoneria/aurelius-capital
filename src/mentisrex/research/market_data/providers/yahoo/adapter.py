@@ -19,7 +19,7 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import date, datetime
 
-from mentisrex.research.market_data.identifiers import IdType, IdentifierMap
+from mentisrex.research.market_data.identifiers import IdentifierMap, IdType
 from mentisrex.research.market_data_ops.adapters import SourceAdapter, SourceMetadata
 from mentisrex.research.market_data_ops.messages import (
     MessageType,
@@ -31,19 +31,28 @@ from mentisrex.research.market_data_ops.messages import (
 class YahooFinanceSourceAdapter(SourceAdapter):
     """Yahoo Finance adapter. convert() is fully offline; fetch() uses yfinance live."""
 
-    def __init__(self, *, id_map: IdentifierMap | None = None, name: str = "yahoo_finance",
-                 timezone: str = "America/New_York") -> None:
-        super().__init__(SourceMetadata(
-            name,
-            frozenset({
-                SourceCapability.HISTORICAL,
-                SourceCapability.BARS,
-                SourceCapability.CORPORATE_ACTIONS,
-            }),
-            schema_version="1.0",
-            description="Yahoo Finance via yfinance — OHLCV + corporate actions",
-            vendor="yahoo",
-        ))
+    def __init__(
+        self,
+        *,
+        id_map: IdentifierMap | None = None,
+        name: str = "yahoo_finance",
+        timezone: str = "America/New_York",
+    ) -> None:
+        super().__init__(
+            SourceMetadata(
+                name,
+                frozenset(
+                    {
+                        SourceCapability.HISTORICAL,
+                        SourceCapability.BARS,
+                        SourceCapability.CORPORATE_ACTIONS,
+                    }
+                ),
+                schema_version="1.0",
+                description="Yahoo Finance via yfinance — OHLCV + corporate actions",
+                vendor="yahoo",
+            )
+        )
         self._id_map = id_map
         self._timezone = timezone
         self._seq = 0
@@ -65,29 +74,34 @@ class YahooFinanceSourceAdapter(SourceAdapter):
 
     def _yfinance_fetch(self, tickers: list, as_of: date) -> list[dict]:
         import yfinance as yf
+
         records = []
         for ticker in tickers:
             try:
                 df = yf.Ticker(str(ticker)).history(
-                    start="1990-01-01", end=as_of.isoformat(), auto_adjust=False,
+                    start="1990-01-01",
+                    end=as_of.isoformat(),
+                    auto_adjust=False,
                 )
                 if df.empty:
                     continue
                 for row_date, row in df.iterrows():
                     d = row_date.date() if hasattr(row_date, "date") else row_date
-                    records.append({
-                        "symbol": str(ticker),
-                        "date": d.isoformat(),
-                        "open": float(row.get("Open", 0)),
-                        "high": float(row.get("High", 0)),
-                        "low": float(row.get("Low", 0)),
-                        "close": float(row.get("Close", 0)),
-                        "adj_close": float(row.get("Adj Close", row.get("Close", 0))),
-                        "volume": float(row.get("Volume", 0)),
-                        "dividends": float(row.get("Dividends", 0)),
-                        "stock_splits": float(row.get("Stock Splits", 0)),
-                    })
-            except Exception:  # noqa: BLE001 — yfinance errors are provider noise
+                    records.append(
+                        {
+                            "symbol": str(ticker),
+                            "date": d.isoformat(),
+                            "open": float(row.get("Open", 0)),
+                            "high": float(row.get("High", 0)),
+                            "low": float(row.get("Low", 0)),
+                            "close": float(row.get("Close", 0)),
+                            "adj_close": float(row.get("Adj Close", row.get("Close", 0))),
+                            "volume": float(row.get("Volume", 0)),
+                            "dividends": float(row.get("Dividends", 0)),
+                            "stock_splits": float(row.get("Stock Splits", 0)),
+                        }
+                    )
+            except Exception:
                 continue
         return records
 
@@ -111,18 +125,20 @@ class YahooFinanceSourceAdapter(SourceAdapter):
         sec_id = self._resolve(ticker, rec_date)
 
         out = []
-        wire = dict(
-            source=self.metadata.name,
-            vendor_id=ticker,
-            observation_date=rec_date,
-            effective_date=rec_date,
-            schema_version=self.metadata.schema_version,
-        )
+        wire = {
+            "source": self.metadata.name,
+            "vendor_id": ticker,
+            "observation_date": rec_date,
+            "effective_date": rec_date,
+            "schema_version": self.metadata.schema_version,
+        }
 
         # unadjusted close
         if r.get("close") is not None:
             payload = {
-                "id": sec_id, "field": "close", "type": "close",
+                "id": sec_id,
+                "field": "close",
+                "type": "close",
                 "value": float(r["close"]),
                 "observation_date": rec_date.isoformat(),
                 "effective_date": rec_date.isoformat(),
@@ -134,7 +150,9 @@ class YahooFinanceSourceAdapter(SourceAdapter):
         # adjusted close — separate message preserves provenance of adjustment
         if r.get("adj_close") is not None and r.get("adj_close") != r.get("close"):
             adj_payload = {
-                "id": sec_id, "field": "close", "type": "adjusted_close",
+                "id": sec_id,
+                "field": "close",
+                "type": "adjusted_close",
                 "value": float(r["adj_close"]),
                 "observation_date": rec_date.isoformat(),
                 "effective_date": rec_date.isoformat(),
@@ -146,7 +164,9 @@ class YahooFinanceSourceAdapter(SourceAdapter):
         div = r.get("dividends", r.get("dividend", 0.0))
         if div and float(div) != 0.0:
             div_payload = {
-                "id": sec_id, "field": "dividend", "type": "dividend",
+                "id": sec_id,
+                "field": "dividend",
+                "type": "dividend",
                 "value": float(div),
                 "observation_date": rec_date.isoformat(),
                 "effective_date": rec_date.isoformat(),
@@ -158,7 +178,9 @@ class YahooFinanceSourceAdapter(SourceAdapter):
         split = r.get("stock_splits", r.get("split_ratio", 0.0))
         if split and float(split) != 0.0 and float(split) != 1.0:
             split_payload = {
-                "id": sec_id, "field": "split_ratio", "type": "split",
+                "id": sec_id,
+                "field": "split_ratio",
+                "type": "split",
                 "value": float(split),
                 "observation_date": rec_date.isoformat(),
                 "effective_date": rec_date.isoformat(),
@@ -196,5 +218,7 @@ def _parse_date(v) -> date | None:
 
 
 def _sort_key(r: dict):
-    return (str(r.get("date") or r.get("observation_date") or ""),
-            str(r.get("symbol") or r.get("id") or ""))
+    return (
+        str(r.get("date") or r.get("observation_date") or ""),
+        str(r.get("symbol") or r.get("id") or ""),
+    )

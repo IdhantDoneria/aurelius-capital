@@ -18,9 +18,9 @@ from mentisrex.research.valuation.daycount import DayCount, year_fraction
 class SwapSpec:
     notional: float
     fixed_rate: float
-    pay_dates: tuple                       # payment dates, increasing
+    pay_dates: tuple  # payment dates, increasing
     start: date
-    pay_fixed: bool = True                 # True: pay fixed / receive float
+    pay_fixed: bool = True  # True: pay fixed / receive float
     day_count: DayCount = DayCount.ACT_360
     currency: str = "USD"
 
@@ -57,15 +57,14 @@ def npv(spec: SwapSpec, disc_curve, proj_curve=None) -> float:
     proj_curve = proj_curve or disc_curve
     fixed = fixed_leg_pv(spec, disc_curve)
     floating = floating_leg_pv(spec, disc_curve, proj_curve)
-    val = floating - fixed                                  # receive float, pay fixed
+    val = floating - fixed  # receive float, pay fixed
     return val if spec.pay_fixed else -val
 
 
 def annuity(spec: SwapSpec, disc_curve) -> float:
     a = 0.0
     for _, d, tau in _accruals(spec.start, spec.pay_dates, spec.day_count):
-        a += tau * disc_curve.discount(
-            year_fraction(disc_curve.ref_date, d, disc_curve.day_count))
+        a += tau * disc_curve.discount(year_fraction(disc_curve.ref_date, d, disc_curve.day_count))
     return a * spec.notional
 
 
@@ -91,6 +90,5 @@ def cash_flow_projection(spec: SwapSpec, disc_curve, proj_curve=None) -> list:
         t2 = year_fraction(proj_curve.ref_date, d, proj_curve.day_count)
         fwd = proj_curve.forward_rate(max(t1, 1e-9), t2) if t2 > t1 else 0.0
         df = disc_curve.discount(year_fraction(disc_curve.ref_date, d, disc_curve.day_count))
-        out.append((d, spec.fixed_rate * tau * spec.notional,
-                    fwd * tau * spec.notional, df))
+        out.append((d, spec.fixed_rate * tau * spec.notional, fwd * tau * spec.notional, df))
     return out

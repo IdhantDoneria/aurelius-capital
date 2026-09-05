@@ -40,7 +40,7 @@ def _rank(mapping: dict[str, float]) -> dict[str, float]:
     keys = list(mapping.keys())
     vals = np.array([mapping[k] for k in keys], dtype=float)
     ranked = percentile_rank(vals)
-    return {k: float(v) for k, v in zip(keys, ranked) if math.isfinite(v)}
+    return {k: float(v) for k, v in zip(keys, ranked, strict=False) if math.isfinite(v)}
 
 
 class USFactorEngine(FactorEngine):
@@ -52,8 +52,9 @@ class USFactorEngine(FactorEngine):
 
     _FACTORS = ("momentum", "book_equity", "net_income", "roe")
 
-    def __init__(self, ohlcv_db_path: str, fundamentals_db_path: str,
-                 ticker_map_path: str | None = None) -> None:
+    def __init__(
+        self, ohlcv_db_path: str, fundamentals_db_path: str, ticker_map_path: str | None = None
+    ) -> None:
         self._price = DuckDBStore(ohlcv_db_path)
         self._fund = FundamentalsStore(fundamentals_db_path)
 
@@ -72,8 +73,10 @@ class USFactorEngine(FactorEngine):
     def compute(
         self, as_of: date, *, knowledge_date: date | None = None
     ) -> dict[str, dict[str, float]]:
-        return {name: self.compute_factor(name, as_of, knowledge_date=knowledge_date)
-                for name in self._FACTORS}
+        return {
+            name: self.compute_factor(name, as_of, knowledge_date=knowledge_date)
+            for name in self._FACTORS
+        }
 
     def compute_factor(
         self, name: str, as_of: date, *, knowledge_date: date | None = None
@@ -123,6 +126,7 @@ class USFactorEngine(FactorEngine):
         WHERE n12.close > 0
         """
         from datetime import timedelta
+
         t1 = (as_of - timedelta(days=30)).isoformat()
         t12 = (as_of - timedelta(days=365)).isoformat()
         rows = self._price.query(sql, [t1, t1, t1, t12, t12, t12])
@@ -138,20 +142,22 @@ class USFactorEngine(FactorEngine):
         """Remap CIK keys → ticker keys when the mapping file is available."""
         if not self._cik_to_ticker:
             return cik_dict
-        return {self._cik_to_ticker[cik]: v for cik, v in cik_dict.items()
-                if cik in self._cik_to_ticker}
+        return {
+            self._cik_to_ticker[cik]: v for cik, v in cik_dict.items() if cik in self._cik_to_ticker
+        }
 
     def _fundamental(
         self, concept: str, as_of: date, knowledge_date: date | None
     ) -> dict[str, float]:
         cross = self._fund.cross_section_as_of(concept, as_of, knowledge_date=knowledge_date)
-        clean = {cik: v for cik, v in cross.items()
-                 if v is not None and math.isfinite(v)}
+        clean = {cik: v for cik, v in cross.items() if v is not None and math.isfinite(v)}
         return _rank(self._remap(clean))
 
     def _roe(self, as_of: date, knowledge_date: date | None) -> dict[str, float]:
         ni = self._fund.cross_section_as_of("NetIncomeLoss", as_of, knowledge_date=knowledge_date)
-        eq = self._fund.cross_section_as_of("StockholdersEquity", as_of, knowledge_date=knowledge_date)
+        eq = self._fund.cross_section_as_of(
+            "StockholdersEquity", as_of, knowledge_date=knowledge_date
+        )
         raw = {}
         for cik in ni:
             if cik not in eq:

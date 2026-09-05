@@ -11,8 +11,13 @@ from mentisrex.market_data.research_matrix import FEATURES
 from mentisrex.research.execution.exceptions import ValidationError
 from mentisrex.research.experiment_registry import hashing
 
-_REQUIRED_VERSIONS = ("prices_version", "fundamentals_version", "insiders_version",
-                      "universe_version", "securitymaster_version")
+_REQUIRED_VERSIONS = (
+    "prices_version",
+    "fundamentals_version",
+    "insiders_version",
+    "universe_version",
+    "securitymaster_version",
+)
 
 
 def validate(session) -> list[str]:
@@ -73,7 +78,11 @@ def consistency_check(session) -> list[str]:
         return warns
     if set(m.directions) != set(session.config.features):
         warns.append("matrix_feature_mismatch")
-    fr_matrix = m.metadata.get("data_versions", {}).get("feature_registry") if hasattr(m, "metadata") else None
+    fr_matrix = (
+        m.metadata.get("data_versions", {}).get("feature_registry")
+        if hasattr(m, "metadata")
+        else None
+    )
     if fr_matrix is not None and fr_matrix != exp.dataset_versions.get("feature_registry_version"):
         warns.append("feature_registry_version_mismatch")
     return warns

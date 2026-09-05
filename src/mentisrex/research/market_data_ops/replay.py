@@ -28,19 +28,19 @@ from mentisrex.research.market_data_ops.reconstruction import (
 class ReplayConfig:
     start: date | None = None
     end: date | None = None
-    dates: tuple = ()                    # explicit replay dates; empty → distinct knowledge dates
-    sources: tuple = ()                  # source filter; empty → all
-    security_ids: tuple = ()             # security filter; empty → all
-    fields: tuple = ()                   # field filter; empty → all
-    knowledge_lag_days: int = 0          # knowledge boundary = valuation_date + lag
-    speed: float = 0.0                   # metadata only — 0 == as-fast-as-possible, no sleeping
+    dates: tuple = ()  # explicit replay dates; empty → distinct knowledge dates
+    sources: tuple = ()  # source filter; empty → all
+    security_ids: tuple = ()  # security filter; empty → all
+    fields: tuple = ()  # field filter; empty → all
+    knowledge_lag_days: int = 0  # knowledge boundary = valuation_date + lag
+    speed: float = 0.0  # metadata only — 0 == as-fast-as-possible, no sleeping
 
 
 @dataclass(frozen=True)
 class ReplayCheckpoint:
     valuation_date: date
     knowledge_date: date
-    emitted: int                         # cumulative messages emitted through this date
+    emitted: int  # cumulative messages emitted through this date
     cumulative_fingerprint: str
     reconstruction: ReconstructionResult | None = None
 
@@ -63,9 +63,18 @@ class MarketDataReplayEngine:
         self._messages = list(messages)
         self.reconstructor = reconstructor or HistoricalReconstructor()
 
-    def replay(self, config: ReplayConfig | None = None, *, reconstruct: bool = True,
-               curves=None, discount_curves=None, vol_surfaces=None, dividend_yields=None,
-               forwards=None, fx_provider=None) -> ReplayResult:
+    def replay(
+        self,
+        config: ReplayConfig | None = None,
+        *,
+        reconstruct: bool = True,
+        curves=None,
+        discount_curves=None,
+        vol_surfaces=None,
+        dividend_yields=None,
+        forwards=None,
+        fx_provider=None,
+    ) -> ReplayResult:
         cfg = config or ReplayConfig()
         pool = self._filter(cfg)
         dates = self._replay_dates(pool, cfg)
@@ -77,9 +86,10 @@ class MarketDataReplayEngine:
         for vd in dates:
             kd = vd if cfg.knowledge_lag_days == 0 else _add_days(vd, cfg.knowledge_lag_days)
             # newly-knowable messages since the last checkpoint, in canonical order
-            newly = sorted((m for m in pool
-                            if _knowable(m, kd) and m.raw_fingerprint() not in emitted_fps),
-                           key=_order_key)
+            newly = sorted(
+                (m for m in pool if _knowable(m, kd) and m.raw_fingerprint() not in emitted_fps),
+                key=_order_key,
+            )
             for m in newly:
                 emitted_fps.add(m.raw_fingerprint())
                 h.update(m.raw_fingerprint().encode())
@@ -87,10 +97,18 @@ class MarketDataReplayEngine:
             rec = None
             if reconstruct:
                 rec = self.reconstructor.reconstruct(
-                    pool, valuation_date=vd, knowledge_date=kd, curves=curves,
-                    discount_curves=discount_curves, vol_surfaces=vol_surfaces,
-                    dividend_yields=dividend_yields, forwards=forwards, fx_provider=fx_provider,
-                    security_ids=cfg.security_ids or None, fields=cfg.fields or None)
+                    pool,
+                    valuation_date=vd,
+                    knowledge_date=kd,
+                    curves=curves,
+                    discount_curves=discount_curves,
+                    vol_surfaces=vol_surfaces,
+                    dividend_yields=dividend_yields,
+                    forwards=forwards,
+                    fx_provider=fx_provider,
+                    security_ids=cfg.security_ids or None,
+                    fields=cfg.fields or None,
+                )
             checkpoints.append(ReplayCheckpoint(vd, kd, total, h.hexdigest(), rec))
         return ReplayResult(tuple(checkpoints), h.hexdigest(), total)
 
@@ -129,4 +147,5 @@ def _knowable(m: SourceMessage, kd: date) -> bool:
 
 def _add_days(d: date, n: int) -> date:
     from datetime import timedelta
+
     return d + timedelta(days=n)

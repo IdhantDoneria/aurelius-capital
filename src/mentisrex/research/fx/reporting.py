@@ -27,23 +27,41 @@ settlement_currency_report = settlement_by_currency
 
 def cash_by_currency_report(book, *, as_of: date | None = None) -> CashByCurrencyReport:
     mc = multi_currency_cash(book, as_of=as_of)
-    return CashByCurrencyReport(base_currency=book.base_currency, as_of=as_of,
-                                balances=mc.balances, total_base=mc.total_base_economic)
+    return CashByCurrencyReport(
+        base_currency=book.base_currency,
+        as_of=as_of,
+        balances=mc.balances,
+        total_base=mc.total_base_economic,
+    )
 
 
-def multi_currency_portfolio_report(book, *, as_of: date | None = None, prices: dict | None = None,
-                                    snap0: dict | None = None, snap1: dict | None = None
-                                    ) -> MultiCurrencyPortfolioReport:
+def multi_currency_portfolio_report(
+    book,
+    *,
+    as_of: date | None = None,
+    prices: dict | None = None,
+    snap0: dict | None = None,
+    snap1: dict | None = None,
+) -> MultiCurrencyPortfolioReport:
     return MultiCurrencyPortfolioReport(
-        base_currency=book.base_currency, as_of=as_of,
+        base_currency=book.base_currency,
+        as_of=as_of,
         value=valuation(book, as_of=as_of, prices=prices),
         cash=cash_by_currency_report(book, as_of=as_of),
         exposure=fx_exposure(book, as_of=as_of),
         reconciliation=reconcile(book, as_of=as_of),
         pnl=(fx_pnl(book, snap0, snap1) if snap0 is not None and snap1 is not None else None),
-        n_currencies=len(book.currencies()), n_conversions=len(book.conversions))
+        n_currencies=len(book.currencies()),
+        n_conversions=len(book.conversions),
+    )
 
 
-__all__ = ["cash_by_currency_report", "exposure_report", "fx_pnl_report",
-           "fx_reconciliation_report", "fx_risk_report", "multi_currency_portfolio_report",
-           "settlement_currency_report"]
+__all__ = [
+    "cash_by_currency_report",
+    "exposure_report",
+    "fx_pnl_report",
+    "fx_reconciliation_report",
+    "fx_risk_report",
+    "multi_currency_portfolio_report",
+    "settlement_currency_report",
+]

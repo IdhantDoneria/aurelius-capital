@@ -244,9 +244,7 @@ class ProgrammeConfig:
     def fingerprint(self) -> str:
         """SHA-256 of the canonical JSON of every field, first 16 hex chars.
         Logged on every run (spec Table 26)."""
-        payload = json.dumps(
-            self.to_dict(), sort_keys=True, separators=(",", ":"), default=str
-        )
+        payload = json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"), default=str)
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
     def to_dict(self) -> dict:

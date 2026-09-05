@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from enum import Enum
+from enum import StrEnum
 
 
-class RiskDecision(str, Enum):
+class RiskDecision(StrEnum):
     APPROVE = "approve"
     APPROVE_WITH_WARNING = "approve_with_warning"
     REJECT = "reject"
@@ -21,12 +21,13 @@ class RiskDecision(str, Enum):
 
 # ── limits / violations ──────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class RiskLimit:
     name: str
     limit: float
-    kind: str = "max"                     # max | min
-    severity: str = "hard"                # hard (reject) | soft (warn)
+    kind: str = "max"  # max | min
+    severity: str = "hard"  # hard (reject) | soft (warn)
 
 
 @dataclass(frozen=True)
@@ -47,6 +48,7 @@ class RiskViolation:
 
 # ── analytics reports ────────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class ExposureReport:
     gross: float
@@ -56,7 +58,7 @@ class ExposureReport:
     cash: float
     n_long: int
     n_short: int
-    sector: dict = field(default_factory=dict)      # classification interfaces
+    sector: dict = field(default_factory=dict)  # classification interfaces
     industry: dict = field(default_factory=dict)
     country: dict = field(default_factory=dict)
     currency: dict = field(default_factory=dict)
@@ -74,43 +76,43 @@ class ConcentrationReport:
 @dataclass(frozen=True)
 class FactorExposure:
     model: str
-    betas: dict                            # factor -> beta
-    factor_contribution: dict             # factor -> variance contribution
-    factor_risk: float                    # systematic vol
-    specific_risk: float                  # idiosyncratic vol
+    betas: dict  # factor -> beta
+    factor_contribution: dict  # factor -> variance contribution
+    factor_risk: float  # systematic vol
+    specific_risk: float  # idiosyncratic vol
     r_squared: float
 
 
 @dataclass(frozen=True)
 class VaRReport:
-    method: str                           # historical | parametric
+    method: str  # historical | parametric
     horizon_days: int
-    var: dict                             # confidence -> VaR (positive loss fraction)
-    expected_shortfall: dict              # confidence -> ES
+    var: dict  # confidence -> VaR (positive loss fraction)
+    expected_shortfall: dict  # confidence -> ES
     volatility: float
 
 
 @dataclass(frozen=True)
 class StressScenario:
     name: str
-    market_shock: float = 0.0             # portfolio-wide return shock
+    market_shock: float = 0.0  # portfolio-wide return shock
     sector_shocks: dict = field(default_factory=dict)
     vol_multiplier: float = 1.0
-    liquidity_multiplier: float = 1.0     # ADV reduction (fraction remaining)
+    liquidity_multiplier: float = 1.0  # ADV reduction (fraction remaining)
     factor_shocks: dict = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
 class StressResult:
     scenario: str
-    pnl_fraction: float                   # portfolio P&L under the shock
+    pnl_fraction: float  # portfolio P&L under the shock
     stressed_value: float
     breached: bool
 
 
 @dataclass(frozen=True)
 class StressTestReport:
-    results: list                         # list[StressResult]
+    results: list  # list[StressResult]
     worst_scenario: str
     worst_pnl_fraction: float
 
@@ -130,9 +132,9 @@ class DrawdownReport:
 class LiquidityReport:
     avg_participation: float
     max_participation: float
-    days_to_liquidate: dict               # security_id -> days
+    days_to_liquidate: dict  # security_id -> days
     max_days_to_liquidate: float
-    illiquid_weight: float                # weight in names > liquidation_threshold days
+    illiquid_weight: float  # weight in names > liquidation_threshold days
     liquidity_signal: str
 
 
@@ -146,6 +148,7 @@ class CapacityReport:
 
 # ── monitoring ───────────────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class RiskAlert:
     as_of: date | None
@@ -157,7 +160,7 @@ class RiskAlert:
 @dataclass(frozen=True)
 class RiskEvent:
     as_of: date | None
-    kind: str                             # limit_breach | drawdown_breach | vol_spike | ...
+    kind: str  # limit_breach | drawdown_breach | vol_spike | ...
     detail: dict = field(default_factory=dict)
 
 
@@ -175,6 +178,7 @@ class RiskSnapshot:
 
 # ── top-level reports ────────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class RiskReport:
     as_of: date | None
@@ -187,9 +191,9 @@ class RiskReport:
     drawdown: DrawdownReport | None
     liquidity: LiquidityReport | None
     capacity: CapacityReport | None
-    violations: list = field(default_factory=list)          # list[RiskViolation]
+    violations: list = field(default_factory=list)  # list[RiskViolation]
     warnings: list = field(default_factory=list)
-    risk_contribution: dict = field(default_factory=dict)   # security_id -> pct risk
+    risk_contribution: dict = field(default_factory=dict)  # security_id -> pct risk
     metadata: dict = field(default_factory=dict)
     generated_at: datetime | None = None
 
@@ -198,7 +202,7 @@ class RiskReport:
 class PortfolioHealthReport:
     healthy: bool
     decision: RiskDecision
-    score: float                          # 0..100 composite health
+    score: float  # 0..100 composite health
     reasons: list = field(default_factory=list)
     checks: dict = field(default_factory=dict)
 

@@ -11,21 +11,21 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from enum import Enum
+from enum import StrEnum
 
 from mentisrex.research.market_data.revisions import RevisionStore
 
 
-class FixingType(str, Enum):
-    OVERNIGHT = "overnight"     # SOFR/ESTR/SONIA/FedFunds
-    BENCHMARK = "benchmark"     # term reference rate
-    FX = "fx"                   # WM/Reuters-style FX fix
-    REFERENCE = "reference"     # commodity/index reference
+class FixingType(StrEnum):
+    OVERNIGHT = "overnight"  # SOFR/ESTR/SONIA/FedFunds
+    BENCHMARK = "benchmark"  # term reference rate
+    FX = "fx"  # WM/Reuters-style FX fix
+    REFERENCE = "reference"  # commodity/index reference
 
 
 @dataclass(frozen=True)
 class Fixing:
-    index: str                  # "SOFR", "EUR/USD", ...
+    index: str  # "SOFR", "EUR/USD", ...
     fixing_date: date
     value: float
     fixing_type: FixingType = FixingType.OVERNIGHT
@@ -42,13 +42,22 @@ class FixingStore:
         self._types: dict[str, FixingType] = {}
         self._ccy: dict[str, str | None] = {}
 
-    def add(self, index: str, fixing_date: date, value: float, *, knowledge_date: date | None = None,
-            fixing_type: FixingType = FixingType.OVERNIGHT, currency: str | None = None,
-            source: str = "unknown") -> Fixing:
+    def add(
+        self,
+        index: str,
+        fixing_date: date,
+        value: float,
+        *,
+        knowledge_date: date | None = None,
+        fixing_type: FixingType = FixingType.OVERNIGHT,
+        currency: str | None = None,
+        source: str = "unknown",
+    ) -> Fixing:
         # a fixing is knowable on its fixing date at the earliest unless stated otherwise
         kd = knowledge_date or fixing_date
-        rec = self._store.record(index, "fixing", fixing_date, value,
-                                 knowledge_date=kd, source=source)
+        rec = self._store.record(
+            index, "fixing", fixing_date, value, knowledge_date=kd, source=source
+        )
         self._types[index] = FixingType(fixing_type)
         self._ccy[index] = currency
         return Fixing(index, fixing_date, value, self._types[index], currency, source, rec.revision)
@@ -61,8 +70,15 @@ class FixingStore:
             rec = self._store.known_as_of(index, "fixing", fixing_date, as_of)
         if rec is None:
             raise KeyError(f"no {index} fixing for {fixing_date} knowable as_of {as_of}")
-        return Fixing(index, fixing_date, rec.value, self._types.get(index, FixingType.OVERNIGHT),
-                      self._ccy.get(index), rec.source, rec.revision)
+        return Fixing(
+            index,
+            fixing_date,
+            rec.value,
+            self._types.get(index, FixingType.OVERNIGHT),
+            self._ccy.get(index),
+            rec.source,
+            rec.revision,
+        )
 
     def history(self, index: str, fixing_date: date) -> list:
         return self._store.history(index, "fixing", fixing_date)

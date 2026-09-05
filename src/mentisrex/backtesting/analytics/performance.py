@@ -118,7 +118,7 @@ class PerformanceCalculator:
         if years > 0:
             ratio = equities[-1] / equities[0]
             if ratio <= 0:
-                metrics.cagr = -1.0   # total wipeout
+                metrics.cagr = -1.0  # total wipeout
             else:
                 metrics.cagr = ratio ** (1.0 / years) - 1
 

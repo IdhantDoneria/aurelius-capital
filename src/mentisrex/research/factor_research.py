@@ -50,17 +50,17 @@ class FactorReport:
     ic_series: list = field(default_factory=list)
     ic_mean: float = float("nan")
     ic_std: float = float("nan")
-    ic_ir: float = float("nan")          # IC information ratio = mean/std
-    ic_t_stat: float = float("nan")      # HAC t-stat of the IC series (M31)
+    ic_ir: float = float("nan")  # IC information ratio = mean/std
+    ic_t_stat: float = float("nan")  # HAC t-stat of the IC series (M31)
     ic_p_value: float = float("nan")
-    ic_hit_rate: float = float("nan")    # fraction of periods IC has the mean's sign
+    ic_hit_rate: float = float("nan")  # fraction of periods IC has the mean's sign
     ls_return_series: list = field(default_factory=list)
     ls_sharpe: float = float("nan")
-    ls_t_stat: float = float("nan")      # HAC t-stat of the long-short series
+    ls_t_stat: float = float("nan")  # HAC t-stat of the long-short series
     ls_p_value: float = float("nan")
     quantile_profile: list = field(default_factory=list)  # avg fwd return per bucket
     monotonic_fraction: float = float("nan")
-    turnover: float = float("nan")       # avg fraction of long book replaced
+    turnover: float = float("nan")  # avg fraction of long book replaced
     ls_turnover_series: list = field(default_factory=list)  # two-way per rebalance
     # net-of-cost (populated only when a cost_model is supplied)
     net_ls_return_series: list = field(default_factory=list)
@@ -108,7 +108,7 @@ def evaluate_factor(
     breadths: list[int] = []
     prev_long: set | None = None
     prev_short: set | None = None
-    ls_turnover: list[float] = []            # two-way, aligned to ls_series periods
+    ls_turnover: list[float] = []  # two-way, aligned to ls_series periods
 
     for t in range(T):
         g = groups[t] if groups is not None else None
@@ -135,18 +135,22 @@ def evaluate_factor(
 
         # long = top quantile, short = bottom quantile; two-way turnover vs prev
         pr = percentile_rank(s)
-        long_names = {keys[i] for i in range(len(keys))
-                      if pr[i] == pr[i] and pr[i] >= (q - 1) / q}
-        short_names = {keys[i] for i in range(len(keys))
-                       if pr[i] == pr[i] and pr[i] < 1.0 / q}
+        long_names = {keys[i] for i in range(len(keys)) if pr[i] == pr[i] and pr[i] >= (q - 1) / q}
+        short_names = {keys[i] for i in range(len(keys)) if pr[i] == pr[i] and pr[i] < 1.0 / q}
 
         if qs["long_short"] == qs["long_short"]:
             ls_series.append(qs["long_short"])
-            long_repl = (1.0 - len(long_names & prev_long) / len(long_names)
-                         if prev_long is not None and long_names else 1.0)
-            short_repl = (1.0 - len(short_names & prev_short) / len(short_names)
-                          if prev_short is not None and short_names else 1.0)
-            ls_turnover.append(long_repl + short_repl)   # two-way (both legs)
+            long_repl = (
+                1.0 - len(long_names & prev_long) / len(long_names)
+                if prev_long is not None and long_names
+                else 1.0
+            )
+            short_repl = (
+                1.0 - len(short_names & prev_short) / len(short_names)
+                if prev_short is not None and short_names
+                else 1.0
+            )
+            ls_turnover.append(long_repl + short_repl)  # two-way (both legs)
 
         if long_names:
             prev_long = long_names
@@ -157,14 +161,18 @@ def evaluate_factor(
     ls_arr = np.array(ls_series, dtype=float)
 
     rep = FactorReport(
-        n_periods=len([b for b in breadths]),
+        n_periods=len(list(breadths)),
         avg_breadth=float(np.mean(breadths)) if breadths else 0.0,
         ic_series=ic_series,
         ls_return_series=ls_series,
-        quantile_profile=[float(bucket_acc[i] / bucket_cnt[i]) if bucket_cnt[i] else float("nan")
-                          for i in range(q)],
+        quantile_profile=[
+            float(bucket_acc[i] / bucket_cnt[i]) if bucket_cnt[i] else float("nan")
+            for i in range(q)
+        ],
         monotonic_fraction=float(mono_hits / mono_total) if mono_total else float("nan"),
-        turnover=float(np.mean([x / 2.0 for x in ls_turnover[1:]])) if len(ls_turnover) > 1 else float("nan"),
+        turnover=float(np.mean([x / 2.0 for x in ls_turnover[1:]]))
+        if len(ls_turnover) > 1
+        else float("nan"),
         ls_turnover_series=ls_turnover,
     )
 
@@ -173,12 +181,12 @@ def evaluate_factor(
         rep.ic_std = float(ic_arr.std(ddof=1))
         rep.ic_ir = float(rep.ic_mean / rep.ic_std) if rep.ic_std > 0 else 0.0
         rep.ic_hit_rate = float(np.mean(np.sign(ic_arr) == np.sign(rep.ic_mean)))
-        h = hac_significance(ic_arr)      # autocorrelation-robust IC t-stat (M31)
+        h = hac_significance(ic_arr)  # autocorrelation-robust IC t-stat (M31)
         rep.ic_t_stat, rep.ic_p_value = h["hac_t_stat"], h["hac_p_value"]
 
     if ls_arr.size >= 2:
         rep.ls_sharpe = sharpe(ls_arr, periods=periods_per_year)
-        _ = significance(ls_arr)          # ensures HAC fields computed identically
+        _ = significance(ls_arr)  # ensures HAC fields computed identically
         h = hac_significance(ls_arr)
         rep.ls_t_stat, rep.ls_p_value = h["hac_t_stat"], h["hac_p_value"]
 
@@ -187,7 +195,7 @@ def evaluate_factor(
             # Assumes equal-weight long and short legs; impact term omitted (needs
             # per-name notionals/ADV — supplied by the backtest layer, not the IC panel).
             lin = cost_model.linear_bps() / 1e4
-            tw = np.array(ls_turnover[:ls_arr.size], dtype=float)
+            tw = np.array(ls_turnover[: ls_arr.size], dtype=float)
             costs = lin * tw
             net = ls_arr - costs
             rep.net_ls_return_series = [float(x) for x in net]
@@ -212,7 +220,7 @@ def ic_decay(
     for h, fwd_panels in enumerate(forward_returns_by_horizon, start=1):
         ics = []
         for sig, fwd in zip(signals, fwd_panels, strict=False):
-            keys, s, f, _, _ = _align(sig, fwd, None, None)
+            _keys, s, f, _, _ = _align(sig, fwd, None, None)
             if s.size >= 2:
                 ic = information_coefficient(s, f, method=ic_method)
                 if ic == ic:

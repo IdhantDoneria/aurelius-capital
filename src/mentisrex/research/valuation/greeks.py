@@ -37,8 +37,14 @@ def fd_rho(is_call, s, k, r, q, vol, t, *, h=1e-4) -> float:
     return (up - dn) / (2 * h)
 
 
-def to_m13_risk_inputs(portfolio_valuation, *, duration: float = 0.0, dv01: float = 0.0,
-                       fx_exposure: dict | None = None, margin: float = 0.0) -> dict:
+def to_m13_risk_inputs(
+    portfolio_valuation,
+    *,
+    duration: float = 0.0,
+    dv01: float = 0.0,
+    fx_exposure: dict | None = None,
+    margin: float = 0.0,
+) -> dict:
     """Shape a PortfolioValuation + fixed-income/FX sensitivities into M13's input dict."""
     g = portfolio_valuation.greeks
     return {

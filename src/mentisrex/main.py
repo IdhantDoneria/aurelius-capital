@@ -13,19 +13,12 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 
-from mentisrex.core.errors import MentisrexError
-from mentisrex.core.logging import configure_logging, get_logger
 from mentisrex.catalog.api import catalog_router
 from mentisrex.catalog.store import CatalogStore
+from mentisrex.core.errors import MentisrexError
+from mentisrex.core.logging import configure_logging, get_logger
 from mentisrex.corpus.api import get_corpus_store
 from mentisrex.corpus.api import router as corpus_router
-from mentisrex.operations.api import configure as configure_operations
-from mentisrex.operations.api import operations_router
-from mentisrex.operations.config import OperationsConfig
-from mentisrex.operations.monitor import OperationsMonitor
-from mentisrex.operations.pipeline import PipelineOrchestrator
-from mentisrex.operations.reporter import DailyReporter
-from mentisrex.operations.watcher import FolderWatcher
 from mentisrex.director.api import router as director_router
 from mentisrex.discovery.api import discovery_router
 from mentisrex.infrastructure.cache.redis import CacheManager
@@ -36,6 +29,13 @@ from mentisrex.knowledge import hooks as kg_hooks
 from mentisrex.knowledge.api import _get_kg
 from mentisrex.knowledge.api import router as kg_router
 from mentisrex.lab.api import router as lab_router
+from mentisrex.operations.api import configure as configure_operations
+from mentisrex.operations.api import operations_router
+from mentisrex.operations.config import OperationsConfig
+from mentisrex.operations.monitor import OperationsMonitor
+from mentisrex.operations.pipeline import PipelineOrchestrator
+from mentisrex.operations.reporter import DailyReporter
+from mentisrex.operations.watcher import FolderWatcher
 from mentisrex.presentation.api.routes import health, metrics
 from mentisrex.presentation.middleware.logging import RequestLoggingMiddleware
 
@@ -129,6 +129,7 @@ def create_app() -> FastAPI:
     @app.get("/operations/dashboard/view", include_in_schema=False)
     async def operations_dashboard_view():
         from fastapi.responses import RedirectResponse
+
         return RedirectResponse(url="/operations/dashboard")
 
     @app.get("/kg/explore", include_in_schema=False)

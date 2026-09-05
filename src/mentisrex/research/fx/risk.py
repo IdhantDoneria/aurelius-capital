@@ -26,31 +26,40 @@ def _z(confidence: float) -> float:
 
 @dataclass
 class FXLimits:
-    max_currency_share: float = 1.0             # max |net exposure|/value per non-base ccy
-    max_gross_fx: float = float("inf")          # max Σ|net|/value across currencies
-    per_currency: dict = field(default_factory=dict)   # ccy -> max share override
+    max_currency_share: float = 1.0  # max |net exposure|/value per non-base ccy
+    max_gross_fx: float = float("inf")  # max Σ|net|/value across currencies
+    per_currency: dict = field(default_factory=dict)  # ccy -> max share override
 
 
-def check_fx_limits(book, limits: FXLimits, *, as_of: date | None = None,
-                    prices: dict | None = None) -> list:
+def check_fx_limits(
+    book, limits: FXLimits, *, as_of: date | None = None, prices: dict | None = None
+) -> list:
     exp = fx_exposure(book, as_of=as_of, prices=prices)
     tv = valuation(book, as_of=as_of).total_base or 1.0
     violations: list = []
     if limits.max_gross_fx < float("inf") and exp.gross / tv > limits.max_gross_fx + 1e-12:
-        violations.append({"limit": "max_gross_fx", "value": exp.gross / tv,
-                           "cap": limits.max_gross_fx})
+        violations.append(
+            {"limit": "max_gross_fx", "value": exp.gross / tv, "cap": limits.max_gross_fx}
+        )
     for ccy, e in exp.by_currency.items():
         cap = limits.per_currency.get(ccy, limits.max_currency_share)
         share = abs(e.net_base) / tv
         if share > cap + 1e-12:
-            violations.append({"limit": "max_currency_share", "currency": ccy,
-                               "value": share, "cap": cap})
+            violations.append(
+                {"limit": "max_currency_share", "currency": ccy, "value": share, "cap": cap}
+            )
     return violations
 
 
-def fx_risk_report(book, *, vols: dict | None = None, confidence: float = 0.99,
-                   as_of: date | None = None, prices: dict | None = None,
-                   limits: FXLimits | None = None) -> FXRiskReport:
+def fx_risk_report(
+    book,
+    *,
+    vols: dict | None = None,
+    confidence: float = 0.99,
+    as_of: date | None = None,
+    prices: dict | None = None,
+    limits: FXLimits | None = None,
+) -> FXRiskReport:
     exp = fx_exposure(book, as_of=as_of, prices=prices)
     tv = valuation(book, as_of=as_of).total_base or 1.0
     vols = {validate_code(k): float(v) for k, v in (vols or {}).items()}
@@ -61,13 +70,23 @@ def fx_risk_report(book, *, vols: dict | None = None, confidence: float = 0.99,
     for ccy, e in exp.by_currency.items():
         vol = vols.get(ccy, 0.0)
         var_sq += (e.net_base * vol) ** 2
-        by[ccy] = {"exposure_base": e.net_base, "share": e.net_base / tv, "vol": vol,
-                   "contribution": abs(e.net_base) * vol, "var": z * abs(e.net_base) * vol}
-    fx_var = z * (var_sq ** 0.5)             # diagonal (independent-currency) VaR
+        by[ccy] = {
+            "exposure_base": e.net_base,
+            "share": e.net_base / tv,
+            "vol": vol,
+            "contribution": abs(e.net_base) * vol,
+            "var": z * abs(e.net_base) * vol,
+        }
+    fx_var = z * (var_sq**0.5)  # diagonal (independent-currency) VaR
     violations = check_fx_limits(book, limits, as_of=as_of) if limits else []
-    return FXRiskReport(base_currency=book.base_currency, by_currency=by, fx_var=fx_var,
-                        largest_currency=exp.largest_currency, concentration=exp.largest_share,
-                        violations=violations)
+    return FXRiskReport(
+        base_currency=book.base_currency,
+        by_currency=by,
+        fx_var=fx_var,
+        largest_currency=exp.largest_currency,
+        concentration=exp.largest_share,
+        violations=violations,
+    )
 
 
 # ── deterministic currency stress ─────────────────────────────────────────────
@@ -93,8 +112,9 @@ def _effective_shock(scenario: FXStressScenario, ccy: str, base: str) -> float:
     return shocks.get(ccy, 0.0) - shocks.get(base, 0.0)
 
 
-def apply_fx_stress(book, scenario: FXStressScenario, *, as_of: date | None = None,
-                    prices: dict | None = None) -> FXStressResult:
+def apply_fx_stress(
+    book, scenario: FXStressScenario, *, as_of: date | None = None, prices: dict | None = None
+) -> FXStressResult:
     val = valuation(book, as_of=as_of, prices=prices)
     base_val = val.total_base
     stressed = 0.0
@@ -104,13 +124,18 @@ def apply_fx_stress(book, scenario: FXStressScenario, *, as_of: date | None = No
         new_base = cv.total_base * (1 + shock)
         by[ccy] = new_base - cv.total_base
         stressed += new_base
-    return FXStressResult(scenario=scenario.name, base_value=base_val, stressed_base_value=stressed,
-                          pnl_base=stressed - base_val,
-                          pnl_fraction=(stressed - base_val) / base_val if base_val else 0.0,
-                          by_currency=by)
+    return FXStressResult(
+        scenario=scenario.name,
+        base_value=base_val,
+        stressed_base_value=stressed,
+        pnl_base=stressed - base_val,
+        pnl_fraction=(stressed - base_val) / base_val if base_val else 0.0,
+        by_currency=by,
+    )
 
 
-def stress_test(book, *, scenarios=None, as_of: date | None = None,
-                prices: dict | None = None) -> list:
+def stress_test(
+    book, *, scenarios=None, as_of: date | None = None, prices: dict | None = None
+) -> list:
     scen = scenarios if scenarios is not None else list(CURRENCY_SCENARIOS.values())
     return [apply_fx_stress(book, s, as_of=as_of, prices=prices) for s in scen]

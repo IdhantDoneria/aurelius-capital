@@ -16,9 +16,9 @@ def risk_diagnostics(weights, cov, mu=None) -> dict:
     port_var = float(w @ cov @ w)
     port_vol = float(np.sqrt(max(port_var, 0.0)))
 
-    marginal = cov @ w                                   # ∂σ²/∂w (unscaled)
+    marginal = cov @ w  # ∂σ²/∂w (unscaled)
     marginal_risk = marginal / port_vol if port_vol > 0 else np.zeros_like(w)  # ∂σ/∂w
-    risk_contribution = w * marginal_risk                # RC_i, Σ RC = σ
+    risk_contribution = w * marginal_risk  # RC_i, Σ RC = σ
     pct_risk = (risk_contribution / port_vol) if port_vol > 0 else np.zeros_like(w)
 
     gross = np.abs(w).sum() or 1.0
@@ -60,14 +60,16 @@ def diagonal_risk_diagnostics(weights, var, mu=None) -> dict:
     shares = np.abs(w) / gross
     herf = float((shares**2).sum())
     out = {
-        "volatility": vol, "variance": port_var,
+        "volatility": vol,
+        "variance": port_var,
         "effective_holdings": float(1.0 / herf) if herf > 0 else 0.0,
         "concentration_herfindahl": herf,
         "max_weight": float(np.abs(w).max()) if w.size else 0.0,
-        "risk_contribution": rc.tolist(), "pct_risk_contribution": pct.tolist(),
+        "risk_contribution": rc.tolist(),
+        "pct_risk_contribution": pct.tolist(),
         "marginal_risk_contribution": marginal.tolist(),
         "max_risk_contribution": float(np.abs(rc).max()) if w.size else 0.0,
-        "avg_correlation": 0.0,             # diagonal model ⇒ zero cross-correlation
+        "avg_correlation": 0.0,  # diagonal model ⇒ zero cross-correlation
     }
     if mu is not None:
         mu = np.asarray(mu, dtype=float)

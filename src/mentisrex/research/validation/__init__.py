@@ -15,11 +15,9 @@ from mentisrex.research.validation.hac import (
     hac_significance,
     hac_standard_error,
 )
-from mentisrex.research.validation.quality import check
-from mentisrex.research.validation.report import ValidationReport
 
 # ── backward-compatible re-exports of the former research/validation.py module ──
-from mentisrex.research.validation.legacy import (  # noqa: E402
+from mentisrex.research.validation.legacy import (
     evaluate,
     parameter_sensitivity,
     rolling_validation,
@@ -28,11 +26,24 @@ from mentisrex.research.validation.legacy import (  # noqa: E402
     train_test,
     walk_forward,
 )
+from mentisrex.research.validation.quality import check
+from mentisrex.research.validation.report import ValidationReport
 
 __all__ = [
-    "ResearchValidator", "ValidationConfig", "ValidationReport", "check",
-    "hac_standard_error", "hac_significance", "purged_kfold", "walk_forward_purged",
+    "ResearchValidator",
+    "ValidationConfig",
+    "ValidationReport",
+    "check",
     # legacy
-    "evaluate", "parameter_sensitivity", "rolling_validation", "run_backtest",
-    "select_features", "train_test", "walk_forward",
+    "evaluate",
+    "hac_significance",
+    "hac_standard_error",
+    "parameter_sensitivity",
+    "purged_kfold",
+    "rolling_validation",
+    "run_backtest",
+    "select_features",
+    "train_test",
+    "walk_forward",
+    "walk_forward_purged",
 ]

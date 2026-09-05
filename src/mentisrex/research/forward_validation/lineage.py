@@ -21,6 +21,7 @@ from mentisrex.research.forward_validation.models import (
 @dataclass(frozen=True)
 class LineageChain:
     """Immutable lineage record linking research to forward evidence."""
+
     research_artifact_id: str
     validation_artifact_id: str
     strategy_id: str
@@ -33,12 +34,13 @@ class LineageChain:
 
     def to_dict(self) -> dict:
         import dataclasses
+
         return dataclasses.asdict(self)
 
 
 def build_lineage(
-    spec,                          # M22 StrategySpecification
-    forward_record,                # M23 ForwardPerformanceRecord
+    spec,  # M22 StrategySpecification
+    forward_record,  # M23 ForwardPerformanceRecord
     validation_report: dict | None,
     *,
     deployment_manifest_fingerprint: str = "",
@@ -54,8 +56,7 @@ def build_lineage(
     strategy_id = getattr(spec, "strategy_id", "")
     strategy_version = getattr(spec, "version", "")
     strategy_fingerprint = (
-        getattr(spec, "configuration_fingerprint", "")
-        or getattr(spec, "fingerprint", lambda: "")()
+        getattr(spec, "configuration_fingerprint", "") or getattr(spec, "fingerprint", lambda: "")()
     )
     research_artifact_id = getattr(spec, "research_artifact_id", "") or ""
     validation_artifact_id = getattr(spec, "validation_artifact_id", "") or ""
@@ -66,59 +67,73 @@ def build_lineage(
     fr_fp = getattr(forward_record, "strategy_fingerprint", "")
 
     if fr_sid and fr_sid != strategy_id:
-        records.append(make_diagnostic(
-            "lineage.strategy_id_mismatch",
-            DiscrepancyCategory.IMPLEMENTATION_DIVERGENCE,
-            DiagnosticSeverity.CRITICAL,
-            "strategy_id",
-            sample_size=0,
-            method="equality_check",
-            evidence=(f"spec.strategy_id={strategy_id!r} "
-                      f"forward_record.strategy_id={fr_sid!r}"),
-            status=ValidationStatus.INVALID,
-        ))
+        records.append(
+            make_diagnostic(
+                "lineage.strategy_id_mismatch",
+                DiscrepancyCategory.IMPLEMENTATION_DIVERGENCE,
+                DiagnosticSeverity.CRITICAL,
+                "strategy_id",
+                sample_size=0,
+                method="equality_check",
+                evidence=(
+                    f"spec.strategy_id={strategy_id!r} forward_record.strategy_id={fr_sid!r}"
+                ),
+                status=ValidationStatus.INVALID,
+            )
+        )
 
     if fr_ver and fr_ver != strategy_version:
-        records.append(make_diagnostic(
-            "lineage.version_mismatch",
-            DiscrepancyCategory.IMPLEMENTATION_DIVERGENCE,
-            DiagnosticSeverity.ERROR,
-            "strategy_version",
-            sample_size=0,
-            method="equality_check",
-            evidence=(f"spec.version={strategy_version!r} "
-                      f"forward_record.strategy_version={fr_ver!r}"),
-            status=ValidationStatus.FAILED,
-        ))
+        records.append(
+            make_diagnostic(
+                "lineage.version_mismatch",
+                DiscrepancyCategory.IMPLEMENTATION_DIVERGENCE,
+                DiagnosticSeverity.ERROR,
+                "strategy_version",
+                sample_size=0,
+                method="equality_check",
+                evidence=(
+                    f"spec.version={strategy_version!r} forward_record.strategy_version={fr_ver!r}"
+                ),
+                status=ValidationStatus.FAILED,
+            )
+        )
 
     if fr_fp and strategy_fingerprint and fr_fp != strategy_fingerprint:
-        records.append(make_diagnostic(
-            "lineage.fingerprint_mismatch",
-            DiscrepancyCategory.IMPLEMENTATION_DIVERGENCE,
-            DiagnosticSeverity.ERROR,
-            "strategy_fingerprint",
-            sample_size=0,
-            method="fingerprint_comparison",
-            evidence=(f"spec fingerprint={strategy_fingerprint[:16]!r} "
-                      f"forward_record fingerprint={fr_fp[:16]!r}"),
-            status=ValidationStatus.FAILED,
-        ))
+        records.append(
+            make_diagnostic(
+                "lineage.fingerprint_mismatch",
+                DiscrepancyCategory.IMPLEMENTATION_DIVERGENCE,
+                DiagnosticSeverity.ERROR,
+                "strategy_fingerprint",
+                sample_size=0,
+                method="fingerprint_comparison",
+                evidence=(
+                    f"spec fingerprint={strategy_fingerprint[:16]!r} "
+                    f"forward_record fingerprint={fr_fp[:16]!r}"
+                ),
+                status=ValidationStatus.FAILED,
+            )
+        )
 
     # validation report linkage check
     if validation_report and validation_artifact_id:
         vr_hash = validation_report.get("manifest_hash", "")
         if vr_hash and vr_hash != validation_artifact_id:
-            records.append(make_diagnostic(
-                "lineage.validation_artifact_mismatch",
-                DiscrepancyCategory.IMPLEMENTATION_DIVERGENCE,
-                DiagnosticSeverity.WARNING,
-                "validation_artifact_id",
-                sample_size=0,
-                method="fingerprint_comparison",
-                evidence=(f"spec.validation_artifact_id={validation_artifact_id[:16]!r} "
-                          f"validation_report.manifest_hash={vr_hash[:16]!r}"),
-                status=ValidationStatus.WARNING,
-            ))
+            records.append(
+                make_diagnostic(
+                    "lineage.validation_artifact_mismatch",
+                    DiscrepancyCategory.IMPLEMENTATION_DIVERGENCE,
+                    DiagnosticSeverity.WARNING,
+                    "validation_artifact_id",
+                    sample_size=0,
+                    method="fingerprint_comparison",
+                    evidence=(
+                        f"spec.validation_artifact_id={validation_artifact_id[:16]!r} "
+                        f"validation_report.manifest_hash={vr_hash[:16]!r}"
+                    ),
+                    status=ValidationStatus.WARNING,
+                )
+            )
 
     # forward_record fingerprint
     cycles = getattr(forward_record, "cycles", [])

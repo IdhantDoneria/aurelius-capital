@@ -21,10 +21,10 @@ from datetime import date
 from pathlib import Path
 
 from mentisrex.research.simulation.models import Holding
-from mentisrex.research.simulation.state import CashLedger, PortfolioState
-
+from mentisrex.research.simulation.state import PortfolioState
 
 # ── serialization helpers ─────────────────────────────────────────────────────
+
 
 def _ser_portfolio(state: PortfolioState) -> dict:
     return {
@@ -51,8 +51,12 @@ def _deser_portfolio(d: dict) -> PortfolioState:
     target_cash = d["cash"]
     if abs(target_cash - state.ledger.initial) > 1e-12:
         state.ledger.entries = [
-            {"date": None, "kind": "checkpoint_restore",
-             "amount": target_cash - state.ledger.initial, "security_id": None}
+            {
+                "date": None,
+                "kind": "checkpoint_restore",
+                "amount": target_cash - state.ledger.initial,
+                "security_id": None,
+            }
         ]
         state.ledger.cash = target_cash
     state.realized_pnl_total = d.get("realized_pnl_total", 0.0)
@@ -94,91 +98,85 @@ def _deser_broker_into(broker, d: dict) -> None:
 
 # ── cycle records ─────────────────────────────────────────────────────────────
 
+
 def _ser_cycle_records(records: list) -> list:
     return [r.to_dict() for r in records]
 
 
 def _deser_cycle_records(data: list) -> list:
     from mentisrex.research.paper_trading.cycle import CycleRecord
+
     return [CycleRecord.from_dict(d) for d in data]
 
 
 # ── sync events ───────────────────────────────────────────────────────────────
 
+
 def _ser_sync_events(events: list) -> list:
     return [
-        {"seq": e.seq, "date": e.date.isoformat() if e.date else None,
-         "n_orders": e.n_orders, "n_fills": e.n_fills,
-         "reconciled": e.reconciled, "n_drift_alerts": e.n_drift_alerts,
-         "note": e.note}
+        {
+            "seq": e.seq,
+            "date": e.date.isoformat() if e.date else None,
+            "n_orders": e.n_orders,
+            "n_fills": e.n_fills,
+            "reconciled": e.reconciled,
+            "n_drift_alerts": e.n_drift_alerts,
+            "note": e.note,
+        }
         for e in events
     ]
 
 
 def _deser_sync_events(data: list) -> list:
     from mentisrex.research.paper_trading.models import SyncEvent
+
     events = []
     for d in data:
         dt = d.get("date")
-        events.append(SyncEvent(
-            seq=d["seq"],
-            date=date.fromisoformat(dt) if dt else None,
-            n_orders=d["n_orders"],
-            n_fills=d["n_fills"],
-            reconciled=d["reconciled"],
-            n_drift_alerts=d["n_drift_alerts"],
-            note=d.get("note", ""),
-        ))
+        events.append(
+            SyncEvent(
+                seq=d["seq"],
+                date=date.fromisoformat(dt) if dt else None,
+                n_orders=d["n_orders"],
+                n_fills=d["n_fills"],
+                reconciled=d["reconciled"],
+                n_drift_alerts=d["n_drift_alerts"],
+                note=d.get("note", ""),
+            )
+        )
     return events
 
 
 # ── public API ────────────────────────────────────────────────────────────────
 
+
 def _checkpoint_dict(loop) -> dict:
     """Produce a serializable dict from all loop state."""
-    from mentisrex.research.paper_trading.runtime_state import StrategyRuntimeState
     return {
         "cycle_seq": loop._cycle_seq,
         "seen_snapshots": sorted(loop._seen),
-        "strategy_states": {
-            sid: rs.to_dict()
-            for sid, rs in loop._runtime_states.items()
-        },
+        "strategy_states": {sid: rs.to_dict() for sid, rs in loop._runtime_states.items()},
         "portfolio_states": {
-            sid: _ser_portfolio(sess.book.state)
-            for sid, sess in loop._sessions.items()
+            sid: _ser_portfolio(sess.book.state) for sid, sess in loop._sessions.items()
         },
-        "broker_states": {
-            sid: _ser_broker(sess.broker)
-            for sid, sess in loop._sessions.items()
-        },
-        "session_seqs": {
-            sid: sess._seq
-            for sid, sess in loop._sessions.items()
-        },
+        "broker_states": {sid: _ser_broker(sess.broker) for sid, sess in loop._sessions.items()},
+        "session_seqs": {sid: sess._seq for sid, sess in loop._sessions.items()},
         "session_last_dates": {
             sid: sess._last_date.isoformat() if sess._last_date else None
             for sid, sess in loop._sessions.items()
         },
-        "session_total_costs": {
-            sid: sess.total_cost
-            for sid, sess in loop._sessions.items()
-        },
+        "session_total_costs": {sid: sess.total_cost for sid, sess in loop._sessions.items()},
         "session_sync_events": {
-            sid: _ser_sync_events(sess.sync_events)
-            for sid, sess in loop._sessions.items()
+            sid: _ser_sync_events(sess.sync_events) for sid, sess in loop._sessions.items()
         },
         "book_applied_fill_ids": {
-            sid: sorted(sess.book._applied_fill_ids)
-            for sid, sess in loop._sessions.items()
+            sid: sorted(sess.book._applied_fill_ids) for sid, sess in loop._sessions.items()
         },
         "session_applied_fill_ids": {
-            sid: list(sess._applied_fill_ids)
-            for sid, sess in loop._sessions.items()
+            sid: list(sess._applied_fill_ids) for sid, sess in loop._sessions.items()
         },
         "session_broker_fill_ids": {
-            sid: list(sess._broker_fill_ids)
-            for sid, sess in loop._sessions.items()
+            sid: list(sess._broker_fill_ids) for sid, sess in loop._sessions.items()
         },
         "cycle_records": _ser_cycle_records(loop._cycle_records),
     }
@@ -246,9 +244,7 @@ def _restore_checkpoint(loop, data: dict) -> None:
 def save_checkpoint(path: str, loop) -> None:
     """Save full loop checkpoint to a JSON file."""
     data = _checkpoint_dict(loop)
-    Path(path).write_text(
-        json.dumps(data, indent=2, sort_keys=True, default=str)
-    )
+    Path(path).write_text(json.dumps(data, indent=2, sort_keys=True, default=str))
 
 
 def load_checkpoint(path: str) -> dict:

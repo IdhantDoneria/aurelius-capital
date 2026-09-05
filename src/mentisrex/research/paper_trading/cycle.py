@@ -12,13 +12,13 @@ from __future__ import annotations
 
 import statistics
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
-from typing import Any
+from datetime import UTC, date, datetime
 
 
 @dataclass(frozen=True)
 class CycleRecord:
     """Immutable record of one evaluation/execution cycle for one strategy."""
+
     cycle_id: str
     strategy_id: str
     strategy_version: str
@@ -43,7 +43,7 @@ class CycleRecord:
     risk_decision: str = ""
     n_signals: int = 0
 
-    recorded_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    recorded_at: datetime = field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
 
     def to_dict(self) -> dict:
         return {
@@ -91,7 +91,9 @@ class CycleRecord:
             risk_approved=d["risk_approved"],
             risk_decision=d.get("risk_decision", ""),
             n_signals=d.get("n_signals", 0),
-            recorded_at=datetime.fromisoformat(d["recorded_at"]) if d.get("recorded_at") else datetime.now(timezone.utc).replace(tzinfo=None),
+            recorded_at=datetime.fromisoformat(d["recorded_at"])
+            if d.get("recorded_at")
+            else datetime.now(UTC).replace(tzinfo=None),
         )
 
 
@@ -116,6 +118,7 @@ class PerformanceMetrics:
 @dataclass(frozen=True)
 class PaperBacktestComparison:
     """Comparison of research/backtest assumptions vs paper-trading realized results."""
+
     strategy_id: str
     strategy_version: str
 
@@ -146,11 +149,9 @@ class ForwardPerformanceRecord:
     Immutable once built from cycles. Methods compute derived metrics.
     """
 
-    def __init__(self,
-                 strategy_id: str,
-                 strategy_version: str,
-                 strategy_fingerprint: str,
-                 cycles: list) -> None:
+    def __init__(
+        self, strategy_id: str, strategy_version: str, strategy_fingerprint: str, cycles: list
+    ) -> None:
         self.strategy_id = strategy_id
         self.strategy_version = strategy_version
         self.strategy_fingerprint = strategy_fingerprint
@@ -162,12 +163,15 @@ class ForwardPerformanceRecord:
 
     def fingerprint(self) -> str:
         from mentisrex.research.strategy_deployment.models import _fp
-        return _fp({
-            "strategy_id": self.strategy_id,
-            "strategy_version": self.strategy_version,
-            "n_cycles": len(self.cycles),
-            "cycle_ids": [c.cycle_id for c in self.cycles],
-        })
+
+        return _fp(
+            {
+                "strategy_id": self.strategy_id,
+                "strategy_version": self.strategy_version,
+                "n_cycles": len(self.cycles),
+                "cycle_ids": [c.cycle_id for c in self.cycles],
+            }
+        )
 
     def nav_series(self) -> list[tuple[date, float]]:
         return [(r.as_of, r.nav) for r in self.cycles]
@@ -176,9 +180,9 @@ class ForwardPerformanceRecord:
         navs = [r.nav for r in self.cycles]
         if len(navs) < 2:
             return []
-        return [(navs[i] - navs[i - 1]) / navs[i - 1]
-                for i in range(1, len(navs))
-                if navs[i - 1] > 0]
+        return [
+            (navs[i] - navs[i - 1]) / navs[i - 1] for i in range(1, len(navs)) if navs[i - 1] > 0
+        ]
 
     def total_return(self) -> float:
         if len(self.cycles) < 2:
@@ -205,14 +209,14 @@ class ForwardPerformanceRecord:
             return 0.0
         mu = statistics.mean(rets)
         sd = statistics.stdev(rets)
-        return (mu / sd * (periods_per_year ** 0.5)) if sd > 0 else 0.0
+        return (mu / sd * (periods_per_year**0.5)) if sd > 0 else 0.0
 
     def volatility(self, periods_per_year: int = 252) -> float:
         rets = self.daily_returns()
         if len(rets) < 2:
             return 0.0
         sd = statistics.stdev(rets)
-        return sd * (periods_per_year ** 0.5)
+        return sd * (periods_per_year**0.5)
 
     def metrics(self, periods_per_year: int = 252) -> PerformanceMetrics:
         rets = self.daily_returns()
@@ -226,9 +230,9 @@ class ForwardPerformanceRecord:
         total_sigs = sum(r.n_signals for r in self.cycles)
 
         avg_ret = statistics.mean(rets) if rets else 0.0
-        vol = (statistics.stdev(rets) * (periods_per_year ** 0.5)) if len(rets) >= 2 else 0.0
+        vol = (statistics.stdev(rets) * (periods_per_year**0.5)) if len(rets) >= 2 else 0.0
         sd = statistics.stdev(rets) if len(rets) >= 2 else 0.0
-        sharpe = (avg_ret / sd * (periods_per_year ** 0.5)) if sd > 0 else 0.0
+        sharpe = (avg_ret / sd * (periods_per_year**0.5)) if sd > 0 else 0.0
 
         return PerformanceMetrics(
             n_cycles=n,
@@ -260,5 +264,7 @@ class ForwardPerformanceRecord:
             risk_approval_rate=m.risk_approval_rate,
             avg_n_signals=(m.total_n_signals / m.n_cycles if m.n_cycles > 0 else 0.0),
             max_drawdown=m.max_drawdown,
-            notes=["paper trading using M21 open/free data — not equivalent to institutional feeds"],
+            notes=[
+                "paper trading using M21 open/free data — not equivalent to institutional feeds"
+            ],
         )

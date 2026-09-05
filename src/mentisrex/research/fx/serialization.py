@@ -28,10 +28,15 @@ def to_dict(book, *, as_of=None) -> dict:
         "realized_fx_pnl": round(book.realized_fx_pnl, 6),
         "conversions": [conversion_to_dict(c) for c in book.conversions],
         "hedges": [_clean(h) for h in book.hedges],
-        "books": {c: {"n_events": len(e.log), "cash": e.accounting.cash,
-                      "value": e.accounting.value(),
-                      "n_positions": len(e.accounting.state.holdings)}
-                  for c, e in sorted(book.books.items())},
+        "books": {
+            c: {
+                "n_events": len(e.log),
+                "cash": e.accounting.cash,
+                "value": e.accounting.value(),
+                "n_positions": len(e.accounting.state.holdings),
+            }
+            for c, e in sorted(book.books.items())
+        },
         "value": _clean(valuation(book, as_of=as_of)),
         "cash": _clean(multi_currency_cash(book, as_of=as_of)),
         "diagnostics": _diagnostics(book, as_of=as_of),

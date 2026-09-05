@@ -17,14 +17,21 @@ _FREQ_DAYS = {"daily": 1, "weekly": 7, "monthly": 30, "quarterly": 91}
 
 @dataclass(frozen=True)
 class RebalanceRule:
-    mode: str = "calendar"                 # calendar | threshold | volatility | hybrid
+    mode: str = "calendar"  # calendar | threshold | volatility | hybrid
     frequency: str = "monthly"
-    drift_threshold: float = 0.05          # max |w - target| before a threshold rebalance
-    vol_change_threshold: float = 0.25     # relative risk change trigger
+    drift_threshold: float = 0.05  # max |w - target| before a threshold rebalance
+    vol_change_threshold: float = 0.25  # relative risk change trigger
 
-    def should_rebalance(self, *, current=None, target=None, last_rebalance: date | None = None,
-                         as_of: date | None = None, prev_risk: float | None = None,
-                         current_risk: float | None = None) -> bool:
+    def should_rebalance(
+        self,
+        *,
+        current=None,
+        target=None,
+        last_rebalance: date | None = None,
+        as_of: date | None = None,
+        prev_risk: float | None = None,
+        current_risk: float | None = None,
+    ) -> bool:
         cal = self._calendar_due(last_rebalance, as_of)
         thr = self._drift_exceeded(current, target)
         vol = self._vol_triggered(prev_risk, current_risk)
@@ -35,7 +42,7 @@ class RebalanceRule:
         if self.mode == "volatility":
             return vol
         if self.mode == "hybrid":
-            return cal or thr               # calendar cadence OR a big drift
+            return cal or thr  # calendar cadence OR a big drift
         return cal
 
     def _calendar_due(self, last, as_of) -> bool:

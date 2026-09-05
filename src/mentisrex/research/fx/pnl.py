@@ -35,9 +35,15 @@ def fx_pnl(book, snap0: dict, snap1: dict, *, tol: float = 1e-6) -> FXPnLReport:
         v1, r1 = s1 if s1 else (0.0, s0[1] if s0 else 1.0)
         dv, dr = v1 - v0, r1 - r0
         local, fxp, inter = r0 * dv, v0 * dr, dv * dr
-        by[ccy] = FXPnL(currency=ccy, local_pnl_base=local, fx_pnl_base=fxp,
-                        interaction_base=inter, total_base=local + fxp + inter,
-                        realized_fx_base=0.0, unrealized_fx_base=fxp)
+        by[ccy] = FXPnL(
+            currency=ccy,
+            local_pnl_base=local,
+            fx_pnl_base=fxp,
+            interaction_base=inter,
+            total_base=local + fxp + inter,
+            realized_fx_base=0.0,
+            unrealized_fx_base=fxp,
+        )
         local_t += local
         fx_t += fxp
         inter_t += inter
@@ -47,6 +53,13 @@ def fx_pnl(book, snap0: dict, snap1: dict, *, tol: float = 1e-6) -> FXPnLReport:
     base1 = sum(v * r for v, r in snap1.values())
     reconciles = abs(total - (base1 - base0)) <= max(tol, abs(base1) * 1e-9)
     return FXPnLReport(
-        base_currency=book.base_currency, by_currency=by, local_pnl=local_t, fx_pnl=fx_t,
-        interaction=inter_t, total_pnl=total, realized_fx=book.realized_fx_pnl,
-        unrealized_fx=fx_t, reconciles=reconciles)
+        base_currency=book.base_currency,
+        by_currency=by,
+        local_pnl=local_t,
+        fx_pnl=fx_t,
+        interaction=inter_t,
+        total_pnl=total,
+        realized_fx=book.realized_fx_pnl,
+        unrealized_fx=fx_t,
+        reconciles=reconciles,
+    )

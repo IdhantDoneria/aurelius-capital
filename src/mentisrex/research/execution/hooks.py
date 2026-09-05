@@ -11,10 +11,14 @@ from __future__ import annotations
 from collections.abc import Callable
 
 HOOK_POINTS = (
-    "before_validation", "after_validation",
-    "before_matrix", "after_matrix",
-    "before_backtest", "after_backtest",
-    "before_metrics", "after_metrics",
+    "before_validation",
+    "after_validation",
+    "before_matrix",
+    "after_matrix",
+    "before_backtest",
+    "after_backtest",
+    "before_metrics",
+    "after_metrics",
     "before_registry_close",
 )
 

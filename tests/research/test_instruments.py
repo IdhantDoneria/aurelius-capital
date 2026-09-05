@@ -19,17 +19,39 @@ from mentisrex.research.instruments import (
     collateral,
     contracts,
     diagnostics,
-    exercise as ex,
-    expiry as exp,
-    fixed_income as fi,
-    instrument as econ,
-    margin as mg,
-    reconciliation as recon,
-    risk as rk,
-    serialization as ser,
-    settlement as stl,
     swaps,
+)
+from mentisrex.research.instruments import (
+    exercise as ex,
+)
+from mentisrex.research.instruments import (
+    expiry as exp,
+)
+from mentisrex.research.instruments import (
+    fixed_income as fi,
+)
+from mentisrex.research.instruments import (
+    instrument as econ,
+)
+from mentisrex.research.instruments import (
+    margin as mg,
+)
+from mentisrex.research.instruments import (
+    reconciliation as recon,
+)
+from mentisrex.research.instruments import (
+    risk as rk,
+)
+from mentisrex.research.instruments import (
+    serialization as ser,
+)
+from mentisrex.research.instruments import (
+    settlement as stl,
+)
+from mentisrex.research.instruments import (
     validation as val,
+)
+from mentisrex.research.instruments import (
     valuation as vln,
 )
 from mentisrex.research.instruments.models import (
@@ -62,6 +84,7 @@ def es_future(**kw):
 
 # ─────────────────────────── instrument model ──────────────────────────────
 
+
 def test_equity_factory_type():
     assert ins.equity("AAPL").type is InstrumentType.EQUITY
 
@@ -88,7 +111,10 @@ def test_future_is_margined():
 
 
 def test_option_is_principal():
-    assert ins.call("C", underlying="U", strike=100, expiry=OE).cash_convention is CashConvention.PRINCIPAL
+    assert (
+        ins.call("C", underlying="U", strike=100, expiry=OE).cash_convention
+        is CashConvention.PRINCIPAL
+    )
 
 
 def test_bond_contract_size_face_scaled():
@@ -113,6 +139,7 @@ def test_put_right():
 
 
 # ─────────────────────────── registry ──────────────────────────────────────
+
 
 def test_registry_register_and_get():
     r = ins.InstrumentRegistry()
@@ -161,6 +188,7 @@ def test_registry_contains():
 
 # ─────────────────── equity backward compatibility ─────────────────────────
 
+
 def test_equity_cash_matches_manual():
     b = book()
     b.book_trade(ins.equity("AAPL"), 100, 150.0)
@@ -183,7 +211,7 @@ def test_equity_position_in_m11_state_not_overlay():
     b = book()
     b.book_trade(ins.equity("AAPL"), 100, 150.0)
     assert "AAPL" in b.engine.accounting.state.holdings
-    assert b.snapshot("AAPL") is None       # equities are not in the derivative overlay
+    assert b.snapshot("AAPL") is None  # equities are not in the derivative overlay
 
 
 def test_equity_mark_updates_m11_unrealized():
@@ -207,6 +235,7 @@ def test_equity_only_book_is_valid():
 
 
 # ─────────────────────────── futures ───────────────────────────────────────
+
 
 def test_future_no_cash_at_trade_except_margin():
     b = book()
@@ -267,7 +296,8 @@ def test_future_roll_pair():
     front = ins.future("ESH", contract_size=50, expiry=date(2026, 3, 20))
     back = ins.future("ESM", contract_size=50, expiry=date(2026, 6, 19))
     close_f, open_b = ins.roll(front, back, 2, front_price=4000.0, back_price=4010.0)
-    assert close_f["quantity"] == -2 and open_b["quantity"] == 2
+    assert close_f["quantity"] == -2
+    assert open_b["quantity"] == 2
 
 
 def test_future_margin_requirement_calc():
@@ -278,10 +308,11 @@ def test_future_margin_requirement_calc():
 
 # ─────────────────────────── options ───────────────────────────────────────
 
+
 def test_option_premium_paid_long():
     b = book()
     b.book_trade(ins.call("C", underlying="U", strike=150, expiry=OE), 1, 5.0)
-    assert b.cash == 1_000_000.0 - 500.0     # 1 * 5 * 100
+    assert b.cash == 1_000_000.0 - 500.0  # 1 * 5 * 100
 
 
 def test_option_premium_received_short():
@@ -292,6 +323,7 @@ def test_option_premium_received_short():
 
 def test_option_intrinsic_call():
     from mentisrex.research.instruments.options import intrinsic_value
+
     c = ins.call("C", underlying="U", strike=150, expiry=OE)
     assert intrinsic_value(c, 170.0) == 20.0
     assert intrinsic_value(c, 140.0) == 0.0
@@ -299,6 +331,7 @@ def test_option_intrinsic_call():
 
 def test_option_intrinsic_put():
     from mentisrex.research.instruments.options import intrinsic_value
+
     p = ins.put("P", underlying="U", strike=150, expiry=OE)
     assert intrinsic_value(p, 130.0) == 20.0
     assert intrinsic_value(p, 170.0) == 0.0
@@ -311,7 +344,7 @@ def test_option_exercise_itm_long():
     r = ex.exercise(b, c, 170.0)
     assert r.status is ExerciseStatus.EXERCISED
     assert r.cash == pytest.approx(2000.0)
-    assert b.realized_pnl() == pytest.approx(1500.0)   # (20-5)*100
+    assert b.realized_pnl() == pytest.approx(1500.0)  # (20-5)*100
 
 
 def test_option_assignment_itm_short():
@@ -329,7 +362,7 @@ def test_option_expire_otm_worthless():
     b.book_trade(c, 1, 5.0)
     r = ex.exercise(b, c, 140.0)
     assert r.status is ExerciseStatus.EXPIRED
-    assert b.realized_pnl() == pytest.approx(-500.0)   # lost the premium
+    assert b.realized_pnl() == pytest.approx(-500.0)  # lost the premium
     assert "C" in b._closed
 
 
@@ -344,8 +377,14 @@ def test_option_closed_cannot_trade():
 
 def test_option_physical_settlement_hands_off_underlying():
     b = book()
-    c = ins.option("C", underlying="AAPL", strike=150, expiry=OE, right="call",
-                   settlement_style=SettlementStyle.PHYSICAL)
+    c = ins.option(
+        "C",
+        underlying="AAPL",
+        strike=150,
+        expiry=OE,
+        right="call",
+        settlement_style=SettlementStyle.PHYSICAL,
+    )
     b.book_trade(c, 1, 5.0)
     r = ex.exercise(b, c, 170.0)
     assert r.underlying_fill["security_id"] == "AAPL"
@@ -359,6 +398,7 @@ def test_exercise_non_option_raises():
 
 
 # ─────────────────────────── expiry ────────────────────────────────────────
+
 
 def test_expiry_future_settles_and_closes():
     b = book()
@@ -396,6 +436,7 @@ def test_days_to_expiry():
 
 # ─────────────────────────── forwards ──────────────────────────────────────
 
+
 def test_forward_no_cash_at_trade():
     b = book()
     fwd = ins.forward("FWD", contract_size=1000, settlement_date=DE, forward_price=1.10)
@@ -412,13 +453,15 @@ def test_forward_mtm():
 
 
 def test_fx_forward_metadata():
-    fwd = ins.fx_forward("EURUSD", base="EUR", quote="USD", notional=1_000_000,
-                         forward_rate=1.10, settlement_date=DE)
+    fwd = ins.fx_forward(
+        "EURUSD", base="EUR", quote="USD", notional=1_000_000, forward_rate=1.10, settlement_date=DE
+    )
     assert fwd.metadata["pair"] == "EUR/USD"
     assert fwd.currency == "USD"
 
 
 # ─────────────────────────── swaps ─────────────────────────────────────────
+
 
 def test_irs_construction():
     s = ins.interest_rate_swap("IRS", notional=10_000_000, fixed_rate=0.03)
@@ -444,21 +487,23 @@ def test_swap_cash_flows_via_provider():
     class P:
         def cash_flows(self, inst):
             return [swaps.CashFlow(DE, 5000.0, "USD", "float")]
+
     assert swaps.cash_flows(s, P())[0].amount == 5000.0
 
 
 def test_swap_leg_pay_receive():
     s = ins.interest_rate_swap("IRS", notional=1_000_000, fixed_rate=0.03, pay_fixed=True)
-    fixed = [l for l in s.metadata["legs"] if l["kind"] == "fixed"][0]
+    fixed = next(l for l in s.metadata["legs"] if l["kind"] == "fixed")
     assert fixed["pay"] is True
 
 
 # ─────────────────────────── fixed income ──────────────────────────────────
 
+
 def test_bond_principal_cash():
     b = book()
     bd = fi.bond("UST", face=1000.0, coupon=0.04, maturity=DE)
-    b.book_trade(bd, 10, 99.0)              # 10 bonds, price 99 per 100, cs=10 -> 10*99*10=9900
+    b.book_trade(bd, 10, 99.0)  # 10 bonds, price 99 per 100, cs=10 -> 10*99*10=9900
     assert b.cash == pytest.approx(1_000_000.0 - 9900.0)
 
 
@@ -487,6 +532,7 @@ def test_bond_duration_via_provider():
 
 # ─────────────────── pricing / greeks / valuation ──────────────────────────
 
+
 def test_black_scholes_call_positive():
     p = ins.BlackScholesPricer()
     c = ins.call("C", underlying="U", strike=100, expiry=OE)
@@ -500,6 +546,7 @@ def test_black_scholes_put_call_parity():
     c = ins.call("C", underlying="U", strike=100, expiry=OE)
     pu = ins.put("P", underlying="U", strike=100, expiry=OE)
     import math
+
     lhs = p.price(c, m) - p.price(pu, m)
     rhs = m["spot"] - 100 * math.exp(-m["rate"] * m["t"])
     assert lhs == pytest.approx(rhs, abs=1e-6)
@@ -516,7 +563,8 @@ def test_greeks_call_delta_range():
     c = ins.call("C", underlying="U", strike=100, expiry=OE)
     g = p.greeks(c, {"spot": 100.0, "vol": 0.2, "rate": 0.01, "t": 0.25})
     assert 0.0 < g.delta < 1.0
-    assert g.gamma > 0 and g.vega > 0
+    assert g.gamma > 0
+    assert g.vega > 0
 
 
 def test_greeks_put_delta_negative():
@@ -552,17 +600,26 @@ def test_value_position_fx_conversion():
     class FX:
         def rate(self, a, b, **k):
             return 1.10
+
     e = ins.equity("EU", currency="EUR")
-    r = vln.value_position(e, 100, 90.0, {"mark": 90.0}, ins.DeterministicMockPricer(),
-                           base_currency="USD", fx_provider=FX())
+    r = vln.value_position(
+        e,
+        100,
+        90.0,
+        {"mark": 90.0},
+        ins.DeterministicMockPricer(),
+        base_currency="USD",
+        fx_provider=FX(),
+    )
     assert r.base_market_value == pytest.approx(100 * 90.0 * 1.10)
 
 
 def test_value_position_fx_missing_provider_raises():
     e = ins.equity("EU", currency="EUR")
     with pytest.raises(ValueError):
-        vln.value_position(e, 1, 1.0, {"mark": 1.0}, ins.DeterministicMockPricer(),
-                           base_currency="USD")
+        vln.value_position(
+            e, 1, 1.0, {"mark": 1.0}, ins.DeterministicMockPricer(), base_currency="USD"
+        )
 
 
 def test_econ_trade_cash_principal():
@@ -574,6 +631,7 @@ def test_econ_trade_cash_margined():
 
 
 # ─────────────────────────── margin / collateral ───────────────────────────
+
 
 def test_margin_call_breached():
     call = mg.check_call(es_future(), 2, 4000.0, posted=10_000.0)
@@ -611,6 +669,7 @@ def test_collateral_base_value_fx():
     class FX:
         def rate(self, a, b, **k):
             return 1.25
+
     c = collateral.post(cash=100.0, currency="GBP")
     assert collateral.base_value(c, "USD", FX()) == pytest.approx(125.0)
 
@@ -622,13 +681,15 @@ def test_collateral_base_value_same_ccy():
 
 # ─────────────────────────── risk integration ──────────────────────────────
 
+
 def test_risk_equity_only_pure_delta():
     b = book()
     b.book_trade(ins.equity("AAPL"), 100, 150.0)
     b.mark({"AAPL": 150.0})
     rep = rk.exposures(b, {"AAPL": 150.0})
     assert rep.delta == pytest.approx(15_000.0)
-    assert rep.gamma == 0.0 and rep.vega == 0.0
+    assert rep.gamma == 0.0
+    assert rep.vega == 0.0
 
 
 def test_risk_future_notional_and_margin():
@@ -643,9 +704,14 @@ def test_risk_option_greeks_from_provider():
     b = book()
     c = ins.call("C", underlying="U", strike=100, expiry=OE)
     b.book_trade(c, 10, 5.0)
-    rep = rk.exposures(b, {"C": 5.0}, greeks_provider=ins.BlackScholesPricer(),
-                       market={"C": {"spot": 100.0, "vol": 0.2, "rate": 0.01, "t": 0.25}})
-    assert rep.gamma > 0 and rep.vega > 0
+    rep = rk.exposures(
+        b,
+        {"C": 5.0},
+        greeks_provider=ins.BlackScholesPricer(),
+        market={"C": {"spot": 100.0, "vol": 0.2, "rate": 0.01, "t": 0.25}},
+    )
+    assert rep.gamma > 0
+    assert rep.vega > 0
 
 
 def test_risk_leverage():
@@ -673,6 +739,7 @@ def test_risk_bond_duration_exposure():
 
 # ─────────────────────────── settlement ────────────────────────────────────
 
+
 def test_settlement_option_cash():
     b = book()
     c = ins.call("C", underlying="U", strike=150, expiry=OE)
@@ -697,6 +764,7 @@ def test_settlement_cash_book_advances_m15():
 
 
 # ─────────────────────────── reconciliation ────────────────────────────────
+
 
 def test_recon_clean():
     b = book()
@@ -753,6 +821,7 @@ def test_recon_missing_exercise():
 
 # ─────────────────── serialization / determinism ───────────────────────────
 
+
 def build_full():
     b = book()
     b.book_trade(ins.equity("AAPL"), 100, 150.0, trade_date=D0)
@@ -784,7 +853,8 @@ def test_fingerprint_changes_with_position():
 def test_serialization_save(tmp_path):
     p = tmp_path / "book.json"
     ser.save_json(build_full(), str(p))
-    assert p.exists() and p.read_text().startswith("{")
+    assert p.exists()
+    assert p.read_text().startswith("{")
 
 
 def test_diagnostics_counts():
@@ -795,8 +865,10 @@ def test_diagnostics_counts():
 
 # ─────────────────────────── validation ────────────────────────────────────
 
+
 def test_validate_option_missing_strike():
     from mentisrex.research.instruments.models import Instrument
+
     # model allows an under-specified option; the validator is what flags it
     bad = Instrument("C", InstrumentType.OPTION, expiry=None, underlying=None, strike=None)
     problems = val.validate_instrument(bad)
@@ -816,6 +888,7 @@ def test_validate_future_margin_ordering():
 
 # ─────────────────────────── failure / edge cases ──────────────────────────
 
+
 def test_zero_quantity_rejected():
     b = book()
     with pytest.raises(ValueError):
@@ -831,7 +904,7 @@ def test_trade_unregistered_auto_registers():
 def test_mark_unknown_instrument_ignored():
     b = book()
     b.book_trade(es_future(), 1, 4000.0)
-    b.mark({"UNKNOWN": 1.0})     # no crash, no effect
+    b.mark({"UNKNOWN": 1.0})  # no crash, no effect
     assert b.snapshot("ES").quantity == 1
 
 
@@ -841,15 +914,16 @@ def test_close_flat_noop():
     b.book_trade(f, 1, 4000.0)
     b.mark({"ES": 4000.0})
     b.close(f, 4000.0)
-    b.close(f, 4000.0)          # already flat
+    b.close(f, 4000.0)  # already flat
     assert b.snapshot("ES").quantity == 0
 
 
 def test_position_flip_through_zero():
     from mentisrex.research.instruments.positions import DerivativePosition
+
     p = DerivativePosition(es_future())
     p.apply(2, 4000.0)
-    p.apply(-3, 4010.0)         # close 2, open -1
+    p.apply(-3, 4010.0)  # close 2, open -1
     assert p.quantity == -1
     assert p.avg_price == pytest.approx(4010.0)
     assert p.realized_pnl == pytest.approx((4010.0 - 4000.0) * 2 * 50)
@@ -883,6 +957,7 @@ def test_events_appended():
 
 def test_creation_event_emitted():
     from mentisrex.research.instruments.models import InstrumentEventType
+
     b = book()
     b.register(es_future())
     assert b.events.of_type(type(b.events.events[0]))
@@ -914,7 +989,8 @@ def test_collateral_lifts_risk_equity_value():
 
 def test_mock_greeks_itm_call_delta_one():
     g = ins.DeterministicMockPricer().greeks(
-        ins.call("C", underlying="U", strike=100, expiry=OE), {"spot": 120.0})
+        ins.call("C", underlying="U", strike=100, expiry=OE), {"spot": 120.0}
+    )
     assert g.delta == 1.0
 
 

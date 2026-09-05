@@ -47,11 +47,11 @@ from mentisrex.research.market_data_ops.ordering import (
 
 @dataclass(frozen=True)
 class ReconstructionResult:
-    snapshot: object                     # M18 MarketDataSnapshot
+    snapshot: object  # M18 MarketDataSnapshot
     valuation_date: date
     knowledge_date: date
     fingerprint: str
-    winners: tuple = ()                  # the SourceMessages that became state
+    winners: tuple = ()  # the SourceMessages that became state
     revision_store: RevisionStore | None = None
     ordering_report: OrderingReport | None = None
     arbitration: ArbitrationResult | None = None
@@ -61,42 +61,63 @@ class ReconstructionResult:
         """Bitemporal audit lookup — the value knowable at this reconstruction's boundary."""
         if self.revision_store is None:
             return None
-        return self.revision_store.known_as_of(security_id, f"{obs_type}:{field}",
-                                               effective_date, self.knowledge_date)
+        return self.revision_store.known_as_of(
+            security_id, f"{obs_type}:{field}", effective_date, self.knowledge_date
+        )
 
 
 class HistoricalReconstructor:
     """Reconstructs a PIT `MarketDataSnapshot` from a message log. Ordering + arbitration policies
     and the M19 normalizer/quality engine are dependency-injected; nothing is assumed."""
 
-    def __init__(self, *, normalizer: Normalizer | None = None,
-                 quality: MarketDataQualityEngine | None = None,
-                 ordering: SequenceManager | None = None,
-                 arbiter: SourceArbiter | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        normalizer: Normalizer | None = None,
+        quality: MarketDataQualityEngine | None = None,
+        ordering: SequenceManager | None = None,
+        arbiter: SourceArbiter | None = None,
+    ) -> None:
         self.normalizer = normalizer or Normalizer()
         self.quality = quality or MarketDataQualityEngine()
         self.ordering = ordering or SequenceManager(OrderingPolicy.REORDER)
         self.arbiter = arbiter or SourceArbiter(ArbitrationConfig())
 
-    def reconstruct(self, messages, *, valuation_date: date, knowledge_date: date | None = None,
-                    curves=None, discount_curves=None, vol_surfaces=None, dividend_yields=None,
-                    forwards=None, fx_provider=None, corporate_actions=None,
-                    security_ids=None, fields=None,
-                    policy: PITPolicy | None = None) -> ReconstructionResult:
+    def reconstruct(
+        self,
+        messages,
+        *,
+        valuation_date: date,
+        knowledge_date: date | None = None,
+        curves=None,
+        discount_curves=None,
+        vol_surfaces=None,
+        dividend_yields=None,
+        forwards=None,
+        fx_provider=None,
+        corporate_actions=None,
+        security_ids=None,
+        fields=None,
+        policy: PITPolicy | None = None,
+    ) -> ReconstructionResult:
         knowledge_date = knowledge_date or valuation_date
 
         # 1. admissibility — the PIT gate. Nothing knowable after the boundary; nothing observed
         #    after the valuation date. This is what forbids look-ahead structurally.
-        admissible = [m for m in messages if _admissible(m, valuation_date, knowledge_date,
-                                                          security_ids, fields)]
+        admissible = [
+            m
+            for m in messages
+            if _admissible(m, valuation_date, knowledge_date, security_ids, fields)
+        ]
 
         # 2. deterministic ordering (dedup + canonical order)
         ordering_report = self.ordering.process(admissible)
         ordered = list(ordering_report.accepted)
 
         # 3. arbitration — one winner per (security, field, effective_date), per policy
-        arb = self.arbiter.arbitrate([m for m in ordered
-                                      if m.msg_type is not MessageType.TOMBSTONE])
+        arb = self.arbiter.arbitrate(
+            [m for m in ordered if m.msg_type is not MessageType.TOMBSTONE]
+        )
         winners = list(arb.winners)
 
         # tombstones remove any winner they cover
@@ -109,23 +130,42 @@ class HistoricalReconstructor:
         # 5. M19 pipeline → M18 snapshot (reuses normalize → quality → PIT → assemble)
         builder = MarketDataSnapshotBuilder(normalizer=self.normalizer, quality=self.quality)
         raw = [dict(w.payload) for w in winners]
-        build = builder.build(as_of=valuation_date, raw=raw, curves=curves,
-                              discount_curves=discount_curves, vol_surfaces=vol_surfaces,
-                              dividend_yields=dividend_yields, forwards=forwards,
-                              fx_provider=fx_provider, corporate_actions=corporate_actions,
-                              policy=policy)
+        build = builder.build(
+            as_of=valuation_date,
+            raw=raw,
+            curves=curves,
+            discount_curves=discount_curves,
+            vol_surfaces=vol_surfaces,
+            dividend_yields=dividend_yields,
+            forwards=forwards,
+            fx_provider=fx_provider,
+            corporate_actions=corporate_actions,
+            policy=policy,
+        )
 
-        fp = _reconstruction_fingerprint(valuation_date, knowledge_date, winners,
-                                         build.snapshot, arb.policy_fingerprint)
+        fp = _reconstruction_fingerprint(
+            valuation_date, knowledge_date, winners, build.snapshot, arb.policy_fingerprint
+        )
         diags = tuple(build.diagnostics)
-        return ReconstructionResult(build.snapshot, valuation_date, knowledge_date, fp,
-                                    tuple(winners), store, ordering_report, arb, diags)
+        return ReconstructionResult(
+            build.snapshot,
+            valuation_date,
+            knowledge_date,
+            fp,
+            tuple(winners),
+            store,
+            ordering_report,
+            arb,
+            diags,
+        )
 
     def _build_revision_store(self, messages) -> RevisionStore:
         store = RevisionStore()
         # feed in knowledge-date order so revision numbers are monotone in publication time
-        for m in sorted(messages, key=lambda x: (x.knowledge_date or date.min,
-                                                  -1 if x.sequence is None else x.sequence)):
+        for m in sorted(
+            messages,
+            key=lambda x: (x.knowledge_date or date.min, -1 if x.sequence is None else x.sequence),
+        ):
             sec, fld, eff = m.security_hint, m.field_hint, m.effective_date
             val = m.payload.get("value") if isinstance(m.payload, dict) else None
             if sec is None or fld is None or eff is None or val is None:
@@ -135,12 +175,19 @@ class HistoricalReconstructor:
             except (TypeError, ValueError):
                 continue
             otype = _obs_type_hint(m)
-            store.record(sec, f"{otype}:{fld}", eff, fval,
-                         knowledge_date=m.knowledge_date or eff, source=m.source)
+            store.record(
+                sec,
+                f"{otype}:{fld}",
+                eff,
+                fval,
+                knowledge_date=m.knowledge_date or eff,
+                source=m.source,
+            )
         return store
 
 
 # ── helpers ────────────────────────────────────────────────────────────────────
+
 
 def _admissible(m: SourceMessage, valuation_date, knowledge_date, security_ids, fields) -> bool:
     if m.msg_type in (MessageType.HEARTBEAT, MessageType.STATUS):

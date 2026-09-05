@@ -29,6 +29,8 @@ def expire(book, instrument, settle_price: float, *, when: date | None = None):
 
 def expiring_on(book, as_of: date) -> list:
     """Instrument ids with an open position expiring on/before `as_of`."""
-    return [iid for iid, p in book.positions.items()
-            if p.quantity != 0 and iid not in book._closed
-            and is_expired(book.registry.get(iid), as_of)]
+    return [
+        iid
+        for iid, p in book.positions.items()
+        if p.quantity != 0 and iid not in book._closed and is_expired(book.registry.get(iid), as_of)
+    ]

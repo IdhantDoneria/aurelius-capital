@@ -18,18 +18,26 @@ def cost_report(trades, *, initial_capital: float, n_years: float) -> CostReport
     total = sum(t.cost for t in trades)
     traded = sum(abs(t.notional) for t in trades) or 1.0
     return CostReport(
-        total_cost=total, linear_cost=total, impact_cost=0.0,
+        total_cost=total,
+        linear_cost=total,
+        impact_cost=0.0,
         cost_bps_of_traded=total / traded * 1e4,
-        cost_drag_annualized=total / initial_capital / max(n_years, 1e-9))
+        cost_drag_annualized=total / initial_capital / max(n_years, 1e-9),
+    )
 
 
-def turnover_report(trades, avg_value: float, *, n_years: float, n_trades: int,
-                    avg_holding_days: float) -> TurnoverReport:
+def turnover_report(
+    trades, avg_value: float, *, n_years: float, n_trades: int, avg_holding_days: float
+) -> TurnoverReport:
     two_way = sum(abs(t.notional) for t in trades)
     one_way = two_way / 2.0
     ann = one_way / max(avg_value, 1e-9) / max(n_years, 1e-9)
-    return TurnoverReport(annualized_turnover=ann, total_two_way_turnover=two_way,
-                          avg_holding_days=avg_holding_days, n_trades=n_trades)
+    return TurnoverReport(
+        annualized_turnover=ann,
+        total_two_way_turnover=two_way,
+        avg_holding_days=avg_holding_days,
+        n_trades=n_trades,
+    )
 
 
 def capacity_report(trades, adv_provider) -> CapacityReport:

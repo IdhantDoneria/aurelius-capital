@@ -19,7 +19,12 @@ def monitoring_report(session) -> MonitoringReport:
     breaks = [f"{r.as_of}: {r.categories}" for r in session.reconciliations if not r.ok]
     consistency_ok = (n_ok == n) and session.book.state.ledger.reconciles()
     return MonitoringReport(
-        n_syncs=n, n_reconciled=n_ok, reconciliation_rate=(n_ok / n if n else 1.0),
-        max_weight_drift=max_wd, total_cost=session.total_cost,
-        total_alerts=len(alerts), consistency_ok=consistency_ok,
-        alerts=alerts + breaks)
+        n_syncs=n,
+        n_reconciled=n_ok,
+        reconciliation_rate=(n_ok / n if n else 1.0),
+        max_weight_drift=max_wd,
+        total_cost=session.total_cost,
+        total_alerts=len(alerts),
+        consistency_ok=consistency_ok,
+        alerts=alerts + breaks,
+    )

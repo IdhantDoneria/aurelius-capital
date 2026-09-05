@@ -21,18 +21,28 @@ CONCEPTS: dict[str, list[str]] = {
     "shares_basic": ["WeightedAverageNumberOfSharesOutstandingBasic"],
     "shares_diluted": ["WeightedAverageNumberOfDilutedSharesOutstanding"],
     "shares_outstanding": ["CommonStockSharesOutstanding", "EntityCommonStockSharesOutstanding"],
-    "equity": ["StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"],
+    "equity": [
+        "StockholdersEquity",
+        "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+    ],
     "assets": ["Assets"],
     "liabilities": ["Liabilities"],
     "current_assets": ["AssetsCurrent"],
     "current_liabilities": ["LiabilitiesCurrent"],
-    "revenue": ["Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax", "SalesRevenueNet"],
+    "revenue": [
+        "Revenues",
+        "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "SalesRevenueNet",
+    ],
     "gross_profit": ["GrossProfit"],
     "operating_income": ["OperatingIncomeLoss"],
     "net_income": ["NetIncomeLoss"],
     "cash": ["CashAndCashEquivalentsAtCarryingValue"],
     "debt": ["LongTermDebt", "LongTermDebtNoncurrent"],
-    "dep_amort": ["DepreciationDepletionAndAmortization", "DepreciationAmortizationAndAccretionNet"],
+    "dep_amort": [
+        "DepreciationDepletionAndAmortization",
+        "DepreciationAmortizationAndAccretionNet",
+    ],
     "operating_cash_flow": ["NetCashProvidedByUsedInOperatingActivities"],
 }
 
@@ -45,24 +55,39 @@ class FundamentalsEngine:
 
     # ── raw concept access ──────────────────────────────────────────────────────
 
-    def fundamental_as_of(self, cik: str, name: str, as_of: date, *,
-                          knowledge_date: date | None = None,
-                          fiscal_period: str | None = None) -> float | None:
+    def fundamental_as_of(
+        self,
+        cik: str,
+        name: str,
+        as_of: date,
+        *,
+        knowledge_date: date | None = None,
+        fiscal_period: str | None = None,
+    ) -> float | None:
         """Resolve a friendly `name` to its concept candidates and return the PIT
         value (None if none reported as of the knowledge date)."""
         for concept in CONCEPTS.get(name, [name]):
-            row = self._store.fact_as_of(cik, concept, as_of,
-                                         knowledge_date=knowledge_date, fiscal_period=fiscal_period)
+            row = self._store.fact_as_of(
+                cik, concept, as_of, knowledge_date=knowledge_date, fiscal_period=fiscal_period
+            )
             if row is not None:
                 return row["value"]
         return None
 
-    def shares_as_of(self, cik: str, as_of: date, *, knowledge_date: date | None = None,
-                     kind: str = "shares_outstanding") -> float | None:
+    def shares_as_of(
+        self,
+        cik: str,
+        as_of: date,
+        *,
+        knowledge_date: date | None = None,
+        kind: str = "shares_outstanding",
+    ) -> float | None:
         """Shares as of a date. kind ∈ shares_outstanding|shares_basic|shares_diluted."""
         return self.fundamental_as_of(cik, kind, as_of, knowledge_date=knowledge_date)
 
-    def book_value_as_of(self, cik: str, as_of: date, *, knowledge_date: date | None = None) -> float | None:
+    def book_value_as_of(
+        self, cik: str, as_of: date, *, knowledge_date: date | None = None
+    ) -> float | None:
         return self.fundamental_as_of(cik, "equity", as_of, knowledge_date=knowledge_date)
 
     # ── price-integrated (M1 + 2) ──────────────────────────────────────────
@@ -74,8 +99,15 @@ class FundamentalsEngine:
             return self._sm.historical_identifier(security_id, as_of)
         return None
 
-    def market_cap_as_of(self, cik: str, as_of: date, *, ticker: str | None = None,
-                         security_id: str | None = None, knowledge_date: date | None = None) -> float | None:
+    def market_cap_as_of(
+        self,
+        cik: str,
+        as_of: date,
+        *,
+        ticker: str | None = None,
+        security_id: str | None = None,
+        knowledge_date: date | None = None,
+    ) -> float | None:
         """PIT market cap = shares known as-of × price known as-of. Ticker is
         resolved point-in-time from SecurityMaster when only a security_id is given."""
         if self._prices is None:
@@ -89,11 +121,19 @@ class FundamentalsEngine:
             return None
         return shares * float(price)
 
-    def enterprise_value_as_of(self, cik: str, as_of: date, *, ticker: str | None = None,
-                               security_id: str | None = None, knowledge_date: date | None = None) -> float | None:
+    def enterprise_value_as_of(
+        self,
+        cik: str,
+        as_of: date,
+        *,
+        ticker: str | None = None,
+        security_id: str | None = None,
+        knowledge_date: date | None = None,
+    ) -> float | None:
         """EV = market cap + total debt − cash & equivalents (all PIT)."""
-        mc = self.market_cap_as_of(cik, as_of, ticker=ticker, security_id=security_id,
-                                   knowledge_date=knowledge_date)
+        mc = self.market_cap_as_of(
+            cik, as_of, ticker=ticker, security_id=security_id, knowledge_date=knowledge_date
+        )
         if mc is None:
             return None
         debt = self.fundamental_as_of(cik, "debt", as_of, knowledge_date=knowledge_date) or 0.0
@@ -102,16 +142,27 @@ class FundamentalsEngine:
 
     # ── factor inputs (thin, PIT) ───────────────────────────────────────────────
 
-    def factor_inputs_as_of(self, cik: str, as_of: date, *, ticker: str | None = None,
-                            security_id: str | None = None, knowledge_date: date | None = None) -> dict[str, float | None]:
+    def factor_inputs_as_of(
+        self,
+        cik: str,
+        as_of: date,
+        *,
+        ticker: str | None = None,
+        security_id: str | None = None,
+        knowledge_date: date | None = None,
+    ) -> dict[str, float | None]:
         """Reusable point-in-time inputs for value/quality/profitability/investment
         factor models. Ratios only — never look-ahead. None where an input is
         unavailable as of the knowledge date."""
         k = knowledge_date
         f = lambda n: self.fundamental_as_of(cik, n, as_of, knowledge_date=k)  # noqa: E731
-        mc = self.market_cap_as_of(cik, as_of, ticker=ticker, security_id=security_id, knowledge_date=k)
-        ev = self.enterprise_value_as_of(cik, as_of, ticker=ticker, security_id=security_id, knowledge_date=k)
-        equity, assets, liabilities = f("equity"), f("assets"), f("liabilities")
+        mc = self.market_cap_as_of(
+            cik, as_of, ticker=ticker, security_id=security_id, knowledge_date=k
+        )
+        ev = self.enterprise_value_as_of(
+            cik, as_of, ticker=ticker, security_id=security_id, knowledge_date=k
+        )
+        equity, assets, _liabilities = f("equity"), f("assets"), f("liabilities")
         cur_a, cur_l = f("current_assets"), f("current_liabilities")
         revenue, gross, op_inc = f("revenue"), f("gross_profit"), f("operating_income")
         ni, ocf, debt = f("net_income"), f("operating_cash_flow"), f("debt")

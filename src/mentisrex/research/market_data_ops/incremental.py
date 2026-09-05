@@ -56,14 +56,27 @@ class MarketDataState:
             added += 1
         return IngestReport(added, dups, len(self._messages), self.fingerprint())
 
-    def tombstone(self, *, security_id: str, field: str, effective_date: date,
-                  source: str = "m20", knowledge_date: date | None = None) -> IngestReport:
+    def tombstone(
+        self,
+        *,
+        security_id: str,
+        field: str,
+        effective_date: date,
+        source: str = "m20",
+        knowledge_date: date | None = None,
+    ) -> IngestReport:
         """Record a deletion of a prior observation as a tombstone message."""
         msg = SourceMessage(
-            source=source, msg_type=MessageType.TOMBSTONE,
-            payload={"id": security_id, "field": field,
-                     "effective_date": effective_date.isoformat()},
-            observation_date=knowledge_date or effective_date, effective_date=effective_date)
+            source=source,
+            msg_type=MessageType.TOMBSTONE,
+            payload={
+                "id": security_id,
+                "field": field,
+                "effective_date": effective_date.isoformat(),
+            },
+            observation_date=knowledge_date or effective_date,
+            effective_date=effective_date,
+        )
         return self.ingest([msg])
 
     @property
@@ -77,12 +90,22 @@ class MarketDataState:
             h.update(fp.encode())
         return h.hexdigest()
 
-    def reconstruct(self, *, valuation_date: date, knowledge_date: date | None = None,
-                    **kwargs) -> ReconstructionResult:
+    def reconstruct(
+        self, *, valuation_date: date, knowledge_date: date | None = None, **kwargs
+    ) -> ReconstructionResult:
         return self.reconstructor.reconstruct(
-            self._messages, valuation_date=valuation_date, knowledge_date=knowledge_date, **kwargs)
+            self._messages, valuation_date=valuation_date, knowledge_date=knowledge_date, **kwargs
+        )
 
-    def seal(self, *, valuation_date: date, knowledge_date: date | None = None,
-             versions: dict | None = None, **kwargs) -> SealedSnapshot:
-        rec = self.reconstruct(valuation_date=valuation_date, knowledge_date=knowledge_date, **kwargs)
+    def seal(
+        self,
+        *,
+        valuation_date: date,
+        knowledge_date: date | None = None,
+        versions: dict | None = None,
+        **kwargs,
+    ) -> SealedSnapshot:
+        rec = self.reconstruct(
+            valuation_date=valuation_date, knowledge_date=knowledge_date, **kwargs
+        )
         return seal(rec, versions=versions)

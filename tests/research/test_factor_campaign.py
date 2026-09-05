@@ -13,8 +13,8 @@ def _factor(T, N, edge, seed):
         names = [f"s{i}" for i in range(N)]
         sig = rng.standard_normal(N)
         ret = edge * sig + rng.standard_normal(N)
-        signals.append(dict(zip(names, sig)))
-        fwd.append(dict(zip(names, ret)))
+        signals.append(dict(zip(names, sig, strict=False)))
+        fwd.append(dict(zip(names, ret, strict=False)))
     return signals, fwd
 
 
@@ -65,12 +65,13 @@ def test_library_listing_and_filter(camp):
     camp.run("bad", "misc", sig2, fwd2)
     assert len(camp.library()) == 2
     promising = camp.library(status="PROMISING")
-    assert len(promising) == 1 and promising[0]["name"] == "good"
+    assert len(promising) == 1
+    assert promising[0]["name"] == "good"
 
 
 def test_independent_factor_not_redundant(camp):
     sig1, fwd1 = _factor(80, 60, edge=0.9, seed=1)
     camp.run("mom", "momentum", sig1, fwd1)
-    sig2, fwd2 = _factor(80, 60, edge=0.9, seed=777)   # independent draws
+    sig2, fwd2 = _factor(80, 60, edge=0.9, seed=777)  # independent draws
     res = camp.run("other", "value", sig2, fwd2)
     assert res.status != "REDUNDANT"

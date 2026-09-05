@@ -32,6 +32,7 @@ def _intrinsic(is_call: bool, s: float, k: float) -> float:
 
 # ── Black-Scholes (spot, dividend yield q) ───────────────────────────────────
 
+
 def _d1_d2(s: float, k: float, r: float, q: float, vol: float, t: float):
     if s <= 0 or k <= 0:
         raise ValueError("spot and strike must be > 0")
@@ -42,10 +43,11 @@ def _d1_d2(s: float, k: float, r: float, q: float, vol: float, t: float):
     return d1, d1 - v
 
 
-def black_scholes_price(is_call: bool, s: float, k: float, r: float, q: float,
-                        vol: float, t: float) -> float:
+def black_scholes_price(
+    is_call: bool, s: float, k: float, r: float, q: float, vol: float, t: float
+) -> float:
     dd = _d1_d2(s, k, r, q, vol, t)
-    if dd is None:                                      # expiry / zero-vol → discounted intrinsic
+    if dd is None:  # expiry / zero-vol → discounted intrinsic
         disc_s = s * math.exp(-q * max(t, 0.0))
         disc_k = k * math.exp(-r * max(t, 0.0))
         return _intrinsic(is_call, disc_s, disc_k)
@@ -56,15 +58,23 @@ def black_scholes_price(is_call: bool, s: float, k: float, r: float, q: float,
     return k * df_k * norm_cdf(-d2) - s * df_s * norm_cdf(-d1)
 
 
-def black_scholes_greeks(is_call: bool, s: float, k: float, r: float, q: float,
-                         vol: float, t: float) -> dict:
+def black_scholes_greeks(
+    is_call: bool, s: float, k: float, r: float, q: float, vol: float, t: float
+) -> dict:
     """Per-unit Greeks. vega/theta/rho are per 1.00 (not per 1%); the engine may rescale."""
     dd = _d1_d2(s, k, r, q, vol, t)
     if dd is None:
         # degenerate: delta is the discounted digital, everything else ~0
         itm = (s > k) if is_call else (s < k)
-        return {"delta": (1.0 if (itm and is_call) else (-1.0 if itm and not is_call else 0.0)),
-                "gamma": 0.0, "theta": 0.0, "vega": 0.0, "rho": 0.0, "vanna": 0.0, "volga": 0.0}
+        return {
+            "delta": (1.0 if (itm and is_call) else (-1.0 if itm and not is_call else 0.0)),
+            "gamma": 0.0,
+            "theta": 0.0,
+            "vega": 0.0,
+            "rho": 0.0,
+            "vanna": 0.0,
+            "volga": 0.0,
+        }
     d1, d2 = dd
     sqt = math.sqrt(t)
     df_s, df_k = math.exp(-q * t), math.exp(-r * t)
@@ -75,19 +85,33 @@ def black_scholes_greeks(is_call: bool, s: float, k: float, r: float, q: float,
     volga = vega * d1 * d2 / vol
     if is_call:
         delta = df_s * norm_cdf(d1)
-        theta = (-s * df_s * nd1 * vol / (2 * sqt)
-                 - r * k * df_k * norm_cdf(d2) + q * s * df_s * norm_cdf(d1))
+        theta = (
+            -s * df_s * nd1 * vol / (2 * sqt)
+            - r * k * df_k * norm_cdf(d2)
+            + q * s * df_s * norm_cdf(d1)
+        )
         rho = k * t * df_k * norm_cdf(d2)
     else:
         delta = -df_s * norm_cdf(-d1)
-        theta = (-s * df_s * nd1 * vol / (2 * sqt)
-                 + r * k * df_k * norm_cdf(-d2) - q * s * df_s * norm_cdf(-d1))
+        theta = (
+            -s * df_s * nd1 * vol / (2 * sqt)
+            + r * k * df_k * norm_cdf(-d2)
+            - q * s * df_s * norm_cdf(-d1)
+        )
         rho = -k * t * df_k * norm_cdf(-d2)
-    return {"delta": delta, "gamma": gamma, "theta": theta, "vega": vega, "rho": rho,
-            "vanna": vanna, "volga": volga}
+    return {
+        "delta": delta,
+        "gamma": gamma,
+        "theta": theta,
+        "vega": vega,
+        "rho": rho,
+        "vanna": vanna,
+        "volga": volga,
+    }
 
 
 # ── Black-76 (option on a forward/future F) ──────────────────────────────────
+
 
 def black76_price(is_call: bool, f: float, k: float, r: float, vol: float, t: float) -> float:
     df = math.exp(-r * max(t, 0.0))
@@ -108,8 +132,19 @@ def black76_greeks(is_call: bool, f: float, k: float, r: float, vol: float, t: f
 
 # ── implied volatility ───────────────────────────────────────────────────────
 
-def implied_vol(is_call: bool, price: float, s: float, k: float, r: float, q: float,
-                t: float, *, tol: float = 1e-8, max_iter: int = 100) -> float:
+
+def implied_vol(
+    is_call: bool,
+    price: float,
+    s: float,
+    k: float,
+    r: float,
+    q: float,
+    t: float,
+    *,
+    tol: float = 1e-8,
+    max_iter: int = 100,
+) -> float:
     """Invert Black-Scholes for vol via bisection (robust, deterministic)."""
     intrinsic = math.exp(-q * t) * s - math.exp(-r * t) * k
     lo_bound = max(0.0, intrinsic if is_call else -intrinsic)

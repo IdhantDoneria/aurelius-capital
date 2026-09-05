@@ -6,16 +6,15 @@ Returns a machine-readable ReadinessReport — never silently approves an incomp
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from mentisrex.research.strategy_deployment.models import (
+    _DEPLOYABLE_VERDICTS,
+    _PAPER_VERDICTS,
     ReadinessReport,
     StrategySpecification,
     StrategyType,
-    _DEPLOYABLE_VERDICTS,
-    _PAPER_VERDICTS,
 )
-
 
 _DEPLOYABLE_CHECKS = [
     "research_artifact_exists",
@@ -41,9 +40,9 @@ _VALID_FREQUENCIES = {"daily", "weekly", "monthly", "quarterly"}
 
 
 class ReadinessValidator:
-
-    def validate(self, spec: StrategySpecification, *,
-                 permit_experimental: bool = False) -> ReadinessReport:
+    def validate(
+        self, spec: StrategySpecification, *, permit_experimental: bool = False
+    ) -> ReadinessReport:
         checks: dict[str, bool] = {}
         issues: list[str] = []
         warnings: list[str] = []
@@ -61,9 +60,7 @@ class ReadinessValidator:
             issues.append("validation_artifact_id is missing — no validation evidence")
 
         # ── validation gate ───────────────────────────────────────────────────
-        checks["validation_status_permits_deployment"] = (
-            spec.validation_status in required_verdicts
-        )
+        checks["validation_status_permits_deployment"] = spec.validation_status in required_verdicts
         if not checks["validation_status_permits_deployment"]:
             issues.append(
                 f"validation_status={spec.validation_status!r} does not permit deployment. "
@@ -137,7 +134,9 @@ class ReadinessValidator:
 
         checks["feature_definition_present"] = bool(spec.feature_definition)
         if not checks["feature_definition_present"]:
-            warnings.append("feature_definition is empty — strategy logic must handle raw snapshot directly")
+            warnings.append(
+                "feature_definition is empty — strategy logic must handle raw snapshot directly"
+            )
 
         # ── no provider access flags (checked by convention in execution_config) ─
         # Strategies must not set provider_access=True; M21 providers are upstream.
@@ -151,14 +150,18 @@ class ReadinessValidator:
 
         # ── type consistency ──────────────────────────────────────────────────
         checks["strategy_type_consistent"] = spec.strategy_type in (
-            StrategyType.VALIDATED_DEPLOYABLE, StrategyType.EXPERIMENTAL_PAPER
+            StrategyType.VALIDATED_DEPLOYABLE,
+            StrategyType.EXPERIMENTAL_PAPER,
         )
         if not checks["strategy_type_consistent"]:
             issues.append(f"strategy_type={spec.strategy_type!r} is not a valid StrategyType")
 
         # ── experimental: must not be confused with validated ─────────────────
-        if (is_experimental and not permit_experimental
-                and spec.strategy_type == StrategyType.EXPERIMENTAL_PAPER):
+        if (
+            is_experimental
+            and not permit_experimental
+            and spec.strategy_type == StrategyType.EXPERIMENTAL_PAPER
+        ):
             warnings.append(
                 "EXPERIMENTAL PAPER strategy submitted for readiness check. "
                 "Pass permit_experimental=True to allow this."
@@ -174,5 +177,5 @@ class ReadinessValidator:
             warnings=warnings,
             strategy_id=spec.strategy_id,
             strategy_version=spec.version,
-            validated_at=datetime.now(timezone.utc).replace(tzinfo=None),
+            validated_at=datetime.now(UTC).replace(tzinfo=None),
         )

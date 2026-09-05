@@ -16,8 +16,12 @@ def bonferroni(pvalues, alpha: float = 0.05) -> dict:
     p = np.asarray(pvalues, dtype=float)
     m = p.size
     adj = np.minimum(p * m, 1.0)
-    return {"method": "bonferroni", "adjusted": adj.tolist(),
-            "reject": (adj <= alpha).tolist(), "alpha": alpha}
+    return {
+        "method": "bonferroni",
+        "adjusted": adj.tolist(),
+        "reject": (adj <= alpha).tolist(),
+        "alpha": alpha,
+    }
 
 
 def holm(pvalues, alpha: float = 0.05) -> dict:
@@ -29,8 +33,12 @@ def holm(pvalues, alpha: float = 0.05) -> dict:
     for rank, idx in enumerate(order):
         running = max(running, (m - rank) * p[idx])
         adj[idx] = min(running, 1.0)
-    return {"method": "holm", "adjusted": adj.tolist(),
-            "reject": (adj <= alpha).tolist(), "alpha": alpha}
+    return {
+        "method": "holm",
+        "adjusted": adj.tolist(),
+        "reject": (adj <= alpha).tolist(),
+        "alpha": alpha,
+    }
 
 
 def benjamini_hochberg(pvalues, alpha: float = 0.05) -> dict:
@@ -44,8 +52,12 @@ def benjamini_hochberg(pvalues, alpha: float = 0.05) -> dict:
         idx = order[rank]
         prev = min(prev, p[idx] * m / (rank + 1))
         adj[idx] = prev
-    return {"method": "benjamini_hochberg", "adjusted": adj.tolist(),
-            "reject": (adj <= alpha).tolist(), "alpha": alpha}
+    return {
+        "method": "benjamini_hochberg",
+        "adjusted": adj.tolist(),
+        "reject": (adj <= alpha).tolist(),
+        "alpha": alpha,
+    }
 
 
 def false_discovery_rate(pvalues, alpha: float = 0.05) -> float:

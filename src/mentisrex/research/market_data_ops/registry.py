@@ -23,6 +23,7 @@ from mentisrex.research.market_data_ops.lifecycle import SealedSnapshot
 @dataclass(frozen=True)
 class SnapshotLineage:
     """Full provenance chain for one sealed snapshot — reproducible from these fingerprints."""
+
     snapshot_id: str
     as_of: str
     knowledge_date: str
@@ -37,13 +38,17 @@ class SnapshotLineage:
 
 def lineage_of(sealed: SealedSnapshot, *, arbitration_fingerprint: str = "") -> SnapshotLineage:
     return SnapshotLineage(
-        snapshot_id=sealed.snapshot_id, as_of=sealed.as_of.isoformat(),
-        knowledge_date=sealed.knowledge_date.isoformat(), source_set=tuple(sealed.source_set),
+        snapshot_id=sealed.snapshot_id,
+        as_of=sealed.as_of.isoformat(),
+        knowledge_date=sealed.knowledge_date.isoformat(),
+        source_set=tuple(sealed.source_set),
         snapshot_fingerprint=sealed.snapshot_fingerprint,
         input_fingerprint=sealed.input_fingerprint,
         accepted_fingerprint=sealed.accepted_fingerprint,
         reconstruction_fingerprint=sealed.reconstruction_fingerprint,
-        arbitration_fingerprint=arbitration_fingerprint, versions=dict(sealed.versions))
+        arbitration_fingerprint=arbitration_fingerprint,
+        versions=dict(sealed.versions),
+    )
 
 
 def default_ops_registry() -> MarketDataRegistry:
@@ -51,20 +56,42 @@ def default_ops_registry() -> MarketDataRegistry:
     PROVIDER kind so no M19 enum is modified)."""
     r = default_market_data_registry()
     for info in (
-        ComponentInfo(ComponentKind.PROVIDER, "ops.local_adapter", "1.0.0",
-                      "M19 source wrapped as operational adapter"),
-        ComponentInfo(ComponentKind.PROVIDER, "ops.message_log", "1.0.0",
-                      "Ordered message-log replay source"),
-        ComponentInfo(ComponentKind.PROVIDER, "ops.fixture_vendor", "1.0.0",
-                      "Recorded vendor fixtures for offline contract tests"),
-        ComponentInfo(ComponentKind.PROVIDER, "ops.production_contract", "1.0.0",
-                      "Live vendor adapter contract (offline, transport raises)"),
-        ComponentInfo(ComponentKind.PROVIDER, "ops.replay_engine", "1.0.0",
-                      "Deterministic historical replay"),
-        ComponentInfo(ComponentKind.PROVIDER, "ops.reconstructor", "1.0.0",
-                      "PIT snapshot reconstruction (ordering+arbitration+M19 builder)"),
-        ComponentInfo(ComponentKind.PROVIDER, "ops.snapshot_store", "1.0.0",
-                      "Deterministic local sealed-snapshot store"),
+        ComponentInfo(
+            ComponentKind.PROVIDER,
+            "ops.local_adapter",
+            "1.0.0",
+            "M19 source wrapped as operational adapter",
+        ),
+        ComponentInfo(
+            ComponentKind.PROVIDER, "ops.message_log", "1.0.0", "Ordered message-log replay source"
+        ),
+        ComponentInfo(
+            ComponentKind.PROVIDER,
+            "ops.fixture_vendor",
+            "1.0.0",
+            "Recorded vendor fixtures for offline contract tests",
+        ),
+        ComponentInfo(
+            ComponentKind.PROVIDER,
+            "ops.production_contract",
+            "1.0.0",
+            "Live vendor adapter contract (offline, transport raises)",
+        ),
+        ComponentInfo(
+            ComponentKind.PROVIDER, "ops.replay_engine", "1.0.0", "Deterministic historical replay"
+        ),
+        ComponentInfo(
+            ComponentKind.PROVIDER,
+            "ops.reconstructor",
+            "1.0.0",
+            "PIT snapshot reconstruction (ordering+arbitration+M19 builder)",
+        ),
+        ComponentInfo(
+            ComponentKind.PROVIDER,
+            "ops.snapshot_store",
+            "1.0.0",
+            "Deterministic local sealed-snapshot store",
+        ),
     ):
         r.register(info)
     return r

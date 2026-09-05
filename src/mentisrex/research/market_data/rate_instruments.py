@@ -10,12 +10,12 @@ price-quoted futures, its implied rate.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 from mentisrex.research.valuation.daycount import Compounding, DayCount
 
 
-class InstrumentKind(str, Enum):
+class InstrumentKind(StrEnum):
     DEPOSIT = "deposit"
     OIS = "ois"
     FRA = "fra"
@@ -29,8 +29,8 @@ class InstrumentKind(str, Enum):
 class RateConvention:
     day_count: DayCount = DayCount.ACT_360
     compounding: Compounding = Compounding.SIMPLE
-    frequency: int = 2                    # coupon payments per year (swaps/bonds)
-    settlement_lag: int = 2               # business days
+    frequency: int = 2  # coupon payments per year (swaps/bonds)
+    settlement_lag: int = 2  # business days
     calendar_name: str = "US"
 
 
@@ -38,11 +38,12 @@ class RateConvention:
 class RateInstrument:
     """A single calibration instrument. `quote` is a rate (decimal) except futures, where it is a
     price (100 - rate*100). `start`/`tenor` are in years; maturity == start + tenor."""
+
     kind: InstrumentKind
-    tenor: float                          # years from start to maturity
+    tenor: float  # years from start to maturity
     quote: float
     convention: RateConvention = field(default_factory=RateConvention)
-    start: float = 0.0                    # years from valuation date (FRAs/futures)
+    start: float = 0.0  # years from valuation date (FRAs/futures)
     label: str = ""
     currency: str = "USD"
 
@@ -61,28 +62,51 @@ class RateInstrument:
 
 # ── convenience constructors ──────────────────────────────────────────────────
 
-def deposit(tenor: float, rate: float, *, convention=None, currency="USD", label="") -> RateInstrument:
-    return RateInstrument(InstrumentKind.DEPOSIT, tenor, rate,
-                          convention or RateConvention(), 0.0, label, currency)
+
+def deposit(
+    tenor: float, rate: float, *, convention=None, currency="USD", label=""
+) -> RateInstrument:
+    return RateInstrument(
+        InstrumentKind.DEPOSIT, tenor, rate, convention or RateConvention(), 0.0, label, currency
+    )
 
 
 def ois(tenor: float, rate: float, *, convention=None, currency="USD", label="") -> RateInstrument:
-    return RateInstrument(InstrumentKind.OIS, tenor, rate,
-                          convention or RateConvention(frequency=1), 0.0, label, currency)
+    return RateInstrument(
+        InstrumentKind.OIS,
+        tenor,
+        rate,
+        convention or RateConvention(frequency=1),
+        0.0,
+        label,
+        currency,
+    )
 
 
-def fra(start: float, end: float, rate: float, *, convention=None, currency="USD", label="") -> RateInstrument:
-    return RateInstrument(InstrumentKind.FRA, end - start, rate,
-                          convention or RateConvention(), start, label, currency)
+def fra(
+    start: float, end: float, rate: float, *, convention=None, currency="USD", label=""
+) -> RateInstrument:
+    return RateInstrument(
+        InstrumentKind.FRA,
+        end - start,
+        rate,
+        convention or RateConvention(),
+        start,
+        label,
+        currency,
+    )
 
 
-def rate_future(start: float, price: float, *, length: float = 0.25, convention=None,
-                currency="USD", label="") -> RateInstrument:
-    return RateInstrument(InstrumentKind.FUTURE, length, price,
-                          convention or RateConvention(), start, label, currency)
+def rate_future(
+    start: float, price: float, *, length: float = 0.25, convention=None, currency="USD", label=""
+) -> RateInstrument:
+    return RateInstrument(
+        InstrumentKind.FUTURE, length, price, convention or RateConvention(), start, label, currency
+    )
 
 
-def swap(tenor: float, rate: float, *, frequency: int = 2, convention=None,
-         currency="USD", label="") -> RateInstrument:
+def swap(
+    tenor: float, rate: float, *, frequency: int = 2, convention=None, currency="USD", label=""
+) -> RateInstrument:
     conv = convention or RateConvention(frequency=frequency)
     return RateInstrument(InstrumentKind.SWAP, tenor, rate, conv, 0.0, label, currency)

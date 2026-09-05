@@ -147,8 +147,11 @@ def _divergence(
         )
     breached = abs(live_value - float(expected_value)) > tolerance
     return Divergence(
-        metric=metric, live=live_value, expected=float(expected_value),
-        tolerance=tolerance, breached=breached,
+        metric=metric,
+        live=live_value,
+        expected=float(expected_value),
+        tolerance=tolerance,
+        breached=breached,
     )
 
 
@@ -207,7 +210,9 @@ def monitor(
         _TURNOVER_RANGE[0] <= live_turnover_annualised <= _TURNOVER_RANGE[1]
     ):
         fired.append("TURNOVER_OUT_OF_RANGE")
-    if not math.isnan(live_beta_value) and not (_BETA_RANGE[0] <= live_beta_value <= _BETA_RANGE[1]):
+    if not math.isnan(live_beta_value) and not (
+        _BETA_RANGE[0] <= live_beta_value <= _BETA_RANGE[1]
+    ):
         fired.append("BETA_OUT_OF_RANGE")
 
     as_of = _series_last_valid(live_returns, live_gross, live_turnover)

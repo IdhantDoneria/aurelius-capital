@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
-from enum import Enum
+from enum import StrEnum
 
 from mentisrex.research.market_data.normalization import Normalizer
 from mentisrex.research.market_data.quality import (
@@ -23,10 +23,10 @@ from mentisrex.research.market_data_ops.messages import MessageType, SourceMessa
 from mentisrex.research.market_data_ops.ordering import OrderingCode, OrderingReport
 
 
-class FeedStatus(str, Enum):
+class FeedStatus(StrEnum):
     CONNECTED = "connected"
-    DEGRADED = "degraded"          # elevated errors / gaps but still delivering
-    STALE = "stale"               # no fresh data within the staleness window
+    DEGRADED = "degraded"  # elevated errors / gaps but still delivering
+    STALE = "stale"  # no fresh data within the staleness window
     DISCONNECTED = "disconnected"
     ERROR = "error"
 
@@ -61,9 +61,14 @@ class HealthMonitor:
         self.stale_after_days = stale_after_days
         self.degraded_error_frac = degraded_error_frac
 
-    def assess(self, messages, *, as_of: date,
-               ordering: OrderingReport | None = None,
-               disconnected_sources=None) -> dict[str, FeedHealth]:
+    def assess(
+        self,
+        messages,
+        *,
+        as_of: date,
+        ordering: OrderingReport | None = None,
+        disconnected_sources=None,
+    ) -> dict[str, FeedHealth]:
         disconnected = set(disconnected_sources or ())
         by_source: dict[str, list[SourceMessage]] = {}
         for m in messages:
@@ -97,14 +102,23 @@ class HealthMonitor:
                 status = FeedStatus.DEGRADED
 
             out[source] = FeedHealth(
-                source=source, status=status, message_count=len(msgs), error_count=anomalies,
-                sequence_gaps=gaps, out_of_order=ooo, duplicates=dups,
-                last_observation_date=last_obs, last_knowledge_date=last_kd,
-                staleness_days=staleness, securities_seen=len({m.security_hint for m in msgs}))
+                source=source,
+                status=status,
+                message_count=len(msgs),
+                error_count=anomalies,
+                sequence_gaps=gaps,
+                out_of_order=ooo,
+                duplicates=dups,
+                last_observation_date=last_obs,
+                last_knowledge_date=last_kd,
+                staleness_days=staleness,
+                securities_seen=len({m.security_hint for m in msgs}),
+            )
         return out
 
 
 # ── coverage / completeness ─────────────────────────────────────────────────────
+
 
 @dataclass(frozen=True)
 class CoverageReport:
@@ -118,15 +132,24 @@ class CoverageReport:
 
     @property
     def security_coverage(self) -> float:
-        return 0.0 if not self.expected_securities else self.observed_securities / self.expected_securities
+        return (
+            0.0
+            if not self.expected_securities
+            else self.observed_securities / self.expected_securities
+        )
 
     @property
     def complete(self) -> bool:
-        return not self.missing_securities and not self.missing_dates and not self.missing_fields_by_security
+        return (
+            not self.missing_securities
+            and not self.missing_dates
+            and not self.missing_fields_by_security
+        )
 
 
-def coverage(messages, *, expected_securities=None, expected_fields=None,
-             expected_dates=None) -> CoverageReport:
+def coverage(
+    messages, *, expected_securities=None, expected_fields=None, expected_dates=None
+) -> CoverageReport:
     """Report what's present vs expected. Missing data is never silently read as zero — it is
     listed. All three expectations are optional."""
     obs_secs: dict[str, set] = {}
@@ -140,7 +163,9 @@ def coverage(messages, *, expected_securities=None, expected_fields=None,
         if m.observation_date is not None:
             obs_dates.add(m.observation_date)
 
-    exp_secs = set(map(str, expected_securities)) if expected_securities is not None else set(obs_secs)
+    exp_secs = (
+        set(map(str, expected_securities)) if expected_securities is not None else set(obs_secs)
+    )
     missing_secs = tuple(sorted(exp_secs - set(obs_secs)))
 
     missing_fields: dict = {}
@@ -156,13 +181,18 @@ def coverage(messages, *, expected_securities=None, expected_fields=None,
         missing_dates = tuple(sorted(set(expected_dates) - obs_dates))
 
     return CoverageReport(
-        expected_securities=len(exp_secs), observed_securities=len(set(obs_secs) & exp_secs),
-        missing_securities=missing_secs, expected_fields=len(expected_fields or ()),
-        missing_fields_by_security=missing_fields, observed_dates=tuple(sorted(obs_dates)),
-        missing_dates=missing_dates)
+        expected_securities=len(exp_secs),
+        observed_securities=len(set(obs_secs) & exp_secs),
+        missing_securities=missing_secs,
+        expected_fields=len(expected_fields or ()),
+        missing_fields_by_security=missing_fields,
+        observed_dates=tuple(sorted(obs_dates)),
+        missing_dates=missing_dates,
+    )
 
 
 # ── quality monitoring (composes the M19 engine) ─────────────────────────────────
+
 
 @dataclass(frozen=True)
 class QualityHealthReport:
@@ -181,15 +211,18 @@ class QualityMonitor:
     """Runs the M19 quality engine over normalized messages and rolls the diagnostics into a
     machine-readable operational report. Does not re-implement any quality rule."""
 
-    def __init__(self, *, normalizer: Normalizer | None = None,
-                 config: QualityConfig | None = None) -> None:
+    def __init__(
+        self, *, normalizer: Normalizer | None = None, config: QualityConfig | None = None
+    ) -> None:
         self.normalizer = normalizer or Normalizer()
         self.engine = MarketDataQualityEngine(config)
 
     def monitor(self, messages, *, as_of: date) -> QualityHealthReport:
-        raw = [dict(m.payload) for m in messages
-               if m.msg_type not in (MessageType.HEARTBEAT, MessageType.STATUS,
-                                     MessageType.TOMBSTONE)]
+        raw = [
+            dict(m.payload)
+            for m in messages
+            if m.msg_type not in (MessageType.HEARTBEAT, MessageType.STATUS, MessageType.TOMBSTONE)
+        ]
         norm = self.normalizer.normalize(raw, as_of=as_of)
         rep = self.engine.check(norm.observations, as_of=as_of)
         by_code: dict = {}
@@ -198,8 +231,12 @@ class QualityMonitor:
             by_code[d.code] = by_code.get(d.code, 0) + 1
             by_sev[d.severity.value] = by_sev.get(d.severity.value, 0) + 1
         return QualityHealthReport(
-            total=len(norm.observations), accepted=len(rep.accepted), rejected=len(rep.rejected),
-            by_code=by_code, by_severity=by_sev)
+            total=len(norm.observations),
+            accepted=len(rep.accepted),
+            rejected=len(rep.rejected),
+            by_code=by_code,
+            by_severity=by_sev,
+        )
 
 
 def _ordering_counts(ordering: OrderingReport | None):

@@ -32,16 +32,22 @@ from mentisrex.research.post_trade.models import CashType
 
 
 class InstrumentBook:
-    def __init__(self, initial_capital: float = 0.0, *, engine: PostTradeEngine | None = None,
-                 registry: InstrumentRegistry | None = None, session_id: str = "instr_book") -> None:
+    def __init__(
+        self,
+        initial_capital: float = 0.0,
+        *,
+        engine: PostTradeEngine | None = None,
+        registry: InstrumentRegistry | None = None,
+        session_id: str = "instr_book",
+    ) -> None:
         self.session_id = session_id
         self.engine = engine or PostTradeEngine(initial_capital, session_id=session_id)
         self.registry = registry or InstrumentRegistry()
-        self.positions: dict = {}             # instrument_id -> DerivativePosition (derivatives only)
-        self.margin_posted: dict = {}         # instrument_id -> posted margin (cash)
-        self.collateral: dict = {}            # instrument_id -> CollateralBalance
+        self.positions: dict = {}  # instrument_id -> DerivativePosition (derivatives only)
+        self.margin_posted: dict = {}  # instrument_id -> posted margin (cash)
+        self.collateral: dict = {}  # instrument_id -> CollateralBalance
         self.events = EventLog()
-        self._closed: set = set()             # instruments settled/expired/terminated
+        self._closed: set = set()  # instruments settled/expired/terminated
 
     # ── registration ────────────────────────────────────────────────────────────
     def register(self, inst: Instrument) -> Instrument:
@@ -50,7 +56,9 @@ class InstrumentBook:
         return inst
 
     def _emit(self, t, iid, **kw) -> InstrumentEvent:
-        return self.events.emit(lambda seq: InstrumentEvent(seq=seq, type=t, instrument_id=iid, **kw))
+        return self.events.emit(
+            lambda seq: InstrumentEvent(seq=seq, type=t, instrument_id=iid, **kw)
+        )
 
     def _inst(self, ref) -> Instrument:
         if isinstance(ref, Instrument):
@@ -70,8 +78,15 @@ class InstrumentBook:
         return self.engine.accounting.cash
 
     # ── trading ──────────────────────────────────────────────────────────────────
-    def book_trade(self, instrument, quantity: float, price: float, *, cost: float = 0.0,
-                   trade_date: date | None = None) -> str:
+    def book_trade(
+        self,
+        instrument,
+        quantity: float,
+        price: float,
+        *,
+        cost: float = 0.0,
+        trade_date: date | None = None,
+    ) -> str:
         """Book a fill for any asset class. Equities take the identical M15 path;
         derivatives update the overlay and post only real cash through the M11 ledger."""
         inst = self._inst(instrument)
@@ -80,24 +95,42 @@ class InstrumentBook:
         if inst.instrument_id in self._closed:
             raise ValueError(f"{inst.instrument_id} is closed (expired/settled)")
 
-        if inst.type is InstrumentType.EQUITY:                     # identical to pre-M17
-            tid = self.engine.book_fill(security_id=inst.instrument_id, quantity=quantity,
-                                        price=price, cost=cost, trade_date=trade_date)
-            self._emit(InstrumentEventType.TRADE, inst.instrument_id, quantity=quantity,
-                       price=price, cash=-(quantity * price) - cost, when=trade_date, data={"tid": tid})
+        if inst.type is InstrumentType.EQUITY:  # identical to pre-M17
+            tid = self.engine.book_fill(
+                security_id=inst.instrument_id,
+                quantity=quantity,
+                price=price,
+                cost=cost,
+                trade_date=trade_date,
+            )
+            self._emit(
+                InstrumentEventType.TRADE,
+                inst.instrument_id,
+                quantity=quantity,
+                price=price,
+                cash=-(quantity * price) - cost,
+                when=trade_date,
+                data={"tid": tid},
+            )
             return tid
 
         pos = self._pos(inst)
         pos.apply(quantity, price)
         cash = _econ.trade_cash(inst, quantity, price, cost)
         ct = CashType.PREMIUM if inst.type is InstrumentType.OPTION else CashType.MARGIN
-        if inst.cash_convention is CashConvention.PRINCIPAL:      # bond principal
+        if inst.cash_convention is CashConvention.PRINCIPAL:  # bond principal
             ct = CashType.PREMIUM if inst.type is InstrumentType.OPTION else CashType.TRADE
         if abs(cash) > 1e-12:
             self.engine.post_cash(cash, ct, when=trade_date, security_id=inst.instrument_id)
         self._post_initial_margin(inst, pos, price, trade_date)
-        self._emit(InstrumentEventType.TRADE, inst.instrument_id, quantity=quantity,
-                   price=price, cash=cash, when=trade_date)
+        self._emit(
+            InstrumentEventType.TRADE,
+            inst.instrument_id,
+            quantity=quantity,
+            price=price,
+            cash=cash,
+            when=trade_date,
+        )
         return f"{inst.instrument_id}:{len(self.events)}"
 
     def _post_initial_margin(self, inst, pos, mark, when) -> None:
@@ -105,10 +138,12 @@ class InstrumentBook:
             return
         req = _margin.requirement(inst, pos.quantity, mark).initial
         delta = req - self.margin_posted.get(inst.instrument_id, 0.0)
-        if abs(delta) > 1e-12:                                    # post/release margin as cash
-            self.engine.post_cash(-delta, CashType.MARGIN, when=when, security_id=inst.instrument_id)
+        if abs(delta) > 1e-12:  # post/release margin as cash
+            self.engine.post_cash(
+                -delta, CashType.MARGIN, when=when, security_id=inst.instrument_id
+            )
             pos.margin = req
-        if req <= 1e-12:                                          # flat → drop the margin line
+        if req <= 1e-12:  # flat → drop the margin line
             self.margin_posted.pop(inst.instrument_id, None)
         else:
             self.margin_posted[inst.instrument_id] = req
@@ -118,9 +153,11 @@ class InstrumentBook:
         """Mark every position. Equities re-mark M11 state; margined derivatives post
         variation margin cash; option/bond marks only move unrealized value. Returns the
         variation-margin cash posted per instrument."""
-        equity_marks = {sid: m for sid, m in marks.items()
-                        if self.registry.has(sid)
-                        and self.registry.get(sid).type is InstrumentType.EQUITY}
+        equity_marks = {
+            sid: m
+            for sid, m in marks.items()
+            if self.registry.has(sid) and self.registry.get(sid).type is InstrumentType.EQUITY
+        }
         if equity_marks:
             self.engine.accounting.mark(equity_marks)
         vm_posted = {}
@@ -139,7 +176,9 @@ class InstrumentBook:
                 pos.realized_pnl += vm
                 pos.avg_price = marks[iid]
             self._post_initial_margin(inst, pos, marks[iid], when)
-            self._emit(InstrumentEventType.MARK_TO_MARKET, iid, price=marks[iid], cash=vm, when=when)
+            self._emit(
+                InstrumentEventType.MARK_TO_MARKET, iid, price=marks[iid], cash=vm, when=when
+            )
         return vm_posted
 
     def close(self, instrument, price: float, *, when: date | None = None) -> None:
@@ -149,7 +188,7 @@ class InstrumentBook:
         if pos is None or pos.quantity == 0:
             return
         self.book_trade(inst, -pos.quantity, price, trade_date=when)
-        if self.margin_posted.get(inst.instrument_id):           # release remaining margin
+        if self.margin_posted.get(inst.instrument_id):  # release remaining margin
             rel = self.margin_posted.pop(inst.instrument_id)
             self.engine.post_cash(rel, CashType.MARGIN, when=when, security_id=inst.instrument_id)
             pos.margin = 0.0

@@ -8,7 +8,7 @@ dependency. Callers that need persistence serialize via spec.to_dict().
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from mentisrex.research.strategy_deployment.models import (
     ALLOWED_TRANSITIONS,
@@ -25,8 +25,10 @@ class StrategyTransitionError(Exception):
 class StrategyEntry:
     spec: StrategySpecification
     state: StrategyState
-    registered_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
-    state_updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    registered_at: datetime = field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
+    state_updated_at: datetime = field(
+        default_factory=lambda: datetime.now(UTC).replace(tzinfo=None)
+    )
     notes: str = ""
 
 
@@ -34,18 +36,24 @@ class StrategyRegistry:
     """In-memory registry of strategy specifications and lifecycle states."""
 
     def __init__(self) -> None:
-        self._entries: dict[str, StrategyEntry] = {}   # strategy_id -> entry
+        self._entries: dict[str, StrategyEntry] = {}  # strategy_id -> entry
 
     # ── write ──────────────────────────────────────────────────────────────────
 
-    def register(self, spec: StrategySpecification,
-                 state: StrategyState = StrategyState.DRAFT, *,
-                 notes: str = "") -> StrategyEntry:
+    def register(
+        self,
+        spec: StrategySpecification,
+        state: StrategyState = StrategyState.DRAFT,
+        *,
+        notes: str = "",
+    ) -> StrategyEntry:
         entry = StrategyEntry(spec=spec, state=state, notes=notes)
         self._entries[spec.strategy_id] = entry
         return entry
 
-    def transition(self, strategy_id: str, new_state: StrategyState, *, notes: str = "") -> StrategyEntry:
+    def transition(
+        self, strategy_id: str, new_state: StrategyState, *, notes: str = ""
+    ) -> StrategyEntry:
         entry = self._get(strategy_id)
         allowed = ALLOWED_TRANSITIONS.get(entry.state, set())
         if new_state not in allowed:
@@ -54,7 +62,7 @@ class StrategyRegistry:
                 f"Allowed: {[s.value for s in allowed]}"
             )
         entry.state = new_state
-        entry.state_updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        entry.state_updated_at = datetime.now(UTC).replace(tzinfo=None)
         if notes:
             entry.notes = notes
         return entry
@@ -63,7 +71,7 @@ class StrategyRegistry:
         """Replace the specification for an existing strategy (version bump)."""
         entry = self._get(spec.strategy_id)
         entry.spec = spec
-        entry.state_updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        entry.state_updated_at = datetime.now(UTC).replace(tzinfo=None)
         return entry
 
     # ── read ───────────────────────────────────────────────────────────────────

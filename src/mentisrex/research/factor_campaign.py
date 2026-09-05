@@ -56,8 +56,9 @@ CREATE TABLE IF NOT EXISTS factor_evaluations (
 
 
 def _fingerprint(name: str, family: str, ls_series: list) -> str:
-    blob = json.dumps({"n": name, "f": family, "ls": [round(x, 10) for x in ls_series]},
-                      sort_keys=True)
+    blob = json.dumps(
+        {"n": name, "f": family, "ls": [round(x, 10) for x in ls_series]}, sort_keys=True
+    )
     return hashlib.sha1(blob.encode()).hexdigest()
 
 
@@ -80,14 +81,22 @@ class CampaignResult:
 
 
 class FactorCampaign:
-    def __init__(self, db_path: str = "./data/factor_library.duckdb", *,
-                 ledger: DoFLedger | None = None, t_min: float = 2.0,
-                 redundancy_threshold: float = 0.8) -> None:
+    def __init__(
+        self,
+        db_path: str = "./data/factor_library.duckdb",
+        *,
+        ledger: DoFLedger | None = None,
+        t_min: float = 2.0,
+        redundancy_threshold: float = 0.8,
+    ) -> None:
         self._path = db_path
         self._in_memory = db_path == ":memory:"
         self._persistent_conn: duckdb.DuckDBPyConnection | None = None
-        self._ledger = ledger if ledger is not None else DoFLedger(
-            ":memory:" if self._in_memory else "./data/dof_ledger.duckdb")
+        self._ledger = (
+            ledger
+            if ledger is not None
+            else DoFLedger(":memory:" if self._in_memory else "./data/dof_ledger.duckdb")
+        )
         self._t_min = t_min
         self._rthr = redundancy_threshold
         if not self._in_memory:
@@ -117,11 +126,9 @@ class FactorCampaign:
     def _existing(self) -> list[dict]:
         with self._conn() as conn:
             rows = conn.execute(
-                "SELECT name, family, ls_series FROM factor_evaluations "
-                "WHERE status != 'REDUNDANT'"
+                "SELECT name, family, ls_series FROM factor_evaluations WHERE status != 'REDUNDANT'"
             ).fetchall()
-        return [{"name": r[0], "family": r[1], "ls_series": json.loads(r[2] or "[]")}
-                for r in rows]
+        return [{"name": r[0], "family": r[1], "ls_series": json.loads(r[2] or "[]")} for r in rows]
 
     def screen_redundancy(self, ls_series: list) -> tuple[str | None, float]:
         """Nearest existing factor by long-short return correlation. Returns
@@ -135,18 +142,34 @@ class FactorCampaign:
             return best_name, best_signed
         return None, best_signed
 
-    def run(self, name: str, family: str,
-            signals: list[dict], forward_returns: list[dict],
-            *, hypothesis_id: str | None = None, variant: str | None = None,
-            dataset_id: str | None = None, period: str | None = None,
-            params: dict | None = None, **eval_kwargs) -> CampaignResult:
+    def run(
+        self,
+        name: str,
+        family: str,
+        signals: list[dict],
+        forward_returns: list[dict],
+        *,
+        hypothesis_id: str | None = None,
+        variant: str | None = None,
+        dataset_id: str | None = None,
+        period: str | None = None,
+        params: dict | None = None,
+        **eval_kwargs,
+    ) -> CampaignResult:
         rep = evaluate_factor(signals, forward_returns, **eval_kwargs)
 
         # log the trial so the family's degrees of freedom stay honest
-        self._ledger.record(Trial(family=family, hypothesis_id=hypothesis_id,
-                                   variant=variant or name, dataset_id=dataset_id,
-                                   period=period, params=params or {},
-                                   selection_note="factor_campaign"))
+        self._ledger.record(
+            Trial(
+                family=family,
+                hypothesis_id=hypothesis_id,
+                variant=variant or name,
+                dataset_id=dataset_id,
+                period=period,
+                params=params or {},
+                selection_note="factor_campaign",
+            )
+        )
 
         redundant_with, _ = self.screen_redundancy(rep.ls_return_series)
         if redundant_with is not None:
@@ -161,15 +184,29 @@ class FactorCampaign:
         with self._conn() as conn:
             conn.execute(
                 "INSERT INTO factor_evaluations VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                [factor_id, name, family, rep.ic_mean, rep.ic_ir, rep.ic_t_stat,
-                 rep.ls_sharpe, rep.turnover, status, redundant_with,
-                 json.dumps(rep.ls_return_series), fp, datetime.now(UTC)],
+                [
+                    factor_id,
+                    name,
+                    family,
+                    rep.ic_mean,
+                    rep.ic_ir,
+                    rep.ic_t_stat,
+                    rep.ls_sharpe,
+                    rep.turnover,
+                    status,
+                    redundant_with,
+                    json.dumps(rep.ls_return_series),
+                    fp,
+                    datetime.now(UTC),
+                ],
             )
         return CampaignResult(factor_id, name, family, status, redundant_with, rep)
 
     def library(self, *, status: str | None = None) -> list[dict]:
-        q = ("SELECT name, family, ic_mean, ic_ir, ic_t_stat, ls_sharpe, turnover, "
-             "status, redundant_with FROM factor_evaluations")
+        q = (
+            "SELECT name, family, ic_mean, ic_ir, ic_t_stat, ls_sharpe, turnover, "
+            "status, redundant_with FROM factor_evaluations"
+        )
         args: list = []
         if status:
             q += " WHERE status = ?"
@@ -177,8 +214,17 @@ class FactorCampaign:
         q += " ORDER BY ic_t_stat DESC"
         with self._conn() as conn:
             rows = conn.execute(q, args).fetchall()
-        cols = ["name", "family", "ic_mean", "ic_ir", "ic_t_stat", "ls_sharpe",
-                "turnover", "status", "redundant_with"]
+        cols = [
+            "name",
+            "family",
+            "ic_mean",
+            "ic_ir",
+            "ic_t_stat",
+            "ls_sharpe",
+            "turnover",
+            "status",
+            "redundant_with",
+        ]
         return [dict(zip(cols, r, strict=True)) for r in rows]
 
     def n_trials(self, family: str) -> int:

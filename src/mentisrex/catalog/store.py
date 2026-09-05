@@ -9,10 +9,11 @@ from __future__ import annotations
 import json
 from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import duckdb
+
 
 def _parse_dt(v: object) -> datetime:
     """DuckDB TIMESTAMPTZ returns datetime objects; strings come from tests/manual inserts."""
@@ -104,48 +105,83 @@ CREATE TABLE IF NOT EXISTS governance_log (
 # Built-in datasets: existing DuckDB stores + market data store
 _BUILTIN_DATASETS: list[DatasetRecord] = [
     DatasetRecord(
-        id="corpus_papers", name="Research Corpus", source="internal",
-        asset_class="all", frequency="on-demand",
+        id="corpus_papers",
+        name="Research Corpus",
+        source="internal",
+        asset_class="all",
+        frequency="on-demand",
         description="Academic papers corpus managed by CorpusStore",
-        owner="system", tags=["corpus", "literature"],
+        owner="system",
+        tags=["corpus", "literature"],
     ),
     DatasetRecord(
-        id="hypothesis_store", name="Hypothesis Store", source="internal",
-        asset_class="all", frequency="on-demand",
+        id="hypothesis_store",
+        name="Hypothesis Store",
+        source="internal",
+        asset_class="all",
+        frequency="on-demand",
         description="Generated and ranked trading hypotheses",
-        owner="system", tags=["hypothesis"],
+        owner="system",
+        tags=["hypothesis"],
     ),
     DatasetRecord(
-        id="knowledge_graph", name="Knowledge Graph", source="internal",
-        asset_class="all", frequency="on-demand",
+        id="knowledge_graph",
+        name="Knowledge Graph",
+        source="internal",
+        asset_class="all",
+        frequency="on-demand",
         description="Property graph of research entities (papers, hypotheses, experiments, features)",
-        owner="system", tags=["knowledge", "graph"],
+        owner="system",
+        tags=["knowledge", "graph"],
     ),
     DatasetRecord(
-        id="literature_papers", name="Literature Store", source="arxiv/nber/crossref",
-        asset_class="all", frequency="daily",
+        id="literature_papers",
+        name="Literature Store",
+        source="arxiv/nber/crossref",
+        asset_class="all",
+        frequency="daily",
         description="Ingested academic papers from arXiv, NBER, CrossRef",
-        owner="system", tags=["literature"],
+        owner="system",
+        tags=["literature"],
     ),
     DatasetRecord(
-        id="research_experiments", name="Research Experiments", source="internal",
-        asset_class="all", frequency="on-demand",
+        id="research_experiments",
+        name="Research Experiments",
+        source="internal",
+        asset_class="all",
+        frequency="on-demand",
         description="Experiment records, validation reports, and verdicts",
-        owner="system", tags=["research", "experiments"],
+        owner="system",
+        tags=["research", "experiments"],
     ),
     DatasetRecord(
-        id="paper_trading_outcomes", name="Paper Trading Outcomes", source="internal",
-        asset_class="equity", frequency="daily",
+        id="paper_trading_outcomes",
+        name="Paper Trading Outcomes",
+        source="internal",
+        asset_class="equity",
+        frequency="daily",
         description="Paper trading journal, orders, and performance records",
-        owner="system", tags=["paper-trading"],
+        owner="system",
+        tags=["paper-trading"],
     ),
     DatasetRecord(
-        id="ohlcv_daily_market", name="OHLCV Daily Market Data", source="yahoo/alpaca",
-        asset_class="equity", frequency="daily",
+        id="ohlcv_daily_market",
+        name="OHLCV Daily Market Data",
+        source="yahoo/alpaca",
+        asset_class="equity",
+        frequency="daily",
         description="Daily OHLCV bars for equities via Yahoo Finance and Alpaca",
-        schema_def={"symbol": "VARCHAR", "timestamp": "TIMESTAMPTZ", "open": "DECIMAL",
-                    "high": "DECIMAL", "low": "DECIMAL", "close": "DECIMAL", "volume": "DECIMAL"},
-        owner="system", tags=["market-data", "ohlcv", "equity"],
+        schema_def={
+            "symbol": "VARCHAR",
+            "timestamp": "TIMESTAMPTZ",
+            "open": "DECIMAL",
+            "high": "DECIMAL",
+            "low": "DECIMAL",
+            "close": "DECIMAL",
+            "volume": "DECIMAL",
+        },
+        owner="system",
+        tags=["market-data", "ohlcv", "equity"],
     ),
 ]
 
@@ -189,12 +225,23 @@ class CatalogStore:
             conn.execute(
                 """INSERT OR REPLACE INTO datasets VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 [
-                    record.id, record.name, record.source, record.asset_class,
-                    record.frequency, json.dumps(record.coverage), json.dumps(record.schema_def),
-                    record.update_freq, record.license, record.quality_score, record.owner,
-                    json.dumps(record.dependencies), json.dumps(record.tags),
-                    record.description, record.created_at.isoformat(),
-                    record.updated_at.isoformat(), record.status,
+                    record.id,
+                    record.name,
+                    record.source,
+                    record.asset_class,
+                    record.frequency,
+                    json.dumps(record.coverage),
+                    json.dumps(record.schema_def),
+                    record.update_freq,
+                    record.license,
+                    record.quality_score,
+                    record.owner,
+                    json.dumps(record.dependencies),
+                    json.dumps(record.tags),
+                    record.description,
+                    record.created_at.isoformat(),
+                    record.updated_at.isoformat(),
+                    record.status,
                 ],
             )
         logger.info("dataset_registered", id=record.id, name=record.name)
@@ -234,7 +281,7 @@ class CatalogStore:
         with self._conn() as conn:
             conn.execute(
                 "UPDATE datasets SET quality_score=?, updated_at=? WHERE id=?",
-                [score, datetime.now(timezone.utc).isoformat(), dataset_id],
+                [score, datetime.now(UTC).isoformat(), dataset_id],
             )
 
     def deprecate(self, dataset_id: str, replaced_by: str | None = None) -> None:
@@ -242,7 +289,7 @@ class CatalogStore:
         with self._conn() as conn:
             conn.execute(
                 "UPDATE datasets SET status=?, updated_at=? WHERE id=?",
-                [new_status, datetime.now(timezone.utc).isoformat(), dataset_id],
+                [new_status, datetime.now(UTC).isoformat(), dataset_id],
             )
 
     def search(self, q: str, limit: int = 20) -> list[DatasetRecord]:
@@ -260,8 +307,14 @@ class CatalogStore:
             conn.execute(
                 "INSERT OR REPLACE INTO dataset_versions VALUES (?,?,?,?,?,?,?,?)",
                 [
-                    v.id, v.dataset_id, v.version, json.dumps(v.snapshot_meta),
-                    v.row_hash, v.created_at.isoformat(), v.created_by, v.notes,
+                    v.id,
+                    v.dataset_id,
+                    v.version,
+                    json.dumps(v.snapshot_meta),
+                    v.row_hash,
+                    v.created_at.isoformat(),
+                    v.created_by,
+                    v.notes,
                 ],
             )
         logger.info("version_saved", dataset_id=v.dataset_id, version=v.version)
@@ -282,9 +335,14 @@ class CatalogStore:
             conn.execute(
                 "INSERT OR REPLACE INTO lineage_edges VALUES (?,?,?,?,?,?,?,?)",
                 [
-                    edge.id, edge.source_id, edge.source_type,
-                    edge.target_id, edge.target_type, edge.rel_type,
-                    json.dumps(edge.metadata), edge.created_at.isoformat(),
+                    edge.id,
+                    edge.source_id,
+                    edge.source_type,
+                    edge.target_id,
+                    edge.target_type,
+                    edge.rel_type,
+                    json.dumps(edge.metadata),
+                    edge.created_at.isoformat(),
                 ],
             )
         return edge
@@ -304,10 +362,18 @@ class CatalogStore:
             conn.execute(
                 "INSERT OR REPLACE INTO quality_reports VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                 [
-                    report.id, report.dataset_id, report.checked_at.isoformat(),
-                    report.missing_pct, report.duplicate_count, report.timestamp_gaps,
-                    report.outlier_count, report.schema_drift, report.feed_delayed,
-                    report.overall_score, json.dumps(report.details), report.passed,
+                    report.id,
+                    report.dataset_id,
+                    report.checked_at.isoformat(),
+                    report.missing_pct,
+                    report.duplicate_count,
+                    report.timestamp_gaps,
+                    report.outlier_count,
+                    report.schema_drift,
+                    report.feed_delayed,
+                    report.overall_score,
+                    json.dumps(report.details),
+                    report.passed,
                 ],
             )
         self.update_quality_score(report.dataset_id, report.overall_score)
@@ -328,8 +394,13 @@ class CatalogStore:
             conn.execute(
                 "INSERT INTO governance_log VALUES (?,?,?,?,?,?,?)",
                 [
-                    rec.id, rec.dataset_id, rec.action, rec.actor,
-                    json.dumps(rec.details), rec.retention_days, rec.logged_at.isoformat(),
+                    rec.id,
+                    rec.dataset_id,
+                    rec.action,
+                    rec.actor,
+                    json.dumps(rec.details),
+                    rec.retention_days,
+                    rec.logged_at.isoformat(),
                 ],
             )
         return rec
@@ -356,29 +427,47 @@ class CatalogStore:
     @staticmethod
     def _row_to_dataset(row: tuple) -> DatasetRecord:
         return DatasetRecord(
-            id=row[0], name=row[1], source=row[2], asset_class=row[3],
-            frequency=row[4], coverage=json.loads(row[5] or "{}"),
-            schema_def=json.loads(row[6] or "{}"), update_freq=row[7],
-            license=row[8], quality_score=float(row[9] or 0.0), owner=row[10],
-            dependencies=json.loads(row[11] or "[]"), tags=json.loads(row[12] or "[]"),
-            description=row[13] or "", created_at=_parse_dt(row[14]),
-            updated_at=_parse_dt(row[15]), status=row[16],
+            id=row[0],
+            name=row[1],
+            source=row[2],
+            asset_class=row[3],
+            frequency=row[4],
+            coverage=json.loads(row[5] or "{}"),
+            schema_def=json.loads(row[6] or "{}"),
+            update_freq=row[7],
+            license=row[8],
+            quality_score=float(row[9] or 0.0),
+            owner=row[10],
+            dependencies=json.loads(row[11] or "[]"),
+            tags=json.loads(row[12] or "[]"),
+            description=row[13] or "",
+            created_at=_parse_dt(row[14]),
+            updated_at=_parse_dt(row[15]),
+            status=row[16],
         )
 
     @staticmethod
     def _row_to_version(row: tuple) -> DataVersion:
         return DataVersion(
-            id=row[0], dataset_id=row[1], version=row[2],
-            snapshot_meta=json.loads(row[3] or "{}"), row_hash=row[4] or "",
+            id=row[0],
+            dataset_id=row[1],
+            version=row[2],
+            snapshot_meta=json.loads(row[3] or "{}"),
+            row_hash=row[4] or "",
             created_at=_parse_dt(row[5]),
-            created_by=row[6] or "system", notes=row[7] or "",
+            created_by=row[6] or "system",
+            notes=row[7] or "",
         )
 
     @staticmethod
     def _row_to_edge(row: tuple) -> LineageEdge:
         return LineageEdge(
-            id=row[0], source_id=row[1], source_type=row[2],
-            target_id=row[3], target_type=row[4], rel_type=row[5],
+            id=row[0],
+            source_id=row[1],
+            source_type=row[2],
+            target_id=row[3],
+            target_type=row[4],
+            rel_type=row[5],
             metadata=json.loads(row[6] or "{}"),
             created_at=_parse_dt(row[7]),
         )
@@ -386,7 +475,8 @@ class CatalogStore:
     @staticmethod
     def _row_to_quality(row: tuple) -> QualityReport:
         return QualityReport(
-            id=row[0], dataset_id=row[1],
+            id=row[0],
+            dataset_id=row[1],
             checked_at=_parse_dt(row[2]),
             missing_pct=float(row[3] or 0.0),
             duplicate_count=int(row[4] or 0),
@@ -402,7 +492,9 @@ class CatalogStore:
     @staticmethod
     def _row_to_governance(row: tuple) -> GovernanceRecord:
         return GovernanceRecord(
-            id=row[0], dataset_id=row[1], action=row[2],
+            id=row[0],
+            dataset_id=row[1],
+            action=row[2],
             actor=row[3] or "system",
             details=json.loads(row[4] or "{}"),
             retention_days=row[5],

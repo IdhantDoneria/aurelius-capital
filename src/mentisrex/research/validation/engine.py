@@ -31,12 +31,16 @@ from mentisrex.research.validation import (
     multiple_testing,
     overfitting,
     permutation,
-    report as report_mod,
-    robustness as robustness_mod,
     scoring,
     stability,
     turnover,
     visualization,
+)
+from mentisrex.research.validation import (
+    report as report_mod,
+)
+from mentisrex.research.validation import (
+    robustness as robustness_mod,
 )
 from mentisrex.research.validation.report import ValidationReport
 from mentisrex.research.validation.significance import sharpe, significance
@@ -52,7 +56,7 @@ class ValidationConfig:
     bootstrap_method: str = "stationary"
     monte_carlo_samples: int = 1000
     permutation_samples: int = 1000
-    n_trials: int = 1                       # # of configs tried (for DSR/Bonferroni)
+    n_trials: int = 1  # # of configs tried (for DSR/Bonferroni)
     seed: int = 0
     aum: float = 1e8
     adv: float | None = None
@@ -66,28 +70,63 @@ class ResearchValidator:
         self.config = config or ValidationConfig()
         self.registry = registry
 
-    def validate(self, experiment, execution_result, research_matrix=None, *,
-                 benchmark_returns=None, evaluator=None, param=None, param_values=None,
-                 returns_matrix=None, excess_matrix=None, positions=None,
-                 artifacts_dir=None) -> ValidationReport:
+    def validate(
+        self,
+        experiment,
+        execution_result,
+        research_matrix=None,
+        *,
+        benchmark_returns=None,
+        evaluator=None,
+        param=None,
+        param_values=None,
+        returns_matrix=None,
+        excess_matrix=None,
+        positions=None,
+        artifacts_dir=None,
+    ) -> ValidationReport:
         try:
-            return self._validate(experiment, execution_result, research_matrix,
-                                  benchmark_returns, evaluator, param, param_values,
-                                  returns_matrix, excess_matrix, positions, artifacts_dir)
-        except Exception as exc:  # noqa: BLE001 — validation must never crash the caller
+            return self._validate(
+                experiment,
+                execution_result,
+                research_matrix,
+                benchmark_returns,
+                evaluator,
+                param,
+                param_values,
+                returns_matrix,
+                excess_matrix,
+                positions,
+                artifacts_dir,
+            )
+        except Exception as exc:
             logger.error("validation_failed", error=str(exc))
             rep = ValidationReport(
-                overall_verdict="REQUIRES_REVIEW", confidence_score=0.0,
+                overall_verdict="REQUIRES_REVIEW",
+                confidence_score=0.0,
                 deployment_recommendation="Validation errored — manual review required.",
                 critical_failures=[f"validation error: {type(exc).__name__}: {exc}"],
-                validation_version=VALIDATION_VERSION)
+                validation_version=VALIDATION_VERSION,
+            )
             rep.manifest_hash = report_mod.manifest_hash(rep)
             return rep
 
     # ── core ──────────────────────────────────────────────────────────────────
 
-    def _validate(self, experiment, execution_result, matrix, benchmark_returns, evaluator,
-                  param, param_values, returns_matrix, excess_matrix, positions, artifacts_dir):
+    def _validate(
+        self,
+        experiment,
+        execution_result,
+        matrix,
+        benchmark_returns,
+        evaluator,
+        param,
+        param_values,
+        returns_matrix,
+        excess_matrix,
+        positions,
+        artifacts_dir,
+    ):
         cfg = self.config
         pm = _extract_pm(execution_result)
         returns = list(pm.daily_returns or [])
@@ -95,23 +134,33 @@ class ResearchValidator:
 
         if len(returns) < 3:
             rep = ValidationReport(
-                overall_verdict="REQUIRES_REVIEW", confidence_score=0.0,
+                overall_verdict="REQUIRES_REVIEW",
+                confidence_score=0.0,
                 deployment_recommendation="Too few return observations to validate.",
                 critical_failures=["insufficient return history (<3 observations)"],
-                validation_version=VALIDATION_VERSION)
+                validation_version=VALIDATION_VERSION,
+            )
             rep.manifest_hash = report_mod.manifest_hash(rep)
             return rep
 
         # ── statistical ──
         sig = significance(returns)
-        boot = bootstrap.bootstrap_ci(returns, sharpe, n_samples=cfg.bootstrap_samples,
-                                      method=cfg.bootstrap_method, seed=cfg.seed)
-        mc = monte_carlo.monte_carlo(returns, sharpe, n_samples=cfg.monte_carlo_samples, seed=cfg.seed)
+        boot = bootstrap.bootstrap_ci(
+            returns,
+            sharpe,
+            n_samples=cfg.bootstrap_samples,
+            method=cfg.bootstrap_method,
+            seed=cfg.seed,
+        )
+        mc = monte_carlo.monte_carlo(
+            returns, sharpe, n_samples=cfg.monte_carlo_samples, seed=cfg.seed
+        )
         # sign permutation: Sharpe is order-invariant, so a *return* permutation is
         # degenerate for it; randomizing the sign is the meaningful null for "is the
         # positive drift beyond chance?".
-        perm = permutation.permutation_test(returns, sharpe, kind="sign",
-                                            n_samples=cfg.permutation_samples, seed=cfg.seed)
+        perm = permutation.permutation_test(
+            returns, sharpe, kind="sign", n_samples=cfg.permutation_samples, seed=cfg.seed
+        )
 
         # ── overfitting ──
         of = overfitting.deflated_sharpe_ratio(returns, n_trials=cfg.n_trials)
@@ -127,18 +176,28 @@ class ResearchValidator:
 
         # ── multiple testing over the computed p-value family + Bonferroni on n_trials ──
         family = [sig["p_value"], perm["p_value"], boot.get("prob_le_zero", 1.0)]
-        mt = {"family_pvalues": family,
-              "bonferroni": multiple_testing.bonferroni(family)["adjusted"],
-              "holm": multiple_testing.holm(family)["adjusted"],
-              "benjamini_hochberg": multiple_testing.benjamini_hochberg(family)["adjusted"],
-              "single_pvalue_bonferroni_n_trials": min(sig["p_value"] * cfg.n_trials, 1.0)}
+        mt = {
+            "family_pvalues": family,
+            "bonferroni": multiple_testing.bonferroni(family)["adjusted"],
+            "holm": multiple_testing.holm(family)["adjusted"],
+            "benjamini_hochberg": multiple_testing.benjamini_hochberg(family)["adjusted"],
+            "single_pvalue_bonferroni_n_trials": min(sig["p_value"] * cfg.n_trials, 1.0),
+        }
 
         # ── robustness / stability ──
-        rob = robustness_mod.robustness_summary(returns, timestamps, evaluator=evaluator,
-                                                param=param, param_values=param_values, seed=cfg.seed)
-        stab = (stability.stability_curve(evaluator, param, param_values)
-                if (evaluator and param and param_values)
-                else {"insufficient_data": True, "reason": "no evaluator/param grid"})
+        rob = robustness_mod.robustness_summary(
+            returns,
+            timestamps,
+            evaluator=evaluator,
+            param=param,
+            param_values=param_values,
+            seed=cfg.seed,
+        )
+        stab = (
+            stability.stability_curve(evaluator, param, param_values)
+            if (evaluator and param and param_values)
+            else {"insufficient_data": True, "reason": "no evaluator/param grid"}
+        )
 
         # ── capacity / turnover / risk ──
         turn = turnover.turnover_profile(pm)
@@ -146,29 +205,52 @@ class ResearchValidator:
         factor = {
             "market": factor_exposure.market_exposure(returns, benchmark_returns),
             "style": factor_exposure.style_exposure(positions, matrix),
-            "concentration": factor_exposure.concentration(positions) if positions else {"insufficient_data": True},
+            "concentration": factor_exposure.concentration(positions)
+            if positions
+            else {"insufficient_data": True},
             **factor_exposure.unsupported_exposures(),
         }
 
         summaries = {
-            "significance": sig, "bootstrap": boot, "monte_carlo": mc, "permutation": perm,
-            "overfitting": of, "multiple_testing": mt, "robustness": rob, "stability": stab,
-            "turnover": turn, "capacity": cap, "factor": factor,
+            "significance": sig,
+            "bootstrap": boot,
+            "monte_carlo": mc,
+            "permutation": perm,
+            "overfitting": of,
+            "multiple_testing": mt,
+            "robustness": rob,
+            "stability": stab,
+            "turnover": turn,
+            "capacity": cap,
+            "factor": factor,
         }
 
         flags = diagnostics.diagnose(summaries)
         score_result = scoring.score(summaries, experiment, weights=cfg.weights)
-        decision = report_mod.decide(score_result, flags, summaries,
-                                     review_threshold=cfg.review_threshold, p_threshold=cfg.p_threshold)
+        decision = report_mod.decide(
+            score_result,
+            flags,
+            summaries,
+            review_threshold=cfg.review_threshold,
+            p_threshold=cfg.p_threshold,
+        )
         visuals = visualization.build_visualizations(pm, summaries=summaries)
 
         rep = ValidationReport(
             overall_verdict=decision["verdict"],
             confidence_score=decision["confidence_score"],
             deployment_recommendation=decision["deployment_recommendation"],
-            warnings=decision["warnings"], critical_failures=decision["critical_failures"],
-            statistical_summary=_strip({"significance": sig, "bootstrap": boot,
-                                        "monte_carlo": mc, "permutation": perm, "multiple_testing": mt}),
+            warnings=decision["warnings"],
+            critical_failures=decision["critical_failures"],
+            statistical_summary=_strip(
+                {
+                    "significance": sig,
+                    "bootstrap": boot,
+                    "monte_carlo": mc,
+                    "permutation": perm,
+                    "multiple_testing": mt,
+                }
+            ),
             robustness_summary=_strip({"robustness": rob, "stability": stab}),
             capacity_summary={"capacity": cap, "turnover": turn},
             risk_summary=factor,
@@ -179,7 +261,8 @@ class ResearchValidator:
                 "fingerprint": getattr(experiment, "fingerprint", None),
                 "git_commit": getattr(experiment, "git_commit", None),
                 "validated_at": datetime.now(UTC).isoformat(),
-                "validation_version": VALIDATION_VERSION, "seed": cfg.seed,
+                "validation_version": VALIDATION_VERSION,
+                "seed": cfg.seed,
                 "n_observations": len(returns),
             },
             research_score=score_result["research_score"],
@@ -202,42 +285,55 @@ class ResearchValidator:
         path = Path(d)
         path.mkdir(parents=True, exist_ok=True)
         files = {
-            "validation_report.json": json.dumps(rep.to_dict(), indent=2, sort_keys=True, default=str),
-            "validation_visuals.json": json.dumps(rep.visualizations["charts"], indent=2, sort_keys=True, default=str),
+            "validation_report.json": json.dumps(
+                rep.to_dict(), indent=2, sort_keys=True, default=str
+            ),
+            "validation_visuals.json": json.dumps(
+                rep.visualizations["charts"], indent=2, sort_keys=True, default=str
+            ),
             "plot_validation.py": rep.visualizations["plotting_code"],
         }
         manifest = {}
         for name, content in files.items():
             fp = path / name
             fp.write_text(content)
-            manifest[name] = {"location": str(fp),
-                              "hash": hashlib.blake2b(fp.read_bytes(), digest_size=16).hexdigest()}
+            manifest[name] = {
+                "location": str(fp),
+                "hash": hashlib.blake2b(fp.read_bytes(), digest_size=16).hexdigest(),
+            }
         rep.execution_metadata["artifacts"] = manifest
 
     def _update_registry(self, rep, experiment) -> None:
         if self.registry is None or experiment is None:
             return
         exp = self.registry.load(experiment.experiment_id) or experiment
-        exp.metrics = {**(exp.metrics or {}),
-                       "ValidationScore": float(rep.research_score),
-                       "DeflatedSharpe": float(rep.overfitting_summary.get("dsr") or 0.0)}
+        exp.metrics = {
+            **(exp.metrics or {}),
+            "ValidationScore": float(rep.research_score),
+            "DeflatedSharpe": float(rep.overfitting_summary.get("dsr") or 0.0),
+        }
         exp.notes = f"validation={rep.overall_verdict} v{rep.validation_version} score={rep.research_score:.0f}"
         arts = rep.execution_metadata.get("artifacts", {})
-        exp.artifacts = [*(exp.artifacts or []),
-                         *({"artifact_type": n, "artifact_location": m["location"], "artifact_hash": m["hash"]}
-                           for n, m in arts.items())]
+        exp.artifacts = [
+            *(exp.artifacts or []),
+            *(
+                {"artifact_type": n, "artifact_location": m["location"], "artifact_hash": m["hash"]}
+                for n, m in arts.items()
+            ),
+        ]
         self.registry.store.update_run(exp)
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
+
 def _extract_pm(execution_result):
     if hasattr(execution_result, "report") and execution_result.report is not None:
-        return execution_result.report.metrics       # M8 ResearchSession
+        return execution_result.report.metrics  # M8 ResearchSession
     if hasattr(execution_result, "metrics"):
-        return execution_result.metrics               # BacktestReport
+        return execution_result.metrics  # BacktestReport
     if hasattr(execution_result, "daily_returns"):
-        return execution_result                       # PerformanceMetrics
+        return execution_result  # PerformanceMetrics
     raise ValueError("execution_result has no metrics / daily_returns")
 
 

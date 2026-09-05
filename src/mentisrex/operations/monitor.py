@@ -74,9 +74,7 @@ class OperationsMonitor:
         )
 
         scores = [
-            j["job"]["priority_score"]
-            for j in completed
-            if j["job"].get("priority_score", 0) > 0
+            j["job"]["priority_score"] for j in completed if j["job"].get("priority_score", 0) > 0
         ]
         avg_score = sum(scores) / len(scores) if scores else 0.0
 
@@ -89,9 +87,7 @@ class OperationsMonitor:
             "avg_priority_score": round(avg_score, 2),
             "stage_failure_counts": stage_failures,
             "pipeline_success_rate": (
-                len(completed) / (len(completed) + len(failed))
-                if (completed or failed)
-                else 1.0
+                len(completed) / (len(completed) + len(failed)) if (completed or failed) else 1.0
             ),
             "corpus_folder_stats": {
                 "incoming": _count_files(self._cfg.incoming),
@@ -114,7 +110,8 @@ def _count_files(path: Path) -> int:
     if not path.exists():
         return 0
     return sum(
-        1 for p in path.iterdir()
+        1
+        for p in path.iterdir()
         if p.is_file() and not p.name.startswith(".") and p.suffix.lower() in _SUPPORTED_EXTENSIONS
     )
 

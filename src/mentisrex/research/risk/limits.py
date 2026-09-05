@@ -35,10 +35,10 @@ class RiskLimits:
     max_net: float | None = 1.05
     max_leverage: float | None = 1.05
     max_volatility: float | None = None
-    max_drawdown: float | None = 0.25          # absolute (fraction)
+    max_drawdown: float | None = 0.25  # absolute (fraction)
     max_var_95: float | None = None
     max_turnover: float | None = None
-    max_concentration: float | None = None     # HHI cap
+    max_concentration: float | None = None  # HHI cap
     max_participation: float | None = None
     max_days_to_liquidate: float | None = None
 
@@ -53,6 +53,13 @@ class RiskLimits:
                 continue
             breached = observed > limit if kind == "max" else observed < limit
             if breached:
-                out.append(RiskViolation(limit_name=attr, observed=float(observed),
-                                         limit=float(limit), kind=kind, severity=severity))
+                out.append(
+                    RiskViolation(
+                        limit_name=attr,
+                        observed=float(observed),
+                        limit=float(limit),
+                        kind=kind,
+                        severity=severity,
+                    )
+                )
         return out

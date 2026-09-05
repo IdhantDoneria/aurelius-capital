@@ -9,24 +9,30 @@ since M9). Reuses M10 `risk_diagnostics` for the risk-contribution concentration
 
 from __future__ import annotations
 
-import numpy as np
-
 from mentisrex.research.risk.models import ExposureReport
 
 
-def exposure_report(weights: dict, *, sectors=None, industries=None,
-                    countries=None, currencies=None) -> ExposureReport:
+def exposure_report(
+    weights: dict, *, sectors=None, industries=None, countries=None, currencies=None
+) -> ExposureReport:
     w = weights or {}
     longs = sum(v for v in w.values() if v > 0)
     shorts = sum(-v for v in w.values() if v < 0)
     gross = longs + shorts
     net = longs - shorts
     return ExposureReport(
-        gross=gross, net=net, long=longs, short=shorts, cash=1.0 - gross,
+        gross=gross,
+        net=net,
+        long=longs,
+        short=shorts,
+        cash=1.0 - gross,
         n_long=sum(1 for v in w.values() if v > 0),
         n_short=sum(1 for v in w.values() if v < 0),
-        sector=_group(w, sectors), industry=_group(w, industries),
-        country=_group(w, countries), currency=_group(w, currencies))
+        sector=_group(w, sectors),
+        industry=_group(w, industries),
+        country=_group(w, countries),
+        currency=_group(w, currencies),
+    )
 
 
 def _group(weights: dict, mapping) -> dict:

@@ -28,8 +28,12 @@ class M18Pricer:
         if inst.type is InstrumentType.OPTION:
             return self._option_price(inst, market)
         if inst.type is InstrumentType.FUTURE:
-            return futures.fair_value(float(market["spot"]), float(market.get("rate", 0.0)),
-                                      float(market.get("div_yield", 0.0)), float(market.get("t", 0.0)))
+            return futures.fair_value(
+                float(market["spot"]),
+                float(market.get("rate", 0.0)),
+                float(market.get("div_yield", 0.0)),
+                float(market.get("t", 0.0)),
+            )
         # equity / forward / bond: mark or spot passthrough (bonds use the yield adapter)
         return float(market.get("mark", market.get("spot", 0.0)))
 
@@ -39,24 +43,27 @@ class M18Pricer:
         vol, t = float(market["vol"]), float(market.get("t", 0.0))
         is_call = inst.right is OptionRight.CALL
         if market.get("american"):
-            return american.crr_price(is_call, s, k, r, q, vol, t,
-                                      steps=int(market.get("steps", 200)))
+            return american.crr_price(
+                is_call, s, k, r, q, vol, t, steps=int(market.get("steps", 200))
+            )
         return pricing.black_scholes_price(is_call, s, k, r, q, vol, t)
 
     def greeks(self, inst: Instrument, market: dict) -> M17Greeks:
         if inst.type is not InstrumentType.OPTION:
-            return M17Greeks(delta=1.0)             # linear instrument
+            return M17Greeks(delta=1.0)  # linear instrument
         s, k = float(market["spot"]), float(inst.strike)
         r, q = float(market.get("rate", 0.0)), float(market.get("div_yield", 0.0))
         vol, t = float(market["vol"]), float(market.get("t", 0.0))
         is_call = inst.right is OptionRight.CALL
         if market.get("american"):
-            g = american.crr_greeks(is_call, s, k, r, q, vol, t,
-                                    steps=int(market.get("steps", 200)))
+            g = american.crr_greeks(
+                is_call, s, k, r, q, vol, t, steps=int(market.get("steps", 200))
+            )
         else:
             g = pricing.black_scholes_greeks(is_call, s, k, r, q, vol, t)
-        return M17Greeks(delta=g["delta"], gamma=g["gamma"], theta=g["theta"],
-                         vega=g["vega"], rho=g["rho"])
+        return M17Greeks(
+            delta=g["delta"], gamma=g["gamma"], theta=g["theta"], vega=g["vega"], rho=g["rho"]
+        )
 
 
 class M18YieldProvider:
@@ -67,10 +74,13 @@ class M18YieldProvider:
 
     def _spec(self, inst: Instrument) -> bonds.BondSpec:
         md = inst.metadata
-        return bonds.BondSpec(face=float(md.get("face", 100.0)),
-                              coupon=float(md.get("coupon", 0.0)),
-                              frequency=int(md.get("frequency", 2)), maturity=inst.expiry,
-                              issue=md.get("issue"))
+        return bonds.BondSpec(
+            face=float(md.get("face", 100.0)),
+            coupon=float(md.get("coupon", 0.0)),
+            frequency=int(md.get("frequency", 2)),
+            maturity=inst.expiry,
+            issue=md.get("issue"),
+        )
 
     def ytm(self, inst: Instrument, price: float) -> float:
         settle = self.settle or date.today()

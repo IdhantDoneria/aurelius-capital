@@ -76,9 +76,7 @@ LIQUIDITY_METRICS: dict[str, tuple] = {
 DEFAULT_METRIC = "dollar_volume_median"
 
 
-def screen(
-    liq: dict[str, float], pct: float, higher_is_more_liquid: bool
-) -> set[str]:
+def screen(liq: dict[str, float], pct: float, higher_is_more_liquid: bool) -> set[str]:
     """Return the survivors: names to KEEP after dropping the bottom `pct`
     fraction by liquidity. Look-ahead-free (caller passes only trailing-window
     metrics). pct<=0 -> keep everything (screen disabled)."""

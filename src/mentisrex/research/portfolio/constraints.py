@@ -20,12 +20,12 @@ import numpy as np
 class ConstraintSet:
     # position
     max_position_weight: float = 1.0
-    min_position_weight: float = 0.0        # applies to held names (|w| floor)
+    min_position_weight: float = 0.0  # applies to held names (|w| floor)
     long_only: bool = True
     # portfolio
-    gross_exposure: float = 1.0             # target Σ|w|
-    net_exposure: float | None = None       # target Σw (None = unconstrained)
-    max_leverage: float = 1.0               # cap on Σ|w|
+    gross_exposure: float = 1.0  # target Σ|w|
+    net_exposure: float | None = None  # target Σw (None = unconstrained)
+    max_leverage: float = 1.0  # cap on Σ|w|
     # risk
     volatility_target: float | None = None
     beta_target: float | None = None
@@ -72,9 +72,16 @@ class ConstraintSet:
                 w = w * (self.gross_exposure / g)
         return w
 
-    def violations(self, w: np.ndarray, *, sectors=None, vol: float | None = None,
-                   beta: float | None = None, turnover: float | None = None,
-                   participation: np.ndarray | None = None) -> list[str]:
+    def violations(
+        self,
+        w: np.ndarray,
+        *,
+        sectors=None,
+        vol: float | None = None,
+        beta: float | None = None,
+        turnover: float | None = None,
+        participation: np.ndarray | None = None,
+    ) -> list[str]:
         v: list[str] = []
         if self.long_only and (w < -1e-9).any():
             v.append("long_only_violation")
@@ -84,14 +91,25 @@ class ConstraintSet:
             v.append("leverage_violation")
         if self.net_exposure is not None and abs(w.sum() - self.net_exposure) > 1e-3:
             v.append("net_exposure_violation")
-        if self.volatility_target is not None and vol is not None and vol > self.volatility_target * 1.05:
+        if (
+            self.volatility_target is not None
+            and vol is not None
+            and vol > self.volatility_target * 1.05
+        ):
             v.append("volatility_target_violation")
         if self.beta_target is not None and beta is not None and abs(beta - self.beta_target) > 0.1:
             v.append("beta_target_violation")
-        if self.max_turnover is not None and turnover is not None and turnover > self.max_turnover + 1e-9:
+        if (
+            self.max_turnover is not None
+            and turnover is not None
+            and turnover > self.max_turnover + 1e-9
+        ):
             v.append("turnover_violation")
-        if self.max_adv_participation is not None and participation is not None \
-                and (participation > self.max_adv_participation + 1e-9).any():
+        if (
+            self.max_adv_participation is not None
+            and participation is not None
+            and (participation > self.max_adv_participation + 1e-9).any()
+        ):
             v.append("adv_participation_violation")
         if sectors is not None and self.sector_limits:
             v += _group_violations(w, sectors, self.sector_limits, "sector")

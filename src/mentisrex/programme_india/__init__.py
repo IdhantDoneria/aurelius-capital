@@ -14,6 +14,6 @@ exactly what would need to be built before this could run live, and why
 that was not attempted in this pass.
 """
 
-from mentisrex.programme_india.config import IndiaConfig, DEFAULT_CONFIG
+from mentisrex.programme_india.config import DEFAULT_CONFIG, IndiaConfig
 
-__all__ = ["IndiaConfig", "DEFAULT_CONFIG"]
+__all__ = ["DEFAULT_CONFIG", "IndiaConfig"]

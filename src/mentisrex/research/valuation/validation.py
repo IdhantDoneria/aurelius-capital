@@ -21,9 +21,9 @@ class ValuationValidator:
 
     def validate_snapshot(self, snap: MarketDataSnapshot) -> list:
         problems = list(validate_pit(snap, max_staleness_days=self.max_staleness_days))
-        for cid, curve in snap.rates.items():
+        for _cid, curve in snap.rates.items():
             problems.extend(curve.validate())
-        for sid, surf in snap.vol_surfaces.items():
+        for _sid, surf in snap.vol_surfaces.items():
             problems.extend(surf.validate())
         return problems
 
@@ -39,7 +39,11 @@ class ValuationValidator:
                 problems.append(f"{inst.instrument_id}: missing underlying spot {u}")
             if u not in snap.vol_surfaces:
                 problems.append(f"{inst.instrument_id}: missing vol surface {u}")
-        if t is InstrumentType.BOND and inst.currency not in snap.rates and "ytm" not in inst.metadata:
+        if (
+            t is InstrumentType.BOND
+            and inst.currency not in snap.rates
+            and "ytm" not in inst.metadata
+        ):
             problems.append(f"{inst.instrument_id}: missing {inst.currency} curve and ytm")
         return problems
 

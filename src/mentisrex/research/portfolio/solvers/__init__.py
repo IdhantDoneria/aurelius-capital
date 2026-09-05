@@ -24,7 +24,13 @@ SOLVER_REGISTRY: dict[str, type[Solver]] = {
 }
 
 __all__ = [
-    "SOLVER_REGISTRY", "Solver", "EqualWeightSolver", "MaxSharpeSolver",
-    "MinVarianceSolver", "RiskParitySolver", "MaxDiversificationSolver",
-    "TrackingErrorSolver", "HierarchicalRiskParitySolver",
+    "SOLVER_REGISTRY",
+    "EqualWeightSolver",
+    "HierarchicalRiskParitySolver",
+    "MaxDiversificationSolver",
+    "MaxSharpeSolver",
+    "MinVarianceSolver",
+    "RiskParitySolver",
+    "Solver",
+    "TrackingErrorSolver",
 ]

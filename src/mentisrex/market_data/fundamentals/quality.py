@@ -28,18 +28,22 @@ class QualityReport:
 
     def as_dict(self) -> dict:
         return {
-            "cik": self.cik, "negative_shares": self.negative_shares,
-            "duplicate_facts": self.duplicate_facts, "unit_mismatch": self.unit_mismatch,
-            "restated_periods": self.restated_periods, "missing_required": self.missing_required,
+            "cik": self.cik,
+            "negative_shares": self.negative_shares,
+            "duplicate_facts": self.duplicate_facts,
+            "unit_mismatch": self.unit_mismatch,
+            "restated_periods": self.restated_periods,
+            "missing_required": self.missing_required,
             "passed": self.passed,
         }
 
 
 def check(store: FundamentalsStore, cik: str, *, as_of: date | None = None) -> QualityReport:
     rep = QualityReport(cik=cik)
-    with store._conn() as conn:  # noqa: SLF001 — same package
+    with store._conn() as conn:
         rep.negative_shares = conn.execute(
-            "SELECT COUNT(*) FROM fundamental_facts WHERE cik=? AND unit='shares' AND value < 0", [cik]
+            "SELECT COUNT(*) FROM fundamental_facts WHERE cik=? AND unit='shares' AND value < 0",
+            [cik],
         ).fetchone()[0]
         # exact duplicate data points (same PK-ish tuple appearing >1 by value) —
         # true dup filing, not a restatement (restatement differs by accession/value)
@@ -47,12 +51,14 @@ def check(store: FundamentalsStore, cik: str, *, as_of: date | None = None) -> Q
             """SELECT COALESCE(SUM(c-1),0) FROM (
                    SELECT COUNT(*) c FROM fundamental_facts WHERE cik=?
                    GROUP BY concept, unit, period_end, value HAVING COUNT(DISTINCT accession) > 1
-               )""", [cik]
+               )""",
+            [cik],
         ).fetchone()[0]
         # same concept+period reported in multiple units → mismatch risk
         rows = conn.execute(
             """SELECT concept, COUNT(DISTINCT unit) u FROM fundamental_facts
-               WHERE cik=? GROUP BY concept, period_end HAVING u > 1""", [cik]
+               WHERE cik=? GROUP BY concept, period_end HAVING u > 1""",
+            [cik],
         ).fetchall()
         for concept, u in rows:
             rep.unit_mismatch[concept] = max(rep.unit_mismatch.get(concept, 0), u)
@@ -60,10 +66,15 @@ def check(store: FundamentalsStore, cik: str, *, as_of: date | None = None) -> Q
             """SELECT COUNT(*) FROM (
                    SELECT concept, period_end FROM fundamental_facts WHERE cik=?
                    GROUP BY concept, period_end HAVING COUNT(DISTINCT accession) > 1
-               )""", [cik]
+               )""",
+            [cik],
         ).fetchone()[0]
-        present = {r[0] for r in conn.execute(
-            "SELECT DISTINCT concept FROM fundamental_facts WHERE cik=?", [cik]).fetchall()}
+        present = {
+            r[0]
+            for r in conn.execute(
+                "SELECT DISTINCT concept FROM fundamental_facts WHERE cik=?", [cik]
+            ).fetchall()
+        }
     rep.missing_required = [c for c in REQUIRED_CONCEPTS if c not in present]
     rep.passed = rep.negative_shares == 0 and not rep.unit_mismatch and not rep.missing_required
     return rep

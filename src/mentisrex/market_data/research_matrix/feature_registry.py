@@ -21,26 +21,26 @@ from __future__ import annotations
 # name: (source, field-in-source-bundle, direction)
 FEATURES: dict[str, tuple[str, str, str]] = {
     # ── price (PIT ticker → PitPriceStore.window_as_of) ──────────────────────
-    "close":         ("price", "close", "higher"),
-    "returns":       ("price", "returns", "higher"),
-    "volatility":    ("price", "volatility", "lower"),
-    "volume":        ("price", "volume", "higher"),
+    "close": ("price", "close", "higher"),
+    "returns": ("price", "returns", "higher"),
+    "volatility": ("price", "volatility", "lower"),
+    "volume": ("price", "volume", "higher"),
     "dollar_volume": ("price", "dollar_volume", "higher"),
     # ── fundamental (CIK → FundamentalsEngine.factor_inputs_as_of) ───────────
-    "market_cap":       ("fundamental", "market_cap", "higher"),
-    "book_value":       ("fundamental", "book_value", "higher"),
-    "earnings_yield":   ("fundamental", "earnings_yield", "higher"),
-    "cashflow_yield":   ("fundamental", "cash_flow_yield", "higher"),
-    "roe":              ("fundamental", "roe", "higher"),
-    "roa":              ("fundamental", "roa", "higher"),
+    "market_cap": ("fundamental", "market_cap", "higher"),
+    "book_value": ("fundamental", "book_value", "higher"),
+    "earnings_yield": ("fundamental", "earnings_yield", "higher"),
+    "cashflow_yield": ("fundamental", "cash_flow_yield", "higher"),
+    "roe": ("fundamental", "roe", "higher"),
+    "roa": ("fundamental", "roa", "higher"),
     "operating_margin": ("fundamental", "operating_margin", "higher"),
-    "leverage":         ("fundamental", "debt_to_equity", "lower"),
+    "leverage": ("fundamental", "debt_to_equity", "lower"),
     # ── insider (security_id → InsiderEngine.insider_signal_as_of) ───────────
-    "insider_buy_value":  ("insider", "buy_value", "higher"),
+    "insider_buy_value": ("insider", "buy_value", "higher"),
     "insider_sell_value": ("insider", "sell_value", "lower"),
-    "net_insider_value":  ("insider", "net_value", "higher"),
-    "insider_count":      ("insider", "insider_count", "higher"),
-    "cluster_buy":        ("insider", "cluster_buy", "higher"),
+    "net_insider_value": ("insider", "net_value", "higher"),
+    "insider_count": ("insider", "insider_count", "higher"),
+    "cluster_buy": ("insider", "cluster_buy", "higher"),
 }
 
 SOURCES = ("price", "fundamental", "insider")

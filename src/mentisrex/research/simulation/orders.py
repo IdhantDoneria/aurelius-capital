@@ -19,7 +19,7 @@ class SizingConfig:
     integer_shares: bool = False
     lot_size: int = 1
     allow_short: bool = False
-    cash_buffer: float = 0.0            # fraction of value kept in cash
+    cash_buffer: float = 0.0  # fraction of value kept in cash
 
 
 def _round_lot(shares: float, cfg: SizingConfig) -> float:
@@ -35,10 +35,10 @@ def generate_orders(target_weights: dict, state, prices: dict, cfg: SizingConfig
         return []
     ids = set(target_weights) | set(state.holdings)
     orders: list[Order] = []
-    for sid in sorted(ids):                       # sorted → deterministic order
+    for sid in sorted(ids):  # sorted → deterministic order
         price = prices.get(sid)
         if price is None or price <= 0:
-            continue                              # unpriced: cannot trade, hold as-is
+            continue  # unpriced: cannot trade, hold as-is
         tw = target_weights.get(sid, 0.0)
         if not cfg.allow_short and tw < 0:
             tw = 0.0

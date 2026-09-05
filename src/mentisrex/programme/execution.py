@@ -130,7 +130,11 @@ def borrow_filter(
     )
     if benchmark in result.index:
         result[benchmark] = float(
-            np.clip(result[benchmark], -allocator.max_position_benchmark, allocator.max_position_benchmark)
+            np.clip(
+                result[benchmark],
+                -allocator.max_position_benchmark,
+                allocator.max_position_benchmark,
+            )
         )
 
     # 4. Re-apply the gross cap by scaling down only — never scale up to

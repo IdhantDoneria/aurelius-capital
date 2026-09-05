@@ -35,7 +35,7 @@ PERIODS = 252
 @dataclass
 class RiskEngineConfig:
     limits: RiskLimits = field(default_factory=RiskLimits)
-    var_method: str = "historical"        # historical | parametric
+    var_method: str = "historical"  # historical | parametric
     var_horizon_days: int = 1
     periods_per_year: int = PERIODS
     participation_limit: float = 0.10
@@ -47,9 +47,22 @@ class RiskEngine:
         self.config = config or RiskEngineConfig()
         self.factor_model = factor_model
 
-    def assess(self, weights: dict, *, returns=None, values=None, adv=None, aum=None,
-               sectors=None, betas=None, factor_ctx=None, turnover=None, when: date | None = None,
-               portfolio_value: float | None = None, limits: RiskLimits | None = None) -> RiskReport:
+    def assess(
+        self,
+        weights: dict,
+        *,
+        returns=None,
+        values=None,
+        adv=None,
+        aum=None,
+        sectors=None,
+        betas=None,
+        factor_ctx=None,
+        turnover=None,
+        when: date | None = None,
+        portfolio_value: float | None = None,
+        limits: RiskLimits | None = None,
+    ) -> RiskReport:
         cfg = self.config
         lim = limits or cfg.limits
         w = weights or {}
@@ -66,7 +79,11 @@ class RiskEngine:
             if R.size and R.shape[0] > 1:
                 rp = R @ wv
                 vol = float(rp.std(ddof=1) * np.sqrt(cfg.periods_per_year))
-                var_fn = var_mod.parametric_var if cfg.var_method == "parametric" else var_mod.historical_var
+                var_fn = (
+                    var_mod.parametric_var
+                    if cfg.var_method == "parametric"
+                    else var_mod.historical_var
+                )
                 var_report = var_fn(rp, horizon_days=cfg.var_horizon_days)
                 variances = np.var(R, axis=0, ddof=1)
                 diag = diagonal_risk_diagnostics(wv, variances)
@@ -74,12 +91,17 @@ class RiskEngine:
 
         concentration = conc_mod.concentration_report(w, risk_contribution=rc_pct)
 
-        dd = drawdown_report(values, halt_threshold=-cfg.halt_drawdown) if values is not None else None
+        dd = (
+            drawdown_report(values, halt_threshold=-cfg.halt_drawdown)
+            if values is not None
+            else None
+        )
 
         liq = None
         if adv is not None and (portfolio_value or 0) > 0:
-            liq = liquidity_report(w, adv, portfolio_value=portfolio_value,
-                                   participation_limit=cfg.participation_limit)
+            liq = liquidity_report(
+                w, adv, portfolio_value=portfolio_value, participation_limit=cfg.participation_limit
+            )
         cap = None
         if adv is not None and aum:
             cap = capacity_report(w, adv, aum=aum, participation_limit=cfg.participation_limit)
@@ -90,7 +112,9 @@ class RiskEngine:
 
         metrics = {
             "max_position": float(np.abs(wv).max()) if wv.size else 0.0,
-            "gross": exposure.gross, "net_abs": abs(exposure.net), "leverage": exposure.gross,
+            "gross": exposure.gross,
+            "net_abs": abs(exposure.net),
+            "leverage": exposure.gross,
             "volatility": vol if returns is not None else None,
             "current_drawdown_abs": abs(dd.current_drawdown) if dd else None,
             "var_95": (var_report.var.get("95%") if var_report else None),
@@ -103,19 +127,46 @@ class RiskEngine:
         decision, warnings = _decide(violations, dd)
 
         return RiskReport(
-            as_of=when, decision=decision, volatility=vol, exposure=exposure,
-            concentration=concentration, var=var_report, factor=factor, drawdown=dd,
-            liquidity=liq, capacity=cap, violations=violations, warnings=warnings,
+            as_of=when,
+            decision=decision,
+            volatility=vol,
+            exposure=exposure,
+            concentration=concentration,
+            var=var_report,
+            factor=factor,
+            drawdown=dd,
+            liquidity=liq,
+            capacity=cap,
+            violations=violations,
+            warnings=warnings,
             risk_contribution=rc_pct,
             metadata={"var_method": cfg.var_method, "n_positions": len(ids)},
-            generated_at=datetime.now(UTC))
+            generated_at=datetime.now(UTC),
+        )
 
     # ── pre-trade gate (M12 integration) ──────────────────────────────────────
-    def pre_trade_check(self, target_weights: dict, *, returns=None, values=None,
-                        adv=None, aum=None, portfolio_value=None, turnover=None,
-                        when=None) -> RiskReport:
-        return self.assess(target_weights, returns=returns, values=values, adv=adv, aum=aum,
-                           portfolio_value=portfolio_value, turnover=turnover, when=when)
+    def pre_trade_check(
+        self,
+        target_weights: dict,
+        *,
+        returns=None,
+        values=None,
+        adv=None,
+        aum=None,
+        portfolio_value=None,
+        turnover=None,
+        when=None,
+    ) -> RiskReport:
+        return self.assess(
+            target_weights,
+            returns=returns,
+            values=values,
+            adv=adv,
+            aum=aum,
+            portfolio_value=portfolio_value,
+            turnover=turnover,
+            when=when,
+        )
 
     def as_gate(self, *, adv_provider=None, returns_provider=None):
         return RiskGate(self, adv_provider=adv_provider, returns_provider=returns_provider)
@@ -162,7 +213,7 @@ class RiskGate:
 def _decide(violations, dd) -> tuple:
     warnings = [v.message for v in violations if v.severity == "soft"]
     if dd and dd.halt_triggered:
-        return RiskDecision.REJECT, warnings + ["drawdown halt triggered"]
+        return RiskDecision.REJECT, [*warnings, "drawdown halt triggered"]
     if any(v.severity == "hard" for v in violations):
         return RiskDecision.REJECT, warnings
     if warnings:

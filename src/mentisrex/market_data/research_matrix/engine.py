@@ -29,24 +29,34 @@ from mentisrex.market_data.research_matrix.feature_registry import FEATURES
 from mentisrex.market_data.research_matrix.schema import ResearchMatrix
 
 # friendly fundamental inputs the registry's fundamental features need
-_FUND_INPUTS = ("equity", "assets", "revenue", "net_income", "operating_cash_flow",
-                "debt", "operating_income", "shares_outstanding")
+_FUND_INPUTS = (
+    "equity",
+    "assets",
+    "revenue",
+    "net_income",
+    "operating_cash_flow",
+    "debt",
+    "operating_income",
+    "shares_outstanding",
+)
 
 
 class ResearchMatrixEngine:
-    def __init__(self, *, universe, fundamentals, insiders, prices,
-                 cik_map: dict[str, str] | None = None) -> None:
-        self._universe = universe        # UniverseEngine (M4)
+    def __init__(
+        self, *, universe, fundamentals, insiders, prices, cik_map: dict[str, str] | None = None
+    ) -> None:
+        self._universe = universe  # UniverseEngine (M4)
         self._fundamentals = fundamentals  # FundamentalsEngine (M3)
-        self._insiders = insiders        # InsiderEngine (M5)
-        self._prices = prices            # PitPriceStore (M1)
+        self._insiders = insiders  # InsiderEngine (M5)
+        self._prices = prices  # PitPriceStore (M1)
         self._cik_map = cik_map or {}
         self._cache: dict[tuple, ResearchMatrix] = {}
 
     # ── public API ──────────────────────────────────────────────────────────────
 
-    def feature_matrix_as_of(self, as_of: date, universe: list[dict] | None = None,
-                             features: list[str] | None = None) -> ResearchMatrix:
+    def feature_matrix_as_of(
+        self, as_of: date, universe: list[dict] | None = None, features: list[str] | None = None
+    ) -> ResearchMatrix:
         """PIT research snapshot on `as_of`. `universe` defaults to the M4
         survivorship-free universe; `features` defaults to the whole registry."""
         feats = list(features or FEATURES.keys())
@@ -58,8 +68,12 @@ class ResearchMatrixEngine:
         ids = [s["security_id"] for s in secs]
 
         dv = self._data_versions()
-        key = (as_of.isoformat(), self._universe_hash(ids), tuple(sorted(feats)),
-               tuple(sorted(dv.items())))
+        key = (
+            as_of.isoformat(),
+            self._universe_hash(ids),
+            tuple(sorted(feats)),
+            tuple(sorted(dv.items())),
+        )
         if key in self._cache:
             return self._cache[key]
 
@@ -74,7 +88,9 @@ class ResearchMatrixEngine:
             price = self._price_bundle(tkr, as_of) if ("price" in needed and tkr) else {}
             bundles = {
                 "price": price,
-                "fundamental": self._fund_bundle(sid, tkr, as_of, fund_xs, price) if "fundamental" in needed else {},
+                "fundamental": self._fund_bundle(sid, tkr, as_of, fund_xs, price)
+                if "fundamental" in needed
+                else {},
                 "insider": ins_xs.get(sid, self._EMPTY_INSIDER) if "insider" in needed else {},
             }
             row = {"security_id": sid}
@@ -85,8 +101,11 @@ class ResearchMatrixEngine:
 
         frame = pd.DataFrame(rows, columns=["security_id", *feats]).set_index("security_id")
         matrix = ResearchMatrix(
-            as_of_date=as_of, universe_size=len(ids), data_versions=dv,
-            generated_at=datetime.now(UTC), frame=frame,
+            as_of_date=as_of,
+            universe_size=len(ids),
+            data_versions=dv,
+            generated_at=datetime.now(UTC),
+            frame=frame,
             directions={f: FEATURES[f][2] for f in feats},
         )
         self._cache[key] = matrix
@@ -113,7 +132,7 @@ class ResearchMatrixEngine:
     def _fund_cross_sections(self, as_of: date) -> dict[str, dict[str, float]]:
         """{input_name: {cik: value}} — one cross_section_as_of per candidate
         concept, higher-priority candidate winning per cik."""
-        store = self._fundamentals._store  # noqa: SLF001
+        store = self._fundamentals._store
         out: dict[str, dict[str, float]] = {}
         for name in _FUND_INPUTS:
             m: dict[str, float] = {}
@@ -122,8 +141,9 @@ class ResearchMatrixEngine:
             out[name] = m
         return out
 
-    def _fund_bundle(self, security_id: str, ticker: str | None, as_of: date,
-                     fund_xs: dict, price: dict) -> dict:
+    def _fund_bundle(
+        self, security_id: str, ticker: str | None, as_of: date, fund_xs: dict, price: dict
+    ) -> dict:
         """Registry fundamental fields from the cross-sections. Same PIT gate and
         ratio math as FundamentalsEngine.factor_inputs_as_of, batched. market_cap
         reuses the already-computed PIT close (else one close_as_of)."""
@@ -132,7 +152,12 @@ class ResearchMatrixEngine:
             return {}
         g = lambda n: fund_xs[n].get(cik)  # noqa: E731
         equity, assets, revenue = g("equity"), g("assets"), g("revenue")
-        ni, ocf, debt, op = g("net_income"), g("operating_cash_flow"), g("debt"), g("operating_income")
+        ni, ocf, debt, op = (
+            g("net_income"),
+            g("operating_cash_flow"),
+            g("debt"),
+            g("operating_income"),
+        )
         shares = g("shares_outstanding")
         close = price.get("close")
         if close is None and ticker is not None:
@@ -144,27 +169,38 @@ class ResearchMatrixEngine:
             return a / b if (a is not None and b not in (None, 0)) else None
 
         return {
-            "market_cap": mc, "book_value": equity,
-            "earnings_yield": div(ni, mc), "cash_flow_yield": div(ocf, mc),
-            "roe": div(ni, equity), "roa": div(ni, assets),
-            "operating_margin": div(op, revenue), "debt_to_equity": div(debt, equity),
+            "market_cap": mc,
+            "book_value": equity,
+            "earnings_yield": div(ni, mc),
+            "cash_flow_yield": div(ocf, mc),
+            "roe": div(ni, equity),
+            "roa": div(ni, assets),
+            "operating_margin": div(op, revenue),
+            "debt_to_equity": div(debt, equity),
         }
 
-    _EMPTY_INSIDER = {"buy_value": 0.0, "sell_value": 0.0, "net_value": 0.0,
-                      "insider_count": 0, "cluster_buy": False}
+    _EMPTY_INSIDER = {
+        "buy_value": 0.0,
+        "sell_value": 0.0,
+        "net_value": 0.0,
+        "insider_count": 0,
+        "cluster_buy": False,
+    }
 
     def _insider_signals(self, ids: list[str], as_of: date) -> dict[str, dict]:
         """Batch insider signals (one gated query) → registry insider fields,
         applying the engine's cluster threshold. Matches InsiderEngine semantics."""
-        threshold = self._insiders._cluster_threshold  # noqa: SLF001
-        agg = self._insiders._store.signals_as_of(ids, as_of)  # noqa: SLF001
+        threshold = self._insiders._cluster_threshold
+        agg = self._insiders._store.signals_as_of(ids, as_of)
         out = {}
         for sid, a in agg.items():
             buyers = a["buyers"]
             out[sid] = {
-                "buy_value": a["buy_value"], "sell_value": a["sell_value"],
+                "buy_value": a["buy_value"],
+                "sell_value": a["sell_value"],
                 "net_value": a["buy_value"] - a["sell_value"],
-                "insider_count": buyers, "cluster_buy": buyers >= threshold,
+                "insider_count": buyers,
+                "cluster_buy": buyers >= threshold,
             }
         return out
 
@@ -182,11 +218,11 @@ class ResearchMatrixEngine:
         """Append-only row counts per source = monotonic version signal."""
         return {
             "prices": self._count(self._prices, "raw_ohlcv"),
-            "fundamentals": self._count(self._fundamentals._store, "fundamental_facts"),  # noqa: SLF001
-            "insiders": self._count(self._insiders._store, "insider_transactions"),  # noqa: SLF001
+            "fundamentals": self._count(self._fundamentals._store, "fundamental_facts"),
+            "insiders": self._count(self._insiders._store, "insider_transactions"),
         }
 
     @staticmethod
     def _count(store, table: str) -> int:
-        with store._conn() as conn:  # noqa: SLF001 — read-only sibling access, matches M4
+        with store._conn() as conn:
             return conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]

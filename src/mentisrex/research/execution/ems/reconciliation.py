@@ -26,10 +26,10 @@ class ExecutionReconciliationReport:
     n_ems_fills: int
     n_broker_fills: int
     duplicate_fill_ids: list
-    missing_fill_ids: list          # in broker, not applied by EMS
-    orphan_fill_ids: list           # applied by EMS, not in broker
+    missing_fill_ids: list  # in broker, not applied by EMS
+    orphan_fill_ids: list  # applied by EMS, not in broker
     non_terminal_orders: list
-    differences: list               # list[StateDifference]
+    differences: list  # list[StateDifference]
 
 
 def reconcile_execution(session, broker_fills) -> ExecutionReconciliationReport:
@@ -40,9 +40,12 @@ def reconcile_execution(session, broker_fills) -> ExecutionReconciliationReport:
     orphan = sorted(ems_ids - broker_ids)
     dupes = sorted(set(session.fills_processor.duplicates))
 
-    non_terminal = [oid for oid in session.oms.order_ids()
-                    if session.oms.status(oid) not in TERMINAL
-                    and session.oms.status(oid).value not in ("partially_filled",)]
+    non_terminal = [
+        oid
+        for oid in session.oms.order_ids()
+        if session.oms.status(oid) not in TERMINAL
+        and session.oms.status(oid).value not in ("partially_filled",)
+    ]
 
     diffs = []
     for _fid in missing:
@@ -56,9 +59,15 @@ def reconcile_execution(session, broker_fills) -> ExecutionReconciliationReport:
 
     ok = not (missing or orphan or dupes or non_terminal)
     return ExecutionReconciliationReport(
-        ok=ok, n_ems_fills=len(ems_ids), n_broker_fills=len(broker_ids),
-        duplicate_fill_ids=dupes, missing_fill_ids=missing, orphan_fill_ids=orphan,
-        non_terminal_orders=non_terminal, differences=diffs)
+        ok=ok,
+        n_ems_fills=len(ems_ids),
+        n_broker_fills=len(broker_ids),
+        duplicate_fill_ids=dupes,
+        missing_fill_ids=missing,
+        orphan_fill_ids=orphan,
+        non_terminal_orders=non_terminal,
+        differences=diffs,
+    )
 
 
 def reconcile_state(book_or_state, broker_account, *, config: ReconciliationConfig | None = None):

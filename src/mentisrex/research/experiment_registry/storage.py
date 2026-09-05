@@ -15,7 +15,6 @@ from __future__ import annotations
 import json
 from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import datetime
 from pathlib import Path
 
 import duckdb
@@ -80,10 +79,28 @@ CREATE INDEX IF NOT EXISTS ix_exp_fp ON experiments(fingerprint);
 CREATE INDEX IF NOT EXISTS ix_exp_created ON experiments(created_at);
 """
 
-_EXP_COLS = ("experiment_id", "name", "description", "status", "created_at", "started_at",
-             "finished_at", "duration_seconds", "git_commit", "git_branch", "python_version",
-             "platform", "hostname", "user", "random_seed", "notes", "fingerprint",
-             "parameter_hash", "duplicate_of", "error")
+_EXP_COLS = (
+    "experiment_id",
+    "name",
+    "description",
+    "status",
+    "created_at",
+    "started_at",
+    "finished_at",
+    "duration_seconds",
+    "git_commit",
+    "git_branch",
+    "python_version",
+    "platform",
+    "hostname",
+    "user",
+    "random_seed",
+    "notes",
+    "fingerprint",
+    "parameter_hash",
+    "duplicate_of",
+    "error",
+)
 # `user` is a DuckDB reserved word → quote it in SQL
 _EXP_SQL = ", ".join(f'"{c}"' if c == "user" else c for c in _EXP_COLS)
 
@@ -125,7 +142,9 @@ class RegistryStore:
                 f"INSERT OR REPLACE INTO experiments ({_EXP_SQL}) VALUES ({', '.join('?' * len(_EXP_COLS))})",
                 vals,
             )
-            conn.execute("DELETE FROM dataset_versions WHERE experiment_id = ?", [exp.experiment_id])
+            conn.execute(
+                "DELETE FROM dataset_versions WHERE experiment_id = ?", [exp.experiment_id]
+            )
             conn.execute(
                 f"INSERT INTO dataset_versions (experiment_id, {', '.join(VERSION_FIELDS)}) "
                 f"VALUES (?, {', '.join('?' * len(VERSION_FIELDS))})",
@@ -133,8 +152,10 @@ class RegistryStore:
             )
             conn.execute("DELETE FROM parameter_sets WHERE experiment_id = ?", [exp.experiment_id])
             for k, v in exp.parameters.items():
-                conn.execute("INSERT INTO parameter_sets VALUES (?, ?, ?)",
-                             [exp.experiment_id, k, json.dumps(v)])
+                conn.execute(
+                    "INSERT INTO parameter_sets VALUES (?, ?, ?)",
+                    [exp.experiment_id, k, json.dumps(v)],
+                )
             conn.execute("DELETE FROM feature_sets WHERE experiment_id = ?", [exp.experiment_id])
             for f in exp.features:
                 conn.execute("INSERT INTO feature_sets VALUES (?, ?)", [exp.experiment_id, f])
@@ -151,8 +172,14 @@ class RegistryStore:
             conn.execute(
                 "UPDATE experiments SET status=?, finished_at=?, duration_seconds=?, "
                 "error=?, notes=? WHERE experiment_id=?",
-                [exp.status, exp.finished_at, exp.duration_seconds, exp.error,
-                 exp.notes, exp.experiment_id],
+                [
+                    exp.status,
+                    exp.finished_at,
+                    exp.duration_seconds,
+                    exp.error,
+                    exp.notes,
+                    exp.experiment_id,
+                ],
             )
             self._write_metrics(conn, exp.experiment_id, exp.metrics)
             self._write_artifacts(conn, exp.experiment_id, exp.artifacts)
@@ -161,21 +188,31 @@ class RegistryStore:
     def _write_metrics(conn, exp_id: str, metrics: dict) -> None:
         conn.execute("DELETE FROM performance_metrics WHERE experiment_id = ?", [exp_id])
         for name, val in (metrics or {}).items():
-            conn.execute("INSERT INTO performance_metrics VALUES (?, ?, ?)", [exp_id, name, float(val)])
+            conn.execute(
+                "INSERT INTO performance_metrics VALUES (?, ?, ?)", [exp_id, name, float(val)]
+            )
 
     @staticmethod
     def _write_artifacts(conn, exp_id: str, artifacts: list[dict]) -> None:
         conn.execute("DELETE FROM artifacts WHERE experiment_id = ?", [exp_id])
         for a in artifacts or []:
-            conn.execute("INSERT INTO artifacts VALUES (?, ?, ?, ?)",
-                         [exp_id, a.get("artifact_type"), a.get("artifact_location"), a.get("artifact_hash")])
+            conn.execute(
+                "INSERT INTO artifacts VALUES (?, ?, ?, ?)",
+                [
+                    exp_id,
+                    a.get("artifact_type"),
+                    a.get("artifact_location"),
+                    a.get("artifact_hash"),
+                ],
+            )
 
     # ── reads ─────────────────────────────────────────────────────────────────
 
     def get(self, experiment_id: str) -> Experiment | None:
         with self._conn() as conn:
             row = conn.execute(
-                f"SELECT {_EXP_SQL} FROM experiments WHERE experiment_id = ?", [experiment_id],
+                f"SELECT {_EXP_SQL} FROM experiments WHERE experiment_id = ?",
+                [experiment_id],
             ).fetchone()
             if row is None:
                 return None
@@ -185,24 +222,33 @@ class RegistryStore:
             ).fetchone()
             params = conn.execute(
                 "SELECT parameter_name, parameter_value FROM parameter_sets WHERE experiment_id = ?",
-                [experiment_id]).fetchall()
+                [experiment_id],
+            ).fetchall()
             feats = conn.execute(
-                "SELECT feature_name FROM feature_sets WHERE experiment_id = ?", [experiment_id]).fetchall()
+                "SELECT feature_name FROM feature_sets WHERE experiment_id = ?", [experiment_id]
+            ).fetchall()
             metrics = conn.execute(
                 "SELECT metric_name, metric_value FROM performance_metrics WHERE experiment_id = ?",
-                [experiment_id]).fetchall()
+                [experiment_id],
+            ).fetchall()
             arts = conn.execute(
                 "SELECT artifact_type, artifact_location, artifact_hash FROM artifacts WHERE experiment_id = ?",
-                [experiment_id]).fetchall()
-        exp = Experiment(**dict(zip(_EXP_COLS[:-4], row[:-4], strict=True)),
-                         fingerprint=row[16], parameter_hash=row[17],
-                         duplicate_of=row[18], error=row[19])
+                [experiment_id],
+            ).fetchall()
+        exp = Experiment(
+            **dict(zip(_EXP_COLS[:-4], row[:-4], strict=True)),
+            fingerprint=row[16],
+            parameter_hash=row[17],
+            duplicate_of=row[18],
+            error=row[19],
+        )
         exp.dataset_versions = dict(zip(VERSION_FIELDS, dv, strict=True)) if dv else {}
         exp.parameters = {k: json.loads(v) for k, v in params}
         exp.features = [f[0] for f in feats]
-        exp.metrics = {k: v for k, v in metrics}
-        exp.artifacts = [{"artifact_type": t, "artifact_location": loc, "artifact_hash": h}
-                         for t, loc, h in arts]
+        exp.metrics = dict(metrics)
+        exp.artifacts = [
+            {"artifact_type": t, "artifact_location": loc, "artifact_hash": h} for t, loc, h in arts
+        ]
         return exp
 
     def latest(self) -> Experiment | None:
@@ -217,16 +263,27 @@ class RegistryStore:
         with self._conn() as conn:
             row = conn.execute(
                 "SELECT experiment_id FROM experiments WHERE fingerprint = ? AND duplicate_of IS NULL "
-                "ORDER BY created_at ASC, experiment_id ASC LIMIT 1", [fingerprint],
+                "ORDER BY created_at ASC, experiment_id ASC LIMIT 1",
+                [fingerprint],
             ).fetchone()
         return row[0] if row else None
 
-    def search(self, *, name: str | None = None, status: str | None = None,
-               git_commit: str | None = None, fingerprint: str | None = None,
-               limit: int = 100) -> list[Experiment]:
+    def search(
+        self,
+        *,
+        name: str | None = None,
+        status: str | None = None,
+        git_commit: str | None = None,
+        fingerprint: str | None = None,
+        limit: int = 100,
+    ) -> list[Experiment]:
         clauses, params = [], []
-        for col, val in (("name", name), ("status", status),
-                         ("git_commit", git_commit), ("fingerprint", fingerprint)):
+        for col, val in (
+            ("name", name),
+            ("status", status),
+            ("git_commit", git_commit),
+            ("fingerprint", fingerprint),
+        ):
             if val is not None:
                 clauses.append(f"{col} = ?")
                 params.append(val)
@@ -234,6 +291,7 @@ class RegistryStore:
         with self._conn() as conn:
             ids = conn.execute(
                 f"SELECT experiment_id FROM experiments {where} "
-                f"ORDER BY created_at DESC, experiment_id DESC LIMIT ?", [*params, limit],
+                f"ORDER BY created_at DESC, experiment_id DESC LIMIT ?",
+                [*params, limit],
             ).fetchall()
         return [self.get(i[0]) for i in ids]

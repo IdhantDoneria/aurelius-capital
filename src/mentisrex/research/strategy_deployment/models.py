@@ -10,12 +10,12 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import asdict, dataclass, field
-from datetime import date, datetime, timezone
-from enum import Enum
+from datetime import UTC, date, datetime
+from enum import StrEnum
 from typing import Any
 
-
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 def _canonical(obj: Any) -> str:
     return json.dumps(obj, sort_keys=True, separators=(",", ":"), default=str)
@@ -27,7 +27,8 @@ def _fp(obj: Any) -> str:
 
 # ── strategy lifecycle ────────────────────────────────────────────────────────
 
-class StrategyState(str, Enum):
+
+class StrategyState(StrEnum):
     DRAFT = "draft"
     VALIDATING = "validating"
     VALIDATED = "validated"
@@ -41,14 +42,14 @@ class StrategyState(str, Enum):
 # Permitted state transitions. REQUIRES_REVIEW is not a standalone state; it is
 # represented as VALIDATED with a warning in the validation report.
 ALLOWED_TRANSITIONS: dict[StrategyState, set[StrategyState]] = {
-    StrategyState.DRAFT:       {StrategyState.VALIDATING, StrategyState.REJECTED},
-    StrategyState.VALIDATING:  {StrategyState.VALIDATED, StrategyState.REJECTED},
-    StrategyState.VALIDATED:   {StrategyState.DEPLOYABLE, StrategyState.REJECTED},
-    StrategyState.DEPLOYABLE:  {StrategyState.PAPER, StrategyState.SUSPENDED, StrategyState.RETIRED},
-    StrategyState.PAPER:       {StrategyState.SUSPENDED, StrategyState.RETIRED},
-    StrategyState.SUSPENDED:   {StrategyState.PAPER, StrategyState.RETIRED},
-    StrategyState.RETIRED:     set(),
-    StrategyState.REJECTED:    set(),
+    StrategyState.DRAFT: {StrategyState.VALIDATING, StrategyState.REJECTED},
+    StrategyState.VALIDATING: {StrategyState.VALIDATED, StrategyState.REJECTED},
+    StrategyState.VALIDATED: {StrategyState.DEPLOYABLE, StrategyState.REJECTED},
+    StrategyState.DEPLOYABLE: {StrategyState.PAPER, StrategyState.SUSPENDED, StrategyState.RETIRED},
+    StrategyState.PAPER: {StrategyState.SUSPENDED, StrategyState.RETIRED},
+    StrategyState.SUSPENDED: {StrategyState.PAPER, StrategyState.RETIRED},
+    StrategyState.RETIRED: set(),
+    StrategyState.REJECTED: set(),
 }
 
 # Verdicts from M9 that permit DEPLOYABLE transition
@@ -58,12 +59,14 @@ _PAPER_VERDICTS = {"PASS", "PASS_WITH_WARNINGS", "REQUIRES_REVIEW"}  # experimen
 
 # ── strategy type ─────────────────────────────────────────────────────────────
 
-class StrategyType(str, Enum):
+
+class StrategyType(StrEnum):
     VALIDATED_DEPLOYABLE = "validated_deployable"
     EXPERIMENTAL_PAPER = "experimental_paper"
 
 
 # ── core specification ─────────────────────────────────────────────────────────
+
 
 @dataclass(frozen=True)
 class StrategySpecification:
@@ -72,28 +75,29 @@ class StrategySpecification:
     One object per (strategy_id, version). Any material change must produce a
     new version; the old spec is never mutated.
     """
+
     strategy_id: str
     strategy_name: str
-    version: str                          # semver string, e.g. "1.0.0"
+    version: str  # semver string, e.g. "1.0.0"
     description: str = ""
     strategy_type: str = StrategyType.VALIDATED_DEPLOYABLE
 
     # research lineage
-    research_artifact_id: str | None = None       # M7 experiment_id
-    validation_artifact_id: str | None = None     # M9 manifest_hash
-    validation_status: str = "UNVALIDATED"        # M9 verdict string
+    research_artifact_id: str | None = None  # M7 experiment_id
+    validation_artifact_id: str | None = None  # M9 manifest_hash
+    validation_status: str = "UNVALIDATED"  # M9 verdict string
 
     # universe & data
     universe_definition: dict = field(default_factory=dict)
-    required_data: list = field(default_factory=list)    # list[str] — field names needed
+    required_data: list = field(default_factory=list)  # list[str] — field names needed
     data_requirements: dict = field(default_factory=dict)
 
     # signal logic
-    feature_definition: dict = field(default_factory=dict)   # config for compute_features
-    signal_definition: dict = field(default_factory=dict)    # config for generate_signal
+    feature_definition: dict = field(default_factory=dict)  # config for compute_features
+    signal_definition: dict = field(default_factory=dict)  # config for generate_signal
 
     # execution schedule
-    rebalance_frequency: str = "monthly"          # daily | weekly | monthly
+    rebalance_frequency: str = "monthly"  # daily | weekly | monthly
 
     # construction / risk / execution config (pass through to M10/M13/M14)
     portfolio_construction_config: dict = field(default_factory=dict)
@@ -114,7 +118,9 @@ class StrategySpecification:
     # provenance
     model_version: str = "0.0.0"
     dependency_versions: dict = field(default_factory=dict)
-    creation_timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    creation_timestamp: datetime = field(
+        default_factory=lambda: datetime.now(UTC).replace(tzinfo=None)
+    )
 
     # content fingerprint — set by make_spec(), never by the caller
     configuration_fingerprint: str = ""
@@ -160,65 +166,74 @@ def make_spec(**kwargs) -> StrategySpecification:
 
 # ── feature & signal sets ─────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class FeatureSet:
     """Output of compute_features() — one row per security."""
+
     strategy_id: str
     strategy_version: str
     as_of: date
-    features: dict                        # security_id -> {feature_name: value}
-    input_fingerprint: str                # hash of snapshot identity
+    features: dict  # security_id -> {feature_name: value}
+    input_fingerprint: str  # hash of snapshot identity
     strategy_fingerprint: str
-    computed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    computed_at: datetime = field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
 
     def fingerprint(self) -> str:
-        return _fp({
-            "strategy_id": self.strategy_id,
-            "version": self.strategy_version,
-            "as_of": str(self.as_of),
-            "input": self.input_fingerprint,
-            "strategy": self.strategy_fingerprint,
-            "n_securities": len(self.features),
-        })
+        return _fp(
+            {
+                "strategy_id": self.strategy_id,
+                "version": self.strategy_version,
+                "as_of": str(self.as_of),
+                "input": self.input_fingerprint,
+                "strategy": self.strategy_fingerprint,
+                "n_securities": len(self.features),
+            }
+        )
 
 
 @dataclass(frozen=True)
 class SignalRecord:
     """Single-security signal with full provenance."""
+
     strategy_id: str
     strategy_version: str
     security_id: str
     as_of: date
     signal_value: float
     metadata: dict = field(default_factory=dict)
-    input_fingerprint: str = ""           # features fingerprint this was generated from
+    input_fingerprint: str = ""  # features fingerprint this was generated from
     strategy_fingerprint: str = ""
 
 
 @dataclass(frozen=True)
 class SignalSet:
     """Output of generate_signal() — one signal per security."""
+
     strategy_id: str
     strategy_version: str
     as_of: date
-    signals: dict                         # security_id -> float
-    signal_records: list                  # list[SignalRecord]
+    signals: dict  # security_id -> float
+    signal_records: list  # list[SignalRecord]
     features_fingerprint: str
     strategy_fingerprint: str
-    generated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    generated_at: datetime = field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
 
     def fingerprint(self) -> str:
-        return _fp({
-            "strategy_id": self.strategy_id,
-            "version": self.strategy_version,
-            "as_of": str(self.as_of),
-            "features": self.features_fingerprint,
-            "strategy": self.strategy_fingerprint,
-            "n_signals": len(self.signals),
-        })
+        return _fp(
+            {
+                "strategy_id": self.strategy_id,
+                "version": self.strategy_version,
+                "as_of": str(self.as_of),
+                "features": self.features_fingerprint,
+                "strategy": self.strategy_fingerprint,
+                "n_signals": len(self.signals),
+            }
+        )
 
 
 # ── M22-level order intent (rich lineage wrapper over M14's minimal OrderIntent) ─
+
 
 @dataclass(frozen=True)
 class OrderIntentRecord:
@@ -228,28 +243,31 @@ class OrderIntentRecord:
     converts these via intents_from_target() / build_requests() from
     mentisrex.research.execution.ems.orders.
     """
+
     intent_id: str
     strategy_id: str
     strategy_version: str
     security_id: str
-    side: str                             # buy | sell | flat
+    side: str  # buy | sell | flat
     delta_shares: float
     target_weight: float
     reference_price: float
     generated_at: datetime
     reason: str = ""
-    signal_reference: str = ""            # signals fingerprint
-    target_reference: str = ""            # portfolio fingerprint
-    risk_reference: str = ""             # risk report fingerprint
+    signal_reference: str = ""  # signals fingerprint
+    target_reference: str = ""  # portfolio fingerprint
+    risk_reference: str = ""  # risk report fingerprint
     configuration_fingerprint: str = ""
 
     def to_ems_intent(self):
         """Produce the M14 OrderIntent consumed by EMS/OMS."""
         from mentisrex.research.execution.ems.models import OrderIntent as EmsIntent
+
         return EmsIntent(security_id=self.security_id, delta_shares=self.delta_shares)
 
 
 # ── strategy evaluation (full snapshot of one runtime.evaluate() call) ────────
+
 
 @dataclass(frozen=True)
 class StrategyEvaluation:
@@ -258,19 +276,20 @@ class StrategyEvaluation:
     Same strategy + same snapshot + same portfolio state + same config
     must always produce the same evaluation_fingerprint.
     """
+
     evaluation_id: str
     strategy_id: str
     strategy_version: str
     as_of: date
     feature_set: FeatureSet
     signal_set: SignalSet
-    portfolio: object                     # M10 Portfolio
-    risk_report: object                   # M13 RiskReport
-    order_intents: list                   # list[OrderIntentRecord]
-    ems_requests: list                    # list[M14 OrderRequest] — execution-ready
+    portfolio: object  # M10 Portfolio
+    risk_report: object  # M13 RiskReport
+    order_intents: list  # list[OrderIntentRecord]
+    ems_requests: list  # list[M14 OrderRequest] — execution-ready
     evaluation_fingerprint: str
     provenance: dict = field(default_factory=dict)
-    evaluated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    evaluated_at: datetime = field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
     strategy_fingerprint: str = ""
     risk_approved: bool = False
     risk_decision: str = ""
@@ -280,6 +299,7 @@ class StrategyEvaluation:
 
 # ── deployment manifest ───────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class DeploymentManifest:
     """Sufficient to reconstruct the strategy runtime for any historical snapshot.
@@ -287,6 +307,7 @@ class DeploymentManifest:
     Every field is deterministic. A manifest fingerprint is the hash of all fields
     except manifest_fingerprint itself.
     """
+
     manifest_id: str
     strategy_id: str
     strategy_version: str
@@ -314,7 +335,7 @@ class DeploymentManifest:
     def fingerprint(self) -> str:
         d = asdict(self)
         d.pop("manifest_fingerprint", None)
-        d.pop("created_at", None)   # operational timestamp is not material content
+        d.pop("created_at", None)  # operational timestamp is not material content
         return _fp(d)
 
     def to_dict(self) -> dict:
@@ -347,34 +368,40 @@ def make_manifest(manifest_id: str, spec: StrategySpecification) -> DeploymentMa
         slippage_assumption=spec.slippage_assumption,
         model_version=spec.model_version,
         dependency_versions=dict(spec.dependency_versions),
-        created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+        created_at=datetime.now(UTC).replace(tzinfo=None),
     )
     fp = tmp.fingerprint()
-    return DeploymentManifest(**{**asdict(tmp), "created_at": tmp.created_at, "manifest_fingerprint": fp})
+    return DeploymentManifest(
+        **{**asdict(tmp), "created_at": tmp.created_at, "manifest_fingerprint": fp}
+    )
 
 
 # ── readiness report ──────────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class ReadinessReport:
     """Machine-readable output of ReadinessValidator.validate()."""
+
     ready: bool
-    verdict: str                          # READY | NOT_READY
-    checks: dict                          # check_name -> bool
-    issues: list                          # list[str] — human-readable failures
+    verdict: str  # READY | NOT_READY
+    checks: dict  # check_name -> bool
+    issues: list  # list[str] — human-readable failures
     warnings: list = field(default_factory=list)
     strategy_id: str = ""
     strategy_version: str = ""
-    validated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    validated_at: datetime = field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
 
 
 # ── consistency report ────────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class ConsistencyReport:
     """Output of ConsistencyChecker — detects research/deployment config drift."""
+
     consistent: bool
-    drifted_fields: list                  # list[str] — field names that differ
-    differences: dict                     # field -> {research: …, deployed: …}
+    drifted_fields: list  # list[str] — field names that differ
+    differences: dict  # field -> {research: …, deployed: …}
     strategy_id: str = ""
-    checked_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    checked_at: datetime = field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))

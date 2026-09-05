@@ -23,25 +23,27 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 
-
 # ── documented risk flags ──────────────────────────────────────────────────────
+
 
 class DataRisks:
     """String constants for documented data risks.
 
     Each flag that appears in DataQualityReport.known_risks is defined here.
     """
-    ADJUSTMENT    = "ADJUSTMENT_RETROACTIVE"
-    PIT           = "NO_POINT_IN_TIME_DB"
-    DELISTING     = "DELISTING_RISK"
+
+    ADJUSTMENT = "ADJUSTMENT_RETROACTIVE"
+    PIT = "NO_POINT_IN_TIME_DB"
+    DELISTING = "DELISTING_RISK"
     TICKER_CHANGE = "TICKER_CHANGE_RISK"
     CORPORATE_ACT = "CORPORATE_ACTION_IN_WINDOW"
-    SURVIVORSHIP  = "SURVIVORSHIP_FORWARD_ONLY"
-    REVISION      = "PROVIDER_REVISION_POSSIBLE"
+    SURVIVORSHIP = "SURVIVORSHIP_FORWARD_ONLY"
+    REVISION = "PROVIDER_REVISION_POSSIBLE"
     CROSS_PROVIDER = "CROSS_PROVIDER_DISCREPANCY"
 
 
 # ── report dataclass ──────────────────────────────────────────────────────────
+
 
 @dataclass
 class DataQualityReport:
@@ -51,24 +53,24 @@ class DataQualityReport:
     """
 
     evaluation_date: date
-    universe: list          # expected symbols
-    n_expected: int         # len(universe)
-    n_present: int          # symbols with non-zero price in snapshot
-    n_missing: int          # expected but absent
-    n_zero_price: int       # present but price == 0 or negative
-    missing_symbols: list   # symbols absent from snapshot
+    universe: list  # expected symbols
+    n_expected: int  # len(universe)
+    n_present: int  # symbols with non-zero price in snapshot
+    n_missing: int  # expected but absent
+    n_zero_price: int  # present but price == 0 or negative
+    missing_symbols: list  # symbols absent from snapshot
     zero_price_symbols: list  # symbols with price <= 0
     coverage_fraction: float  # n_present / n_expected
 
     # per-symbol prices (float; 0.0 if missing)
-    spot_prices: dict       # symbol → float
+    spot_prices: dict  # symbol → float
 
     # risk flags always present for Yahoo Finance
-    known_risks: list       # list[str] — from DataRisks constants
+    known_risks: list  # list[str] — from DataRisks constants
 
     # pass/fail for automated gate
-    coverage_ok: bool       # True if coverage_fraction >= min_coverage_threshold
-    sanity_ok: bool         # True if n_zero_price == 0
+    coverage_ok: bool  # True if coverage_fraction >= min_coverage_threshold
+    sanity_ok: bool  # True if n_zero_price == 0
     min_coverage_threshold: float
 
     # human-readable summary
@@ -86,8 +88,10 @@ class DataQualityReport:
         print(f"n_present         : {self.n_present}")
         print(f"n_missing         : {self.n_missing}")
         print(f"n_zero_price      : {self.n_zero_price}")
-        print(f"coverage          : {self.coverage_fraction:.1%}"
-              f" ({'OK' if self.coverage_ok else 'BELOW_THRESHOLD'})")
+        print(
+            f"coverage          : {self.coverage_fraction:.1%}"
+            f" ({'OK' if self.coverage_ok else 'BELOW_THRESHOLD'})"
+        )
         print(f"sanity            : {'OK' if self.sanity_ok else 'FAIL (zero/negative prices)'}")
         print(f"overall           : {'HEALTHY' if self.is_healthy() else 'UNHEALTHY'}")
         if self.missing_symbols:
@@ -107,6 +111,7 @@ class DataQualityReport:
 
 
 # ── checker ───────────────────────────────────────────────────────────────────
+
 
 def check_snapshot_quality(
     snapshot,
@@ -155,9 +160,7 @@ def check_snapshot_quality(
             f"from provider today: {missing}"
         )
     if zero_price:
-        notes.append(
-            f"Zero/negative prices indicate bad data or halted trading: {zero_price}"
-        )
+        notes.append(f"Zero/negative prices indicate bad data or halted trading: {zero_price}")
     notes.append(
         "Yahoo Finance (auto_adjust=True) applies retroactive split/dividend "
         "adjustments. A pull on a future date may return different prices for "
@@ -211,17 +214,19 @@ def check_universe_pit_risks(universe: list[str]) -> list[dict]:
     # JNJ, V).  This list is documentation only — it does not block execution.
     known_events: dict[str, str] = {
         "GOOGL": "2022-07 20:1 split — yahoo may still adjust older bars retroactively",
-        "AMZN":  "2022-06 20:1 split — yahoo may still adjust older bars retroactively",
-        "TSLA":  "2022-08 3:1 split — fractional-share behaviour varies by broker",
-        "NVDA":  "2024-06 10:1 split — recent; yfinance may return unadjusted data for some windows",
+        "AMZN": "2022-06 20:1 split — yahoo may still adjust older bars retroactively",
+        "TSLA": "2022-08 3:1 split — fractional-share behaviour varies by broker",
+        "NVDA": "2024-06 10:1 split — recent; yfinance may return unadjusted data for some windows",
     }
     risks = []
     for sym in universe:
         note = known_events.get(sym, "No major splits in record; monitor corporate actions.")
-        risks.append({
-            "symbol": sym,
-            "pit_risk": DataRisks.PIT,
-            "adjustment_risk": DataRisks.ADJUSTMENT,
-            "note": note,
-        })
+        risks.append(
+            {
+                "symbol": sym,
+                "pit_risk": DataRisks.PIT,
+                "adjustment_risk": DataRisks.ADJUSTMENT,
+                "note": note,
+            }
+        )
     return risks

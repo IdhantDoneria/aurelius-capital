@@ -20,19 +20,37 @@ from mentisrex.research.instruments.models import (
 )
 
 
-def option(instrument_id: str, *, underlying: str, strike: float, expiry: date,
-           right: OptionRight | str, currency: str = "USD", exchange: str = "",
-           contract_size: float = 100.0, settlement_style: SettlementStyle = SettlementStyle.CASH,
-           **metadata) -> Instrument:
+def option(
+    instrument_id: str,
+    *,
+    underlying: str,
+    strike: float,
+    expiry: date,
+    right: OptionRight | str,
+    currency: str = "USD",
+    exchange: str = "",
+    contract_size: float = 100.0,
+    settlement_style: SettlementStyle = SettlementStyle.CASH,
+    **metadata,
+) -> Instrument:
     right = OptionRight(right) if isinstance(right, str) else right
     if strike <= 0:
         raise ValueError("strike must be > 0")
     return Instrument(
-        instrument_id=instrument_id, type=InstrumentType.OPTION, currency=currency,
-        exchange=exchange, contract_size=contract_size, expiry=expiry,
-        cash_convention=CashConvention.PRINCIPAL, settlement_style=settlement_style,
-        underlying=underlying, strike=strike, right=right,
-        exercise_style=ExerciseStyle.EUROPEAN, metadata=metadata)
+        instrument_id=instrument_id,
+        type=InstrumentType.OPTION,
+        currency=currency,
+        exchange=exchange,
+        contract_size=contract_size,
+        expiry=expiry,
+        cash_convention=CashConvention.PRINCIPAL,
+        settlement_style=settlement_style,
+        underlying=underlying,
+        strike=strike,
+        right=right,
+        exercise_style=ExerciseStyle.EUROPEAN,
+        metadata=metadata,
+    )
 
 
 def call(instrument_id: str, **kw) -> Instrument:

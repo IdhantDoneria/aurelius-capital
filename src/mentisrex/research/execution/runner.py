@@ -18,8 +18,13 @@ from mentisrex.research.experiment_registry import ExperimentRegistry
 
 
 class ResearchRunner:
-    def __init__(self, *, registry: ExperimentRegistry | None = None, matrix_engine=None,
-                 hooks: HookRegistry | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        registry: ExperimentRegistry | None = None,
+        matrix_engine=None,
+        hooks: HookRegistry | None = None,
+    ) -> None:
         self.registry = registry or ExperimentRegistry()
         self.matrix_engine = matrix_engine
         self.hooks = hooks or HookRegistry()
@@ -30,15 +35,22 @@ class ResearchRunner:
     def run(self, config: RunConfiguration, *, stop_after: State | None = None) -> ResearchSession:
         """Execute one run end-to-end (or pause after `stop_after` for resume).
         Always returns a session; run failures are recorded, not raised."""
-        session = ResearchSession(config, registry=self.registry,
-                                  matrix_engine=self.matrix_engine, hooks=self.hooks)
+        session = ResearchSession(
+            config, registry=self.registry, matrix_engine=self.matrix_engine, hooks=self.hooks
+        )
         # pipeline step 1 — registry start
         exp = self.registry.start_experiment(
-            config.name, description=config.description, parameters=config.parameters,
-            features=config.features, dataset_versions=config.dataset_versions,
-            random_seed=config.random_seed)
+            config.name,
+            description=config.description,
+            parameters=config.parameters,
+            features=config.features,
+            dataset_versions=config.dataset_versions,
+            random_seed=config.random_seed,
+        )
         session.experiment = exp
-        session.events.emit("registry_started", stage=session.state, experiment_id=exp.experiment_id)
+        session.events.emit(
+            "registry_started", stage=session.state, experiment_id=exp.experiment_id
+        )
         return run_pipeline(session, stop_after=stop_after)
 
     def resume(self, session: ResearchSession) -> ResearchSession:
@@ -76,10 +88,14 @@ class ResearchRunner:
         if executor is None:
             return plan
         config = RunConfiguration(
-            name=plan["name"], description=plan.get("description", ""),
-            parameters=plan["parameters"], features=plan["features"],
-            dataset_versions=plan["dataset_versions"], random_seed=plan["random_seed"],
-            executor=executor)
+            name=plan["name"],
+            description=plan.get("description", ""),
+            parameters=plan["parameters"],
+            features=plan["features"],
+            dataset_versions=plan["dataset_versions"],
+            random_seed=plan["random_seed"],
+            executor=executor,
+        )
         return self.run(config)
 
     def batch(self, configs: list[RunConfiguration], **kw):
@@ -89,8 +105,10 @@ class ResearchRunner:
 def make_backtest_executor(strategy, data_feed, backtest_config=None):
     """The single bridge to the backtester. Returns an executor `(session) ->
     BacktestReport` that the platform runs inside the RUNNING stage."""
+
     def executor(session):
         from mentisrex.backtesting import BacktestEngine
-        return BacktestEngine(strategy=strategy, data_feed=data_feed,
-                              config=backtest_config).run()
+
+        return BacktestEngine(strategy=strategy, data_feed=data_feed, config=backtest_config).run()
+
     return executor

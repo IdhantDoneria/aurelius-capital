@@ -14,10 +14,10 @@ from datetime import date, datetime
 @dataclass(frozen=True)
 class Holding:
     security_id: str
-    shares: float                 # signed: + long, − short
-    cost_basis: float             # average entry price of the OPEN position
-    price: float = 0.0            # last mark
-    realized_pnl: float = 0.0     # cumulative realized on this security
+    shares: float  # signed: + long, − short
+    cost_basis: float  # average entry price of the OPEN position
+    price: float = 0.0  # last mark
+    realized_pnl: float = 0.0  # cumulative realized on this security
     opened_at: date | None = None
 
     @property
@@ -32,18 +32,18 @@ class Holding:
 @dataclass(frozen=True)
 class Order:
     security_id: str
-    quantity: float               # signed target delta in shares
-    order_type: str = "market"    # market | limit (limit = interface only)
+    quantity: float  # signed target delta in shares
+    order_type: str = "market"  # market | limit (limit = interface only)
     limit_price: float | None = None
 
 
 @dataclass(frozen=True)
 class Fill:
     security_id: str
-    quantity: float               # signed executed shares
-    price: float                  # execution price
-    cost: float                   # transaction cost (commission+spread+slippage+impact)
-    notional: float               # quantity * price (signed)
+    quantity: float  # signed executed shares
+    price: float  # execution price
+    cost: float  # transaction cost (commission+spread+slippage+impact)
+    notional: float  # quantity * price (signed)
 
 
 @dataclass(frozen=True)
@@ -54,13 +54,13 @@ class Trade:
     cost: float
     notional: float
     date: date | None = None
-    kind: str = "rebalance"       # rebalance | entry | exit | reduce
+    kind: str = "rebalance"  # rebalance | entry | exit | reduce
 
 
 @dataclass(frozen=True)
 class EquityPoint:
     date: date
-    value: float                  # total portfolio value (cash + positions)
+    value: float  # total portfolio value (cash + positions)
     cash: float
     gross_exposure: float
     net_exposure: float
@@ -71,7 +71,7 @@ class PortfolioSnapshot:
     date: date
     value: float
     cash: float
-    holdings: dict                # security_id → weight
+    holdings: dict  # security_id → weight
     gross_exposure: float
     net_exposure: float
     long_exposure: float

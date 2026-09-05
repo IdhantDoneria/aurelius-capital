@@ -7,11 +7,9 @@ All tests run offline with no network access. All inputs are deterministic.
 from __future__ import annotations
 
 import dataclasses
-import hashlib
 import json
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
-from typing import Any
+from datetime import UTC, date, datetime
 
 import pytest
 
@@ -26,38 +24,28 @@ from mentisrex.research.forward_validation.data_diagnostics import (
     build_data_diagnostics,
 )
 from mentisrex.research.forward_validation.drift import (
+    cost_drift,
     detect_metric_drift,
     detect_pit_violation,
     detect_snapshot_ordering,
     execution_drift,
-    cost_drift,
     risk_drift,
     signal_drift,
 )
 from mentisrex.research.forward_validation.engine import EngineConfig, ForwardValidationEngine
-from mentisrex.research.forward_validation.errors import (
-    ForwardValidationError,
-    ImplementationDivergenceError,
-    InsufficientDataError,
-    LineageError,
-    PITViolationError,
-)
 from mentisrex.research.forward_validation.execution_diagnostics import (
     analyze_execution,
     build_execution_diagnostics,
 )
-from mentisrex.research.forward_validation.lineage import LineageChain, build_lineage
+from mentisrex.research.forward_validation.lineage import build_lineage
 from mentisrex.research.forward_validation.models import (
     DiagnosticRecord,
     DiagnosticSeverity,
     DiscrepancyCategory,
-    EconomicStatus,
     ForwardValidationArtifact,
     ForwardValidationReport,
-    OperationalStatus,
     SampleAdequacy,
     ValidationStatus,
-    _fp,
     make_diagnostic,
     stamp_artifact,
 )
@@ -77,25 +65,23 @@ from mentisrex.research.forward_validation.signal_diagnostics import (
     compare_signal_distributions,
 )
 from mentisrex.research.forward_validation.statistics import (
-    AnnualizedMetrics,
     bootstrap_mean_ci,
     compute_annualized,
-    daily_returns_from_nav,
     is_statistically_reliable,
     return_distribution_summary,
     rolling_drawdown,
-    rolling_returns,
     rolling_sharpe,
     rolling_volatility,
     sample_adequacy,
 )
 
-
 # ── fixtures / helpers ────────────────────────────────────────────────────────
+
 
 @dataclass
 class FakeCycleRecord:
     """Minimal CycleRecord-like object for tests."""
+
     cycle_id: str
     strategy_id: str
     strategy_version: str
@@ -115,12 +101,13 @@ class FakeCycleRecord:
     risk_approved: bool = True
     risk_decision: str = ""
     n_signals: int = 2
-    recorded_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    recorded_at: datetime = field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
 
 
 @dataclass
 class FakeSpec:
     """Minimal StrategySpecification-like object."""
+
     strategy_id: str = "test-strat-001"
     version: str = "1.0.0"
     configuration_fingerprint: str = "abc123"
@@ -150,8 +137,9 @@ class FakeForwardRecord:
         navs = [c.nav for c in self.cycles]
         if len(navs) < 2:
             return []
-        return [(navs[i] - navs[i - 1]) / navs[i - 1]
-                for i in range(1, len(navs)) if navs[i - 1] > 0]
+        return [
+            (navs[i] - navs[i - 1]) / navs[i - 1] for i in range(1, len(navs)) if navs[i - 1] > 0
+        ]
 
     def total_return(self) -> float:
         if len(self.cycles) < 2:
@@ -174,6 +162,7 @@ class FakeForwardRecord:
 
     def metrics(self):
         import statistics as stats_mod
+
         navs = [c.nav for c in self.cycles]
         rets = self.daily_returns()
         n = len(self.cycles)
@@ -183,16 +172,17 @@ class FakeForwardRecord:
 
         avg_ret = stats_mod.mean(rets) if rets else 0.0
         sd = stats_mod.stdev(rets) if len(rets) >= 2 else 0.0
-        sharpe = (avg_ret / sd * (252 ** 0.5)) if sd > 0 else 0.0
+        sharpe = (avg_ret / sd * (252**0.5)) if sd > 0 else 0.0
 
         import types
+
         m = types.SimpleNamespace(
             n_cycles=n,
             total_return=self.total_return(),
             max_drawdown=self.max_drawdown(),
             final_nav=navs[-1] if navs else 0.0,
             avg_daily_return=avg_ret,
-            volatility=sd * (252 ** 0.5) if sd else 0.0,
+            volatility=sd * (252**0.5) if sd else 0.0,
             sharpe=sharpe,
             total_orders=total_orders,
             total_fills=total_fills,
@@ -217,31 +207,31 @@ def _make_cycles(
     cycles = []
     for i in range(n):
         nav = start_nav * ((1 + growth) ** i)
-        n_orders = 2 if (i % 5 == 0) else 0   # rebalance every 5 days
+        n_orders = 2 if (i % 5 == 0) else 0  # rebalance every 5 days
         n_fills = round(n_orders * fill_rate)
-        cycles.append(FakeCycleRecord(
-            cycle_id=f"cycle-{i:04d}",
-            strategy_id=strategy_id,
-            strategy_version="1.0.0",
-            strategy_fingerprint="abc123",
-            as_of=date(2024, 1, 1).__class__.fromordinal(
-                date(2024, 1, 1).toordinal() + i
-            ),
-            snapshot_fingerprint=f"snap-{i:04d}",
-            evaluation_fingerprint=f"eval-{i:04d}",
-            evaluation_id=f"eval-id-{i:04d}",
-            portfolio_value=nav,
-            nav=nav,
-            cash=nav * 0.05,
-            realized_pnl=nav * growth * i * 0.01,
-            unrealized_pnl=nav * 0.005,
-            n_orders=n_orders,
-            n_fills=n_fills,
-            reconciled=True,
-            risk_approved=risk_approved,
-            risk_decision="" if risk_approved else "LIMIT_BREACH",
-            n_signals=2,
-        ))
+        cycles.append(
+            FakeCycleRecord(
+                cycle_id=f"cycle-{i:04d}",
+                strategy_id=strategy_id,
+                strategy_version="1.0.0",
+                strategy_fingerprint="abc123",
+                as_of=date(2024, 1, 1).__class__.fromordinal(date(2024, 1, 1).toordinal() + i),
+                snapshot_fingerprint=f"snap-{i:04d}",
+                evaluation_fingerprint=f"eval-{i:04d}",
+                evaluation_id=f"eval-id-{i:04d}",
+                portfolio_value=nav,
+                nav=nav,
+                cash=nav * 0.05,
+                realized_pnl=nav * growth * i * 0.01,
+                unrealized_pnl=nav * 0.005,
+                n_orders=n_orders,
+                n_fills=n_fills,
+                reconciled=True,
+                risk_approved=risk_approved,
+                risk_decision="" if risk_approved else "LIMIT_BREACH",
+                n_signals=2,
+            )
+        )
     return cycles
 
 
@@ -261,20 +251,33 @@ def _make_engine(**kw) -> ForwardValidationEngine:
 # Section A: Models and immutability (10 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestModels:
     def test_diagnostic_record_frozen(self):
         rec = make_diagnostic(
-            "test.metric", DiscrepancyCategory.DATA_DRIFT, DiagnosticSeverity.INFO,
-            "fill_rate", observed=0.9, threshold=0.8, sample_size=10,
+            "test.metric",
+            DiscrepancyCategory.DATA_DRIFT,
+            DiagnosticSeverity.INFO,
+            "fill_rate",
+            observed=0.9,
+            threshold=0.8,
+            sample_size=10,
         )
         with pytest.raises((AttributeError, TypeError)):
             rec.metric = "other"  # type: ignore[misc]
 
     def test_diagnostic_record_to_from_dict(self):
         rec = make_diagnostic(
-            "test.roundtrip", DiscrepancyCategory.EXECUTION_DRIFT, DiagnosticSeverity.WARNING,
-            "fill_rate", baseline=1.0, observed=0.8, threshold=0.1, sample_size=30,
-            evidence="test evidence", status=ValidationStatus.WARNING,
+            "test.roundtrip",
+            DiscrepancyCategory.EXECUTION_DRIFT,
+            DiagnosticSeverity.WARNING,
+            "fill_rate",
+            baseline=1.0,
+            observed=0.8,
+            threshold=0.1,
+            sample_size=30,
+            evidence="test evidence",
+            status=ValidationStatus.WARNING,
         )
         d = rec.to_dict()
         rec2 = DiagnosticRecord.from_dict(d)
@@ -284,28 +287,51 @@ class TestModels:
 
     def test_forward_validation_artifact_frozen(self):
         a = ForwardValidationArtifact(
-            artifact_id="a1", strategy_id="s1", strategy_version="1.0.0",
-            strategy_fingerprint="fp1", deployment_manifest_fingerprint="dm1",
-            forward_record_fingerprint="fr1", research_artifact_id="ra1",
-            validation_artifact_id="va1", analysis_period={"n_cycles": 5},
-            data_sources=[], data_fingerprints={}, comparison_configuration={},
-            diagnostic_configuration={}, metric_results={}, diagnostic_results=[],
-            warnings=[], failures=[], status="VALID", operational_status="OPERATIONALLY_VALID",
-            economic_status="ECONOMICALLY_INCONCLUSIVE", sample_adequacy="INSUFFICIENT",
+            artifact_id="a1",
+            strategy_id="s1",
+            strategy_version="1.0.0",
+            strategy_fingerprint="fp1",
+            deployment_manifest_fingerprint="dm1",
+            forward_record_fingerprint="fr1",
+            research_artifact_id="ra1",
+            validation_artifact_id="va1",
+            analysis_period={"n_cycles": 5},
+            data_sources=[],
+            data_fingerprints={},
+            comparison_configuration={},
+            diagnostic_configuration={},
+            metric_results={},
+            diagnostic_results=[],
+            warnings=[],
+            failures=[],
+            status="VALID",
+            operational_status="OPERATIONALLY_VALID",
+            economic_status="ECONOMICALLY_INCONCLUSIVE",
+            sample_adequacy="INSUFFICIENT",
         )
         with pytest.raises((AttributeError, TypeError)):
             a.strategy_id = "other"  # type: ignore[misc]
 
     def test_artifact_to_from_dict_roundtrip(self):
         a = ForwardValidationArtifact(
-            artifact_id="a1", strategy_id="s1", strategy_version="1.0.0",
-            strategy_fingerprint="fp1", deployment_manifest_fingerprint="",
-            forward_record_fingerprint="fr1", research_artifact_id="ra1",
-            validation_artifact_id="va1", analysis_period={"n_cycles": 10},
-            data_sources=["SIMULATION"], data_fingerprints={"x": "y"},
-            comparison_configuration={}, diagnostic_configuration={},
-            metric_results={"k": "v"}, diagnostic_results=[],
-            warnings=["w1"], failures=[], status="VALID",
+            artifact_id="a1",
+            strategy_id="s1",
+            strategy_version="1.0.0",
+            strategy_fingerprint="fp1",
+            deployment_manifest_fingerprint="",
+            forward_record_fingerprint="fr1",
+            research_artifact_id="ra1",
+            validation_artifact_id="va1",
+            analysis_period={"n_cycles": 10},
+            data_sources=["SIMULATION"],
+            data_fingerprints={"x": "y"},
+            comparison_configuration={},
+            diagnostic_configuration={},
+            metric_results={"k": "v"},
+            diagnostic_results=[],
+            warnings=["w1"],
+            failures=[],
+            status="VALID",
             operational_status="OPERATIONALLY_VALID",
             economic_status="ECONOMICALLY_INCONCLUSIVE",
             sample_adequacy="PRELIMINARY",
@@ -317,13 +343,24 @@ class TestModels:
 
     def test_artifact_fingerprint_verification(self):
         a = ForwardValidationArtifact(
-            artifact_id="a1", strategy_id="s1", strategy_version="1.0.0",
-            strategy_fingerprint="fp1", deployment_manifest_fingerprint="",
-            forward_record_fingerprint="fr1", research_artifact_id="",
-            validation_artifact_id="", analysis_period={"n_cycles": 10, "start": "", "end": ""},
-            data_sources=[], data_fingerprints={}, comparison_configuration={},
-            diagnostic_configuration={}, metric_results={}, diagnostic_results=[],
-            warnings=[], failures=[], status="VALID",
+            artifact_id="a1",
+            strategy_id="s1",
+            strategy_version="1.0.0",
+            strategy_fingerprint="fp1",
+            deployment_manifest_fingerprint="",
+            forward_record_fingerprint="fr1",
+            research_artifact_id="",
+            validation_artifact_id="",
+            analysis_period={"n_cycles": 10, "start": "", "end": ""},
+            data_sources=[],
+            data_fingerprints={},
+            comparison_configuration={},
+            diagnostic_configuration={},
+            metric_results={},
+            diagnostic_results=[],
+            warnings=[],
+            failures=[],
+            status="VALID",
             operational_status="OPERATIONALLY_VALID",
             economic_status="ECONOMICALLY_INCONCLUSIVE",
             sample_adequacy="PRELIMINARY",
@@ -334,13 +371,24 @@ class TestModels:
 
     def test_tampered_artifact_fails_fingerprint(self):
         a = ForwardValidationArtifact(
-            artifact_id="a1", strategy_id="s1", strategy_version="1.0.0",
-            strategy_fingerprint="fp1", deployment_manifest_fingerprint="",
-            forward_record_fingerprint="fr1", research_artifact_id="",
-            validation_artifact_id="", analysis_period={"n_cycles": 5, "start": "", "end": ""},
-            data_sources=[], data_fingerprints={}, comparison_configuration={},
-            diagnostic_configuration={}, metric_results={}, diagnostic_results=[],
-            warnings=[], failures=[], status="VALID",
+            artifact_id="a1",
+            strategy_id="s1",
+            strategy_version="1.0.0",
+            strategy_fingerprint="fp1",
+            deployment_manifest_fingerprint="",
+            forward_record_fingerprint="fr1",
+            research_artifact_id="",
+            validation_artifact_id="",
+            analysis_period={"n_cycles": 5, "start": "", "end": ""},
+            data_sources=[],
+            data_fingerprints={},
+            comparison_configuration={},
+            diagnostic_configuration={},
+            metric_results={},
+            diagnostic_results=[],
+            warnings=[],
+            failures=[],
+            status="VALID",
             operational_status="OPERATIONALLY_VALID",
             economic_status="ECONOMICALLY_INCONCLUSIVE",
             sample_adequacy="INSUFFICIENT",
@@ -360,14 +408,22 @@ class TestModels:
         assert DiscrepancyCategory.STATISTICAL_NOISE.value == "STATISTICAL_NOISE"
 
     def test_diagnostic_severity_ordering(self):
-        severities = [DiagnosticSeverity.INFO, DiagnosticSeverity.WARNING,
-                      DiagnosticSeverity.ERROR, DiagnosticSeverity.CRITICAL]
+        severities = [
+            DiagnosticSeverity.INFO,
+            DiagnosticSeverity.WARNING,
+            DiagnosticSeverity.ERROR,
+            DiagnosticSeverity.CRITICAL,
+        ]
         assert len(severities) == 4
 
     def test_make_diagnostic_computes_difference(self):
         rec = make_diagnostic(
-            "x", DiscrepancyCategory.DATA_DRIFT, DiagnosticSeverity.INFO,
-            "fill_rate", baseline=1.0, observed=0.8,
+            "x",
+            DiscrepancyCategory.DATA_DRIFT,
+            DiagnosticSeverity.INFO,
+            "fill_rate",
+            baseline=1.0,
+            observed=0.8,
         )
         assert abs(rec.difference - (-0.2)) < 1e-9
 
@@ -375,6 +431,7 @@ class TestModels:
 # ═══════════════════════════════════════════════════════════════════════════════
 # Section B: Statistics module (8 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestStatistics:
     def test_sample_adequacy_insufficient(self):
@@ -429,7 +486,8 @@ class TestStatistics:
         rets = [0.001, 0.002, -0.001, 0.003, 0.0]
         lo1, hi1 = bootstrap_mean_ci(rets, n_samples=100, seed=42)
         lo2, hi2 = bootstrap_mean_ci(rets, n_samples=100, seed=42)
-        assert lo1 == lo2 and hi1 == hi2
+        assert lo1 == lo2
+        assert hi1 == hi2
 
     def test_return_distribution_summary(self):
         rets = [0.01, -0.005, 0.02, -0.01, 0.005]
@@ -447,6 +505,7 @@ class TestStatistics:
 # ═══════════════════════════════════════════════════════════════════════════════
 # Section C: Data diagnostics (6 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestDataDiagnostics:
     def test_coverage_empty(self):
@@ -492,6 +551,7 @@ class TestDataDiagnostics:
 # Section D: Signal diagnostics (6 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestSignalDiagnostics:
     def test_analyze_signal_distribution_empty(self):
         result = analyze_signal_distribution([])
@@ -499,8 +559,14 @@ class TestSignalDiagnostics:
 
     def test_analyze_signal_distribution_basic(self):
         history = [
-            {"as_of": "2024-01-01", "n_signals": 5, "mean": 0.1, "stdev": 0.05,
-             "long_count": 3, "short_count": 2}
+            {
+                "as_of": "2024-01-01",
+                "n_signals": 5,
+                "mean": 0.1,
+                "stdev": 0.05,
+                "long_count": 3,
+                "short_count": 2,
+            }
         ]
         result = analyze_signal_distribution(history)
         assert result["analyzed"]
@@ -509,7 +575,7 @@ class TestSignalDiagnostics:
 
     def test_compare_signal_distributions_no_research(self):
         fwd = {"analyzed": True, "signal_mean": 0.1, "signal_stdev": 0.05, "avg_n_signals": 5}
-        summary, records = compare_signal_distributions({}, fwd, sample_size=10)
+        summary, _records = compare_signal_distributions({}, fwd, sample_size=10)
         assert not summary["compared"]
 
     def test_compare_signal_distributions_no_drift(self):
@@ -549,6 +615,7 @@ class TestSignalDiagnostics:
 # Section E: Execution diagnostics (6 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestExecutionDiagnostics:
     def test_analyze_execution_empty(self):
         result = analyze_execution([])
@@ -576,7 +643,7 @@ class TestExecutionDiagnostics:
 
     def test_build_execution_diagnostics_produces_records(self):
         cycles = _make_cycles(20)
-        summary, records = build_execution_diagnostics(cycles, expected_fill_rate=1.0)
+        _summary, records = build_execution_diagnostics(cycles, expected_fill_rate=1.0)
         assert isinstance(records, list)
         # should have at least the fill_rate diagnostic
         fill_recs = [r for r in records if "fill_rate" in r.metric]
@@ -584,7 +651,7 @@ class TestExecutionDiagnostics:
 
     def test_build_execution_diagnostics_detects_low_fill_rate(self):
         cycles = _make_cycles(20, fill_rate=0.0)
-        summary, records = build_execution_diagnostics(
+        _summary, records = build_execution_diagnostics(
             cycles, expected_fill_rate=1.0, fill_rate_threshold=0.10
         )
         warning_recs = [r for r in records if r.severity == "WARNING"]
@@ -594,6 +661,7 @@ class TestExecutionDiagnostics:
 # ═══════════════════════════════════════════════════════════════════════════════
 # Section F: Portfolio diagnostics (5 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestPortfolioDiagnostics:
     def test_drift_no_history(self):
@@ -610,9 +678,7 @@ class TestPortfolioDiagnostics:
         assert result["max_weight_drift_ever"] == 0.0
 
     def test_drift_large_drift_detected(self):
-        wh = [
-            {"target": {"AAPL": 0.5, "GOOG": 0.5}, "actual": {"AAPL": 0.2, "GOOG": 0.5}}
-        ]
+        wh = [{"target": {"AAPL": 0.5, "GOOG": 0.5}, "actual": {"AAPL": 0.2, "GOOG": 0.5}}]
         result = analyze_portfolio_drift(wh)
         assert result["max_weight_drift_ever"] == pytest.approx(0.3)
         assert len(result["issues"]) > 0
@@ -628,18 +694,16 @@ class TestPortfolioDiagnostics:
         assert result["avg_turnover"] > 0
 
     def test_build_portfolio_diagnostics(self):
-        wh = [
-            {"target": {"A": 0.5, "B": 0.5}, "actual": {"A": 0.45, "B": 0.55}}
-            for _ in range(5)
-        ]
+        wh = [{"target": {"A": 0.5, "B": 0.5}, "actual": {"A": 0.45, "B": 0.55}} for _ in range(5)]
         cycles = _make_cycles(5)
-        summary, records = build_portfolio_diagnostics(wh, cycles)
+        _summary, records = build_portfolio_diagnostics(wh, cycles)
         assert isinstance(records, list)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Section G: Risk diagnostics (5 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestRiskDiagnostics:
     def test_all_approved(self):
@@ -663,13 +727,13 @@ class TestRiskDiagnostics:
 
     def test_build_risk_diagnostics_low_approval(self):
         cycles = _make_cycles(20, risk_approved=False)
-        summary, records = build_risk_diagnostics(cycles, expected_approval_rate=1.0)
+        _summary, records = build_risk_diagnostics(cycles, expected_approval_rate=1.0)
         warning_recs = [r for r in records if r.severity == "WARNING"]
         assert len(warning_recs) > 0
 
     def test_build_risk_diagnostics_full_approval_no_warning(self):
         cycles = _make_cycles(20, risk_approved=True)
-        summary, records = build_risk_diagnostics(cycles, expected_approval_rate=1.0)
+        _summary, records = build_risk_diagnostics(cycles, expected_approval_rate=1.0)
         # fill_rate diagnostic should be INFO
         approval_recs = [r for r in records if "approval_rate" in r.metric]
         assert all(r.severity == "INFO" for r in approval_recs)
@@ -679,27 +743,25 @@ class TestRiskDiagnostics:
 # Section H: Drift detection (8 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestDriftDetection:
     def test_detect_metric_drift_no_drift(self):
         rec = detect_metric_drift(
-            "sharpe", DiscrepancyCategory.SIGNAL_DRIFT, 1.0, 1.05,
-            relative_threshold=0.20
+            "sharpe", DiscrepancyCategory.SIGNAL_DRIFT, 1.0, 1.05, relative_threshold=0.20
         )
         assert rec.severity == "INFO"
         assert rec.status == "VALID"
 
     def test_detect_metric_drift_with_drift(self):
         rec = detect_metric_drift(
-            "sharpe", DiscrepancyCategory.SIGNAL_DRIFT, 1.0, 2.5,
-            relative_threshold=0.20
+            "sharpe", DiscrepancyCategory.SIGNAL_DRIFT, 1.0, 2.5, relative_threshold=0.20
         )
         assert rec.severity == "WARNING"
         assert rec.status == "WARNING"
 
     def test_detect_metric_drift_zero_baseline(self):
         rec = detect_metric_drift(
-            "returns", DiscrepancyCategory.STATISTICAL_NOISE, 0.0, 0.5,
-            absolute_threshold=0.10
+            "returns", DiscrepancyCategory.STATISTICAL_NOISE, 0.0, 0.5, absolute_threshold=0.10
         )
         assert rec.severity == "WARNING"
 
@@ -743,11 +805,13 @@ class TestDriftDetection:
 
     def test_signal_drift_detects_mean_shift(self):
         result = signal_drift(
-            baseline_mean=0.0, forward_mean=1.0,
-            baseline_stdev=0.1, forward_stdev=0.1,
-            z_threshold=2.0
+            baseline_mean=0.0,
+            forward_mean=1.0,
+            baseline_stdev=0.1,
+            forward_stdev=0.1,
+            z_threshold=2.0,
         )
-        mean_rec = [r for r in result.records if r.metric == "signal_mean"][0]
+        mean_rec = next(r for r in result.records if r.metric == "signal_mean")
         assert mean_rec.severity == "WARNING"
 
 
@@ -755,19 +819,37 @@ class TestDriftDetection:
 # Section I: Comparison (6 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestComparison:
     def test_comparison_no_backtest(self):
-        fwd = {"total_return": 0.05, "sharpe": 0.5, "max_drawdown": 0.1,
-               "volatility": 0.15, "fill_rate": 0.9, "n_cycles": 30}
+        fwd = {
+            "total_return": 0.05,
+            "sharpe": 0.5,
+            "max_drawdown": 0.1,
+            "volatility": 0.15,
+            "fill_rate": 0.9,
+            "n_cycles": 30,
+        }
         summary, records = build_comparison({}, fwd, sample_adequacy="PRELIMINARY")
         assert not summary["compared"]
         assert records == []
 
     def test_comparison_no_drift(self):
-        backtest = {"total_return": 0.10, "sharpe": 1.0, "max_drawdown": 0.05,
-                    "volatility": 0.15, "fill_rate": 1.0}
-        fwd = {"total_return": 0.10, "sharpe": 1.0, "max_drawdown": 0.05,
-               "volatility": 0.15, "fill_rate": 1.0, "n_cycles": 30}
+        backtest = {
+            "total_return": 0.10,
+            "sharpe": 1.0,
+            "max_drawdown": 0.05,
+            "volatility": 0.15,
+            "fill_rate": 1.0,
+        }
+        fwd = {
+            "total_return": 0.10,
+            "sharpe": 1.0,
+            "max_drawdown": 0.05,
+            "volatility": 0.15,
+            "fill_rate": 1.0,
+            "n_cycles": 30,
+        }
         summary, records = build_comparison(backtest, fwd, sample_adequacy="MEANINGFUL")
         assert summary["compared"]
         assert summary["n_warnings"] == 0
@@ -783,22 +865,16 @@ class TestComparison:
     def test_comparison_sample_adequacy_caveat(self):
         backtest = {"total_return": 0.10}
         fwd = {"total_return": 0.11, "n_cycles": 5}
-        summary, records = build_comparison(backtest, fwd, sample_adequacy="INSUFFICIENT")
+        summary, _records = build_comparison(backtest, fwd, sample_adequacy="INSUFFICIENT")
         assert "insufficient" in summary.get("adequacy_note", "").lower()
 
     def test_classify_discrepancies_with_warnings(self):
-        rec = make_diagnostic(
-            "x", DiscrepancyCategory.DATA_DRIFT, DiagnosticSeverity.WARNING, "m"
-        )
+        rec = make_diagnostic("x", DiscrepancyCategory.DATA_DRIFT, DiagnosticSeverity.WARNING, "m")
         cats = classify_discrepancies({}, {}, {}, {}, {}, {}, [rec])
         assert "DATA_DRIFT" in cats
 
     def test_classify_discrepancies_adds_insufficient_sample(self):
-        cats = classify_discrepancies(
-            {}, {}, {}, {}, {},
-            {"sample_adequacy": "INSUFFICIENT"},
-            []
-        )
+        cats = classify_discrepancies({}, {}, {}, {}, {}, {"sample_adequacy": "INSUFFICIENT"}, [])
         assert "INSUFFICIENT_SAMPLE" in cats
 
 
@@ -806,11 +882,12 @@ class TestComparison:
 # Section J: Lineage (5 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestLineage:
     def test_lineage_builds_correctly(self):
         spec = _make_spec()
         record = _make_record(30)
-        chain, records = build_lineage(spec, record, None)
+        chain, _records = build_lineage(spec, record, None)
         assert chain.strategy_id == spec.strategy_id
         assert chain.research_artifact_id == spec.research_artifact_id
         assert chain.lineage_fingerprint != ""
@@ -829,7 +906,7 @@ class TestLineage:
         for c in cycles:
             c.strategy_id = "forward-id"
         record = FakeForwardRecord(cycles)
-        chain, records = build_lineage(spec, record, None)
+        _chain, records = build_lineage(spec, record, None)
         critical_recs = [r for r in records if r.severity == "CRITICAL"]
         assert len(critical_recs) > 0
 
@@ -839,7 +916,7 @@ class TestLineage:
         for c in cycles:
             c.strategy_version = "2.0.0"
         record = FakeForwardRecord(cycles)
-        chain, records = build_lineage(spec, record, None)
+        _chain, records = build_lineage(spec, record, None)
         error_recs = [r for r in records if r.severity == "ERROR"]
         assert len(error_recs) > 0
 
@@ -855,6 +932,7 @@ class TestLineage:
 # ═══════════════════════════════════════════════════════════════════════════════
 # Section K: Sample-size discipline (5 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestSampleSizeDiscipline:
     def test_engine_returns_insufficient_status_for_small_sample(self):
@@ -895,6 +973,7 @@ class TestSampleSizeDiscipline:
 # Section L: Engine integration (10 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestEngineIntegration:
     def _run(self, n=30, **engine_kw) -> ForwardValidationArtifact:
         spec = _make_spec()
@@ -926,8 +1005,13 @@ class TestEngineIntegration:
         spec = _make_spec()
         record = _make_record(30)
         engine = _make_engine()
-        backtest = {"total_return": 0.15, "sharpe": 1.2, "max_drawdown": 0.08,
-                    "volatility": 0.12, "fill_rate": 1.0}
+        backtest = {
+            "total_return": 0.15,
+            "sharpe": 1.2,
+            "max_drawdown": 0.08,
+            "volatility": 0.12,
+            "fill_rate": 1.0,
+        }
         artifact = engine.analyze(record, spec, backtest_results=backtest)
         assert artifact.metric_results["backtest_comparison"]["compared"]
 
@@ -951,8 +1035,7 @@ class TestEngineIntegration:
         spec = _make_spec()
         record = _make_record(30)
         engine = _make_engine()
-        wh = [{"target": {"A": 0.5, "B": 0.5}, "actual": {"A": 0.5, "B": 0.5}}
-              for _ in range(30)]
+        wh = [{"target": {"A": 0.5, "B": 0.5}, "actual": {"A": 0.5, "B": 0.5}} for _ in range(30)]
         artifact = engine.analyze(record, spec, weight_history=wh)
         assert artifact.metric_results["portfolio"]["analyzed"]
 
@@ -986,6 +1069,7 @@ class TestEngineIntegration:
 # Section M: Report generation (5 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestReportGeneration:
     def test_report_deterministic(self):
         spec = _make_spec()
@@ -1002,9 +1086,17 @@ class TestReportGeneration:
         engine = _make_engine()
         artifact = engine.analyze(record, spec)
         report = assemble_report(artifact)
-        for attr in ("data_diagnostics", "signal_diagnostics", "execution_diagnostics",
-                     "risk_diagnostics", "performance_diagnostics", "backtest_comparison",
-                     "drift_analysis", "statistical_diagnostics", "limitations"):
+        for attr in (
+            "data_diagnostics",
+            "signal_diagnostics",
+            "execution_diagnostics",
+            "risk_diagnostics",
+            "performance_diagnostics",
+            "backtest_comparison",
+            "drift_analysis",
+            "statistical_diagnostics",
+            "limitations",
+        ):
             assert hasattr(report, attr), f"missing {attr}"
 
     def test_report_limitations_always_present(self):
@@ -1039,6 +1131,7 @@ class TestReportGeneration:
 # Section N: End-to-end certification (5 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestEndToEndCertification:
     def _full_pipeline(
         self,
@@ -1056,30 +1149,33 @@ class TestEndToEndCertification:
 
     def test_case_a_clean_run_no_divergence(self):
         """CASE A: same behavior → no material divergence."""
-        backtest = {"total_return": 0.05, "sharpe": 0.5, "max_drawdown": 0.02,
-                    "volatility": 0.10, "fill_rate": 1.0}
-        artifact, report = self._full_pipeline(n_cycles=80, backtest=backtest)
+        backtest = {
+            "total_return": 0.05,
+            "sharpe": 0.5,
+            "max_drawdown": 0.02,
+            "volatility": 0.10,
+            "fill_rate": 1.0,
+        }
+        artifact, _report = self._full_pipeline(n_cycles=80, backtest=backtest)
         # status should not be INVALID or FAILED
         assert artifact.status not in ("INVALID", "FAILED")
         assert artifact.verify_fingerprint()
 
     def test_case_c_execution_drift(self):
         """CASE C: zero fills → EXECUTION_DRIFT."""
-        artifact, report = self._full_pipeline(n_cycles=80, fill_rate=0.0)
+        artifact, _report = self._full_pipeline(n_cycles=80, fill_rate=0.0)
         # should have execution warnings
-        exec_recs = [r for r in artifact.diagnostic_results
-                     if "fill_rate" in r.get("metric", "")]
-        _warn_or_above = {"WARNING",
-                          "ERROR",
-                          "CRITICAL"}
+        exec_recs = [r for r in artifact.diagnostic_results if "fill_rate" in r.get("metric", "")]
+        _warn_or_above = {"WARNING", "ERROR", "CRITICAL"}
         warning_exec = [r for r in exec_recs if r.get("severity") in _warn_or_above]
         assert len(warning_exec) > 0
 
     def test_case_f_risk_rejection_drift(self):
         """CASE F: risk rejection → RISK_DRIFT."""
-        artifact, report = self._full_pipeline(n_cycles=80, risk_approved=False)
-        risk_recs = [r for r in artifact.diagnostic_results
-                     if "approval_rate" in r.get("metric", "")]
+        artifact, _report = self._full_pipeline(n_cycles=80, risk_approved=False)
+        risk_recs = [
+            r for r in artifact.diagnostic_results if "approval_rate" in r.get("metric", "")
+        ]
         _warn_or_above = {"WARNING", "ERROR"}
         warning_risk = [r for r in risk_recs if r.get("severity") in _warn_or_above]
         assert len(warning_risk) > 0
@@ -1114,6 +1210,7 @@ class TestEndToEndCertification:
 # Section O: Adversarial / edge cases (8 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestAdversarialCases:
     def test_empty_forward_record(self):
         spec = _make_spec()
@@ -1133,7 +1230,7 @@ class TestAdversarialCases:
     def test_implementation_divergence_signals(self):
         rec = check_signal_consistency(
             {"A": 1.0, "B": -0.5},
-            {"A": 0.0, "B": -0.5},   # A completely wrong
+            {"A": 0.0, "B": -0.5},  # A completely wrong
         )
         assert rec.category == "IMPLEMENTATION_DIVERGENCE"
         assert rec.severity == "CRITICAL"
@@ -1152,8 +1249,9 @@ class TestAdversarialCases:
         record = FakeForwardRecord(cycles)
         engine = _make_engine()
         artifact = engine.analyze(record, spec)
-        lineage_recs = [r for r in artifact.diagnostic_results
-                        if "version" in r.get("diagnostic_id", "")]
+        lineage_recs = [
+            r for r in artifact.diagnostic_results if "version" in r.get("diagnostic_id", "")
+        ]
         assert len(lineage_recs) > 0
 
     def test_cost_drift_large_slippage(self):
@@ -1177,6 +1275,7 @@ class TestAdversarialCases:
 # ═══════════════════════════════════════════════════════════════════════════════
 # Section P: Export / re-import (3 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestExportImport:
     def test_artifact_json_roundtrip(self):
@@ -1204,9 +1303,16 @@ class TestExportImport:
 
     def test_diagnostic_record_json_roundtrip(self):
         rec = make_diagnostic(
-            "roundtrip.test", DiscrepancyCategory.DATA_DRIFT, DiagnosticSeverity.WARNING,
-            "fill_rate", baseline=1.0, observed=0.7, threshold=0.1, sample_size=50,
-            evidence="test", status=ValidationStatus.WARNING,
+            "roundtrip.test",
+            DiscrepancyCategory.DATA_DRIFT,
+            DiagnosticSeverity.WARNING,
+            "fill_rate",
+            baseline=1.0,
+            observed=0.7,
+            threshold=0.1,
+            sample_size=50,
+            evidence="test",
+            status=ValidationStatus.WARNING,
         )
         d = rec.to_dict()
         json_str = json.dumps(d)
@@ -1219,6 +1325,7 @@ class TestExportImport:
 # ═══════════════════════════════════════════════════════════════════════════════
 # Section Q: Multi-strategy and restart (4 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestMultiStrategyAndRestart:
     def test_strategies_validated_independently(self):
@@ -1267,6 +1374,7 @@ class TestMultiStrategyAndRestart:
 # Section R: Economic/operational distinction (3 tests)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestEconomicOperationalDistinction:
     def test_operational_valid_but_economic_inconclusive(self):
         """Sufficient cycles for operational validity but not for economic conclusiveness."""
@@ -1280,7 +1388,7 @@ class TestEconomicOperationalDistinction:
     def test_positive_return_does_not_override_operational_invalid(self):
         """Even with positive return, implementation divergence → OPERATIONALLY_INVALID."""
         spec = _make_spec()
-        record = _make_record(30, growth=0.01)  # positive growing NAV
+        _make_record(30, growth=0.01)  # positive growing NAV
         engine = _make_engine()
         # inject a lineage mismatch by mismatching version
         cycles = _make_cycles(30)

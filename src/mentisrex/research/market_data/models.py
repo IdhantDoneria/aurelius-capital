@@ -14,14 +14,14 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass, field, replace
 from datetime import date, datetime
-from enum import Enum
+from enum import StrEnum
 
 from mentisrex.research.valuation.models import Provenance
 
-
 # ── typed enums (semantics stay explicit) ────────────────────────────────────
 
-class ObservationType(str, Enum):
+
+class ObservationType(StrEnum):
     TRADE = "trade"
     QUOTE = "quote"
     CLOSE = "close"
@@ -40,26 +40,26 @@ class ObservationType(str, Enum):
     REFERENCE = "reference"
 
 
-class Unit(str, Enum):
-    PRICE = "price"              # currency per share/unit
-    RATE = "rate"               # decimal (0.05 == 5%)
-    PERCENT = "percent"         # 5.0 == 5%
+class Unit(StrEnum):
+    PRICE = "price"  # currency per share/unit
+    RATE = "rate"  # decimal (0.05 == 5%)
+    PERCENT = "percent"  # 5.0 == 5%
     BASIS_POINT = "basis_point"  # 50 == 0.005
-    FACTOR = "factor"           # dimensionless (discount factor, split ratio)
+    FACTOR = "factor"  # dimensionless (discount factor, split ratio)
     SHARES = "shares"
     CONTRACTS = "contracts"
-    VOL = "vol"                 # annualized vol as a decimal
+    VOL = "vol"  # annualized vol as a decimal
     NONE = "none"
 
 
-class QualityStatus(str, Enum):
-    RAW = "raw"                 # straight off a source, not yet checked
-    VALIDATED = "validated"     # passed the quality engine
-    SUSPECT = "suspect"         # flagged (WARNING/ERROR) but retained
-    REJECTED = "rejected"       # failed a REJECT rule — never valued
+class QualityStatus(StrEnum):
+    RAW = "raw"  # straight off a source, not yet checked
+    VALIDATED = "validated"  # passed the quality engine
+    SUSPECT = "suspect"  # flagged (WARNING/ERROR) but retained
+    REJECTED = "rejected"  # failed a REJECT rule — never valued
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -67,6 +67,7 @@ class Severity(str, Enum):
 
 
 # ── the canonical datum ───────────────────────────────────────────────────────
+
 
 @dataclass(frozen=True)
 class CanonicalObservation:
@@ -76,26 +77,32 @@ class CanonicalObservation:
     is *for*. A close printed 2024-01-03 for the 2024-01-02 session has observation_date
     2024-01-03, effective_date 2024-01-02. PIT reads gate on `observation_date`.
     """
-    security_id: str                       # canonical/internal stable id
+
+    security_id: str  # canonical/internal stable id
     obs_type: ObservationType
-    field: str                             # "close" | "bid" | "ask" | "zero_rate" | ...
+    field: str  # "close" | "bid" | "ask" | "zero_rate" | ...
     value: float
-    observation_date: date                 # when knowable
-    effective_date: date                   # what date it is for
+    observation_date: date  # when knowable
+    effective_date: date  # what date it is for
     source: str = "unknown"
     timestamp: datetime | None = None
     currency: str | None = None
     unit: Unit = Unit.PRICE
     status: QualityStatus = QualityStatus.RAW
-    revision: int = 0                      # 0 == original; higher == later restatement
-    meta: dict = field(default_factory=dict)   # bid/ask/volume/open/high/low & source extras
+    revision: int = 0  # 0 == original; higher == later restatement
+    meta: dict = field(default_factory=dict)  # bid/ask/volume/open/high/low & source extras
 
     def provenance(self) -> Provenance:
-        return Provenance(source=self.source, observation_date=self.observation_date,
-                          effective_date=self.effective_date, timestamp=self.timestamp,
-                          currency=self.currency, instrument_id=self.security_id)
+        return Provenance(
+            source=self.source,
+            observation_date=self.observation_date,
+            effective_date=self.effective_date,
+            timestamp=self.timestamp,
+            currency=self.currency,
+            instrument_id=self.security_id,
+        )
 
-    def with_status(self, status: QualityStatus) -> "CanonicalObservation":
+    def with_status(self, status: QualityStatus) -> CanonicalObservation:
         return replace(self, status=status)
 
     @property
@@ -104,9 +111,18 @@ class CanonicalObservation:
         return (self.security_id, self.obs_type.value, self.field, self.effective_date)
 
     def fingerprint(self) -> str:
-        parts = [self.security_id, self.obs_type.value, self.field, f"{self.value:.12g}",
-                 str(self.observation_date), str(self.effective_date), self.source,
-                 self.currency or "", self.unit.value, str(self.revision)]
+        parts = [
+            self.security_id,
+            self.obs_type.value,
+            self.field,
+            f"{self.value:.12g}",
+            str(self.observation_date),
+            str(self.effective_date),
+            self.source,
+            self.currency or "",
+            self.unit.value,
+            str(self.revision),
+        ]
         return hashlib.blake2b("|".join(parts).encode(), digest_size=8).hexdigest()
 
 
@@ -114,6 +130,7 @@ class CanonicalObservation:
 class QualityDiagnostic:
     """A structured finding from normalization or the quality engine. No silent repair —
     the datum is classified, the reason is recorded."""
+
     code: str
     severity: Severity
     message: str

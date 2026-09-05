@@ -50,8 +50,9 @@ def _param_hash(params: dict | None) -> str:
 
 
 def _fingerprint(family, hypothesis_id, variant, dataset_id, period, param_hash) -> str:
-    canon = "|".join(str(x) for x in
-                     (family, hypothesis_id, variant, dataset_id, period, param_hash))
+    canon = "|".join(
+        str(x) for x in (family, hypothesis_id, variant, dataset_id, period, param_hash)
+    )
     return hashlib.sha1(canon.encode()).hexdigest()
 
 
@@ -98,8 +99,9 @@ class DoFLedger:
         """Record one trial. Returns True if newly counted, False if it duplicates
         an existing (fingerprint-identical) trial."""
         ph = _param_hash(trial.params)
-        fp = _fingerprint(trial.family, trial.hypothesis_id, trial.variant,
-                          trial.dataset_id, trial.period, ph)
+        fp = _fingerprint(
+            trial.family, trial.hypothesis_id, trial.variant, trial.dataset_id, trial.period, ph
+        )
         with self._conn() as conn:
             exists = conn.execute(
                 "SELECT 1 FROM research_trials WHERE fingerprint = ? LIMIT 1", [fp]
@@ -108,9 +110,18 @@ class DoFLedger:
                 return False
             conn.execute(
                 "INSERT INTO research_trials VALUES (?,?,?,?,?,?,?,?,?,?)",
-                [str(uuid.uuid4()), trial.family, trial.hypothesis_id, trial.variant,
-                 trial.dataset_id, trial.period, ph, trial.selection_note, fp,
-                 datetime.now(UTC)],
+                [
+                    str(uuid.uuid4()),
+                    trial.family,
+                    trial.hypothesis_id,
+                    trial.variant,
+                    trial.dataset_id,
+                    trial.period,
+                    ph,
+                    trial.selection_note,
+                    fp,
+                    datetime.now(UTC),
+                ],
             )
         return True
 
@@ -135,8 +146,9 @@ class DoFLedger:
                 [family],
             ).fetchone()
         keys = ("hypotheses", "variants", "datasets", "periods", "parameter_sets", "trials")
-        return dict(zip(keys, (int(x) for x in row), strict=True)) if row else \
-            dict.fromkeys(keys, 0)
+        return (
+            dict(zip(keys, (int(x) for x in row), strict=True)) if row else dict.fromkeys(keys, 0)
+        )
 
     def families(self) -> list[str]:
         with self._conn() as conn:

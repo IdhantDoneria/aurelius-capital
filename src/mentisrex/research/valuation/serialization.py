@@ -41,8 +41,9 @@ def portfolio_to_dict(pv) -> dict:
         "base_value": round(pv.base_value, 6),
         "unrealized_pnl": round(pv.unrealized_pnl, 6),
         "greeks": _clean(pv.greeks) if pv.greeks else None,
-        "risk_inputs": {k: round(v, 6) if isinstance(v, float) else v
-                        for k, v in sorted(pv.risk_inputs.items())},
+        "risk_inputs": {
+            k: round(v, 6) if isinstance(v, float) else v for k, v in sorted(pv.risk_inputs.items())
+        },
         "market_data_fingerprint": pv.market_data_fingerprint,
         "results": [result_to_dict(r) for r in pv.results],
     }
@@ -54,8 +55,11 @@ def to_json(obj, *, indent: int = 2) -> str:
 
 
 def curve_to_dict(curve) -> dict:
-    return {"curve_id": curve.curve_id, "ref_date": str(curve.ref_date),
-            "tenors": list(curve.tenors),
-            "zeros": list(getattr(curve, "zeros", [])) or None,
-            "dfs": list(getattr(curve, "dfs", [])) or None,
-            "fingerprint": curve.fingerprint()}
+    return {
+        "curve_id": curve.curve_id,
+        "ref_date": str(curve.ref_date),
+        "tenors": list(curve.tenors),
+        "zeros": list(getattr(curve, "zeros", [])) or None,
+        "dfs": list(getattr(curve, "dfs", [])) or None,
+        "fingerprint": curve.fingerprint(),
+    }

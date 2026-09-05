@@ -23,6 +23,11 @@ def apply(book, action, *, when: date | None = None, receive_currency: str | Non
     ev = _m15_ca.apply(eng, action, when=when)
 
     if receive_currency and validate_code(receive_currency) != ccy and ev.cash_impact:
-        book.convert(amount=ev.cash_impact, from_currency=ccy, to_currency=receive_currency,
-                     when=when, reason="corporate_action_fx")
+        book.convert(
+            amount=ev.cash_impact,
+            from_currency=ccy,
+            to_currency=receive_currency,
+            when=when,
+            reason="corporate_action_fx",
+        )
     return ev

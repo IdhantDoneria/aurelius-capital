@@ -45,11 +45,13 @@ logger = get_logger(__name__)
 ALPACA_PAPER_BASE_URL = "https://paper-api.alpaca.markets"
 
 # Known live endpoints — any attempt to use these is explicitly blocked.
-_LIVE_ENDPOINTS: frozenset[str] = frozenset([
-    "https://api.alpaca.markets",
-    "https://api.alpaca.markets/",
-    "http://api.alpaca.markets",
-])
+_LIVE_ENDPOINTS: frozenset[str] = frozenset(
+    [
+        "https://api.alpaca.markets",
+        "https://api.alpaca.markets/",
+        "http://api.alpaca.markets",
+    ]
+)
 
 # ── exceptions ────────────────────────────────────────────────────────────────
 
@@ -78,16 +80,17 @@ class AlpacaOrderRecord:
 
     Governance: credentials are NEVER stored here.
     """
-    mentisrex_order_id: str   # = client_order_id (deterministic)
-    alpaca_order_id: str      # Alpaca-assigned UUID
-    client_order_id: str      # deterministic hash (idempotency key)
+
+    mentisrex_order_id: str  # = client_order_id (deterministic)
+    alpaca_order_id: str  # Alpaca-assigned UUID
+    client_order_id: str  # deterministic hash (idempotency key)
     strategy_id: str
     strategy_fingerprint: str
     symbol: str
-    side: str                 # "buy" | "sell"
-    quantity: str             # Decimal serialized as string
-    order_type: str           # "market" | "limit"
-    time_in_force: str        # "day" | "gtc"
+    side: str  # "buy" | "sell"
+    quantity: str  # Decimal serialized as string
+    order_type: str  # "market" | "limit"
+    time_in_force: str  # "day" | "gtc"
     status: str
     broker: str = "ALPACA"
     environment: str = "PAPER"
@@ -101,6 +104,7 @@ class AlpacaOrderRecord:
 @dataclass
 class AlpacaFill:
     """Canonical fill record from Alpaca paper account."""
+
     fill_id: str
     alpaca_order_id: str
     symbol: str
@@ -126,8 +130,7 @@ class NavReconciliationResult:
     delta_bps: float
     ok: bool
     note: str = (
-        "Differences expected from: timing, pending orders, "
-        "broker mark-to-market, dividends, fees."
+        "Differences expected from: timing, pending orders, broker mark-to-market, dividends, fees."
     )
 
 
@@ -244,8 +247,16 @@ class AlpacaPaperBroker:
         _assert_no_live_trading()
 
         # 2. Validate credentials — fail closed on missing.
-        key = api_key or os.environ.get("ALPACA_PAPER_API_KEY") or os.environ.get("ALPACA_API_KEY", "")
-        secret = api_secret or os.environ.get("ALPACA_PAPER_API_SECRET") or os.environ.get("ALPACA_API_SECRET", "")
+        key = (
+            api_key
+            or os.environ.get("ALPACA_PAPER_API_KEY")
+            or os.environ.get("ALPACA_API_KEY", "")
+        )
+        secret = (
+            api_secret
+            or os.environ.get("ALPACA_PAPER_API_SECRET")
+            or os.environ.get("ALPACA_API_SECRET", "")
+        )
         if not key or not secret:
             raise PaperAccountVerificationError(
                 "Missing Alpaca paper credentials. "
@@ -452,8 +463,8 @@ class AlpacaPaperBroker:
         Translates paper.broker.OrderRequest → AlpacaPaperBroker.submit_order().
         Returns an OrderResult-like object.
         """
-        from mentisrex.paper.broker import OrderResult
         from mentisrex.backtesting.events.types import OrderType as BtOrderType
+        from mentisrex.paper.broker import OrderResult
 
         try:
             otype = "limit" if req.order_type == BtOrderType.LIMIT else "market"
@@ -490,8 +501,9 @@ class AlpacaPaperBroker:
     def get_order_by_client_id(self, client_order_id: str) -> dict | None:
         """Retrieve order by client_order_id (restart recovery)."""
         try:
-            resp = self._http.get(f"/v2/orders:by_client_order_id",
-                                  params={"client_order_id": client_order_id})
+            resp = self._http.get(
+                "/v2/orders:by_client_order_id", params={"client_order_id": client_order_id}
+            )
             if resp.is_success:
                 return resp.json()
         except Exception:
@@ -515,16 +527,18 @@ class AlpacaPaperBroker:
         qty = Decimal(data.get("filled_qty") or "0")
         if not px or not qty:
             return []
-        return [AlpacaFill(
-            fill_id=f"{alpaca_order_id}-f1",
-            alpaca_order_id=alpaca_order_id,
-            symbol=data["symbol"],
-            side=data["side"],
-            quantity=qty,
-            fill_price=px,
-            cost=qty * px,
-            filled_at=data.get("filled_at", ""),
-        )]
+        return [
+            AlpacaFill(
+                fill_id=f"{alpaca_order_id}-f1",
+                alpaca_order_id=alpaca_order_id,
+                symbol=data["symbol"],
+                side=data["side"],
+                quantity=qty,
+                fill_price=px,
+                cost=qty * px,
+                filled_at=data.get("filled_at", ""),
+            )
+        ]
 
     # ── account / positions ───────────────────────────────────────────────────
 
@@ -535,8 +549,7 @@ class AlpacaPaperBroker:
         pos_list = self._http.get("/v2/positions").raise_for_status().json()
         positions = {p["symbol"]: Decimal(p["qty"]) for p in pos_list}
         open_count = len(
-            self._http.get("/v2/orders", params={"status": "open"})
-            .raise_for_status().json()
+            self._http.get("/v2/orders", params={"status": "open"}).raise_for_status().json()
         )
         return {
             "broker": self.BROKER,
@@ -557,15 +570,12 @@ class AlpacaPaperBroker:
     @property
     def open_orders(self) -> int:
         return len(
-            self._http.get("/v2/orders", params={"status": "open"})
-            .raise_for_status().json()
+            self._http.get("/v2/orders", params={"status": "open"}).raise_for_status().json()
         )
 
     # ── reconciliation ────────────────────────────────────────────────────────
 
-    def reconcile_positions(
-        self, expected: dict[str, Decimal]
-    ) -> PositionReconciliationResult:
+    def reconcile_positions(self, expected: dict[str, Decimal]) -> PositionReconciliationResult:
         """Compare expected positions vs Alpaca paper positions.
 
         Marks RECONCILIATION_FAILED if any mismatch or unexpected position found.
@@ -577,24 +587,28 @@ class AlpacaPaperBroker:
         for sym, exp_qty in expected.items():
             act_qty = actual.get(sym, Decimal(0))
             if abs(act_qty - exp_qty) > Decimal("0.01"):
-                differences.append({
-                    "symbol": sym,
-                    "category": "quantity_mismatch",
-                    "expected": float(exp_qty),
-                    "actual": float(act_qty),
-                    "delta": float(act_qty - exp_qty),
-                    "severity": "warning",
-                })
+                differences.append(
+                    {
+                        "symbol": sym,
+                        "category": "quantity_mismatch",
+                        "expected": float(exp_qty),
+                        "actual": float(act_qty),
+                        "delta": float(act_qty - exp_qty),
+                        "severity": "warning",
+                    }
+                )
         for sym, act_qty in actual.items():
             if sym not in expected and abs(act_qty) > Decimal("0.01"):
-                differences.append({
-                    "symbol": sym,
-                    "category": "unexpected_position",
-                    "expected": 0.0,
-                    "actual": float(act_qty),
-                    "delta": float(act_qty),
-                    "severity": "warning",
-                })
+                differences.append(
+                    {
+                        "symbol": sym,
+                        "category": "unexpected_position",
+                        "expected": 0.0,
+                        "actual": float(act_qty),
+                        "delta": float(act_qty),
+                        "severity": "warning",
+                    }
+                )
         ok = len(differences) == 0
         return PositionReconciliationResult(
             ok=ok,
@@ -661,7 +675,7 @@ class AlpacaPaperBroker:
     def close(self) -> None:
         self._http.close()
 
-    def __enter__(self) -> "AlpacaPaperBroker":
+    def __enter__(self) -> AlpacaPaperBroker:
         return self
 
     def __exit__(self, *_: object) -> None:
@@ -685,7 +699,9 @@ class AlpacaPaperBroker:
             if resp.is_success:
                 data = resp.json()
                 if data and isinstance(data, dict) and "id" in data:
-                    return _record_from_alpaca(data, client_order_id, strategy_id, strategy_fingerprint)
+                    return _record_from_alpaca(
+                        data, client_order_id, strategy_id, strategy_fingerprint
+                    )
         except Exception:
             pass
 
@@ -695,7 +711,9 @@ class AlpacaPaperBroker:
             if resp.is_success:
                 for data in resp.json():
                     if data.get("client_order_id") == client_order_id:
-                        return _record_from_alpaca(data, client_order_id, strategy_id, strategy_fingerprint)
+                        return _record_from_alpaca(
+                            data, client_order_id, strategy_id, strategy_fingerprint
+                        )
         except Exception:
             pass
         return None
@@ -756,6 +774,7 @@ class AlpacaBroker(AlpacaPaperBroker):
                 "AlpacaPaperBroker accepts only the hardcoded paper endpoint."
             )
         import warnings
+
         warnings.warn(
             "AlpacaBroker is deprecated; use AlpacaPaperBroker instead.",
             DeprecationWarning,

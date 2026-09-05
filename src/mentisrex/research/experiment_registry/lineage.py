@@ -22,7 +22,7 @@ def _git(*args: str) -> str | None:
     try:
         out = subprocess.run(["git", *args], capture_output=True, text=True, timeout=5)
         return out.stdout.strip() or None if out.returncode == 0 else None
-    except Exception:  # noqa: BLE001 — lineage is best-effort; absence is flagged by quality
+    except Exception:
         return None
 
 
@@ -41,19 +41,31 @@ def capture_runtime() -> dict:
 def _try(fn):
     try:
         return fn()
-    except Exception:  # noqa: BLE001
+    except Exception:
         return None
 
 
 # canonical dataset-version field order (mirrors the dataset_versions table)
 VERSION_FIELDS = (
-    "prices_version", "fundamentals_version", "insiders_version", "universe_version",
-    "securitymaster_version", "feature_registry_version", "research_matrix_version",
+    "prices_version",
+    "fundamentals_version",
+    "insiders_version",
+    "universe_version",
+    "securitymaster_version",
+    "feature_registry_version",
+    "research_matrix_version",
 )
 
 
-def dataset_versions(*, prices=None, fundamentals=None, insiders=None, universe=None,
-                     securitymaster=None, feature_registry_version=None) -> dict:
+def dataset_versions(
+    *,
+    prices=None,
+    fundamentals=None,
+    insiders=None,
+    universe=None,
+    securitymaster=None,
+    feature_registry_version=None,
+) -> dict:
     """Assemble append-only dataset versions. Each *_count is a monotonic row
     count (append-only stores). research_matrix_version is derived: the matrix is
     a deterministic view over the others, so it versions as their combined hash."""
@@ -69,12 +81,20 @@ def dataset_versions(*, prices=None, fundamentals=None, insiders=None, universe=
     return v
 
 
-def versions_from_stores(*, prices=None, fundamentals=None, insiders=None,
-                         security_master=None, feature_registry: dict | None = None) -> dict:
+def versions_from_stores(
+    *,
+    prices=None,
+    fundamentals=None,
+    insiders=None,
+    security_master=None,
+    feature_registry: dict | None = None,
+) -> dict:
     """Convenience: read append-only row counts straight off store handles.
     universe_version = listing-interval count (security_identity_history), the set
     that drives UniverseEngine — no separate universe table exists."""
-    fr = hashing.feature_registry_version(feature_registry) if feature_registry is not None else None
+    fr = (
+        hashing.feature_registry_version(feature_registry) if feature_registry is not None else None
+    )
     return dataset_versions(
         prices=_count(prices, "raw_ohlcv"),
         fundamentals=_count(fundamentals, "fundamental_facts"),
@@ -88,5 +108,5 @@ def versions_from_stores(*, prices=None, fundamentals=None, insiders=None,
 def _count(store, table: str):
     if store is None:
         return None
-    with store._conn() as conn:  # noqa: SLF001 — read-only sibling access, matches M4/M6
+    with store._conn() as conn:
         return conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]

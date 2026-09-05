@@ -40,7 +40,7 @@ class DerivativePosition:
             self.realized_pnl += realized
             self.quantity = q0 + quantity
             if (self.quantity > 0) != (q0 > 0) and self.quantity != 0:
-                self.avg_price = price                     # flipped through zero → new basis
+                self.avg_price = price  # flipped through zero → new basis
             elif self.quantity == 0:
                 self.avg_price = 0.0
         self.last_mark = price
@@ -54,7 +54,13 @@ class DerivativePosition:
 
     def snapshot(self) -> InstrumentPosition:
         return InstrumentPosition(
-            instrument_id=self.inst.instrument_id, quantity=self.quantity,
-            avg_price=self.avg_price, last_mark=self.last_mark,
-            contract_size=self.inst.contract_size, currency=self.inst.currency,
-            realized_pnl=self.realized_pnl, margin=self.margin, collateral=self.collateral)
+            instrument_id=self.inst.instrument_id,
+            quantity=self.quantity,
+            avg_price=self.avg_price,
+            last_mark=self.last_mark,
+            contract_size=self.inst.contract_size,
+            currency=self.inst.currency,
+            realized_pnl=self.realized_pnl,
+            margin=self.margin,
+            collateral=self.collateral,
+        )

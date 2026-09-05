@@ -22,24 +22,19 @@ DO NOT fabricate forward-campaign evidence.
 
 from __future__ import annotations
 
-import dataclasses
 import json
 import tempfile
 import unittest
 from datetime import date
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from mentisrex.research.forward_campaign.alpaca_execution import (
     AlpacaCycleExecutionRecord,
     AlpacaCycleExecutor,
     AlpacaExecutionLedger,
-    AlpacaOrderExecution,
-    _compute_execution_summary,
 )
 from mentisrex.research.forward_campaign.data_quality import (
-    DataQualityReport,
     DataRisks,
     check_snapshot_quality,
     check_universe_pit_risks,
@@ -49,7 +44,6 @@ from mentisrex.research.forward_campaign.record import (
     ForwardCycleRecord,
     make_forward_cycle_id,
 )
-
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -79,8 +73,8 @@ def _fake_cycle_record(
         campaign_id="DRY_RUN_CAMPAIGN",
         mode="PAPER_FORWARD",
         ending_nav=nav,
-        portfolio_weights=portfolio_weights or {s: 0.1 for s in UNIVERSE},
-        positions=positions or {s: 10.0 for s in UNIVERSE},
+        portfolio_weights=portfolio_weights or dict.fromkeys(UNIVERSE, 0.1),
+        positions=positions or dict.fromkeys(UNIVERSE, 10.0),
         status=status,
         start_time="2026-07-01T10:00:00",
         end_time="2026-07-01T10:00:01",
@@ -92,15 +86,23 @@ def _fake_cycle_record(
 def _spot_prices() -> dict[str, float]:
     """Deterministic synthetic spot prices for dry-run tests."""
     return {
-        "AAPL": 195.0, "MSFT": 410.0, "GOOGL": 178.0, "AMZN": 195.0,
-        "META": 510.0, "NVDA": 130.0, "TSLA": 250.0, "JPM": 210.0,
-        "JNJ": 155.0, "V": 280.0,
+        "AAPL": 195.0,
+        "MSFT": 410.0,
+        "GOOGL": 178.0,
+        "AMZN": 195.0,
+        "META": 510.0,
+        "NVDA": 130.0,
+        "TSLA": 250.0,
+        "JPM": 210.0,
+        "JNJ": 155.0,
+        "V": 280.0,
     }
 
 
 def _fake_broker(equity: float = 1_050_000.0) -> MagicMock:
     """Mocked AlpacaPaperBroker for dry-run: all orders succeed."""
     broker = MagicMock()
+
     # submit_order returns a mock OrderRecord
     def _submit(symbol, side, quantity, **kw):
         rec = MagicMock()
@@ -109,6 +111,7 @@ def _fake_broker(equity: float = 1_050_000.0) -> MagicMock:
         rec.submitted_at = "2026-07-01T10:00:05+00:00"
         rec.status = "accepted"
         return rec
+
     broker.submit_order.side_effect = _submit
 
     # get_order_status → immediately filled
@@ -119,6 +122,7 @@ def _fake_broker(equity: float = 1_050_000.0) -> MagicMock:
             "filled_avg_price": "195.0",
             "filled_at": "2026-07-01T10:00:06+00:00",
         }
+
     broker.get_order_status.side_effect = _status
 
     # reconcile_positions → PASS
@@ -164,8 +168,8 @@ def _fake_snapshot(symbols: list[str] | None = None, missing: list[str] | None =
 
 # ── T01: dry-run AlpacaCycleExecutor completes without error ─────────────────
 
-class TestDryRunExecution(unittest.TestCase):
 
+class TestDryRunExecution(unittest.TestCase):
     def test_executor_completes_with_mock_broker(self):
         """End-to-end dry-run: executor writes sealed record, returns SUCCESS."""
         with tempfile.TemporaryDirectory() as td:
@@ -176,11 +180,11 @@ class TestDryRunExecution(unittest.TestCase):
 
             result = executor.execute_cycle(cycle_rec, spot_prices=_spot_prices())
 
-        self.assertEqual(result.status, "SUCCESS")
-        self.assertTrue(result.is_sealed)
-        self.assertEqual(result.cycle_id, DRY_RUN_CYCLE_ID)
-        self.assertGreater(len(result.orders), 0)
-        self.assertEqual(result.reconciliation_status, "PASS")
+        assert result.status == "SUCCESS"
+        assert result.is_sealed
+        assert result.cycle_id == DRY_RUN_CYCLE_ID
+        assert len(result.orders) > 0
+        assert result.reconciliation_status == "PASS"
 
     def test_executor_writes_json_to_temp_dir(self):
         """Sealed record persists to alpaca_executions/{cycle_id}.json in temp dir."""
@@ -189,13 +193,13 @@ class TestDryRunExecution(unittest.TestCase):
             executor = AlpacaCycleExecutor(data_dir, _fake_broker())
             executor.execute_cycle(_fake_cycle_record(), spot_prices=_spot_prices())
             path = data_dir / "alpaca_executions" / f"{DRY_RUN_CYCLE_ID}.json"
-            self.assertTrue(path.exists())
+            assert path.exists()
             stored = json.loads(path.read_text())
-            self.assertEqual(stored["cycle_id"], DRY_RUN_CYCLE_ID)
-            self.assertEqual(stored["broker"], "ALPACA")
-            self.assertEqual(stored["environment"], "PAPER")
-            self.assertEqual(stored["live_execution"], "NO")
-            self.assertEqual(stored["real_capital"], "NO")
+            assert stored["cycle_id"] == DRY_RUN_CYCLE_ID
+            assert stored["broker"] == "ALPACA"
+            assert stored["environment"] == "PAPER"
+            assert stored["live_execution"] == "NO"
+            assert stored["real_capital"] == "NO"
 
     def test_real_campaign_dir_untouched(self):
         """Dry-run uses temp dir; real FORWARD_CAMPAIGN_DIR is never created."""
@@ -205,13 +209,13 @@ class TestDryRunExecution(unittest.TestCase):
             executor = AlpacaCycleExecutor(Path(td), _fake_broker())
             executor.execute_cycle(_fake_cycle_record(), spot_prices=_spot_prices())
         after = set(real_dir.glob("**/*")) if real_dir.exists() else set()
-        self.assertEqual(before, after)
+        assert before == after
 
 
 # ── T06: idempotency — repeat execute_cycle returns same record ───────────────
 
-class TestDryRunIdempotency(unittest.TestCase):
 
+class TestDryRunIdempotency(unittest.TestCase):
     def test_repeat_execute_returns_existing_no_second_order(self):
         """Second execute_cycle call returns existing sealed record, no orders submitted."""
         with tempfile.TemporaryDirectory() as td:
@@ -225,10 +229,10 @@ class TestDryRunIdempotency(unittest.TestCase):
 
             result2 = executor.execute_cycle(cycle_rec, spot_prices=_spot_prices())
 
-        self.assertEqual(result1.cycle_id, result2.cycle_id)
-        self.assertEqual(result1.sealed_at, result2.sealed_at)
+        assert result1.cycle_id == result2.cycle_id
+        assert result1.sealed_at == result2.sealed_at
         # No new orders submitted on second call
-        self.assertEqual(broker.submit_order.call_count, call_count_after_first)
+        assert broker.submit_order.call_count == call_count_after_first
 
     def test_repeat_execute_does_not_overwrite_json(self):
         """Sealed JSON file is never overwritten by a second execute_cycle."""
@@ -244,7 +248,7 @@ class TestDryRunIdempotency(unittest.TestCase):
             executor.execute_cycle(cycle_rec, spot_prices=_spot_prices())
             mtime2 = path.stat().st_mtime
 
-        self.assertEqual(mtime1, mtime2)
+        assert mtime1 == mtime2
 
     def test_different_cycles_write_separate_files(self):
         """Two different cycle_ids produce separate JSON files."""
@@ -262,40 +266,44 @@ class TestDryRunIdempotency(unittest.TestCase):
             executor.execute_cycle(r2, spot_prices=_spot_prices())
 
             files = list((data_dir / "alpaca_executions").glob("*.json"))
-        self.assertEqual(len(files), 2)
+        assert len(files) == 2
 
 
 # ── T09: DataQualityReport ────────────────────────────────────────────────────
 
-class TestDataQualityFullUniverse(unittest.TestCase):
 
+class TestDataQualityFullUniverse(unittest.TestCase):
     def test_full_universe_healthy(self):
         snap = _fake_snapshot()
         report = check_snapshot_quality(snap, UNIVERSE, DRY_RUN_DATE)
-        self.assertEqual(report.n_expected, 10)
-        self.assertEqual(report.n_missing, 0)
-        self.assertEqual(report.n_zero_price, 0)
-        self.assertEqual(report.coverage_fraction, 1.0)
-        self.assertTrue(report.coverage_ok)
-        self.assertTrue(report.sanity_ok)
-        self.assertTrue(report.is_healthy())
+        assert report.n_expected == 10
+        assert report.n_missing == 0
+        assert report.n_zero_price == 0
+        assert report.coverage_fraction == 1.0
+        assert report.coverage_ok
+        assert report.sanity_ok
+        assert report.is_healthy()
 
     def test_known_risks_always_present(self):
         snap = _fake_snapshot()
         report = check_snapshot_quality(snap, UNIVERSE, DRY_RUN_DATE)
-        for risk in (DataRisks.ADJUSTMENT, DataRisks.PIT, DataRisks.DELISTING,
-                     DataRisks.REVISION, DataRisks.CROSS_PROVIDER):
-            self.assertIn(risk, report.known_risks)
+        for risk in (
+            DataRisks.ADJUSTMENT,
+            DataRisks.PIT,
+            DataRisks.DELISTING,
+            DataRisks.REVISION,
+            DataRisks.CROSS_PROVIDER,
+        ):
+            assert risk in report.known_risks
 
 
 class TestDataQualityMissingSymbols(unittest.TestCase):
-
     def test_missing_symbol_detected(self):
         snap = _fake_snapshot(missing=["TSLA", "NVDA"])
         report = check_snapshot_quality(snap, UNIVERSE, DRY_RUN_DATE)
-        self.assertEqual(report.n_missing, 2)
-        self.assertIn("TSLA", report.missing_symbols)
-        self.assertIn("NVDA", report.missing_symbols)
+        assert report.n_missing == 2
+        assert "TSLA" in report.missing_symbols
+        assert "NVDA" in report.missing_symbols
 
     def test_missing_symbol_reduces_coverage(self):
         snap = _fake_snapshot(missing=["TSLA"])
@@ -305,27 +313,26 @@ class TestDataQualityMissingSymbols(unittest.TestCase):
     def test_below_threshold_marks_unhealthy(self):
         snap = _fake_snapshot(missing=["TSLA", "NVDA", "META"])
         report = check_snapshot_quality(snap, UNIVERSE, DRY_RUN_DATE, min_coverage=0.8)
-        self.assertFalse(report.coverage_ok)
-        self.assertFalse(report.is_healthy())
+        assert not report.coverage_ok
+        assert not report.is_healthy()
 
     def test_above_threshold_marks_ok(self):
         snap = _fake_snapshot(missing=["TSLA"])
         report = check_snapshot_quality(snap, UNIVERSE, DRY_RUN_DATE, min_coverage=0.8)
-        self.assertTrue(report.coverage_ok)
+        assert report.coverage_ok
 
 
 class TestDataQualityZeroPrice(unittest.TestCase):
-
     def test_zero_price_detected(self):
         snap = _fake_snapshot()
         v = MagicMock()
         v.mid = 0.0
         snap.spots["AAPL"] = v
         report = check_snapshot_quality(snap, UNIVERSE, DRY_RUN_DATE)
-        self.assertEqual(report.n_zero_price, 1)
-        self.assertIn("AAPL", report.zero_price_symbols)
-        self.assertFalse(report.sanity_ok)
-        self.assertFalse(report.is_healthy())
+        assert report.n_zero_price == 1
+        assert "AAPL" in report.zero_price_symbols
+        assert not report.sanity_ok
+        assert not report.is_healthy()
 
     def test_negative_price_detected(self):
         snap = _fake_snapshot()
@@ -333,60 +340,62 @@ class TestDataQualityZeroPrice(unittest.TestCase):
         v.mid = -5.0
         snap.spots["MSFT"] = v
         report = check_snapshot_quality(snap, UNIVERSE, DRY_RUN_DATE)
-        self.assertIn("MSFT", report.zero_price_symbols)
+        assert "MSFT" in report.zero_price_symbols
 
 
 class TestDataQualityPitRisks(unittest.TestCase):
-
     def test_pit_risks_covers_universe(self):
         risks = check_universe_pit_risks(UNIVERSE)
         symbols = [r["symbol"] for r in risks]
         for s in UNIVERSE:
-            self.assertIn(s, symbols)
+            assert s in symbols
 
     def test_pit_risks_flags_adjustment_risk(self):
         risks = check_universe_pit_risks(UNIVERSE)
         for r in risks:
-            self.assertEqual(r["pit_risk"], DataRisks.PIT)
-            self.assertEqual(r["adjustment_risk"], DataRisks.ADJUSTMENT)
+            assert r["pit_risk"] == DataRisks.PIT
+            assert r["adjustment_risk"] == DataRisks.ADJUSTMENT
 
     def test_known_split_history_documented(self):
         risks = check_universe_pit_risks(UNIVERSE)
         notes = {r["symbol"]: r["note"] for r in risks}
         # GOOGL, AMZN, TSLA had documented splits
-        self.assertIn("split", notes["GOOGL"].lower())
-        self.assertIn("split", notes["AMZN"].lower())
+        assert "split" in notes["GOOGL"].lower()
+        assert "split" in notes["AMZN"].lower()
 
 
 # ── T16: isolation — forward campaign doesn't share state with simulation ──────
 
-class TestForwardCampaignIsolation(unittest.TestCase):
 
+class TestForwardCampaignIsolation(unittest.TestCase):
     def test_forward_campaign_dir_separate_from_simulation_dir(self):
         """Real campaign dir path must differ from any SIMULATION dir path."""
         from pathlib import Path
+
         repo = Path(__file__).resolve().parents[2]
         campaign_dir = repo / "data" / "forward_campaign"
         simulation_dir = repo / "data" / "forward_runs"
-        self.assertNotEqual(campaign_dir, simulation_dir)
+        assert campaign_dir != simulation_dir
 
     def test_campaign_checkpoint_path_separate(self):
         """ForwardCampaign._CAMPAIGN_CHECKPOINT is separate from sim checkpoint."""
         from mentisrex.research.forward_campaign.campaign import ForwardCampaign
-        self.assertEqual(ForwardCampaign._CAMPAIGN_CHECKPOINT, "campaign_checkpoint.json")
+
+        assert ForwardCampaign._CAMPAIGN_CHECKPOINT == "campaign_checkpoint.json"
         # The simulation uses "checkpoint.json" (not campaign_checkpoint.json)
-        self.assertNotEqual(ForwardCampaign._CAMPAIGN_CHECKPOINT, "checkpoint.json")
+        assert ForwardCampaign._CAMPAIGN_CHECKPOINT != "checkpoint.json"
 
     def test_forward_ledger_reads_from_cycles_subdir(self):
         """ForwardLedger only reads from cycles/ subdir — not from parent dir."""
         from mentisrex.research.forward_campaign.ledger import ForwardLedger
+
         with tempfile.TemporaryDirectory() as td:
             data_dir = Path(td)
             # plant a JSON in parent dir — should NOT be picked up
             (data_dir / "stray_cycle.json").write_text('{"cycle_id": "stray"}')
             ledger = ForwardLedger(data_dir)
             cycles = ledger.list_cycles()
-        self.assertEqual(cycles, [])
+        assert cycles == []
 
     def test_alpaca_execution_ledger_reads_from_exec_subdir(self):
         """AlpacaExecutionLedger only reads from alpaca_executions/ subdir."""
@@ -396,19 +405,18 @@ class TestForwardCampaignIsolation(unittest.TestCase):
             (data_dir / "stray_exec.json").write_text('{"cycle_id": "stray"}')
             ledger = AlpacaExecutionLedger(data_dir)
             cycles = ledger.list_cycles()
-        self.assertEqual(cycles, [])
+        assert cycles == []
 
     def test_forward_cycle_record_mode_is_paper_forward(self):
         """ForwardCycleRecord default mode=PAPER_FORWARD, never SIMULATION."""
         rec = ForwardCycleRecord()
-        self.assertEqual(rec.mode, "PAPER_FORWARD")
-        self.assertNotEqual(rec.mode, "SIMULATION")
-        self.assertNotEqual(rec.mode, "BACKTEST")
-        self.assertNotEqual(rec.mode, "REPLAY")
+        assert rec.mode == "PAPER_FORWARD"
+        assert rec.mode != "SIMULATION"
+        assert rec.mode != "BACKTEST"
+        assert rec.mode != "REPLAY"
 
 
 class TestForwardDataIsolation(unittest.TestCase):
-
     def test_forward_observation_not_written_to_backtest_dir(self):
         """Executing forward cycle in temp dir leaves backtest dirs unchanged."""
         repo = Path(__file__).resolve().parents[2]
@@ -420,7 +428,7 @@ class TestForwardDataIsolation(unittest.TestCase):
             executor.execute_cycle(_fake_cycle_record(), spot_prices=_spot_prices())
 
         after_count = len(list(repo.glob("data/backtests/**/*.json")))
-        self.assertEqual(before_count, after_count)
+        assert before_count == after_count
 
     def test_execution_record_mode_tags(self):
         """All execution records carry ALPACA/PAPER/NO/NO governance tags."""
@@ -428,16 +436,16 @@ class TestForwardDataIsolation(unittest.TestCase):
             executor = AlpacaCycleExecutor(Path(td), _fake_broker())
             result = executor.execute_cycle(_fake_cycle_record(), spot_prices=_spot_prices())
 
-        self.assertEqual(result.broker, "ALPACA")
-        self.assertEqual(result.environment, "PAPER")
-        self.assertEqual(result.live_execution, "NO")
-        self.assertEqual(result.real_capital, "NO")
+        assert result.broker == "ALPACA"
+        assert result.environment == "PAPER"
+        assert result.live_execution == "NO"
+        assert result.real_capital == "NO"
 
 
 # ── T21: restart/recovery ─────────────────────────────────────────────────────
 
-class TestRestartRecovery(unittest.TestCase):
 
+class TestRestartRecovery(unittest.TestCase):
     def test_stale_tmp_file_does_not_block_new_execution(self):
         """A leftover .tmp file from a crashed write does not block the executor."""
         with tempfile.TemporaryDirectory() as td:
@@ -452,7 +460,7 @@ class TestRestartRecovery(unittest.TestCase):
             result = executor.execute_cycle(_fake_cycle_record(), spot_prices=_spot_prices())
 
         # Should succeed; the .tmp is not a sealed record
-        self.assertEqual(result.status, "SUCCESS")
+        assert result.status == "SUCCESS"
 
     def test_ledger_skips_corrupt_json(self):
         """AlpacaExecutionLedger silently skips corrupt JSON files."""
@@ -471,26 +479,27 @@ class TestRestartRecovery(unittest.TestCase):
             )
             rec.seal("SUCCESS")
             (exec_dir / "good-cycle.json").write_text(
-                json.dumps(rec.to_dict(), indent=2, default=str))
+                json.dumps(rec.to_dict(), indent=2, default=str)
+            )
 
             ledger = AlpacaExecutionLedger(data_dir)
             cycles = ledger.list_cycles()
 
-        self.assertEqual(len(cycles), 1)
-        self.assertEqual(cycles[0].cycle_id, "good-cycle")
+        assert len(cycles) == 1
+        assert cycles[0].cycle_id == "good-cycle"
 
 
 # ── T23: September 2026 prerequisites ────────────────────────────────────────
 
-class TestSeptemberPrerequisites(unittest.TestCase):
 
+class TestSeptemberPrerequisites(unittest.TestCase):
     def test_september_cycle_id_is_deterministic(self):
         """September cycle_id is deterministic and unique."""
         sep_date = date(2026, 9, 1)
         cid = make_forward_cycle_id("ew-momentum-exp", "1.0.0", sep_date)
-        self.assertEqual(cid, "ew-momentum-exp__2026_09")
+        assert cid == "ew-momentum-exp__2026_09"
         # Different from July (dry-run)
-        self.assertNotEqual(cid, DRY_RUN_CYCLE_ID)
+        assert cid != DRY_RUN_CYCLE_ID
 
     def test_september_cycle_not_yet_in_dry_run_dir(self):
         """Dry-run temp dir contains no September cycle record."""
@@ -501,7 +510,7 @@ class TestSeptemberPrerequisites(unittest.TestCase):
             # Run July, not September
             executor.execute_cycle(_fake_cycle_record(), spot_prices=_spot_prices())
             sep_path = data_dir / "alpaca_executions" / f"{sep_cid}.json"
-        self.assertFalse(sep_path.exists())
+        assert not sep_path.exists()
 
     def test_no_premature_future_cycle_execution(self):
         """Real FORWARD_CAMPAIGN_DIR has no execution record for a cycle month
@@ -518,6 +527,7 @@ class TestSeptemberPrerequisites(unittest.TestCase):
         it never goes stale and never needs editing again.
         """
         from datetime import datetime
+
         today = datetime.now().date()
         if today.month == 12:
             next_month = date(today.year + 1, 1, 1)
@@ -536,18 +546,18 @@ class TestSeptemberPrerequisites(unittest.TestCase):
 
 # ── T24: strategy fingerprint guard ───────────────────────────────────────────
 
-class TestStrategyFingerprintGuard(unittest.TestCase):
 
+class TestStrategyFingerprintGuard(unittest.TestCase):
     def test_expected_fingerprint(self):
         """Strategy fingerprint remains b69961b65bab226a500d71f45709945b."""
         import sys
+
         sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts" / "forward_run"))
         try:
             from spec import SPEC
-            self.assertEqual(
-                SPEC.configuration_fingerprint,
-                "b69961b65bab226a500d71f45709945b",
-                "STRATEGY FINGERPRINT CHANGED — strategy has been modified!",
+
+            assert SPEC.configuration_fingerprint == "b69961b65bab226a500d71f45709945b", (
+                "STRATEGY FINGERPRINT CHANGED — strategy has been modified!"
             )
         except ImportError:
             self.skipTest("spec.py not importable from test context")
@@ -555,14 +565,14 @@ class TestStrategyFingerprintGuard(unittest.TestCase):
     def test_execution_record_carries_expected_fingerprint(self):
         """AlpacaCycleExecutionRecord carries the same fingerprint."""
         rec = _fake_cycle_record()
-        self.assertEqual(rec.strategy_fingerprint, "b69961b65bab226a500d71f45709945b")
+        assert rec.strategy_fingerprint == "b69961b65bab226a500d71f45709945b"
 
     def test_strategy_not_modified_tag_in_execution(self):
         """Execute cycle: governance fields confirm strategy not modified."""
         with tempfile.TemporaryDirectory() as td:
             executor = AlpacaCycleExecutor(Path(td), _fake_broker())
             result = executor.execute_cycle(_fake_cycle_record(), spot_prices=_spot_prices())
-        self.assertEqual(result.strategy_fingerprint, "b69961b65bab226a500d71f45709945b")
+        assert result.strategy_fingerprint == "b69961b65bab226a500d71f45709945b"
 
 
 if __name__ == "__main__":

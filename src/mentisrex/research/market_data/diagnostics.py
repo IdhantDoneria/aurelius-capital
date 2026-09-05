@@ -83,5 +83,8 @@ def stale(observation_date, as_of, max_days: int | None) -> str | None:
 def look_ahead(observation_date, as_of) -> str | None:
     if observation_date is None or as_of is None:
         return None
-    return (f"look-ahead: observed {observation_date} after valuation {as_of}"
-            if observation_date > as_of else None)
+    return (
+        f"look-ahead: observed {observation_date} after valuation {as_of}"
+        if observation_date > as_of
+        else None
+    )

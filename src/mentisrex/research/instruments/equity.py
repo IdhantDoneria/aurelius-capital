@@ -14,9 +14,20 @@ from mentisrex.research.instruments.models import (
 )
 
 
-def equity(instrument_id: str, *, currency: str = "USD", exchange: str = "",
-           contract_size: float = 1.0, **metadata) -> Instrument:
+def equity(
+    instrument_id: str,
+    *,
+    currency: str = "USD",
+    exchange: str = "",
+    contract_size: float = 1.0,
+    **metadata,
+) -> Instrument:
     return Instrument(
-        instrument_id=instrument_id, type=InstrumentType.EQUITY, currency=currency,
-        exchange=exchange, contract_size=contract_size,
-        cash_convention=CashConvention.PRINCIPAL, metadata=metadata)
+        instrument_id=instrument_id,
+        type=InstrumentType.EQUITY,
+        currency=currency,
+        exchange=exchange,
+        contract_size=contract_size,
+        cash_convention=CashConvention.PRINCIPAL,
+        metadata=metadata,
+    )

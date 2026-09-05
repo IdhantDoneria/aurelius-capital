@@ -39,7 +39,9 @@ def list_datasets(
     status: str | None = None,
     limit: int = Query(100, ge=1, le=500),
 ) -> list[DatasetRecord]:
-    return get_catalog().list_datasets(source=source, asset_class=asset_class, status=status, limit=limit)
+    return get_catalog().list_datasets(
+        source=source, asset_class=asset_class, status=status, limit=limit
+    )
 
 
 @catalog_router.post("/datasets", response_model=DatasetRecord, status_code=201)
@@ -106,8 +108,11 @@ def snapshot_dataset(dataset_id: str, req: SnapshotRequest) -> dict:
         raise HTTPException(status_code=404, detail=f"Dataset {dataset_id!r} not found")
     try:
         v = VersionManager(catalog).snapshot(
-            dataset_id, req.db_path, req.table,
-            created_by=req.created_by, notes=req.notes,
+            dataset_id,
+            req.db_path,
+            req.table,
+            created_by=req.created_by,
+            notes=req.notes,
         )
         return v.model_dump()
     except Exception as exc:
@@ -134,9 +139,13 @@ def run_quality_check(dataset_id: str, req: QualityRunRequest) -> dict:
         raise HTTPException(status_code=404, detail=f"Dataset {dataset_id!r} not found")
     try:
         report = QualityEngine(catalog).run(
-            ds, req.db_path, req.table,
-            date_col=req.date_col, symbol_col=req.symbol_col,
-            value_cols=req.value_cols or None, freshness_days=req.freshness_days,
+            ds,
+            req.db_path,
+            req.table,
+            date_col=req.date_col,
+            symbol_col=req.symbol_col,
+            value_cols=req.value_cols or None,
+            freshness_days=req.freshness_days,
         )
         return report.model_dump()
     except Exception as exc:

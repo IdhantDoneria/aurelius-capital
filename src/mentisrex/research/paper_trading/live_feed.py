@@ -30,8 +30,8 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from typing import Any
 
+from mentisrex.research.market_data.identifiers import IdentifierMap
 from mentisrex.research.market_data.normalization import Normalizer
 from mentisrex.research.market_data.pit import (
     BuildResult,
@@ -39,10 +39,9 @@ from mentisrex.research.market_data.pit import (
     PITPolicy,
     SnapshotBuildError,
 )
+from mentisrex.research.market_data.providers.yahoo.adapter import YahooFinanceSourceAdapter
 from mentisrex.research.market_data.quality import MarketDataQualityEngine, QualityConfig
 from mentisrex.research.market_data_ops.messages import MessageType
-from mentisrex.research.market_data.identifiers import IdentifierMap
-from mentisrex.research.market_data.providers.yahoo.adapter import YahooFinanceSourceAdapter
 
 
 @dataclass(frozen=True)
@@ -51,8 +50,9 @@ class LiveFeedConfig:
 
     No credentials are needed for Yahoo Finance (yfinance is credential-free).
     """
-    universe: tuple          # tickers / security_ids matching the strategy universe
-    fetch_window_days: int = 5   # fetch last N calendar days of data (recent observations only)
+
+    universe: tuple  # tickers / security_ids matching the strategy universe
+    fetch_window_days: int = 5  # fetch last N calendar days of data (recent observations only)
     max_staleness_days: int = 5  # reject observations older than N days vs as_of
     provider_name: str = "yahoo_finance"
     timezone: str = "America/New_York"
@@ -65,6 +65,7 @@ class LiveFeedConfig:
 @dataclass
 class FeedMetrics:
     """Operational metrics for section 13 observability requirements."""
+
     provider: str = "yahoo_finance"
     # DATA FEED
     requests: int = 0
@@ -108,15 +109,18 @@ class FeedMetrics:
             "missing_securities": self.missing_securities,
             "avg_fetch_latency_s": (
                 sum(self.fetch_latencies) / len(self.fetch_latencies)
-                if self.fetch_latencies else 0.0
+                if self.fetch_latencies
+                else 0.0
             ),
             "avg_normalization_latency_s": (
                 sum(self.normalization_latencies) / len(self.normalization_latencies)
-                if self.normalization_latencies else 0.0
+                if self.normalization_latencies
+                else 0.0
             ),
             "avg_build_latency_s": (
                 sum(self.build_latencies) / len(self.build_latencies)
-                if self.build_latencies else 0.0
+                if self.build_latencies
+                else 0.0
             ),
             "evaluations": self.evaluations,
             "signals_generated": self.signals_generated,
@@ -186,7 +190,7 @@ class LiveFeedBuilder:
             fetch_s = time.monotonic() - t0
             self.metrics.fetch_latencies.append(fetch_s)
             self.metrics.successful_responses += 1
-        except Exception as exc:
+        except Exception:
             self.metrics.failed_responses += 1
             self.metrics.snapshots_rejected += 1
             return None
@@ -249,20 +253,20 @@ class LiveFeedBuilder:
                     d = row_date.date() if hasattr(row_date, "date") else row_date
                     if d > as_of:
                         continue
-                    records.append({
-                        "symbol": ticker,
-                        "date": d.isoformat(),
-                        "open": float(row.get("Open", 0) or 0),
-                        "high": float(row.get("High", 0) or 0),
-                        "low": float(row.get("Low", 0) or 0),
-                        "close": float(row.get("Close", 0) or 0),
-                        "adj_close": float(
-                            row.get("Adj Close", row.get("Close", 0)) or 0
-                        ),
-                        "volume": float(row.get("Volume", 0) or 0),
-                        "dividends": float(row.get("Dividends", 0) or 0),
-                        "stock_splits": float(row.get("Stock Splits", 0) or 0),
-                    })
+                    records.append(
+                        {
+                            "symbol": ticker,
+                            "date": d.isoformat(),
+                            "open": float(row.get("Open", 0) or 0),
+                            "high": float(row.get("High", 0) or 0),
+                            "low": float(row.get("Low", 0) or 0),
+                            "close": float(row.get("Close", 0) or 0),
+                            "adj_close": float(row.get("Adj Close", row.get("Close", 0)) or 0),
+                            "volume": float(row.get("Volume", 0) or 0),
+                            "dividends": float(row.get("Dividends", 0) or 0),
+                            "stock_splits": float(row.get("Stock Splits", 0) or 0),
+                        }
+                    )
             except Exception:
                 continue
         return records
@@ -309,8 +313,4 @@ class LiveFeedBuilder:
     @staticmethod
     def _extract_observation_payloads(messages) -> list[dict]:
         """Extract payloads from OBSERVATION messages only (skip REFERENCE etc.)."""
-        return [
-            msg.payload
-            for msg in messages
-            if msg.msg_type == MessageType.OBSERVATION
-        ]
+        return [msg.payload for msg in messages if msg.msg_type == MessageType.OBSERVATION]

@@ -49,6 +49,7 @@ def _state_with(holdings, cash):
     st = PortfolioState(0.0)
     st.ledger.cash = cash
     from mentisrex.research.simulation.models import Holding
+
     for sid, (sh, cb, pr) in holdings.items():
         st.holdings[sid] = Holding(sid, sh, cb, pr)
     return st
@@ -61,12 +62,14 @@ def _account(positions, cash):
 
 # ── broker mock / lifecycle ──────────────────────────────────────────────────
 
+
 def test_mock_broker_fills_full_at_mark():
     b = MockBroker(initial_cash=1_000_000.0)
     b.set_prices(PRICES)
     o = b.place_order(OrderRequest("c1", "A", 100.0))
     assert o.status == OrderStatus.FILLED
-    assert o.filled_quantity == 100.0 and o.avg_fill_price == 100.0
+    assert o.filled_quantity == 100.0
+    assert o.avg_fill_price == 100.0
 
 
 def test_mock_broker_rejects_unpriced():
@@ -120,6 +123,7 @@ def test_simulated_broker_rejects_every_n():
 
 def test_adapter_stubs_raise():
     from mentisrex.research.paper_trading.adapter import AlpacaAdapter, FIXAdapter
+
     with pytest.raises(NotImplementedError):
         AlpacaAdapter().connect()
     with pytest.raises(NotImplementedError):
@@ -127,6 +131,7 @@ def test_adapter_stubs_raise():
 
 
 # ── order flow / accounting reuse ────────────────────────────────────────────
+
 
 def test_loop_reaches_target_weights():
     s = _session(MockBroker(initial_cash=1_000_000.0))
@@ -177,11 +182,13 @@ def test_risk_gate_kill_switch():
 
 # ── reconciliation: the nine break categories (pure function) ────────────────
 
+
 def test_reconcile_clean():
     st = _state_with({"A": (100.0, 100.0, 100.0)}, cash=990_000.0)
     acct = _account({"A": (100.0, 100.0, 100.0)}, cash=990_000.0)
     r = reconcile(st, acct)
-    assert r.ok and not r.differences
+    assert r.ok
+    assert not r.differences
 
 
 def test_reconcile_missing_position():
@@ -230,8 +237,9 @@ def test_reconcile_cash_mismatch():
 def test_reconcile_stale_order():
     st = _state_with({}, cash=0.0)
     acct = _account({}, cash=0.0)
-    r = reconcile(st, acct, pending_orders=[("c1", 7)],
-                  config=ReconciliationConfig(stale_order_days=5))
+    r = reconcile(
+        st, acct, pending_orders=[("c1", 7)], config=ReconciliationConfig(stale_order_days=5)
+    )
     assert r.categories.get("stale_order") == 1
 
 
@@ -267,8 +275,9 @@ def test_reconcile_qty_within_tolerance_is_clean():
 
 # ── drift monitoring ─────────────────────────────────────────────────────────
 
+
 def test_drift_weight_alert():
-    st = _state_with({"A": (100.0, 100.0, 100.0)}, cash=0.0)   # 100% A
+    st = _state_with({"A": (100.0, 100.0, 100.0)}, cash=0.0)  # 100% A
     acct = _account({"A": (100.0, 100.0, 100.0)}, cash=0.0)
     d = pt.compute_drift(st, acct, {"A": 0.5})
     assert d.max_weight_drift == pytest.approx(0.5)
@@ -314,6 +323,7 @@ def test_drift_clean_no_alerts():
 
 # ── monitoring ───────────────────────────────────────────────────────────────
 
+
 def test_monitoring_report_clean_run():
     s = _session(MockBroker(initial_cash=1_000_000.0))
     s.run(_timeline(), _tp, _pp)
@@ -330,9 +340,12 @@ def test_monitoring_counts_syncs():
 
 # ── serialization ────────────────────────────────────────────────────────────
 
+
 def test_serialization_roundtrip_stable():
     import json
+
     from mentisrex.research.paper_trading import serialization
+
     s = _session(MockBroker(initial_cash=1_000_000.0))
     s.run(_timeline(), _tp, _pp)
     a = serialization.to_json(s)
@@ -343,13 +356,15 @@ def test_serialization_roundtrip_stable():
 
 def test_serialization_save(tmp_path):
     from mentisrex.research.paper_trading import serialization
+
     s = _session(MockBroker(initial_cash=1_000_000.0))
     s.run(_timeline(3), _tp, _pp)
-    p = serialization.save_json(s, str(tmp_path / "sess.json"))
+    serialization.save_json(s, str(tmp_path / "sess.json"))
     assert (tmp_path / "sess.json").exists()
 
 
 # ── determinism ──────────────────────────────────────────────────────────────
+
 
 def test_determinism_same_fingerprint():
     s1 = _session(MockBroker(initial_cash=1_000_000.0))
@@ -364,10 +379,12 @@ def test_determinism_simulated_broker():
         s = _session(SimulatedBroker(initial_cash=1_000_000.0, fill_ratio=0.7, slippage_bps=20.0))
         s.run(_timeline(), _tp, _pp)
         return s
+
     assert build().book.value() == pytest.approx(build().book.value())
 
 
 # ── registry ─────────────────────────────────────────────────────────────────
+
 
 def test_registry_attach(tmp_path):
     s = _session(MockBroker(initial_cash=1_000_000.0))
@@ -394,7 +411,8 @@ def test_registry_attach(tmp_path):
 
     reg, exp = _Reg(), _Exp()
     out = pt.attach_session(reg, exp, s, artifacts_dir=str(tmp_path))
-    assert "hash" in out and "PaperReconciliationRate" in exp.metrics
+    assert "hash" in out
+    assert "PaperReconciliationRate" in exp.metrics
     assert reg.store.inserted is exp
 
 
@@ -406,15 +424,18 @@ def test_registry_noop_without_registry():
 
 # ── validation integration ───────────────────────────────────────────────────
 
+
 def test_state_consistency_clean():
     s = _session(MockBroker(initial_cash=1_000_000.0))
     s.run(_timeline(), _tp, _pp)
     c = pt.state_consistency(s)
-    assert c.ok and c.ledger_reconciles
+    assert c.ok
+    assert c.ledger_reconciles
 
 
 def test_deployment_readiness_requires_both():
     from mentisrex.research.paper_trading.models import StateConsistencyReport
+
     good = StateConsistencyReport(True, True, True, 0.0, [])
     assert pt.deployment_readiness("PASS", 80.0, good).ready
     assert not pt.deployment_readiness("REJECT", 80.0, good).ready
@@ -432,6 +453,7 @@ def test_validate_session_without_m9():
 
 def test_validate_session_with_m9():
     from mentisrex.research.validation import ResearchValidator, ValidationConfig
+
     # a longer run so M9 has >3 observations with variation
     prices = {"A": 100.0}
     seq = {}
@@ -444,14 +466,18 @@ def test_validate_session_with_m9():
 
     s = _session(MockBroker(initial_cash=1_000_000.0))
     s.run(_timeline(30), tp, pp)
-    v = ResearchValidator(config=ValidationConfig(bootstrap_samples=50, monte_carlo_samples=30,
-                                                  permutation_samples=50, n_trials=1))
+    v = ResearchValidator(
+        config=ValidationConfig(
+            bootstrap_samples=50, monte_carlo_samples=30, permutation_samples=50, n_trials=1
+        )
+    )
     res = pt.validate_session(s, validator=v)
     assert res.deployment.verdict in ("PASS", "PASS_WITH_WARNINGS", "REJECT", "REQUIRES_REVIEW")
     assert "verdict" in res.validation
 
 
 # ── edge cases ───────────────────────────────────────────────────────────────
+
 
 def test_empty_target_no_trades():
     s = _session(MockBroker(initial_cash=1_000_000.0))
@@ -470,14 +496,16 @@ def test_duplicate_fill_ingest_idempotent():
     s = _session(MockBroker(initial_cash=1_000_000.0))
     f = BrokerFill("f1", "o1", "A", 10.0, 100.0, 0.0)
     assert s.book.ingest_fill(f) is True
-    assert s.book.ingest_fill(f) is False       # same fill_id → skipped
+    assert s.book.ingest_fill(f) is False  # same fill_id → skipped
     assert s.book.state.holdings["A"].shares == 10.0
 
 
 def test_zero_capital_no_orders():
-    s = pt.PaperTradingSession(broker=MockBroker(initial_cash=0.0),
-                               config=pt.SessionConfig(initial_capital=0.0),
-                               risk_gate=pt.PreTradeRiskGate(LIM))
+    s = pt.PaperTradingSession(
+        broker=MockBroker(initial_cash=0.0),
+        config=pt.SessionConfig(initial_capital=0.0),
+        risk_gate=pt.PreTradeRiskGate(LIM),
+    )
     s.step(date(2024, 1, 1), _tp(None), PRICES)
     assert not s.book.state.holdings
 
@@ -489,5 +517,7 @@ def test_account_snapshot_pairs_positions():
     pp.state = st
     snap = pp.snapshot(acct, when=date(2024, 1, 1))
     rows = {r.security_id: r for r in snap.positions}
-    assert rows["A"].internal_qty == 100.0 and rows["A"].external_qty == 90.0
-    assert rows["B"].internal_qty == 0.0 and rows["B"].external_qty == 10.0
+    assert rows["A"].internal_qty == 100.0
+    assert rows["A"].external_qty == 90.0
+    assert rows["B"].internal_qty == 0.0
+    assert rows["B"].external_qty == 10.0

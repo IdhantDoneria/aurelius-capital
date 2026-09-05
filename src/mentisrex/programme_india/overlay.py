@@ -48,8 +48,9 @@ def vol_scalar(bench_close: pd.Series, cfg: IndiaConfig) -> pd.Series:
     return (cfg.target_vol / realised).clip(cfg.vol_scalar_floor, cfg.vol_scalar_ceiling)
 
 
-def exposure_overlay(bench_close: pd.Series, universe_close: pd.DataFrame,
-                      index: pd.DatetimeIndex, cfg: IndiaConfig) -> pd.Series:
+def exposure_overlay(
+    bench_close: pd.Series, universe_close: pd.DataFrame, index: pd.DatetimeIndex, cfg: IndiaConfig
+) -> pd.Series:
     """The full pipeline: gate x vol_scalar x leverage_cap, clipped to
     [0, leverage_cap], shifted by `signal_lag_days` so nothing trades on
     same-day information."""

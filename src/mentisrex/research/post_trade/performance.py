@@ -24,8 +24,9 @@ def performance(engine) -> dict:
     realized = engine.accounting.realized_pnl()
     unrealized = engine.accounting.unrealized_pnl()
 
-    dividend_cash = sum(e.amount for e in engine.cash_ledger.events
-                        if e.cash_type == CashType.DIVIDEND)
+    dividend_cash = sum(
+        e.amount for e in engine.cash_ledger.events if e.cash_type == CashType.DIVIDEND
+    )
     ca_cash = sum(e.cash_impact for e in engine.log.of_type(CorporateActionEvent))
 
     return {
@@ -35,13 +36,15 @@ def performance(engine) -> dict:
         "total_cost": total_cost,
         "turnover": gross_traded / value,
         "gross_traded_notional": gross_traded,
-        "implementation_shortfall": total_cost,          # cost proxy vs arrival unavailable post-trade
+        "implementation_shortfall": total_cost,  # cost proxy vs arrival unavailable post-trade
         "cash_drag": engine.accounting.cash / value,
         "dividend_impact": dividend_cash,
         "corporate_action_impact": ca_cash,
         "portfolio_value": engine.accounting.value(),
-        "return_on_capital": (engine.accounting.value() - engine.initial_capital) / engine.initial_capital
-        if engine.initial_capital else 0.0,
+        "return_on_capital": (engine.accounting.value() - engine.initial_capital)
+        / engine.initial_capital
+        if engine.initial_capital
+        else 0.0,
     }
 
 

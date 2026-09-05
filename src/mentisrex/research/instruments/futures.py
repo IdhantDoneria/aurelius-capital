@@ -17,20 +17,36 @@ from mentisrex.research.instruments.models import (
 )
 
 
-def future(instrument_id: str, *, currency: str = "USD", exchange: str = "",
-           contract_size: float = 1.0, expiry: date | None = None,
-           initial_margin_rate: float = 0.05, maintenance_margin_rate: float = 0.04,
-           settlement_style: SettlementStyle = SettlementStyle.CASH, **metadata) -> Instrument:
+def future(
+    instrument_id: str,
+    *,
+    currency: str = "USD",
+    exchange: str = "",
+    contract_size: float = 1.0,
+    expiry: date | None = None,
+    initial_margin_rate: float = 0.05,
+    maintenance_margin_rate: float = 0.04,
+    settlement_style: SettlementStyle = SettlementStyle.CASH,
+    **metadata,
+) -> Instrument:
     return Instrument(
-        instrument_id=instrument_id, type=InstrumentType.FUTURE, currency=currency,
-        exchange=exchange, contract_size=contract_size, expiry=expiry,
-        cash_convention=CashConvention.MARGINED, settlement_style=settlement_style,
+        instrument_id=instrument_id,
+        type=InstrumentType.FUTURE,
+        currency=currency,
+        exchange=exchange,
+        contract_size=contract_size,
+        expiry=expiry,
+        cash_convention=CashConvention.MARGINED,
+        settlement_style=settlement_style,
         initial_margin_rate=initial_margin_rate,
-        maintenance_margin_rate=maintenance_margin_rate, metadata=metadata)
+        maintenance_margin_rate=maintenance_margin_rate,
+        metadata=metadata,
+    )
 
 
-def roll(front: Instrument, back: Instrument, quantity: float, *,
-         front_price: float, back_price: float):
+def roll(
+    front: Instrument, back: Instrument, quantity: float, *, front_price: float, back_price: float
+):
     """Return the (close-front, open-back) fill pair for rolling `quantity` contracts."""
     return (
         {"instrument": front, "quantity": -quantity, "price": front_price},

@@ -21,7 +21,7 @@ from mentisrex.research.post_trade.models import CashEvent, SettlementStatus
 
 class TradeLedger:
     def __init__(self) -> None:
-        self.events: list = []                       # list[TradeEvent]
+        self.events: list = []  # list[TradeEvent]
 
     def record(self, event) -> None:
         self.events.append(event)
@@ -39,7 +39,7 @@ class TradeLedger:
 
 class PositionLedger:
     def __init__(self) -> None:
-        self.events: list = []                       # list[PositionEvent]
+        self.events: list = []  # list[PositionEvent]
 
     def record(self, event) -> None:
         self.events.append(event)
@@ -57,7 +57,7 @@ class CashLedger:
 
     def __init__(self, initial: float) -> None:
         self.initial = float(initial)
-        self.events: list = []                       # list[CashEvent]
+        self.events: list = []  # list[CashEvent]
 
     def post(self, event: CashEvent) -> int:
         self.events.append(event)
@@ -75,16 +75,19 @@ class CashLedger:
         return self.initial + sum(e.amount for e in self.events)
 
     def settled_balance(self) -> float:
-        return self.initial + sum(e.amount for e in self.events
-                                  if e.status == SettlementStatus.COMPLETED)
+        return self.initial + sum(
+            e.amount for e in self.events if e.status == SettlementStatus.COMPLETED
+        )
 
     def pending_inflows(self) -> float:
-        return sum(e.amount for e in self.events
-                   if e.status == SettlementStatus.PENDING and e.amount > 0)
+        return sum(
+            e.amount for e in self.events if e.status == SettlementStatus.PENDING and e.amount > 0
+        )
 
     def pending_outflows(self) -> float:
-        return sum(-e.amount for e in self.events
-                   if e.status == SettlementStatus.PENDING and e.amount < 0)
+        return sum(
+            -e.amount for e in self.events if e.status == SettlementStatus.PENDING and e.amount < 0
+        )
 
     def available(self) -> float:
         """Conservative: only settled cash is available to spend."""

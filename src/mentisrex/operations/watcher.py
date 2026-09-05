@@ -30,7 +30,7 @@ class FolderWatcher:
     Thread-safe: seen_files set is protected by a lock.
     """
 
-    def __init__(self, config: OperationsConfig, pipeline: "PipelineOrchestrator") -> None:
+    def __init__(self, config: OperationsConfig, pipeline: PipelineOrchestrator) -> None:
         self._cfg = config
         self._pipeline = pipeline
         self._seen: set[str] = set()

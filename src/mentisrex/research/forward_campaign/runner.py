@@ -19,7 +19,7 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from mentisrex.research.forward_campaign.campaign import CycleResult, ForwardCampaign
@@ -30,6 +30,7 @@ from mentisrex.research.paper_trading.scheduler import RebalanceScheduler
 @dataclass
 class RunnerConfig:
     """Operational configuration for ForwardOperationsRunner."""
+
     log_prefix: str = "[forward-runner]"
 
 
@@ -52,15 +53,17 @@ class ForwardOperationsRunner:
     are safe: all after the first return ALREADY_SEALED.
     """
 
-    def __init__(self,
-                 spec,
-                 logic,
-                 campaign_dir: str | Path,
-                 universe: list,
-                 starting_capital: float,
-                 campaign_id: str = "",
-                 *,
-                 config: RunnerConfig | None = None) -> None:
+    def __init__(
+        self,
+        spec,
+        logic,
+        campaign_dir: str | Path,
+        universe: list,
+        starting_capital: float,
+        campaign_id: str = "",
+        *,
+        config: RunnerConfig | None = None,
+    ) -> None:
         self._spec = spec
         self._logic = logic
         self._campaign_dir = Path(campaign_dir)
@@ -79,8 +82,9 @@ class ForwardOperationsRunner:
 
     # ── public API ─────────────────────────────────────────────────────────────
 
-    def check_and_run(self, as_of: date | None = None, *,
-                      provider_records: list | None = None) -> CycleResult:
+    def check_and_run(
+        self, as_of: date | None = None, *, provider_records: list | None = None
+    ) -> CycleResult:
         """Check if a forward cycle is due for as_of and execute it.
 
         Idempotent: repeated calls for the same month return ALREADY_SEALED.
@@ -101,23 +105,20 @@ class ForwardOperationsRunner:
         # update session state
         self._run_count += 1
         self._last_status = result.status
-        self._last_run_at = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+        self._last_run_at = datetime.now(UTC).replace(tzinfo=None).isoformat()
 
         if result.status == CycleStatus.SUCCESS:
             self._session_successes += 1
             self._last_error = ""
         elif result.status == CycleStatus.FAILED:
             self._session_failures += 1
-            self._last_error = (
-                result.record.error_message
-                if result.record else result.message
-            )
+            self._last_error = result.record.error_message if result.record else result.message
 
         return result
 
-    def run_months(self,
-                   month_dates: list[date],
-                   provider_records_list: list | None = None) -> list[CycleResult]:
+    def run_months(
+        self, month_dates: list[date], provider_records_list: list | None = None
+    ) -> list[CycleResult]:
         """Execute check_and_run for each date in month_dates.
 
         OPERATIONAL SIMULATION — not genuine forward evidence.
@@ -153,18 +154,19 @@ class ForwardOperationsRunner:
         latest = ledger.latest_cycle()
         next_due: date | None = None
         if latest and latest.evaluation_date:
-            next_due = self._scheduler.next_due(
-                self._spec, _LastEvalStub(latest.evaluation_date))
+            next_due = self._scheduler.next_due(self._spec, _LastEvalStub(latest.evaluation_date))
 
-        base.update({
-            "runner_state": "ACTIVE" if self._run_count > 0 else "IDLE",
-            "next_expected_cycle": next_due.isoformat() if next_due else None,
-            "last_error": self._last_error,
-            "last_run_at": self._last_run_at,
-            "session_run_count": self._run_count,
-            "session_successes": self._session_successes,
-            "session_failures": self._session_failures,
-        })
+        base.update(
+            {
+                "runner_state": "ACTIVE" if self._run_count > 0 else "IDLE",
+                "next_expected_cycle": next_due.isoformat() if next_due else None,
+                "last_error": self._last_error,
+                "last_run_at": self._last_run_at,
+                "session_run_count": self._run_count,
+                "session_successes": self._session_successes,
+                "session_failures": self._session_failures,
+            }
+        )
         return base
 
     # ── internal ───────────────────────────────────────────────────────────────
@@ -174,8 +176,7 @@ class ForwardOperationsRunner:
         manifest = self._campaign_dir / "campaign_manifest.json"
         if manifest.exists():
             try:
-                return ForwardCampaign.resume(
-                    self._spec, self._logic, self._campaign_dir)
+                return ForwardCampaign.resume(self._spec, self._logic, self._campaign_dir)
             except Exception:
                 pass
         return ForwardCampaign.init(

@@ -35,7 +35,8 @@ def ledger_report(engine) -> LedgerReport:
         n_cash_events=len(engine.cash_ledger.events),
         net_cash_flow=engine.trade_ledger.net_cash_flow(),
         gross_traded_notional=engine.trade_ledger.gross_notional(),
-        reconciles=monitoring.ledger_reconciles(engine))
+        reconciles=monitoring.ledger_reconciles(engine),
+    )
 
 
 def corporate_action_report(engine) -> CorporateActionReport:
@@ -44,21 +45,30 @@ def corporate_action_report(engine) -> CorporateActionReport:
     for e in evs:
         by_type[e.action_type] = by_type.get(e.action_type, 0) + 1
     return CorporateActionReport(
-        n_actions=len(evs), total_cash_impact=sum(e.cash_impact for e in evs), by_type=by_type)
+        n_actions=len(evs), total_cash_impact=sum(e.cash_impact for e in evs), by_type=by_type
+    )
 
 
-def post_trade_report(engine, *, as_of: date | None = None, broker_account=None,
-                      execution_fills=None) -> PostTradeReport:
-    recon = reconciliation.reconcile(engine, broker_account=broker_account,
-                                     execution_fills=execution_fills, as_of=as_of)
+def post_trade_report(
+    engine, *, as_of: date | None = None, broker_account=None, execution_fills=None
+) -> PostTradeReport:
+    recon = reconciliation.reconcile(
+        engine, broker_account=broker_account, execution_fills=execution_fills, as_of=as_of
+    )
     health = monitoring.operational_health(
-        engine, reconciliation_breaks=0 if recon.ok else len(recon.differences))
+        engine, reconciliation_breaks=0 if recon.ok else len(recon.differences)
+    )
     return PostTradeReport(
-        as_of=as_of, portfolio_value=engine.accounting.value(),
+        as_of=as_of,
+        portfolio_value=engine.accounting.value(),
         settled_cash=engine.cash_ledger.settled_balance(),
         realized_pnl=engine.accounting.realized_pnl(),
         unrealized_pnl=engine.accounting.unrealized_pnl(),
         n_positions=len(engine.accounting.state.holdings),
-        settlement=settlement_report(engine, as_of), cash=cash_report(engine, as_of),
-        ledger=ledger_report(engine), corporate_actions=corporate_action_report(engine),
-        health=health, reconciliation=recon)
+        settlement=settlement_report(engine, as_of),
+        cash=cash_report(engine, as_of),
+        ledger=ledger_report(engine),
+        corporate_actions=corporate_action_report(engine),
+        health=health,
+        reconciliation=recon,
+    )

@@ -43,7 +43,7 @@ def _forward_returns(sids, t: date, t_next: date, close_fn, symbol_fn) -> dict:
         sym = symbol_fn(sid, t)
         if not sym:
             continue
-        c0 = close_fn(sym, t, t_next)      # entry leg, adjusted into endpoint frame
+        c0 = close_fn(sym, t, t_next)  # entry leg, adjusted into endpoint frame
         c1 = close_fn(sym, t_next, t_next)
         if c0 and c1 and c0 != 0:
             out[sid] = c1 / c0 - 1.0
@@ -67,8 +67,9 @@ def panels_from_matrices(
     signals, forwards = [], []
     for i in range(len(ms) - 1):
         sig = _matrix_signal(ms[i], feature, apply_direction)
-        fwd = _forward_returns(sig.keys(), ms[i].as_of_date, ms[i + 1].as_of_date,
-                               close_fn, symbol_fn)
+        fwd = _forward_returns(
+            sig.keys(), ms[i].as_of_date, ms[i + 1].as_of_date, close_fn, symbol_fn
+        )
         signals.append(sig)
         forwards.append(fwd)
     return signals, forwards

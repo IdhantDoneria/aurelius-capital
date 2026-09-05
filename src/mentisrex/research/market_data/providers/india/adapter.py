@@ -24,7 +24,7 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import date, datetime
 
-from mentisrex.research.market_data.identifiers import IdType, IdentifierMap
+from mentisrex.research.market_data.identifiers import IdentifierMap, IdType
 from mentisrex.research.market_data_ops.adapters import SourceAdapter, SourceMetadata
 from mentisrex.research.market_data_ops.messages import (
     MessageType,
@@ -37,18 +37,22 @@ class IndiaSourceAdapter(SourceAdapter):
     """India market data adapter — NSE, BSE, data.gov.in. convert() is offline."""
 
     def __init__(self, *, id_map: IdentifierMap | None = None, name: str = "india") -> None:
-        super().__init__(SourceMetadata(
-            name,
-            frozenset({
-                SourceCapability.HISTORICAL,
-                SourceCapability.BARS,
-                SourceCapability.CORPORATE_ACTIONS,
-                SourceCapability.REFERENCE_DATA,
-            }),
-            schema_version="1.0",
-            description="India market data — NSE/BSE equities, corporate actions, data.gov.in",
-            vendor="india",
-        ))
+        super().__init__(
+            SourceMetadata(
+                name,
+                frozenset(
+                    {
+                        SourceCapability.HISTORICAL,
+                        SourceCapability.BARS,
+                        SourceCapability.CORPORATE_ACTIONS,
+                        SourceCapability.REFERENCE_DATA,
+                    }
+                ),
+                schema_version="1.0",
+                description="India market data — NSE/BSE equities, corporate actions, data.gov.in",
+                vendor="india",
+            )
+        )
         self._id_map = id_map
         self._seq = 0
 
@@ -64,8 +68,13 @@ class IndiaSourceAdapter(SourceAdapter):
         if self._state.value == "disconnected":
             self.connect()
         msgs = []
-        for r in sorted(records, key=lambda x: (str(x.get("TIMESTAMP") or x.get("date") or ""),
-                                                  str(x.get("SYMBOL") or ""))):
+        for r in sorted(
+            records,
+            key=lambda x: (
+                str(x.get("TIMESTAMP") or x.get("date") or ""),
+                str(x.get("SYMBOL") or ""),
+            ),
+        ):
             msg = self._nse_one(r, as_of)
             if msg is not None:
                 self._seq += 1
@@ -77,8 +86,13 @@ class IndiaSourceAdapter(SourceAdapter):
         if self._state.value == "disconnected":
             self.connect()
         msgs = []
-        for r in sorted(records, key=lambda x: (str(x.get("Date") or x.get("date") or ""),
-                                                  str(x.get("Code") or x.get("code") or ""))):
+        for r in sorted(
+            records,
+            key=lambda x: (
+                str(x.get("Date") or x.get("date") or ""),
+                str(x.get("Code") or x.get("code") or ""),
+            ),
+        ):
             msg = self._bse_one(r, as_of)
             if msg is not None:
                 self._seq += 1
@@ -90,8 +104,9 @@ class IndiaSourceAdapter(SourceAdapter):
         if self._state.value == "disconnected":
             self.connect()
         msgs = []
-        for r in sorted(records, key=lambda x: (str(x.get("date") or ""),
-                                                  str(x.get("indicator") or ""))):
+        for r in sorted(
+            records, key=lambda x: (str(x.get("date") or ""), str(x.get("indicator") or ""))
+        ):
             msg = self._macro_one(r, as_of)
             if msg is not None:
                 self._seq += 1
@@ -125,18 +140,25 @@ class IndiaSourceAdapter(SourceAdapter):
         }
         if isin:
             payload["isin"] = isin
-        for src, dst in (("OPEN", "open"), ("HIGH", "high"), ("LOW", "low"),
-                          ("TOTTRDQTY", "volume"), ("TOTALTRADES", "total_trades")):
+        for src, dst in (
+            ("OPEN", "open"),
+            ("HIGH", "high"),
+            ("LOW", "low"),
+            ("TOTTRDQTY", "volume"),
+            ("TOTALTRADES", "total_trades"),
+        ):
             if r.get(src) is not None:
                 try:
                     payload[dst] = float(r[src])
                 except (TypeError, ValueError):
                     pass
         return SourceMessage(
-            source=self.metadata.name, payload=payload,
+            source=self.metadata.name,
+            payload=payload,
             msg_type=MessageType.OBSERVATION,
             vendor_id=f"NSE:{symbol}",
-            observation_date=rec_date, effective_date=rec_date,
+            observation_date=rec_date,
+            effective_date=rec_date,
             schema_version=self.metadata.schema_version,
         )
 
@@ -172,10 +194,12 @@ class IndiaSourceAdapter(SourceAdapter):
                 except (TypeError, ValueError):
                     pass
         return SourceMessage(
-            source=self.metadata.name, payload=payload,
+            source=self.metadata.name,
+            payload=payload,
             msg_type=MessageType.OBSERVATION,
             vendor_id=f"BSE:{bse_code}",
-            observation_date=rec_date, effective_date=rec_date,
+            observation_date=rec_date,
+            effective_date=rec_date,
             schema_version=self.metadata.schema_version,
         )
 
@@ -200,10 +224,12 @@ class IndiaSourceAdapter(SourceAdapter):
         if r.get("unit"):
             payload["unit"] = str(r["unit"])
         return SourceMessage(
-            source=self.metadata.name, payload=payload,
+            source=self.metadata.name,
+            payload=payload,
             msg_type=MessageType.OBSERVATION,
             vendor_id=f"IN:{indicator}:{rec_date.isoformat()}",
-            observation_date=rec_date, effective_date=rec_date,
+            observation_date=rec_date,
+            effective_date=rec_date,
             schema_version=self.metadata.schema_version,
         )
 

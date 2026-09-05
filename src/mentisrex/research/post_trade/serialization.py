@@ -23,15 +23,16 @@ def _clean(obj):
         return {str(k): _clean(v) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):
         return [_clean(v) for v in obj]
-    if hasattr(obj, "value") and hasattr(obj, "name"):        # enum
+    if hasattr(obj, "value") and hasattr(obj, "name"):  # enum
         return obj.value
-    if hasattr(obj, "isoformat"):                             # date/datetime
+    if hasattr(obj, "isoformat"):  # date/datetime
         return obj.isoformat()
     return obj
 
 
 def to_dict(engine) -> dict:
     from mentisrex.research.post_trade.diagnostics import diagnostics as _diag
+
     return {
         "session_id": engine.session_id,
         "initial_capital": engine.initial_capital,

@@ -16,11 +16,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
-from enum import Enum
+from enum import StrEnum
 
 
-class LifecycleState(str, Enum):
+class LifecycleState(StrEnum):
     """A trade's position in the post-trade pipeline."""
+
     RECEIVED = "received"
     BOOKED = "booked"
     POSITION_UPDATED = "position_updated"
@@ -32,31 +33,32 @@ class LifecycleState(str, Enum):
     FAILED = "failed"
 
 
-class SettlementStatus(str, Enum):
+class SettlementStatus(StrEnum):
     PENDING = "pending"
     COMPLETED = "completed"
     FAILED = "failed"
 
 
-class CashType(str, Enum):
+class CashType(StrEnum):
     TRADE = "trade"
     COMMISSION = "commission"
     FEE = "fee"
     INTEREST = "interest"
     DIVIDEND = "dividend"
     CORPORATE_ACTION = "corporate_action"
-    MARGIN = "margin"                     # M17: variation / settlement margin flows
-    PREMIUM = "premium"                   # M17: option premium exchange
+    MARGIN = "margin"  # M17: variation / settlement margin flows
+    PREMIUM = "premium"  # M17: option premium exchange
 
 
 # ── events (append-only log entries) ─────────────────────────────────────────
+
 
 @dataclass(frozen=True)
 class TradeEvent:
     seq: int
     trade_id: str
     security_id: str
-    quantity: float                       # signed executed shares
+    quantity: float  # signed executed shares
     price: float
     cost: float
     state: LifecycleState
@@ -75,13 +77,13 @@ class PositionEvent:
     cost_basis: float
     trade_id: str | None = None
     when: date | None = None
-    reason: str = "trade"                 # trade | corporate_action
+    reason: str = "trade"  # trade | corporate_action
 
 
 @dataclass(frozen=True)
 class CashEvent:
     seq: int
-    amount: float                         # signed: +inflow / −outflow
+    amount: float  # signed: +inflow / −outflow
     cash_type: CashType
     trade_date: date | None
     settle_date: date | None
@@ -116,13 +118,14 @@ class CorporateActionEvent:
 
 # ── settlement ───────────────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class SettlementInstruction:
     instruction_id: str
     trade_id: str
     security_id: str
     quantity: float
-    cash_amount: float                    # signed net cash to move at settlement
+    cash_amount: float  # signed net cash to move at settlement
     trade_date: date | None
     settle_date: date | None
     status: SettlementStatus = SettlementStatus.PENDING
@@ -141,12 +144,14 @@ class SettlementRecord:
 
 # ── corporate actions ────────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class CorporateAction:
     """Base corporate action. Concrete kinds below carry their own parameters and set
     `action_type` in `__post_init__`; all are dated (`ex_date`) and identified for a
     replayable, auditable trail. `action_type` values: dividend | stock_dividend |
     split | reverse_split | merger | symbol_change | delisting | rights_issue."""
+
     action_id: str
     security_id: str
     action_type: str = ""
@@ -156,27 +161,27 @@ class CorporateAction:
 
 @dataclass(frozen=True)
 class DividendEvent(CorporateAction):
-    amount_per_share: float = 0.0         # cash dividend per share
-    stock_ratio: float = 0.0              # stock dividend: extra shares per share held
+    amount_per_share: float = 0.0  # cash dividend per share
+    stock_ratio: float = 0.0  # stock dividend: extra shares per share held
 
     def __post_init__(self):
-        object.__setattr__(self, "action_type",
-                           "stock_dividend" if self.stock_ratio else "dividend")
+        object.__setattr__(
+            self, "action_type", "stock_dividend" if self.stock_ratio else "dividend"
+        )
 
 
 @dataclass(frozen=True)
 class SplitEvent(CorporateAction):
-    ratio: float = 1.0                    # 2.0 = 2-for-1 split; 0.5 = 1-for-2 reverse
+    ratio: float = 1.0  # 2.0 = 2-for-1 split; 0.5 = 1-for-2 reverse
 
     def __post_init__(self):
-        object.__setattr__(self, "action_type",
-                           "reverse_split" if self.ratio < 1 else "split")
+        object.__setattr__(self, "action_type", "reverse_split" if self.ratio < 1 else "split")
 
 
 @dataclass(frozen=True)
 class MergerEvent(CorporateAction):
     new_security_id: str | None = None
-    share_ratio: float = 1.0              # new shares per old share
+    share_ratio: float = 1.0  # new shares per old share
     cash_per_share: float = 0.0
 
     def __post_init__(self):
@@ -193,7 +198,7 @@ class SymbolChangeEvent(CorporateAction):
 
 @dataclass(frozen=True)
 class DelistingEvent(CorporateAction):
-    final_price: float = 0.0              # liquidation price (0 → total loss)
+    final_price: float = 0.0  # liquidation price (0 → total loss)
 
     def __post_init__(self):
         object.__setattr__(self, "action_type", "delisting")
@@ -201,11 +206,12 @@ class DelistingEvent(CorporateAction):
 
 # ── reports ──────────────────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class ReconciliationReport:
     as_of: date | None
     ok: bool
-    differences: list = field(default_factory=list)   # list[StateDifference]-like dicts
+    differences: list = field(default_factory=list)  # list[StateDifference]-like dicts
     n_trades: int = 0
     n_settled: int = 0
     cash_diff: float = 0.0
@@ -220,7 +226,7 @@ class SettlementReport:
     n_failed: int
     pending_cash: float
     settled_cash: float
-    settlement_exposure: float            # gross unsettled notional
+    settlement_exposure: float  # gross unsettled notional
     failed_instruction_ids: list = field(default_factory=list)
 
 

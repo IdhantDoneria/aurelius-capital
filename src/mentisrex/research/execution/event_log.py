@@ -19,13 +19,17 @@ logger = get_logger(__name__)
 @dataclass(frozen=True)
 class Event:
     name: str
-    stage: str                       # the State the session was in
+    stage: str  # the State the session was in
     timestamp: datetime
     data: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
-        return {"name": self.name, "stage": self.stage,
-                "timestamp": self.timestamp.isoformat(), "data": self.data}
+        return {
+            "name": self.name,
+            "stage": self.stage,
+            "timestamp": self.timestamp.isoformat(),
+            "data": self.data,
+        }
 
 
 class EventLog:

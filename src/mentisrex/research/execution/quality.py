@@ -25,5 +25,9 @@ def check(session) -> dict:
             issues.append(f"missing_artifacts:{missing}")
         if any("hash" not in m for m in session.artifacts.values()):
             issues.append("artifact_hash_missing")
-    return {"session_id": session.session_id, "state": str(session.state),
-            "ok": not issues, "issues": issues}
+    return {
+        "session_id": session.session_id,
+        "state": str(session.state),
+        "ok": not issues,
+        "issues": issues,
+    }

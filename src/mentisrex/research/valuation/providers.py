@@ -21,6 +21,7 @@ class MarketDataProvider(ABC):
     The one required method is `snapshot(as_of)`; the typed accessors default to reading from
     a produced snapshot so subclasses only override what they source differently.
     """
+
     source: str = "provider"
 
     @abstractmethod
@@ -42,8 +43,9 @@ class MarketDataProvider(ABC):
 class StaticMarketDataProvider(MarketDataProvider):
     """Wraps one fixed snapshot — returns it for any `as_of` (asserts date match if strict)."""
 
-    def __init__(self, snapshot: MarketDataSnapshot, *, strict_date: bool = False,
-                 source: str = "static") -> None:
+    def __init__(
+        self, snapshot: MarketDataSnapshot, *, strict_date: bool = False, source: str = "static"
+    ) -> None:
         self._snap = snapshot
         self.strict_date = strict_date
         self.source = source
@@ -59,7 +61,7 @@ class HistoricalMarketDataProvider(MarketDataProvider):
     (point-in-time, no look-ahead). Raises if nothing is available."""
 
     def __init__(self, snapshots: dict, *, source: str = "historical") -> None:
-        self._by_date = dict(sorted(snapshots.items()))     # date -> MarketDataSnapshot
+        self._by_date = dict(sorted(snapshots.items()))  # date -> MarketDataSnapshot
         self.source = source
 
     def snapshot(self, as_of: date) -> MarketDataSnapshot:
@@ -78,8 +80,16 @@ class DeterministicMockMarketDataProvider(MarketDataProvider):
     """Pure-function synthetic snapshot for tests/benchmarks — reproducible from `as_of` and a
     seed map, no randomness that isn't seeded, no network."""
 
-    def __init__(self, spots: dict, *, rates=None, vol_surfaces=None, dividend_yields=None,
-                 fx_provider=None, source: str = "mock") -> None:
+    def __init__(
+        self,
+        spots: dict,
+        *,
+        rates=None,
+        vol_surfaces=None,
+        dividend_yields=None,
+        fx_provider=None,
+        source: str = "mock",
+    ) -> None:
         self.spots = dict(spots)
         self.rates = dict(rates or {})
         self.vol_surfaces = dict(vol_surfaces or {})
@@ -89,11 +99,14 @@ class DeterministicMockMarketDataProvider(MarketDataProvider):
 
     def snapshot(self, as_of: date) -> MarketDataSnapshot:
         return MarketDataSnapshot(
-            as_of=as_of, spots=self.spots, rates=self.rates,
-            vol_surfaces=self.vol_surfaces, dividend_yields=self.dividend_yields,
+            as_of=as_of,
+            spots=self.spots,
+            rates=self.rates,
+            vol_surfaces=self.vol_surfaces,
+            dividend_yields=self.dividend_yields,
             fx_provider=self.fx_provider,
-            provenance=Provenance(source=self.source, observation_date=as_of,
-                                  effective_date=as_of))
+            provenance=Provenance(source=self.source, observation_date=as_of, effective_date=as_of),
+        )
 
 
 class ProductionMarketDataAdapter(MarketDataProvider):

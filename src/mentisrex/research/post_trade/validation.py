@@ -55,4 +55,5 @@ def validate_fill(security_id: str, quantity: float, price: float) -> Validation
 
 def check_determinism(run_fn, *, n: int = 2) -> bool:
     from mentisrex.research.post_trade.diagnostics import fingerprint
+
     return len({fingerprint(run_fn()) for _ in range(n)}) == 1

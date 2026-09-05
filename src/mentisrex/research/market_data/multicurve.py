@@ -17,9 +17,10 @@ from mentisrex.research.valuation.curves import ZeroCurve
 @dataclass(frozen=True)
 class MultiCurveSet:
     """One discount curve + optional projection + named basis curves, all M18 `ZeroCurve`s."""
+
     discount: ZeroCurve
     projection: ZeroCurve | None = None
-    basis: dict = field(default_factory=dict)          # name -> ZeroCurve
+    basis: dict = field(default_factory=dict)  # name -> ZeroCurve
     label: str = ""
 
     def project(self) -> ZeroCurve:
@@ -41,8 +42,11 @@ class MultiCurveSet:
 
     def fingerprint(self) -> str:
         import hashlib
-        parts = [self.discount.fingerprint(),
-                 self.projection.fingerprint() if self.projection else "-"]
+
+        parts = [
+            self.discount.fingerprint(),
+            self.projection.fingerprint() if self.projection else "-",
+        ]
         parts += [f"{k}:{v.fingerprint()}" for k, v in sorted(self.basis.items())]
         return hashlib.blake2b("|".join(parts).encode(), digest_size=8).hexdigest()
 
@@ -52,8 +56,10 @@ def single_curve(curve: ZeroCurve) -> MultiCurveSet:
     return MultiCurveSet(discount=curve, projection=curve, label=curve.curve_id)
 
 
-def ois_multicurve(discount: ZeroCurve, projection: ZeroCurve, *, basis=None,
-                   label: str = "multicurve") -> MultiCurveSet:
+def ois_multicurve(
+    discount: ZeroCurve, projection: ZeroCurve, *, basis=None, label: str = "multicurve"
+) -> MultiCurveSet:
     """OIS-discounted, index-projected set. `discount` = OIS, `projection` = the index curve."""
-    return MultiCurveSet(discount=discount, projection=projection,
-                         basis=dict(basis or {}), label=label)
+    return MultiCurveSet(
+        discount=discount, projection=projection, basis=dict(basis or {}), label=label
+    )

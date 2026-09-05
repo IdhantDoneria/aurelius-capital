@@ -14,6 +14,7 @@ Two enforced guarantees:
   with enough history to be plausibly real, so residual toy rows cannot enter a
   reproduction universe.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

@@ -86,9 +86,11 @@ def analyze_costs(
         "expected_cost_pct": expected_cost_pct,
         "realized_pnl_final": realized_pnl_series[-1] if realized_pnl_series else 0.0,
         "n_observations": len(realized_pnl_series),
-        "note": ("M23 paper trading uses SimulatedBroker or MockBroker. "
-                 "Cost diagnostics compare spec assumptions against broker config. "
-                 "Real ADV not available — partial-fill simulation is approximate."),
+        "note": (
+            "M23 paper trading uses SimulatedBroker or MockBroker. "
+            "Cost diagnostics compare spec assumptions against broker config. "
+            "Real ADV not available — partial-fill simulation is approximate."
+        ),
     }
 
 
@@ -109,52 +111,58 @@ def build_execution_diagnostics(
     diff = abs(observed_fill_rate - expected_fill_rate)
     drifted = diff > fill_rate_threshold
 
-    records.append(make_diagnostic(
-        "execution.fill_rate",
-        DiscrepancyCategory.EXECUTION_DRIFT,
-        DiagnosticSeverity.WARNING if drifted else DiagnosticSeverity.INFO,
-        "fill_rate",
-        baseline=expected_fill_rate,
-        observed=observed_fill_rate,
-        threshold=fill_rate_threshold,
-        sample_size=n,
-        method="absolute_threshold",
-        evidence=f"fill_rate={observed_fill_rate:.3f} expected={expected_fill_rate:.3f}",
-        status=ValidationStatus.WARNING if drifted else ValidationStatus.VALID,
-    ))
+    records.append(
+        make_diagnostic(
+            "execution.fill_rate",
+            DiscrepancyCategory.EXECUTION_DRIFT,
+            DiagnosticSeverity.WARNING if drifted else DiagnosticSeverity.INFO,
+            "fill_rate",
+            baseline=expected_fill_rate,
+            observed=observed_fill_rate,
+            threshold=fill_rate_threshold,
+            sample_size=n,
+            method="absolute_threshold",
+            evidence=f"fill_rate={observed_fill_rate:.3f} expected={expected_fill_rate:.3f}",
+            status=ValidationStatus.WARNING if drifted else ValidationStatus.VALID,
+        )
+    )
 
     # reconciliation diagnostic
     reconciled_rate = exec_summary["reconciled_rate"]
     if reconciled_rate < 1.0:
-        records.append(make_diagnostic(
-            "execution.reconciliation",
-            DiscrepancyCategory.ACCOUNTING_DRIFT,
-            DiagnosticSeverity.ERROR,
-            "reconciliation_rate",
-            baseline=1.0,
-            observed=reconciled_rate,
-            threshold=1.0,
-            sample_size=n,
-            method="threshold",
-            evidence=f"reconciliation_rate={reconciled_rate:.3f} (expected 1.0)",
-            status=ValidationStatus.FAILED,
-        ))
+        records.append(
+            make_diagnostic(
+                "execution.reconciliation",
+                DiscrepancyCategory.ACCOUNTING_DRIFT,
+                DiagnosticSeverity.ERROR,
+                "reconciliation_rate",
+                baseline=1.0,
+                observed=reconciled_rate,
+                threshold=1.0,
+                sample_size=n,
+                method="threshold",
+                evidence=f"reconciliation_rate={reconciled_rate:.3f} (expected 1.0)",
+                status=ValidationStatus.FAILED,
+            )
+        )
 
     # zero-order diagnostic
     zero_order = exec_summary["zero_order_cycles"]
     if zero_order > 0:
-        records.append(make_diagnostic(
-            "execution.zero_orders",
-            DiscrepancyCategory.EXECUTION_DRIFT,
-            DiagnosticSeverity.INFO,
-            "zero_order_cycles",
-            observed=float(zero_order),
-            threshold=float(n),
-            sample_size=n,
-            method="count",
-            evidence=f"{zero_order}/{n} cycles with no orders (may be expected on non-rebalance days)",
-            status=ValidationStatus.VALID,
-        ))
+        records.append(
+            make_diagnostic(
+                "execution.zero_orders",
+                DiscrepancyCategory.EXECUTION_DRIFT,
+                DiagnosticSeverity.INFO,
+                "zero_order_cycles",
+                observed=float(zero_order),
+                threshold=float(n),
+                sample_size=n,
+                method="count",
+                evidence=f"{zero_order}/{n} cycles with no orders (may be expected on non-rebalance days)",
+                status=ValidationStatus.VALID,
+            )
+        )
 
     realized_pnl_series = []
     for c in cycles:

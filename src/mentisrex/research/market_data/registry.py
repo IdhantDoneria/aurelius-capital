@@ -9,10 +9,10 @@ produced it — the same governance discipline M18's `ModelRegistry` applies to 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class ComponentKind(str, Enum):
+class ComponentKind(StrEnum):
     PROVIDER = "provider"
     CURVE_BUILDER = "curve_builder"
     CONVENTION = "convention"
@@ -37,7 +37,9 @@ class MarketDataRegistry:
     def register(self, info: ComponentInfo) -> ComponentInfo:
         key = (info.kind, info.name, info.version)
         if key in self._components and self._components[key] != info:
-            raise ValueError(f"{info.kind.value}:{info.name}@{info.version} already registered differently")
+            raise ValueError(
+                f"{info.kind.value}:{info.name}@{info.version} already registered differently"
+            )
         self._components[key] = info
         return info
 
@@ -61,10 +63,15 @@ def default_market_data_registry() -> MarketDataRegistry:
         ComponentInfo(ComponentKind.PROVIDER, "static", "1.0.0", "Fixed raw records"),
         ComponentInfo(ComponentKind.PROVIDER, "historical", "1.0.0", "Date-keyed PIT records"),
         ComponentInfo(ComponentKind.PROVIDER, "mock", "1.0.0", "Deterministic synthetic"),
-        ComponentInfo(ComponentKind.CURVE_BUILDER, "bootstrap.sequential", "1.0.0",
-                      "Deposits/OIS/FRA/futures/swaps bisection bootstrap"),
-        ComponentInfo(ComponentKind.CURVE_BUILDER, "credit.hazard", "1.0.0",
-                      "Par-CDS hazard bootstrap"),
+        ComponentInfo(
+            ComponentKind.CURVE_BUILDER,
+            "bootstrap.sequential",
+            "1.0.0",
+            "Deposits/OIS/FRA/futures/swaps bisection bootstrap",
+        ),
+        ComponentInfo(
+            ComponentKind.CURVE_BUILDER, "credit.hazard", "1.0.0", "Par-CDS hazard bootstrap"
+        ),
         ComponentInfo(ComponentKind.CONVENTION, "ACT_360.simple", "1.0.0", "Money-market"),
         ComponentInfo(ComponentKind.CONVENTION, "ACT_365.continuous", "1.0.0", "Curve default"),
         ComponentInfo(ComponentKind.VOL_CALIBRATOR, "sabr.hagan", "1.0.0", "Hagan lognormal SABR"),
@@ -73,8 +80,9 @@ def default_market_data_registry() -> MarketDataRegistry:
         ComponentInfo(ComponentKind.CALENDAR, "US", "1.0.0", "US business days"),
         ComponentInfo(ComponentKind.CALENDAR, "UK", "1.0.0", "UK business days"),
         ComponentInfo(ComponentKind.CALENDAR, "IN", "1.0.0", "India business days"),
-        ComponentInfo(ComponentKind.FIXING_PROVIDER, "store.bitemporal", "1.0.0",
-                      "PIT versioned fixings"),
+        ComponentInfo(
+            ComponentKind.FIXING_PROVIDER, "store.bitemporal", "1.0.0", "PIT versioned fixings"
+        ),
     ):
         r.register(info)
     return r

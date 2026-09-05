@@ -35,6 +35,7 @@ class FundamentalObservation:
     value:            the computed ratio (NaN-like sentinel: None means not computable).
     inputs:           the field values used to compute this ratio (for audit/debug).
     """
+
     security_id: str
     ratio_name: str
     value: float | None
@@ -67,9 +68,14 @@ class FundamentalRatioEngine:
     """
 
     def compute(
-        self, security_id: str, fields: dict,
-        observation_date: date, effective_date: date,
-        *, source: str = "fundamentals", price: float | None = None,
+        self,
+        security_id: str,
+        fields: dict,
+        observation_date: date,
+        effective_date: date,
+        *,
+        source: str = "fundamentals",
+        price: float | None = None,
     ) -> list[FundamentalObservation]:
         """Compute all available ratios from the provided field dict.
 
@@ -79,11 +85,17 @@ class FundamentalRatioEngine:
         results = []
 
         def obs(name: str, value, inp: dict) -> None:
-            results.append(FundamentalObservation(
-                security_id=security_id, ratio_name=name, value=value,
-                observation_date=observation_date, effective_date=effective_date,
-                source=source, inputs=inp,
-            ))
+            results.append(
+                FundamentalObservation(
+                    security_id=security_id,
+                    ratio_name=name,
+                    value=value,
+                    observation_date=observation_date,
+                    effective_date=effective_date,
+                    source=source,
+                    inputs=inp,
+                )
+            )
 
         f = fields
 
@@ -107,21 +119,34 @@ class FundamentalRatioEngine:
         # ── Leverage ratios ────────────────────────────────────────────────────
         ltd = f.get("long_term_debt")
         cash = f.get("cash")
-        obs("debt_to_equity", _safe_div(ltd, equity),
-            {"long_term_debt": ltd, "stockholders_equity": equity})
-        obs("debt_to_assets", _safe_div(ltd, assets),
-            {"long_term_debt": ltd, "total_assets": assets})
-        obs("interest_coverage", _safe_div(oi, interest),
-            {"operating_income": oi, "interest_expense": interest})
-        net_debt = (float(ltd or 0) - float(cash or 0)) if (ltd is not None or cash is not None) else None
-        obs("net_debt_to_ebitda", _safe_div(net_debt, ebitda),
-            {"long_term_debt": ltd, "cash": cash, "ebitda": ebitda})
+        obs(
+            "debt_to_equity",
+            _safe_div(ltd, equity),
+            {"long_term_debt": ltd, "stockholders_equity": equity},
+        )
+        obs(
+            "debt_to_assets",
+            _safe_div(ltd, assets),
+            {"long_term_debt": ltd, "total_assets": assets},
+        )
+        obs(
+            "interest_coverage",
+            _safe_div(oi, interest),
+            {"operating_income": oi, "interest_expense": interest},
+        )
+        net_debt = (
+            (float(ltd or 0) - float(cash or 0)) if (ltd is not None or cash is not None) else None
+        )
+        obs(
+            "net_debt_to_ebitda",
+            _safe_div(net_debt, ebitda),
+            {"long_term_debt": ltd, "cash": cash, "ebitda": ebitda},
+        )
 
         # ── Liquidity ratios ──────────────────────────────────────────────────
         ca = f.get("current_assets")
         cl = f.get("current_liabilities")
-        obs("current_ratio", _safe_div(ca, cl),
-            {"current_assets": ca, "current_liabilities": cl})
+        obs("current_ratio", _safe_div(ca, cl), {"current_assets": ca, "current_liabilities": cl})
         # quick ratio: (current_assets - inventory) / current_liabilities
         # inventory not always available — approximate with current_assets
         obs("cash_ratio", _safe_div(cash, cl), {"cash": cash, "current_liabilities": cl})
@@ -137,10 +162,16 @@ class FundamentalRatioEngine:
             rev_per_share = _safe_div(rev, shares)
 
             obs("pe_ratio", _safe_div(price, eps), {"price": price, "eps": eps})
-            obs("pb_ratio", _safe_div(price, book_per_share),
-                {"price": price, "book_per_share": book_per_share})
-            obs("ps_ratio", _safe_div(price, rev_per_share),
-                {"price": price, "revenue_per_share": rev_per_share})
+            obs(
+                "pb_ratio",
+                _safe_div(price, book_per_share),
+                {"price": price, "book_per_share": book_per_share},
+            )
+            obs(
+                "ps_ratio",
+                _safe_div(price, rev_per_share),
+                {"price": price, "revenue_per_share": rev_per_share},
+            )
 
         # ── Cash flow ratios ──────────────────────────────────────────────────
         cfo = f.get("cash_flow_operations")
@@ -154,20 +185,30 @@ class FundamentalRatioEngine:
         return [r for r in results if r.valid]
 
     def compute_growth(
-        self, security_id: str,
-        current: dict, prior: dict,
-        observation_date: date, effective_date: date,
-        *, source: str = "fundamentals",
+        self,
+        security_id: str,
+        current: dict,
+        prior: dict,
+        observation_date: date,
+        effective_date: date,
+        *,
+        source: str = "fundamentals",
     ) -> list[FundamentalObservation]:
         """Compute YoY growth rates given current and prior period field dicts."""
         results = []
 
         def obs(name: str, value, inp: dict) -> None:
-            results.append(FundamentalObservation(
-                security_id=security_id, ratio_name=name, value=value,
-                observation_date=observation_date, effective_date=effective_date,
-                source=source, inputs=inp,
-            ))
+            results.append(
+                FundamentalObservation(
+                    security_id=security_id,
+                    ratio_name=name,
+                    value=value,
+                    observation_date=observation_date,
+                    effective_date=effective_date,
+                    source=source,
+                    inputs=inp,
+                )
+            )
 
         for field_name, ratio_name in (
             ("revenue", "revenue_growth"),
@@ -180,7 +221,10 @@ class FundamentalRatioEngine:
             prev_val = prior.get(field_name)
             if curr_val is not None and prev_val is not None and float(prev_val) != 0.0:
                 growth = (float(curr_val) - float(prev_val)) / abs(float(prev_val))
-                obs(ratio_name, growth, {f"current_{field_name}": curr_val,
-                                          f"prior_{field_name}": prev_val})
+                obs(
+                    ratio_name,
+                    growth,
+                    {f"current_{field_name}": curr_val, f"prior_{field_name}": prev_val},
+                )
 
         return [r for r in results if r.valid]

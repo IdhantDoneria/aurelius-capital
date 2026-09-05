@@ -21,7 +21,9 @@ def check(report: ValidationReport) -> dict:
         issues.append("pass_with_critical_failures")
     if not report.manifest_hash:
         issues.append("missing_manifest_hash")
-    if report.component_scores and abs(sum(report.score_contributions.values())
-                                       - report.research_score) > 1e-6:
+    if (
+        report.component_scores
+        and abs(sum(report.score_contributions.values()) - report.research_score) > 1e-6
+    ):
         issues.append("contributions_do_not_sum_to_score")
     return {"ok": not issues, "issues": issues, "verdict": report.overall_verdict}

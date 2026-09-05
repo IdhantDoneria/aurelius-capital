@@ -30,19 +30,23 @@ class FinceptSourceAdapter(SourceAdapter):
     """
 
     def __init__(self, *, name: str = "fincept") -> None:
-        super().__init__(SourceMetadata(
-            name,
-            frozenset({
-                SourceCapability.HISTORICAL,
-                SourceCapability.BARS,
-                SourceCapability.FUNDAMENTALS,
-                SourceCapability.RATES,
-                SourceCapability.REFERENCE_DATA,
-            }),
-            schema_version="1.0",
-            description="Fincept multi-source connector adapter",
-            vendor="fincept",
-        ))
+        super().__init__(
+            SourceMetadata(
+                name,
+                frozenset(
+                    {
+                        SourceCapability.HISTORICAL,
+                        SourceCapability.BARS,
+                        SourceCapability.FUNDAMENTALS,
+                        SourceCapability.RATES,
+                        SourceCapability.REFERENCE_DATA,
+                    }
+                ),
+                schema_version="1.0",
+                description="Fincept multi-source connector adapter",
+                vendor="fincept",
+            )
+        )
         self._seq = 0
 
     def fetch(self, as_of: date, *, security_ids=None, fields=None) -> list[SourceMessage]:
@@ -117,6 +121,8 @@ def _parse_date(v) -> date | None:
 
 
 def _sort_key(r: dict):
-    return (str(r.get("date") or r.get("observation_date") or ""),
-            str(r.get("id") or r.get("symbol") or r.get("series_id") or ""),
-            str(r.get("field") or ""))
+    return (
+        str(r.get("date") or r.get("observation_date") or ""),
+        str(r.get("id") or r.get("symbol") or r.get("series_id") or ""),
+        str(r.get("field") or ""),
+    )

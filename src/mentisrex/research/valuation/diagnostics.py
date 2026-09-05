@@ -16,8 +16,9 @@ def negative_discount_factors(curve, tenors=None) -> list:
     return [f"{curve.curve_id}: DF({t}) <= 0" for t in tenors if curve.discount(t) <= 0]
 
 
-def curve_discontinuities(curve, *, step: float = 0.25, tmax: float = 30.0,
-                          jump_tol: float = 0.05) -> list:
+def curve_discontinuities(
+    curve, *, step: float = 0.25, tmax: float = 30.0, jump_tol: float = 0.05
+) -> list:
     """Flag large jumps in the zero rate between adjacent sample points."""
     problems, t, prev = [], step, None
     while t <= tmax:
@@ -29,12 +30,16 @@ def curve_discontinuities(curve, *, step: float = 0.25, tmax: float = 30.0,
 
 
 def fx_reciprocal(fx_provider, pairs, *, as_of=None, tol: float = 1e-9) -> list:
-    return [f"FX reciprocal violated for {b}/{q}"
-            for b, q in pairs if not _fx.reciprocal_consistent(fx_provider, b, q, as_of=as_of, tol=tol)]
+    return [
+        f"FX reciprocal violated for {b}/{q}"
+        for b, q in pairs
+        if not _fx.reciprocal_consistent(fx_provider, b, q, as_of=as_of, tol=tol)
+    ]
 
 
 def put_call_parity(s, k, r, q, vol, t, *, tol: float = 1e-6) -> list:
     import math
+
     c = pricing.black_scholes_price(True, s, k, r, q, vol, t)
     p = pricing.black_scholes_price(False, s, k, r, q, vol, t)
     lhs = c - p
@@ -45,6 +50,7 @@ def put_call_parity(s, k, r, q, vol, t, *, tol: float = 1e-6) -> list:
 def option_bounds(price, is_call, s, k, r, q, t, *, tol: float = 1e-6) -> list:
     """European no-arbitrage bounds: intrinsic-of-forwards <= price <= discounted spot/strike."""
     import math
+
     df_s, df_k = math.exp(-q * t), math.exp(-r * t)
     if is_call:
         lo, hi = max(0.0, s * df_s - k * df_k), s * df_s

@@ -45,9 +45,7 @@ def analyze_snapshot_coverage(
 
     sorted_dates = sorted(cycle_dates)
     duplicates = n - len(set(cycle_dates))
-    out_of_order = sum(
-        1 for i in range(1, n) if cycle_dates[i] < cycle_dates[i - 1]
-    )
+    out_of_order = sum(1 for i in range(1, n) if cycle_dates[i] < cycle_dates[i - 1])
 
     # gap detection: count calendar days between first and last and compare
     span_days = (sorted_dates[-1] - sorted_dates[0]).days + 1
@@ -102,9 +100,7 @@ def analyze_snapshot_metadata(
         return {"analyzed": False, "issues": []}
 
     stale_count = sum(1 for m in snapshot_metadata if m.get("stale", False))
-    missing_fields = sum(
-        len(m.get("fields_missing", [])) for m in snapshot_metadata
-    )
+    missing_fields = sum(len(m.get("fields_missing", [])) for m in snapshot_metadata)
     sources = {m.get("source", "unknown") for m in snapshot_metadata}
     source_changes = len(sources) > 1
 
@@ -141,60 +137,68 @@ def build_data_diagnostics(
     n = coverage["snapshot_count"]
 
     if coverage["out_of_order_count"] > 0:
-        records.append(make_diagnostic(
-            "data.ordering",
-            DiscrepancyCategory.DATA_DRIFT,
-            DiagnosticSeverity.ERROR,
-            "snapshot_ordering",
-            observed=float(coverage["out_of_order_count"]),
-            threshold=0.0,
-            sample_size=n,
-            method="ordering_check",
-            evidence=f"{coverage['out_of_order_count']} out-of-order delivery(ies)",
-            status=ValidationStatus.INVALID,
-        ))
+        records.append(
+            make_diagnostic(
+                "data.ordering",
+                DiscrepancyCategory.DATA_DRIFT,
+                DiagnosticSeverity.ERROR,
+                "snapshot_ordering",
+                observed=float(coverage["out_of_order_count"]),
+                threshold=0.0,
+                sample_size=n,
+                method="ordering_check",
+                evidence=f"{coverage['out_of_order_count']} out-of-order delivery(ies)",
+                status=ValidationStatus.INVALID,
+            )
+        )
 
     if coverage["duplicate_count"] > 0:
-        records.append(make_diagnostic(
-            "data.duplicates",
-            DiscrepancyCategory.DATA_DRIFT,
-            DiagnosticSeverity.WARNING,
-            "duplicate_snapshots",
-            observed=float(coverage["duplicate_count"]),
-            threshold=0.0,
-            sample_size=n,
-            method="fingerprint_check",
-            evidence=f"{coverage['duplicate_count']} duplicate snapshots (idempotency gate should handle these)",
-            status=ValidationStatus.WARNING,
-        ))
+        records.append(
+            make_diagnostic(
+                "data.duplicates",
+                DiscrepancyCategory.DATA_DRIFT,
+                DiagnosticSeverity.WARNING,
+                "duplicate_snapshots",
+                observed=float(coverage["duplicate_count"]),
+                threshold=0.0,
+                sample_size=n,
+                method="fingerprint_check",
+                evidence=f"{coverage['duplicate_count']} duplicate snapshots (idempotency gate should handle these)",
+                status=ValidationStatus.WARNING,
+            )
+        )
 
     if meta.get("stale_count", 0) > 0:
-        records.append(make_diagnostic(
-            "data.staleness",
-            DiscrepancyCategory.DATA_DRIFT,
-            DiagnosticSeverity.WARNING,
-            "stale_snapshots",
-            observed=float(meta["stale_count"]),
-            threshold=0.0,
-            sample_size=n,
-            method="staleness_flag",
-            evidence=f"{meta['stale_count']} stale snapshots in metadata",
-            status=ValidationStatus.WARNING,
-        ))
+        records.append(
+            make_diagnostic(
+                "data.staleness",
+                DiscrepancyCategory.DATA_DRIFT,
+                DiagnosticSeverity.WARNING,
+                "stale_snapshots",
+                observed=float(meta["stale_count"]),
+                threshold=0.0,
+                sample_size=n,
+                method="staleness_flag",
+                evidence=f"{meta['stale_count']} stale snapshots in metadata",
+                status=ValidationStatus.WARNING,
+            )
+        )
 
     if meta.get("source_change_detected", False):
-        records.append(make_diagnostic(
-            "data.source_change",
-            DiscrepancyCategory.DATA_DRIFT,
-            DiagnosticSeverity.WARNING,
-            "data_source_provenance",
-            observed=None,
-            threshold=None,
-            sample_size=n,
-            method="provenance_check",
-            evidence=f"sources changed mid-run: {meta.get('sources_seen', [])}",
-            status=ValidationStatus.WARNING,
-        ))
+        records.append(
+            make_diagnostic(
+                "data.source_change",
+                DiscrepancyCategory.DATA_DRIFT,
+                DiagnosticSeverity.WARNING,
+                "data_source_provenance",
+                observed=None,
+                threshold=None,
+                sample_size=n,
+                method="provenance_check",
+                evidence=f"sources changed mid-run: {meta.get('sources_seen', [])}",
+                status=ValidationStatus.WARNING,
+            )
+        )
 
     result = {**coverage, "metadata_analysis": meta}
     return result, records

@@ -16,7 +16,6 @@ Redesigns nothing — pure integration of existing frameworks.
 
 from __future__ import annotations
 
-import duckdb
 import time
 import uuid
 from collections import Counter
@@ -25,6 +24,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+import duckdb
 
 from mentisrex.backtesting.data.feed import BarData
 from mentisrex.core.logging import get_logger

@@ -27,11 +27,11 @@ class RiskParitySolver(Solver):
         n = mu.size
         if n == 0:
             return np.array([])
-        budget = np.full(n, 1.0 / n)          # equal risk budget
+        budget = np.full(n, 1.0 / n)  # equal risk budget
         w = 1.0 / np.sqrt(np.clip(np.diag(cov), 1e-12, None))
         w = w / w.sum()
         for _ in range(self._max_iter):
-            rc = w * (cov @ w)                  # risk contribution RC_i = w_i(Σw)_i
+            rc = w * (cov @ w)  # risk contribution RC_i = w_i(Σw)_i
             rc = np.where(np.abs(rc) < 1e-15, 1e-15, rc)
             # sqrt-damped multiplicative update — stable (undamped ratio oscillates
             # and can pin weights at 0); converges to equal risk contribution.

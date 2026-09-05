@@ -11,76 +11,75 @@ Provides isolated PAPER_FORWARD operating mode with:
   - Automated operational runner with health gate (M26)
 """
 
+from mentisrex.research.forward_campaign.alpaca_execution import (
+    AlpacaCycleExecutionRecord,
+    AlpacaCycleExecutor,
+    AlpacaExecutionLedger,
+    AlpacaOrderExecution,
+    CycleExecutionSummary,
+    ForwardVsBacktestComparison,
+    build_forward_vs_backtest_comparison,
+)
+from mentisrex.research.forward_campaign.benchmark import (
+    BenchmarkCycleRecord,
+    BenchmarkLedger,
+    BenchmarkPerformanceSummary,
+    BenchmarkPortfolio,
+    fetch_spy_price,
+)
+from mentisrex.research.forward_campaign.campaign import CampaignConfig, ForwardCampaign
+from mentisrex.research.forward_campaign.data_quality import (
+    DataQualityReport,
+    DataRisks,
+    check_snapshot_quality,
+    check_universe_pit_risks,
+)
+from mentisrex.research.forward_campaign.evidence_report import (
+    BacktestSnapshot,
+    CycleComparison,
+    EvidenceReportBuilder,
+    ForwardEvidenceReport,
+)
+from mentisrex.research.forward_campaign.ledger import ForwardLedger
 from mentisrex.research.forward_campaign.record import (
     CycleStatus,
     ForwardCycleRecord,
     make_forward_cycle_id,
 )
-from mentisrex.research.forward_campaign.ledger import ForwardLedger
-from mentisrex.research.forward_campaign.campaign import ForwardCampaign, CampaignConfig
 from mentisrex.research.forward_campaign.runner import ForwardOperationsRunner, RunnerConfig
-from mentisrex.research.forward_campaign.benchmark import (
-    BenchmarkCycleRecord,
-    BenchmarkLedger,
-    BenchmarkPortfolio,
-    BenchmarkPerformanceSummary,
-    fetch_spy_price,
-)
-from mentisrex.research.forward_campaign.evidence_report import (
-    BacktestSnapshot,
-    CycleComparison,
-    ForwardEvidenceReport,
-    EvidenceReportBuilder,
-)
-from mentisrex.research.forward_campaign.alpaca_execution import (
-    AlpacaOrderExecution,
-    CycleExecutionSummary,
-    AlpacaCycleExecutionRecord,
-    AlpacaExecutionLedger,
-    AlpacaCycleExecutor,
-    ForwardVsBacktestComparison,
-    build_forward_vs_backtest_comparison,
-)
-
-from mentisrex.research.forward_campaign.data_quality import (
-    DataRisks,
-    DataQualityReport,
-    check_snapshot_quality,
-    check_universe_pit_risks,
-)
 
 __all__ = [
-    # M25 / M26
-    "CycleStatus",
-    "ForwardCycleRecord",
-    "ForwardLedger",
-    "ForwardCampaign",
-    "CampaignConfig",
-    "ForwardOperationsRunner",
-    "RunnerConfig",
-    "make_forward_cycle_id",
+    "AlpacaCycleExecutionRecord",
+    "AlpacaCycleExecutor",
+    "AlpacaExecutionLedger",
+    # M29 — Alpaca execution quality
+    "AlpacaOrderExecution",
+    # M27 — evidence report
+    "BacktestSnapshot",
     # M27 — benchmark
     "BenchmarkCycleRecord",
     "BenchmarkLedger",
-    "BenchmarkPortfolio",
     "BenchmarkPerformanceSummary",
-    "fetch_spy_price",
-    # M27 — evidence report
-    "BacktestSnapshot",
+    "BenchmarkPortfolio",
+    "CampaignConfig",
     "CycleComparison",
-    "ForwardEvidenceReport",
-    "EvidenceReportBuilder",
-    # M29 — Alpaca execution quality
-    "AlpacaOrderExecution",
     "CycleExecutionSummary",
-    "AlpacaCycleExecutionRecord",
-    "AlpacaExecutionLedger",
-    "AlpacaCycleExecutor",
-    "ForwardVsBacktestComparison",
-    "build_forward_vs_backtest_comparison",
+    # M25 / M26
+    "CycleStatus",
+    "DataQualityReport",
     # M30 — data quality
     "DataRisks",
-    "DataQualityReport",
+    "EvidenceReportBuilder",
+    "ForwardCampaign",
+    "ForwardCycleRecord",
+    "ForwardEvidenceReport",
+    "ForwardLedger",
+    "ForwardOperationsRunner",
+    "ForwardVsBacktestComparison",
+    "RunnerConfig",
+    "build_forward_vs_backtest_comparison",
     "check_snapshot_quality",
     "check_universe_pit_risks",
+    "fetch_spy_price",
+    "make_forward_cycle_id",
 ]

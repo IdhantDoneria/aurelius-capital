@@ -12,8 +12,9 @@ from datetime import date
 from mentisrex.research.fx.models import CurrencyValuation, MultiCurrencyPortfolioValue
 
 
-def valuation(book, *, as_of: date | None = None, prices: dict | None = None
-              ) -> MultiCurrencyPortfolioValue:
+def valuation(
+    book, *, as_of: date | None = None, prices: dict | None = None
+) -> MultiCurrencyPortfolioValue:
     if prices:
         book.mark(prices)
     src = getattr(book.provider, "source", "provider")
@@ -27,15 +28,26 @@ def valuation(book, *, as_of: date | None = None, prices: dict | None = None
         rate = book.base_rate(ccy, as_of)
         tb = total_local * rate
         by[ccy] = CurrencyValuation(
-            currency=ccy, cash_local=cash_local, positions_local=pos_local,
-            total_local=total_local, fx_rate_to_base=rate, total_base=tb,
-            as_of=as_of, rate_source=src)
+            currency=ccy,
+            cash_local=cash_local,
+            positions_local=pos_local,
+            total_local=total_local,
+            fx_rate_to_base=rate,
+            total_base=tb,
+            as_of=as_of,
+            rate_source=src,
+        )
         total_base += tb
         cash_base += cash_local * rate
         pos_base += pos_local * rate
     return MultiCurrencyPortfolioValue(
-        base_currency=book.base_currency, as_of=as_of, by_currency=by,
-        total_base=total_base, cash_base=cash_base, positions_base=pos_base)
+        base_currency=book.base_currency,
+        as_of=as_of,
+        by_currency=by,
+        total_base=total_base,
+        cash_base=cash_base,
+        positions_base=pos_base,
+    )
 
 
 def base_value(book, *, as_of: date | None = None, prices: dict | None = None) -> float:

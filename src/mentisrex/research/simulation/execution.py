@@ -31,9 +31,16 @@ class CostExecutionModel(ExecutionModel):
 
     def execute(self, order, price, adv=None):
         notional = order.quantity * price
-        cost = self._cm.estimate([abs(notional)], adv=[adv] if adv is not None else None)["total_cost"]
-        return Fill(security_id=order.security_id, quantity=order.quantity, price=float(price),
-                    cost=float(cost), notional=float(notional))
+        cost = self._cm.estimate([abs(notional)], adv=[adv] if adv is not None else None)[
+            "total_cost"
+        ]
+        return Fill(
+            security_id=order.security_id,
+            quantity=order.quantity,
+            price=float(price),
+            cost=float(cost),
+            notional=float(notional),
+        )
 
 
 class FrictionlessExecutionModel(ExecutionModel):

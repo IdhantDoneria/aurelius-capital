@@ -16,7 +16,7 @@ from dataclasses import dataclass
 class RiskLimits:
     max_name_weight: float = 0.10
     max_gross_leverage: float = 1.05
-    kill: bool = False                    # kill switch: block all order flow
+    kill: bool = False  # kill switch: block all order flow
 
 
 class PreTradeRiskGate:
@@ -42,8 +42,11 @@ class PreTradeRiskGate:
             if abs(new_shares * p) / value > self.limits.max_name_weight + 1e-9:
                 rejected.append((o, "name_weight_cap"))
                 continue
-            gross = (sum(abs(s) * prices.get(sid, 0.0) for sid, s in proj.items())
-                     - abs(proj.get(o.security_id, 0.0) * p) + abs(new_shares * p))
+            gross = (
+                sum(abs(s) * prices.get(sid, 0.0) for sid, s in proj.items())
+                - abs(proj.get(o.security_id, 0.0) * p)
+                + abs(new_shares * p)
+            )
             if gross / value > self.limits.max_gross_leverage + 1e-9:
                 rejected.append((o, "gross_leverage_cap"))
                 continue

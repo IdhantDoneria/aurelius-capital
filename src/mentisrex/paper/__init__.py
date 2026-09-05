@@ -18,7 +18,7 @@ M28 adds AlpacaPaperBroker (Alpaca PAPER account, no live execution):
 """
 
 from mentisrex.paper.alpaca_broker import (
-    AlpacaBroker,       # deprecated alias — use AlpacaPaperBroker
+    AlpacaBroker,  # deprecated alias — use AlpacaPaperBroker
     AlpacaFill,
     AlpacaOrderRecord,
     AlpacaPaperBroker,
@@ -34,23 +34,23 @@ from mentisrex.paper.engine import Health, TradingEngine, replay
 from mentisrex.paper.journal import TradeJournal
 
 __all__ = [
-    # M28 — Alpaca paper broker
-    "AlpacaPaperBroker",
-    "AlpacaOrderRecord",
-    "AlpacaFill",
-    "PositionReconciliationResult",
-    "NavReconciliationResult",
-    "LiveTradingBlockedError",
-    "InvalidPaperOrderError",
-    "PaperAccountVerificationError",
-    "BrokerMode",
     # Legacy / deprecated
     "AlpacaBroker",
+    "AlpacaFill",
+    "AlpacaOrderRecord",
+    # M28 — Alpaca paper broker
+    "AlpacaPaperBroker",
+    "BrokerMode",
     # Phase-9 local paper broker
     "Health",
+    "InvalidPaperOrderError",
+    "LiveTradingBlockedError",
+    "NavReconciliationResult",
     "OrderRequest",
     "OrderResult",
+    "PaperAccountVerificationError",
     "PaperBroker",
+    "PositionReconciliationResult",
     "Tick",
     "TradeJournal",
     "TradingEngine",

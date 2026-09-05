@@ -91,7 +91,8 @@ def test_lag_is_applied_exactly_once(panel, config):
     rng = np.random.default_rng(11)
     weights = pd.DataFrame(
         rng.normal(0, 0.01, (len(panel.index), len(universe))),
-        index=panel.index, columns=universe,
+        index=panel.index,
+        columns=universe,
     )
     lag = config.execution.signal_to_trade_lag
     base = sleeves.sleeve_returns(weights, panel.returns, lag)
@@ -203,7 +204,5 @@ def test_effective_breadth_recovers_known_structure():
     assert allocator.effective_breadth(independent) > 9.0
 
     a, b = rng.normal(0, 0.01, 2000), rng.normal(0, 0.01, 2000)
-    blocks = pd.DataFrame(
-        {i: (a if i < 5 else b) + rng.normal(0, 0.0005, 2000) for i in range(10)}
-    )
+    blocks = pd.DataFrame({i: (a if i < 5 else b) + rng.normal(0, 0.0005, 2000) for i in range(10)})
     assert allocator.effective_breadth(blocks) < 3.0

@@ -9,12 +9,12 @@ from __future__ import annotations
 import dataclasses
 import hashlib
 import json
-from dataclasses import dataclass, field
-from enum import Enum
+from dataclasses import dataclass
+from enum import StrEnum
 from typing import Any
 
-
 # ── helpers ────────────────────────────────────────────────────────────────────
+
 
 def _canonical(obj: Any) -> str:
     return json.dumps(obj, sort_keys=True, separators=(",", ":"), default=str)
@@ -26,7 +26,8 @@ def _fp(obj: Any) -> str:
 
 # ── classification enumerations ────────────────────────────────────────────────
 
-class ValidationStatus(str, Enum):
+
+class ValidationStatus(StrEnum):
     INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
     IN_PROGRESS = "IN_PROGRESS"
     VALID = "VALID"
@@ -36,25 +37,25 @@ class ValidationStatus(str, Enum):
     INVALID = "INVALID"
 
 
-class OperationalStatus(str, Enum):
+class OperationalStatus(StrEnum):
     OPERATIONALLY_VALID = "OPERATIONALLY_VALID"
     OPERATIONALLY_INVALID = "OPERATIONALLY_INVALID"
     OPERATIONALLY_INCONCLUSIVE = "OPERATIONALLY_INCONCLUSIVE"
 
 
-class EconomicStatus(str, Enum):
+class EconomicStatus(StrEnum):
     ECONOMICALLY_CONCLUSIVE = "ECONOMICALLY_CONCLUSIVE"
     ECONOMICALLY_INCONCLUSIVE = "ECONOMICALLY_INCONCLUSIVE"
 
 
-class SampleAdequacy(str, Enum):
-    INSUFFICIENT = "INSUFFICIENT"    # < 20 observations
-    PRELIMINARY = "PRELIMINARY"      # 20–62 (~1 month daily)
-    MEANINGFUL = "MEANINGFUL"        # 63–251
-    EXTENDED = "EXTENDED"            # ≥ 252 (≈ 1 year daily)
+class SampleAdequacy(StrEnum):
+    INSUFFICIENT = "INSUFFICIENT"  # < 20 observations
+    PRELIMINARY = "PRELIMINARY"  # 20–62 (~1 month daily)
+    MEANINGFUL = "MEANINGFUL"  # 63–251
+    EXTENDED = "EXTENDED"  # ≥ 252 (≈ 1 year daily)
 
 
-class DiscrepancyCategory(str, Enum):
+class DiscrepancyCategory(StrEnum):
     DATA_DRIFT = "DATA_DRIFT"
     SIGNAL_DRIFT = "SIGNAL_DRIFT"
     UNIVERSE_DRIFT = "UNIVERSE_DRIFT"
@@ -70,7 +71,7 @@ class DiscrepancyCategory(str, Enum):
     UNKNOWN = "UNKNOWN"
 
 
-class DiagnosticSeverity(str, Enum):
+class DiagnosticSeverity(StrEnum):
     INFO = "INFO"
     WARNING = "WARNING"
     ERROR = "ERROR"
@@ -79,21 +80,23 @@ class DiagnosticSeverity(str, Enum):
 
 # ── diagnostic record ─────────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class DiagnosticRecord:
     """Machine-readable single diagnostic finding."""
+
     diagnostic_id: str
-    category: str               # DiscrepancyCategory value
-    severity: str               # DiagnosticSeverity value
+    category: str  # DiscrepancyCategory value
+    severity: str  # DiagnosticSeverity value
     metric: str
-    baseline: float | None      # research/expected value
-    observed: float | None      # forward/paper value
-    difference: float | None    # observed - baseline
+    baseline: float | None  # research/expected value
+    observed: float | None  # forward/paper value
+    difference: float | None  # observed - baseline
     threshold: float | None
     sample_size: int
     method: str
     evidence: str
-    status: str                 # ValidationStatus value
+    status: str  # ValidationStatus value
     fingerprint: str = ""
 
     def to_dict(self) -> dict:
@@ -167,6 +170,7 @@ def make_diagnostic(
 
 # ── forward validation artifact ───────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class ForwardValidationArtifact:
     """Immutable, deterministically fingerprinted forward-validation artifact (M24).
@@ -175,6 +179,7 @@ class ForwardValidationArtifact:
     Fingerprint excludes recorded_at so the same analysis inputs always produce
     the same fingerprint.
     """
+
     artifact_id: str
     strategy_id: str
     strategy_version: str
@@ -183,19 +188,19 @@ class ForwardValidationArtifact:
     forward_record_fingerprint: str
     research_artifact_id: str
     validation_artifact_id: str
-    analysis_period: dict        # {"start": "YYYY-MM-DD", "end": "YYYY-MM-DD", "n_cycles": N}
-    data_sources: list           # list[str] — mode labels
-    data_fingerprints: dict      # {source: fingerprint}
+    analysis_period: dict  # {"start": "YYYY-MM-DD", "end": "YYYY-MM-DD", "n_cycles": N}
+    data_sources: list  # list[str] — mode labels
+    data_fingerprints: dict  # {source: fingerprint}
     comparison_configuration: dict
     diagnostic_configuration: dict
     metric_results: dict
-    diagnostic_results: list     # list[DiagnosticRecord.to_dict()]
-    warnings: list               # list[str]
-    failures: list               # list[str]
-    status: str                  # ValidationStatus
-    operational_status: str      # OperationalStatus
-    economic_status: str         # EconomicStatus
-    sample_adequacy: str         # SampleAdequacy
+    diagnostic_results: list  # list[DiagnosticRecord.to_dict()]
+    warnings: list  # list[str]
+    failures: list  # list[str]
+    status: str  # ValidationStatus
+    operational_status: str  # OperationalStatus
+    economic_status: str  # EconomicStatus
+    sample_adequacy: str  # SampleAdequacy
     artifact_fingerprint: str = ""
 
     def to_dict(self) -> dict:
@@ -239,6 +244,7 @@ def stamp_artifact(artifact: ForwardValidationArtifact) -> ForwardValidationArti
 
 # ── forward validation report ─────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class ForwardValidationReport:
     """Human-and-machine-readable forward validation report (M24).
@@ -247,6 +253,7 @@ class ForwardValidationReport:
     Fingerprint is computed from the artifact_fingerprint so the report
     and artifact are linked.
     """
+
     strategy_id: str
     strategy_version: str
     research_artifact_id: str
@@ -264,8 +271,8 @@ class ForwardValidationReport:
     backtest_comparison: dict
     drift_analysis: dict
     statistical_diagnostics: dict
-    discrepancy_classification: list   # list[str] — DiscrepancyCategory values
-    limitations: list                  # list[str]
+    discrepancy_classification: list  # list[str] — DiscrepancyCategory values
+    limitations: list  # list[str]
     status: str
     operational_status: str
     economic_status: str

@@ -40,13 +40,15 @@ class QlibSourceAdapter(SourceAdapter):
     """
 
     def __init__(self, *, name: str = "qlib") -> None:
-        super().__init__(SourceMetadata(
-            name,
-            frozenset({SourceCapability.HISTORICAL, SourceCapability.BARS}),
-            schema_version="1.0",
-            description="Qlib-format OHLCV reader",
-            vendor="qlib",
-        ))
+        super().__init__(
+            SourceMetadata(
+                name,
+                frozenset({SourceCapability.HISTORICAL, SourceCapability.BARS}),
+                schema_version="1.0",
+                description="Qlib-format OHLCV reader",
+                vendor="qlib",
+            )
+        )
         self._seq = 0
 
     def fetch(self, as_of: date, *, security_ids=None, fields=None) -> list[SourceMessage]:
@@ -67,8 +69,9 @@ class QlibSourceAdapter(SourceAdapter):
                 msgs.append(replace(msg, sequence=self._seq))
         return self._record(msgs)
 
-    def convert_directory(self, directory: str | Path, as_of: date,
-                          *, symbols: list[str] | None = None) -> list[SourceMessage]:
+    def convert_directory(
+        self, directory: str | Path, as_of: date, *, symbols: list[str] | None = None
+    ) -> list[SourceMessage]:
         """Convert all CSV files in a Qlib data directory."""
         if self._state.value == "disconnected":
             self.connect()
@@ -86,14 +89,14 @@ class QlibSourceAdapter(SourceAdapter):
         rec_date = _parse_date(r.get("date"))
         if rec_date is None or rec_date > as_of:
             return []
-        base = dict(
-            source=self.metadata.name,
-            msg_type=MessageType.OBSERVATION,
-            vendor_id=symbol,
-            observation_date=rec_date,
-            effective_date=rec_date,
-            schema_version=self.metadata.schema_version,
-        )
+        base = {
+            "source": self.metadata.name,
+            "msg_type": MessageType.OBSERVATION,
+            "vendor_id": symbol,
+            "observation_date": rec_date,
+            "effective_date": rec_date,
+            "schema_version": self.metadata.schema_version,
+        }
         msgs = []
         try:
             close = float(r.get("close", 0.0))
@@ -101,7 +104,9 @@ class QlibSourceAdapter(SourceAdapter):
             return []
 
         payload: dict = {
-            "id": symbol, "field": "close", "type": "close",
+            "id": symbol,
+            "field": "close",
+            "type": "close",
             "value": close,
             "observation_date": rec_date.isoformat(),
             "effective_date": rec_date.isoformat(),
@@ -124,7 +129,9 @@ class QlibSourceAdapter(SourceAdapter):
             factor = 1.0
         if factor != 1.0 and factor > 0:
             adj_payload = {
-                "id": symbol, "field": "close", "type": "adjusted_close",
+                "id": symbol,
+                "field": "close",
+                "type": "adjusted_close",
                 "value": round(close * factor, 6),
                 "observation_date": rec_date.isoformat(),
                 "effective_date": rec_date.isoformat(),
@@ -148,6 +155,7 @@ class QlibExporter:
         Returns mapping of security_id → written file path.
         """
         from collections import defaultdict
+
         root = Path(output_dir)
         root.mkdir(parents=True, exist_ok=True)
 
@@ -168,22 +176,35 @@ class QlibExporter:
             rows = []
             for d in sorted(by_date):
                 row = by_date[d]
-                rows.append({
-                    "date": d.isoformat(),
-                    "open": row.get("open", ""),
-                    "high": row.get("high", ""),
-                    "low": row.get("low", ""),
-                    "close": row.get("close", ""),
-                    "volume": row.get("volume", ""),
-                    "factor": "1.0",
-                    "change": "",
-                })
+                rows.append(
+                    {
+                        "date": d.isoformat(),
+                        "open": row.get("open", ""),
+                        "high": row.get("high", ""),
+                        "low": row.get("low", ""),
+                        "close": row.get("close", ""),
+                        "volume": row.get("volume", ""),
+                        "factor": "1.0",
+                        "change": "",
+                    }
+                )
 
             safe_name = security_id.replace("/", "_").replace(":", "_")
             out_path = root / f"{safe_name}.csv"
             with open(out_path, "w", newline="") as f:
-                writer = csv.DictWriter(f, fieldnames=["date", "open", "high", "low", "close",
-                                                         "volume", "factor", "change"])
+                writer = csv.DictWriter(
+                    f,
+                    fieldnames=[
+                        "date",
+                        "open",
+                        "high",
+                        "low",
+                        "close",
+                        "volume",
+                        "factor",
+                        "change",
+                    ],
+                )
                 writer.writeheader()
                 writer.writerows(rows)
             written[security_id] = out_path

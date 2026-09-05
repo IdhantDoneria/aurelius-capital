@@ -21,9 +21,13 @@ def _frame() -> pd.DataFrame:
     idx = pd.to_datetime(["2020-01-02", "2020-01-10"])
     return pd.DataFrame(
         {
-            "Open": [100.0, 50.0], "High": [100.0, 50.0], "Low": [100.0, 50.0],
-            "Close": [100.0, 50.0], "Volume": [1000, 1000],
-            "Dividends": [0.0, 0.0], "Stock Splits": [0.0, 2.0],
+            "Open": [100.0, 50.0],
+            "High": [100.0, 50.0],
+            "Low": [100.0, 50.0],
+            "Close": [100.0, 50.0],
+            "Volume": [1000, 1000],
+            "Dividends": [0.0, 0.0],
+            "Stock Splits": [0.0, 2.0],
         },
         index=idx,
     )
@@ -32,7 +36,8 @@ def _frame() -> pd.DataFrame:
 def test_parse_extracts_raw_bars_and_split() -> None:
     bars, actions = parse_raw_history(_frame(), "aapl")
     assert len(bars) == 2
-    assert bars[0]["symbol"] == "AAPL" and bars[0]["close"] == Decimal("100")
+    assert bars[0]["symbol"] == "AAPL"
+    assert bars[0]["close"] == Decimal("100")
     assert len(actions) == 1
     assert actions[0]["effective_date"] == date(2020, 1, 10)
     assert actions[0]["ratio"] == 2.0

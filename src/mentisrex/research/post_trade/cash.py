@@ -23,7 +23,8 @@ def cash_report(engine, as_of: date | None = None) -> CashReport:
         restricted_cash=cl.restricted(),
         pending_inflows=cl.pending_inflows(),
         pending_outflows=cl.pending_outflows(),
-        reconciles=cl.reconciles(engine.accounting.cash))
+        reconciles=cl.reconciles(engine.accounting.cash),
+    )
 
 
 def settlement_obligations(engine) -> dict:

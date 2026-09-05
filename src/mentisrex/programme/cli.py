@@ -25,7 +25,16 @@ from typing import Any
 import pandas as pd
 
 from mentisrex.core.logging import get_logger
-from mentisrex.programme import allocator, backtest, data, execution, rates, reconcile, risk, sleeves
+from mentisrex.programme import (
+    allocator,
+    backtest,
+    data,
+    execution,
+    rates,
+    reconcile,
+    risk,
+    sleeves,
+)
 from mentisrex.programme.config import RUNGS, ProgrammeConfig, ProgrammeError, load_config
 from mentisrex.programme.state import StateStore, halt, restart
 
@@ -65,8 +74,11 @@ def _panel_and_mask(
     config: ProgrammeConfig, args: argparse.Namespace
 ) -> tuple[data.PricePanel, pd.DataFrame]:
     panel = data.build_panel(
-        config, source=None, start=getattr(args, "start", None) or _DEFAULT_START,
-        end=_end_date(args), db_path=getattr(args, "db", None),
+        config,
+        source=None,
+        start=getattr(args, "start", None) or _DEFAULT_START,
+        end=_end_date(args),
+        db_path=getattr(args, "db", None),
     )
     mask = data.eligibility_mask(panel, config.universe)
     return panel, mask
@@ -149,8 +161,11 @@ def cmd_run(args: argparse.Namespace) -> int:
             print(f"  FATAL {fatal}")
         print("\n  No orders today. The existing book is held. Never trade on old prices.")
         store.append_audit(
-            {"event": "quality_fatal", "fatal": list(report.fatal),
-             "config_fingerprint": fingerprint}
+            {
+                "event": "quality_fatal",
+                "fatal": list(report.fatal),
+                "config_fingerprint": fingerprint,
+            }
         )
         return EXIT_QUALITY_FATAL
 
@@ -169,7 +184,10 @@ def cmd_run(args: argparse.Namespace) -> int:
     prior_target = _load_prior_target(config)
     recon = reconcile.reconcile(
         target=prior_target if prior_target is not None else pd.Series(dtype="float64"),
-        positions=positions, prices=prices, nav=nav, config=config,
+        positions=positions,
+        prices=prices,
+        nav=nav,
+        config=config,
         as_of=panel.index[-1],
     )
     _kv("positions held", recon.n_positions)
@@ -187,10 +205,12 @@ def cmd_run(args: argparse.Namespace) -> int:
     base_cap = min(risk.deployment_cap(state.quarters_live), config.allocator.gross_cap)
     multipliers = risk.sleeve_health(
         {name: sleeve.gross_returns for name, sleeve in built.items()},
-        panel.index[-1], config.risk,
+        panel.index[-1],
+        config.risk,
     )
-    book = allocator.combine(built, panel, config, effective_cap=base_cap,
-                             sleeve_multipliers=multipliers)
+    book = allocator.combine(
+        built, panel, config, effective_cap=base_cap, sleeve_multipliers=multipliers
+    )
     _kv("deployment cap (ramp)", f"{base_cap:.2f}x  (quarter {state.quarters_live + 1})")
     _kv("gross / net", f"{book.gross.iloc[-1]:.3f}x / {book.net.iloc[-1]:.3f}x")
     _kv("long / short", f"{book.long_exposure.iloc[-1]:.3f}x / {book.short_exposure.iloc[-1]:.3f}x")
@@ -225,8 +245,10 @@ def cmd_run(args: argparse.Namespace) -> int:
     )
     verdict = risk.evaluate(inputs, config.risk)
     for breach in verdict.breaches:
-        print(f"  {breach.severity.value:<6} {breach.code:<20} "
-              f"observed {breach.observed:.4f} vs {breach.threshold:.4f}")
+        print(
+            f"  {breach.severity.value:<6} {breach.code:<20} "
+            f"observed {breach.observed:.4f} vs {breach.threshold:.4f}"
+        )
     if not verdict.breaches:
         print("  clean — no breaker fired")
     _kv("effective cap", f"{verdict.effective_cap:.3f}x")
@@ -236,8 +258,13 @@ def cmd_run(args: argparse.Namespace) -> int:
         print("\n  HALT. Flatten to cash. Manual restart required, with a written justification.")
         return EXIT_RISK_HALT
     if verdict.derisked:
-        book = allocator.combine(built, panel, config, effective_cap=verdict.effective_cap,
-                                 sleeve_multipliers=multipliers)
+        book = allocator.combine(
+            built,
+            panel,
+            config,
+            effective_cap=verdict.effective_cap,
+            sleeve_multipliers=multipliers,
+        )
         target = book.target_weights.iloc[-1]
         print(f"  DERISK applied — book rebuilt at {verdict.effective_cap:.3f}x")
 
@@ -274,8 +301,10 @@ def cmd_run(args: argparse.Namespace) -> int:
     _rule("15:45  submit")
     if args.mode == "dryrun":
         for order in order_set.orders[:20]:
-            print(f"  {order.side:<4} {order.symbol:<8} {order.quantity:>8} sh  "
-                  f"${order.notional:>12,.0f}  target {order.target_weight:+.4f}")
+            print(
+                f"  {order.side:<4} {order.symbol:<8} {order.quantity:>8} sh  "
+                f"${order.notional:>12,.0f}  target {order.target_weight:+.4f}"
+            )
         if len(order_set.orders) > 20:
             print(f"  ... and {len(order_set.orders) - 20} more")
         print("\n  dryrun — nothing submitted.")
@@ -300,13 +329,19 @@ def cmd_run(args: argparse.Namespace) -> int:
     if args.mode != "dryrun":
         store.save(state)
         _save_target(config, target)
-    store.append_audit({
-        "event": "run", "mode": args.mode, "rung": args.rung,
-        "config_fingerprint": fingerprint, "nav": nav,
-        "gross": float(order_set.gross), "net": float(order_set.net),
-        "n_orders": len(order_set.orders),
-        "breaches": [b.code for b in verdict.breaches],
-    })
+    store.append_audit(
+        {
+            "event": "run",
+            "mode": args.mode,
+            "rung": args.rung,
+            "config_fingerprint": fingerprint,
+            "nav": nav,
+            "gross": float(order_set.gross),
+            "net": float(order_set.net),
+            "n_orders": len(order_set.orders),
+            "breaches": [b.code for b in verdict.breaches],
+        }
+    )
     _kv("state written", "yes" if args.mode != "dryrun" else "no (dryrun)")
     print()
     return EXIT_OK
@@ -320,9 +355,7 @@ def _realised_vol(panel: data.PricePanel, config: ProgrammeConfig) -> float:
     return float(rets.std(ddof=1) * (252.0**0.5))
 
 
-def _current_weights(
-    positions: dict[str, float], prices: pd.Series, nav: float
-) -> pd.Series:
+def _current_weights(positions: dict[str, float], prices: pd.Series, nav: float) -> pd.Series:
     if nav <= 0 or not positions:
         return pd.Series(0.0, index=prices.index, dtype="float64")
     held = pd.Series(positions, dtype="float64").reindex(prices.index).fillna(0.0)
@@ -449,9 +482,11 @@ def cmd_universe(args: argparse.Namespace) -> int:
     _kv("passing all filters", len(keep))
     _kv("written to", out)
     if len(keep) < 500:
-        print(f"\n  NOTE  the specification's own study used 657 tickers (median 593 "
-              f"eligible).\n        This universe is {len(keep)}. A smaller universe raises "
-              "return and\n        worsens drawdown — see Table 17's universe-shrinkage row.")
+        print(
+            f"\n  NOTE  the specification's own study used 657 tickers (median 593 "
+            f"eligible).\n        This universe is {len(keep)}. A smaller universe raises "
+            "return and\n        worsens drawdown — see Table 17's universe-shrinkage row."
+        )
     print()
     return EXIT_OK
 
@@ -465,16 +500,22 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
         print("  no prior target on file — nothing to reconcile against.")
         return EXIT_OK
     report = reconcile.reconcile(
-        target=prior, positions=broker.positions(), prices=panel.close.iloc[-1],
-        nav=float(args.nav), config=config, as_of=panel.index[-1],
+        target=prior,
+        positions=broker.positions(),
+        prices=panel.close.iloc[-1],
+        nav=float(args.nav),
+        config=config,
+        as_of=panel.index[-1],
     )
     _rule("RECONCILIATION")
     _kv("positions", report.n_positions)
     _kv("total drift (bps of NAV)", f"{report.total_drift_bps:.1f}")
     _kv("realised / modelled cost", f"{report.realised_cost_bps} / {report.modelled_cost_bps}")
     for drift in report.drifts:
-        print(f"  DRIFT {drift.symbol:<8} target {drift.target_weight:+.4f} "
-              f"actual {drift.actual_weight:+.4f}  {drift.drift_bps:+.1f} bp")
+        print(
+            f"  DRIFT {drift.symbol:<8} target {drift.target_weight:+.4f} "
+            f"actual {drift.actual_weight:+.4f}  {drift.drift_bps:+.1f} bp"
+        )
     print(f"\n  {'OK' if report.ok else 'investigate before trading'}\n")
     return EXIT_OK
 
@@ -497,15 +538,22 @@ def cmd_backtest(args: argparse.Namespace) -> int:
 
 def _add_common(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--config", default=None, help="TOML/JSON overrides, dotted paths")
-    parser.add_argument("--rung", default="recommended", choices=sorted(RUNGS),
-                        help="deployment rung (spec Table 7)")
+    parser.add_argument(
+        "--rung",
+        default="recommended",
+        choices=sorted(RUNGS),
+        help="deployment rung (spec Table 7)",
+    )
     parser.add_argument("--db", default=None, help="path to analytics.duckdb")
     parser.add_argument("--start", default=None, help=f"panel start (default {_DEFAULT_START})")
     parser.add_argument("--end", default=None, help="panel end (default: today)")
     parser.add_argument("--state-dir", default=None, help="override the state directory")
-    parser.add_argument("--as-of", default=None,
-                        help="evaluate the quality gate as of this date (default: now; "
-                             "dryrun defaults to the panel's last bar)")
+    parser.add_argument(
+        "--as-of",
+        default=None,
+        help="evaluate the quality gate as of this date (default: now; "
+        "dryrun defaults to the panel's last bar)",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:

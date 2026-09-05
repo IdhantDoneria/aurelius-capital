@@ -19,10 +19,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
-from enum import Enum
+from enum import StrEnum
 
 
-class InstrumentType(str, Enum):
+class InstrumentType(StrEnum):
     EQUITY = "equity"
     FUTURE = "future"
     OPTION = "option"
@@ -31,38 +31,40 @@ class InstrumentType(str, Enum):
     BOND = "bond"
 
 
-class CashConvention(str, Enum):
-    PRINCIPAL = "principal"       # cash = -(qty * price * contract_size) - cost
-    MARGINED = "margined"         # cash = -cost; P&L flows as variation margin
-    NPV = "npv"                   # valued/settled by an injected provider
+class CashConvention(StrEnum):
+    PRINCIPAL = "principal"  # cash = -(qty * price * contract_size) - cost
+    MARGINED = "margined"  # cash = -cost; P&L flows as variation margin
+    NPV = "npv"  # valued/settled by an injected provider
 
 
-class OptionRight(str, Enum):
+class OptionRight(StrEnum):
     CALL = "call"
     PUT = "put"
 
 
-class SettlementStyle(str, Enum):
+class SettlementStyle(StrEnum):
     CASH = "cash"
     PHYSICAL = "physical"
 
 
-class ExerciseStyle(str, Enum):
-    EUROPEAN = "european"         # M17 supports European exercise only
+class ExerciseStyle(StrEnum):
+    EUROPEAN = "european"  # M17 supports European exercise only
 
 
-class ExerciseStatus(str, Enum):
+class ExerciseStatus(StrEnum):
     OPEN = "open"
     EXERCISED = "exercised"
     ASSIGNED = "assigned"
-    EXPIRED = "expired"           # expired worthless
+    EXPIRED = "expired"  # expired worthless
 
 
 # ── the unified instrument ───────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class Instrument:
     """One instrument definition — the vocabulary every asset class shares."""
+
     instrument_id: str
     type: InstrumentType
     currency: str = "USD"
@@ -97,18 +99,20 @@ class Instrument:
 
 # ── positions & accounting overlay ───────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class InstrumentPosition:
     """Immutable snapshot of a derivative position (equities live in M11 state)."""
+
     instrument_id: str
-    quantity: float               # signed contracts
-    avg_price: float              # average entry price / premium per unit
-    last_mark: float              # last mark used for MTM
+    quantity: float  # signed contracts
+    avg_price: float  # average entry price / premium per unit
+    last_mark: float  # last mark used for MTM
     contract_size: float
     currency: str
-    realized_pnl: float = 0.0     # closed-trade P&L (position currency)
-    margin: float = 0.0           # posted margin requirement
-    collateral: float = 0.0       # posted collateral requirement
+    realized_pnl: float = 0.0  # closed-trade P&L (position currency)
+    margin: float = 0.0  # posted margin requirement
+    collateral: float = 0.0  # posted collateral requirement
 
     @property
     def notional(self) -> float:
@@ -131,13 +135,23 @@ class Greeks:
     vega: float = 0.0
     rho: float = 0.0
 
-    def scale(self, factor: float) -> "Greeks":
-        return Greeks(self.delta * factor, self.gamma * factor, self.theta * factor,
-                      self.vega * factor, self.rho * factor)
+    def scale(self, factor: float) -> Greeks:
+        return Greeks(
+            self.delta * factor,
+            self.gamma * factor,
+            self.theta * factor,
+            self.vega * factor,
+            self.rho * factor,
+        )
 
-    def __add__(self, other: "Greeks") -> "Greeks":
-        return Greeks(self.delta + other.delta, self.gamma + other.gamma,
-                      self.theta + other.theta, self.vega + other.vega, self.rho + other.rho)
+    def __add__(self, other: Greeks) -> Greeks:
+        return Greeks(
+            self.delta + other.delta,
+            self.gamma + other.gamma,
+            self.theta + other.theta,
+            self.vega + other.vega,
+            self.rho + other.rho,
+        )
 
 
 @dataclass(frozen=True)
@@ -151,9 +165,10 @@ class MarginRequirement:
 @dataclass(frozen=True)
 class CollateralBalance:
     """Posted collateral. `cash` and `securities` are gross; `value` applies haircuts."""
+
     cash: float = 0.0
     securities: float = 0.0
-    haircut: float = 0.0          # fraction applied to securities (0.10 = 10%)
+    haircut: float = 0.0  # fraction applied to securities (0.10 = 10%)
     currency: str = "USD"
 
     @property
@@ -163,7 +178,8 @@ class CollateralBalance:
 
 # ── lifecycle events (append-only, extend the M15 event vocabulary) ──────────
 
-class InstrumentEventType(str, Enum):
+
+class InstrumentEventType(StrEnum):
     CREATION = "creation"
     TRADE = "trade"
     SETTLEMENT = "settlement"

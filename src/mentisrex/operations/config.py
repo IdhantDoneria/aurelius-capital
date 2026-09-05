@@ -59,8 +59,15 @@ class OperationsConfig:
 
     def ensure_dirs(self) -> None:
         for d in (
-            self.incoming, self.processing, self.processed, self.rejected,
-            self.metadata, self.extracted, self.summaries,
-            self.experiments, self.reports, self.logs,
+            self.incoming,
+            self.processing,
+            self.processed,
+            self.rejected,
+            self.metadata,
+            self.extracted,
+            self.summaries,
+            self.experiments,
+            self.reports,
+            self.logs,
         ):
             d.mkdir(parents=True, exist_ok=True)

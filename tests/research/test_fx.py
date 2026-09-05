@@ -18,7 +18,7 @@ from mentisrex.research.fx import conversion as conv
 from mentisrex.research.post_trade import PostTradeEngine, SettlementConfig
 from mentisrex.research.post_trade import fingerprint as pt_fingerprint
 
-D0 = date(2026, 1, 5)          # Monday
+D0 = date(2026, 1, 5)  # Monday
 D1 = date(2026, 1, 6)
 
 
@@ -28,12 +28,16 @@ def static(**extra):
 
 
 def book(initial=None, provider=None, base="USD"):
-    return fx.MultiCurrencyBook(base, provider or static(),
-                                initial=initial or {"USD": 1_000_000.0},
-                                settlement_config=SettlementConfig(default_days=2))
+    return fx.MultiCurrencyBook(
+        base,
+        provider or static(),
+        initial=initial or {"USD": 1_000_000.0},
+        settlement_config=SettlementConfig(default_days=2),
+    )
 
 
 # ─────────────────────────── currency model ────────────────────────────────
+
 
 def test_validate_code_upper():
     assert fx.validate_code("usd") == "USD"
@@ -92,6 +96,7 @@ def test_currency_pair_inverse():
 
 # ─────────────────────────── FX rate conventions ───────────────────────────
 
+
 def test_direct_rate():
     assert static().rate("EUR", "USD") == pytest.approx(1.10)
 
@@ -141,7 +146,8 @@ def test_direction_identity():
 
 def test_spot_returns_fxrate():
     r = static().spot("EUR", "USD")
-    assert r.pair.symbol == "EUR/USD" and r.rate == pytest.approx(1.10)
+    assert r.pair.symbol == "EUR/USD"
+    assert r.rate == pytest.approx(1.10)
 
 
 def test_snapshot():
@@ -157,10 +163,12 @@ def test_fxrate_convert():
 
 def test_fxrate_inverse_model():
     inv = fx.FXRate(fx.CurrencyPair("EUR", "USD"), 1.10).inverse()
-    assert inv.pair.symbol == "USD/EUR" and inv.rate == pytest.approx(1 / 1.10)
+    assert inv.pair.symbol == "USD/EUR"
+    assert inv.rate == pytest.approx(1 / 1.10)
 
 
 # ─────────────────────────── rate providers ────────────────────────────────
+
 
 def test_static_missing_rate():
     with pytest.raises(fx.MissingFXRateError):
@@ -238,6 +246,7 @@ def test_production_adapter_interface():
 
 # ─────────────────────────── conversions ───────────────────────────────────
 
+
 def test_convert_amount():
     c = conv.convert(static(), 100, "EUR", "USD")
     assert c.to_amount == pytest.approx(110)
@@ -245,14 +254,16 @@ def test_convert_amount():
 
 def test_convert_same_currency_identity():
     c = conv.convert(static(), 100, "USD", "USD")
-    assert c.rate == 1.0 and c.direction.value == "identity"
+    assert c.rate == 1.0
+    assert c.direction.value == "identity"
 
 
 def test_convert_to_target():
     c = conv.convert_to_target(static(), 110, "USD", "EUR")
     # need enough USD to obtain 110 EUR
     assert c.to_amount == pytest.approx(110)
-    assert c.from_currency == "USD" and c.to_currency == "EUR"
+    assert c.from_currency == "USD"
+    assert c.to_currency == "EUR"
 
 
 def test_round_trip_zero_error():
@@ -273,6 +284,7 @@ def test_conversion_dict_round_trip():
 
 # ─────────────────────────── book / cross-currency trades ──────────────────
 
+
 def test_book_single_currency_trade():
     b = book()
     b.book_fill(security_id="AAPL", quantity=100, price=150.0, currency="USD", trade_date=D0)
@@ -281,39 +293,69 @@ def test_book_single_currency_trade():
 
 def test_usd_security_usd_cash():
     b = book()
-    b.book_fill(security_id="AAPL", quantity=10, price=100.0, currency="USD",
-                funding_currency="USD", trade_date=D0)
+    b.book_fill(
+        security_id="AAPL",
+        quantity=10,
+        price=100.0,
+        currency="USD",
+        funding_currency="USD",
+        trade_date=D0,
+    )
     assert b.currencies() == ["USD"]
     assert b.books["USD"].accounting.cash == pytest.approx(1_000_000 - 1000)
 
 
 def test_eur_security_usd_cash_creates_eur_book():
     b = book()
-    b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR",
-                funding_currency="USD", trade_date=D0)
+    b.book_fill(
+        security_id="SAP",
+        quantity=100,
+        price=50.0,
+        currency="EUR",
+        funding_currency="USD",
+        trade_date=D0,
+    )
     assert "EUR" in b.currencies()
     assert b.books["EUR"].accounting.shares("SAP") == 100
 
 
 def test_eur_funded_from_usd_moves_usd_cash():
     b = book()
-    b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR",
-                funding_currency="USD", trade_date=D0)
+    b.book_fill(
+        security_id="SAP",
+        quantity=100,
+        price=50.0,
+        currency="EUR",
+        funding_currency="USD",
+        trade_date=D0,
+    )
     # 5000 EUR needed → 5000/ (1/1.10) USD = 5500 USD
     assert b.books["USD"].accounting.cash == pytest.approx(1_000_000 - 5500)
 
 
 def test_eur_funded_leaves_eur_cash_flat():
     b = book()
-    b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR",
-                funding_currency="USD", trade_date=D0)
+    b.book_fill(
+        security_id="SAP",
+        quantity=100,
+        price=50.0,
+        currency="EUR",
+        funding_currency="USD",
+        trade_date=D0,
+    )
     assert b.books["EUR"].accounting.cash == pytest.approx(0.0, abs=1e-6)
 
 
 def test_inr_security_usd_cash():
     b = book()
-    b.book_fill(security_id="INFY", quantity=1000, price=1500.0, currency="INR",
-                funding_currency="USD", trade_date=D0)
+    b.book_fill(
+        security_id="INFY",
+        quantity=1000,
+        price=1500.0,
+        currency="INR",
+        funding_currency="USD",
+        trade_date=D0,
+    )
     assert b.books["INR"].accounting.shares("INFY") == 1000
 
 
@@ -336,8 +378,14 @@ def test_eur_proceeds_converted_to_usd():
 
 def test_gbp_settlement_funded_from_usd():
     b = book()
-    b.book_fill(security_id="LLOY", quantity=1000, price=0.5, currency="GBP",
-                funding_currency="USD", trade_date=D0)
+    b.book_fill(
+        security_id="LLOY",
+        quantity=1000,
+        price=0.5,
+        currency="GBP",
+        funding_currency="USD",
+        trade_date=D0,
+    )
     assert b.books["GBP"].accounting.shares("LLOY") == 1000
 
 
@@ -350,8 +398,14 @@ def test_security_currency_mismatch_rejected():
 
 def test_conversion_recorded():
     b = book()
-    b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR",
-                funding_currency="USD", trade_date=D0)
+    b.book_fill(
+        security_id="SAP",
+        quantity=100,
+        price=50.0,
+        currency="EUR",
+        funding_currency="USD",
+        trade_date=D0,
+    )
     assert len(b.conversions) == 1
     assert b.conversions[0].reason == "trade_funding"
 
@@ -363,10 +417,12 @@ def test_base_book_always_exists():
 
 # ─────────────────────────── multi-currency cash ───────────────────────────
 
+
 def test_currency_balances_independent():
     b = book(initial={"USD": 500_000.0, "EUR": 200_000.0})
     bals = fx.settlement_by_currency(b)  # just ensure book set up
     from mentisrex.research.fx.multi_currency_cash import currency_balances
+
     cb = currency_balances(b)
     assert cb["USD"].economic == pytest.approx(500_000)
     assert cb["EUR"].economic == pytest.approx(200_000)
@@ -389,6 +445,7 @@ def test_cash_not_collapsed():
 
 
 # ─────────────────────────── valuation ─────────────────────────────────────
+
 
 def test_valuation_base_total():
     b = book(initial={"USD": 1_000_000.0, "EUR": 100_000.0})
@@ -425,6 +482,7 @@ def test_valuation_base_rate_one():
 
 
 # ─────────────────────────── FX exposure ───────────────────────────────────
+
 
 def test_exposure_base_currency_excluded():
     b = book(initial={"USD": 1_000_000.0})
@@ -471,6 +529,7 @@ def test_exposure_settlement_component():
 
 # ─────────────────────────── FX P&L ────────────────────────────────────────
 
+
 def test_fx_pnl_reconciles():
     prov = fx.HistoricalFXRateProvider({"EUR/USD": {D0: 1.10, D1: 1.20}}, pivot="USD")
     b = fx.MultiCurrencyBook("USD", prov, initial={"USD": 1_000_000.0, "EUR": 100_000.0})
@@ -510,6 +569,7 @@ def test_fx_pnl_base_currency_no_fx():
 
 # ─────────────────────────── realized FX P&L ───────────────────────────────
 
+
 def test_realized_fx_pnl_on_round_trip_gain():
     prov = fx.HistoricalFXRateProvider({"EUR/USD": {D0: 1.10, D1: 1.20}}, pivot="USD")
     b = fx.MultiCurrencyBook("USD", prov, initial={"USD": 1_000_000.0})
@@ -535,10 +595,17 @@ def test_base_realized_includes_fx():
 
 # ─────────────────────────── settlement ────────────────────────────────────
 
+
 def test_settle_per_currency():
     b = book()
-    b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR",
-                funding_currency="USD", trade_date=D0)
+    b.book_fill(
+        security_id="SAP",
+        quantity=100,
+        price=50.0,
+        currency="EUR",
+        funding_currency="USD",
+        trade_date=D0,
+    )
     settled = b.settle(date(2026, 1, 8))
     assert any(settled[c] for c in settled)
 
@@ -555,7 +622,8 @@ def test_fund_settlement_creates_conversion():
     tid = b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR", trade_date=D0)
     n0 = len(b.conversions)
     b.fund_settlement("EUR", tid, "USD", when=D0) if False else fx.fund_settlement(
-        b, "EUR", tid, "USD", when=D0)
+        b, "EUR", tid, "USD", when=D0
+    )
     assert len(b.conversions) == n0 + 1
 
 
@@ -581,8 +649,14 @@ def test_obligations_by_currency():
 def test_different_trade_and_settlement_currency():
     # trade in EUR, funded/settled from USD base
     b = book()
-    tid = b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR",
-                      funding_currency="USD", trade_date=D0)
+    tid = b.book_fill(
+        security_id="SAP",
+        quantity=100,
+        price=50.0,
+        currency="EUR",
+        funding_currency="USD",
+        trade_date=D0,
+    )
     fx.fund_settlement(b, "EUR", tid, "USD", when=D0)
     b.settle(date(2026, 1, 8))
     assert b.books["EUR"].trades[tid].value == "settled"
@@ -596,10 +670,12 @@ def test_fund_settlement_inflow_noop():
 
 # ─────────────────────────── corporate actions ─────────────────────────────
 
+
 def test_dividend_in_security_currency():
     b = book(initial={"USD": 1_000_000.0, "EUR": 100_000.0})
     b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR", trade_date=D0)
     from mentisrex.research.post_trade import DividendEvent
+
     fx.apply_corporate_action(b, DividendEvent("D1", "SAP", amount_per_share=2.0, ex_date=D0))
     # dividend lands in EUR book
     assert b.books["EUR"].accounting.cash == pytest.approx(100_000 - 5000 + 200)
@@ -609,9 +685,11 @@ def test_dividend_converted_to_base():
     b = book(initial={"USD": 1_000_000.0, "EUR": 100_000.0})
     b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR", trade_date=D0)
     from mentisrex.research.post_trade import DividendEvent
+
     n0 = len(b.conversions)
-    fx.apply_corporate_action(b, DividendEvent("D1", "SAP", amount_per_share=2.0, ex_date=D0),
-                              receive_currency="USD")
+    fx.apply_corporate_action(
+        b, DividendEvent("D1", "SAP", amount_per_share=2.0, ex_date=D0), receive_currency="USD"
+    )
     assert len(b.conversions) == n0 + 1
 
 
@@ -619,11 +697,13 @@ def test_split_multi_currency():
     b = book(initial={"EUR": 100_000.0})
     b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR", trade_date=D0)
     from mentisrex.research.post_trade import SplitEvent
+
     fx.apply_corporate_action(b, SplitEvent("S1", "SAP", ratio=2.0, ex_date=D0))
     assert b.books["EUR"].accounting.shares("SAP") == 200
 
 
 # ─────────────────────────── accounting ────────────────────────────────────
+
 
 def test_position_accounting_base_translation():
     b = book(initial={"EUR": 100_000.0})
@@ -648,42 +728,61 @@ def test_base_unrealized_pnl_translates():
 
 # ─────────────────────────── reconciliation ────────────────────────────────
 
+
 def test_reconcile_clean():
     b = book()
-    b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR",
-                funding_currency="USD", trade_date=D0)
+    b.book_fill(
+        security_id="SAP",
+        quantity=100,
+        price=50.0,
+        currency="EUR",
+        funding_currency="USD",
+        trade_date=D0,
+    )
     assert fx.reconcile(b, as_of=D0).ok
 
 
 def test_reconcile_detects_bad_conversion():
     from mentisrex.research.fx.models import ConversionDirection, FXConversion
+
     b = book()
-    b.conversions.append(FXConversion("BAD", "EUR", "USD", 100, 999, 1.10,
-                                      ConversionDirection.DIRECT, D0, "static"))
+    b.conversions.append(
+        FXConversion("BAD", "EUR", "USD", 100, 999, 1.10, ConversionDirection.DIRECT, D0, "static")
+    )
     r = fx.reconcile(b, as_of=D0)
-    assert not r.ok and "fx_conversion_mismatch" in r.categories
+    assert not r.ok
+    assert "fx_conversion_mismatch" in r.categories
 
 
 def test_reconcile_detects_bad_rate():
     from mentisrex.research.fx.models import ConversionDirection, FXConversion
+
     b = book()
-    b.conversions.append(FXConversion("BAD", "EUR", "USD", 100, -110, -1.10,
-                                      ConversionDirection.DIRECT, D0, "static"))
+    b.conversions.append(
+        FXConversion(
+            "BAD", "EUR", "USD", 100, -110, -1.10, ConversionDirection.DIRECT, D0, "static"
+        )
+    )
     r = fx.reconcile(b, as_of=D0)
     assert "wrong_fx_rate" in r.categories
 
 
 def test_reconcile_broker_positions():
     from mentisrex.research.paper_trading.models import BrokerAccount, BrokerPosition
+
     b = book(initial={"EUR": 100_000.0})
     b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR", trade_date=D0)
-    acct = BrokerAccount(account_id="x", cash=b.books["EUR"].accounting.cash,
-                         positions={"SAP": BrokerPosition("SAP", 90, 50.0)})
+    acct = BrokerAccount(
+        account_id="x",
+        cash=b.books["EUR"].accounting.cash,
+        positions={"SAP": BrokerPosition("SAP", 90, 50.0)},
+    )
     r = fx.reconcile(b, broker_accounts={"EUR": acct}, as_of=D0)
     assert not r.ok
 
 
 # ─────────────────────────── risk & stress ─────────────────────────────────
+
 
 def test_fx_risk_report():
     b = book(initial={"USD": 1_000_000.0, "EUR": 100_000.0})
@@ -742,7 +841,8 @@ def test_stress_simultaneous():
     b = book(initial={"USD": 1_000_000.0, "EUR": 100_000.0, "INR": 1_000_000.0})
     scen = fx.FXStressScenario("multi", {"EUR": 0.05, "INR": -0.10})
     res = fx.apply_fx_stress(b, scen, as_of=D0)
-    assert res.by_currency["EUR"] > 0 and res.by_currency["INR"] < 0
+    assert res.by_currency["EUR"] > 0
+    assert res.by_currency["INR"] < 0
 
 
 def test_stress_test_all_scenarios():
@@ -759,9 +859,11 @@ def test_stress_base_only_no_pnl():
 
 # ─────────────────────────── hedging ───────────────────────────────────────
 
+
 def test_make_forward():
     h = fx.make_forward("EUR", 100_000)
-    assert h.instrument == "forward" and h.currency == "EUR"
+    assert h.instrument == "forward"
+    assert h.currency == "EUR"
 
 
 def test_make_future_swap():
@@ -778,6 +880,7 @@ def test_unhedged_by_currency():
 
 # ─────────────────────────── performance attribution ───────────────────────
 
+
 def test_currency_attribution_reconciles():
     prov = fx.HistoricalFXRateProvider({"EUR/USD": {D0: 1.10, D1: 1.20}}, pivot="USD")
     b = fx.MultiCurrencyBook("USD", prov, initial={"USD": 1_000_000.0, "EUR": 100_000.0})
@@ -789,6 +892,7 @@ def test_currency_attribution_reconciles():
 
 
 # ─────────────────────────── reporting ─────────────────────────────────────
+
 
 def test_cash_by_currency_report():
     b = book(initial={"USD": 500_000.0, "EUR": 200_000.0})
@@ -811,16 +915,25 @@ def test_portfolio_report_with_pnl():
     s0 = fx.value_snapshot(b, as_of=D0)
     s1 = fx.value_snapshot(b, as_of=D1)
     rep = fx.multi_currency_portfolio_report(b, as_of=D1, snap0=s0, snap1=s1)
-    assert rep.pnl is not None and rep.pnl.reconciles
+    assert rep.pnl is not None
+    assert rep.pnl.reconciles
 
 
 # ─────────────────────────── serialization ─────────────────────────────────
 
+
 def test_serialization_round_trip_conversions():
     from mentisrex.research.fx import serialization
+
     b = book()
-    b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR",
-                funding_currency="USD", trade_date=D0)
+    b.book_fill(
+        security_id="SAP",
+        quantity=100,
+        price=50.0,
+        currency="EUR",
+        funding_currency="USD",
+        trade_date=D0,
+    )
     d = serialization.to_dict(b, as_of=D0)
     restored = [conv.conversion_from_dict(c) for c in d["conversions"]]
     assert restored == b.conversions
@@ -828,18 +941,21 @@ def test_serialization_round_trip_conversions():
 
 def test_serialization_json_stable():
     from mentisrex.research.fx import serialization
+
     b = book(initial={"USD": 1_000_000.0, "EUR": 100_000.0})
     assert serialization.to_json(b, as_of=D0) == serialization.to_json(b, as_of=D0)
 
 
 def test_serialization_preserves_currencies():
     from mentisrex.research.fx import serialization
+
     b = book(initial={"USD": 1_000_000.0, "EUR": 100_000.0})
     d = serialization.to_dict(b, as_of=D0)
     assert set(d["currencies"]) == {"USD", "EUR"}
 
 
 # ─────────────────────────── registry ──────────────────────────────────────
+
 
 def test_attach_fx(tmp_path):
     from types import SimpleNamespace
@@ -858,18 +974,27 @@ def test_attach_fx(tmp_path):
 
 # ─────────────────────────── validation ────────────────────────────────────
 
+
 def test_validate_book_clean():
     b = book()
-    b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR",
-                funding_currency="USD", trade_date=D0)
+    b.book_fill(
+        security_id="SAP",
+        quantity=100,
+        price=50.0,
+        currency="EUR",
+        funding_currency="USD",
+        trade_date=D0,
+    )
     assert fx.validate_book(b).ok
 
 
 def test_validate_book_detects_bad_conversion():
     from mentisrex.research.fx.models import ConversionDirection, FXConversion
+
     b = book()
-    b.conversions.append(FXConversion("BAD", "EUR", "USD", 100, 999, 1.10,
-                                      ConversionDirection.DIRECT, D0, "static"))
+    b.conversions.append(
+        FXConversion("BAD", "EUR", "USD", 100, 999, 1.10, ConversionDirection.DIRECT, D0, "static")
+    )
     assert not fx.validate_book(b).ok
 
 
@@ -881,6 +1006,7 @@ def test_validate_rate_inversion():
 
 # ─────────────────────────── backward compatibility ────────────────────────
 
+
 def _m15_engine():
     eng = PostTradeEngine(1_000_000.0, settlement_config=SettlementConfig(default_days=2))
     eng.book_fill(security_id="AAPL", quantity=100, price=150.0, cost=1.0, trade_date=D0)
@@ -890,20 +1016,32 @@ def _m15_engine():
 
 
 def _single_ccy_book():
-    b = fx.MultiCurrencyBook("USD", static(), initial={"USD": 1_000_000.0},
-                             settlement_config=SettlementConfig(default_days=2))
-    b.book_fill(security_id="AAPL", quantity=100, price=150.0, cost=1.0, currency="USD", trade_date=D0)
-    b.book_fill(security_id="MSFT", quantity=50, price=300.0, cost=1.0, currency="USD", trade_date=D0)
+    b = fx.MultiCurrencyBook(
+        "USD",
+        static(),
+        initial={"USD": 1_000_000.0},
+        settlement_config=SettlementConfig(default_days=2),
+    )
+    b.book_fill(
+        security_id="AAPL", quantity=100, price=150.0, cost=1.0, currency="USD", trade_date=D0
+    )
+    b.book_fill(
+        security_id="MSFT", quantity=50, price=300.0, cost=1.0, currency="USD", trade_date=D0
+    )
     b.settle(date(2026, 1, 8))
     return b
 
 
 def test_single_currency_matches_m15_cash():
-    assert _single_ccy_book().books["USD"].accounting.cash == pytest.approx(_m15_engine().accounting.cash)
+    assert _single_ccy_book().books["USD"].accounting.cash == pytest.approx(
+        _m15_engine().accounting.cash
+    )
 
 
 def test_single_currency_matches_m15_value():
-    assert _single_ccy_book().books["USD"].accounting.value() == pytest.approx(_m15_engine().accounting.value())
+    assert _single_ccy_book().books["USD"].accounting.value() == pytest.approx(
+        _m15_engine().accounting.value()
+    )
 
 
 def test_single_currency_matches_m15_fingerprint():
@@ -922,10 +1060,17 @@ def test_single_currency_base_value_equals_local():
 
 # ─────────────────────────── determinism / invariants ──────────────────────
 
+
 def _build():
     b = book(initial={"USD": 1_000_000.0, "EUR": 100_000.0})
-    b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR",
-                funding_currency="USD", trade_date=D0)
+    b.book_fill(
+        security_id="SAP",
+        quantity=100,
+        price=50.0,
+        currency="EUR",
+        funding_currency="USD",
+        trade_date=D0,
+    )
     b.book_fill(security_id="AAPL", quantity=100, price=150.0, currency="USD", trade_date=D0)
     b.settle(date(2026, 1, 8))
     return b
@@ -938,8 +1083,14 @@ def test_determinism_fingerprint():
 def test_fingerprint_changes_with_trade():
     a = _build()
     b = _build()
-    b.book_fill(security_id="SAP", quantity=10, price=51.0, currency="EUR",
-                funding_currency="USD", trade_date=D0)
+    b.book_fill(
+        security_id="SAP",
+        quantity=10,
+        price=51.0,
+        currency="EUR",
+        funding_currency="USD",
+        trade_date=D0,
+    )
     assert fx.fingerprint(a) != fx.fingerprint(b)
 
 
@@ -959,7 +1110,8 @@ def test_invariant_cash_sum_equals_base():
 
 def test_invariant_pnl_reconciles_multi_currency():
     prov = fx.HistoricalFXRateProvider(
-        {"EUR/USD": {D0: 1.10, D1: 1.15}, "GBP/USD": {D0: 1.25, D1: 1.30}}, pivot="USD")
+        {"EUR/USD": {D0: 1.10, D1: 1.15}, "GBP/USD": {D0: 1.25, D1: 1.30}}, pivot="USD"
+    )
     b = fx.MultiCurrencyBook("USD", prov, initial={"USD": 1e6, "EUR": 1e5, "GBP": 1e5})
     s0 = fx.value_snapshot(b, as_of=D0)
     s1 = fx.value_snapshot(b, as_of=D1)
@@ -968,10 +1120,12 @@ def test_invariant_pnl_reconciles_multi_currency():
 
 def test_diagnostics_shape():
     d = fx.diagnostics(_build(), as_of=D0)
-    assert d["n_currencies"] == 2 and "per_book_fingerprint" in d
+    assert d["n_currencies"] == 2
+    assert "per_book_fingerprint" in d
 
 
 # ─────────────────────────── edge cases ────────────────────────────────────
+
 
 def test_same_currency_conversion_no_pnl():
     b = book()
@@ -1002,8 +1156,9 @@ def test_partial_conversion():
 def test_weekend_settlement_skips():
     # trade Friday, T+2 settles Tuesday (skips weekend)
     b = book()
-    tid = b.book_fill(security_id="SAP", quantity=100, price=50.0, currency="EUR",
-                      trade_date=date(2026, 1, 9))  # Friday
+    tid = b.book_fill(
+        security_id="SAP", quantity=100, price=50.0, currency="EUR", trade_date=date(2026, 1, 9)
+    )  # Friday
     inst = b.books["EUR"].settlement.instructions[f"S-{tid}"]
     assert inst.settle_date == date(2026, 1, 13)  # Tuesday
 

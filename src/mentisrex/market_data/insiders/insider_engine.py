@@ -27,8 +27,8 @@ class InsiderSignal:
     buy_value: float
     sell_value: float
     net_value: float
-    insider_count: int          # distinct insiders buying (cluster size)
-    ownership_change: float     # signed shares across available transactions
+    insider_count: int  # distinct insiders buying (cluster size)
+    ownership_change: float  # signed shares across available transactions
     cluster_buy: bool
 
 
@@ -50,11 +50,16 @@ class InsiderEngine:
         buy_value = sum(t["value"] or 0.0 for t in buys)
         sell_value = sum(t["value"] or 0.0 for t in sells)
         buyers = {t["insider_name"] for t in buys if t["insider_name"]}
-        ownership_change = sum(t["shares"] or 0.0 for t in txns if t["transaction_code"] in (_BUY, _SELL))
+        ownership_change = sum(
+            t["shares"] or 0.0 for t in txns if t["transaction_code"] in (_BUY, _SELL)
+        )
         return InsiderSignal(
-            security_id=security_id, as_of=as_of,
-            purchases=len(buys), sales=len(sells),
-            buy_value=buy_value, sell_value=sell_value,
+            security_id=security_id,
+            as_of=as_of,
+            purchases=len(buys),
+            sales=len(sells),
+            buy_value=buy_value,
+            sell_value=sell_value,
             net_value=buy_value - sell_value,
             insider_count=len(buyers),
             ownership_change=ownership_change,

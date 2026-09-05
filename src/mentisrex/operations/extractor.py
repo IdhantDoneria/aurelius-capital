@@ -18,30 +18,82 @@ _HAS_PYPDF = importlib.util.find_spec("pypdf") is not None
 
 # Common section headers used in academic papers
 _SECTION_PATTERNS = {
-    "abstract": re.compile(r"(?i)\babstract\b[:\s]*(.{100,2000}?)(?=\n\n|\Z|\bintroduction\b|\b1\b\.?\s)", re.DOTALL),
-    "introduction": re.compile(r"(?i)\bintroduction\b[:\s]*(.{100,3000}?)(?=\n\n[A-Z0-9]|\Z)", re.DOTALL),
-    "methodology": re.compile(r"(?i)\b(?:methodology|methods|approach)\b[:\s]*(.{100,3000}?)(?=\n\n[A-Z0-9]|\Z)", re.DOTALL),
-    "results": re.compile(r"(?i)\b(?:results|findings|empirical results)\b[:\s]*(.{100,3000}?)(?=\n\n[A-Z0-9]|\Z)", re.DOTALL),
-    "conclusion": re.compile(r"(?i)\b(?:conclusion|conclusions|summary)\b[:\s]*(.{100,2000}?)(?=\n\n[A-Z0-9]|\Z|\breferences\b)", re.DOTALL),
+    "abstract": re.compile(
+        r"(?i)\babstract\b[:\s]*(.{100,2000}?)(?=\n\n|\Z|\bintroduction\b|\b1\b\.?\s)", re.DOTALL
+    ),
+    "introduction": re.compile(
+        r"(?i)\bintroduction\b[:\s]*(.{100,3000}?)(?=\n\n[A-Z0-9]|\Z)", re.DOTALL
+    ),
+    "methodology": re.compile(
+        r"(?i)\b(?:methodology|methods|approach)\b[:\s]*(.{100,3000}?)(?=\n\n[A-Z0-9]|\Z)",
+        re.DOTALL,
+    ),
+    "results": re.compile(
+        r"(?i)\b(?:results|findings|empirical results)\b[:\s]*(.{100,3000}?)(?=\n\n[A-Z0-9]|\Z)",
+        re.DOTALL,
+    ),
+    "conclusion": re.compile(
+        r"(?i)\b(?:conclusion|conclusions|summary)\b[:\s]*(.{100,2000}?)(?=\n\n[A-Z0-9]|\Z|\breferences\b)",
+        re.DOTALL,
+    ),
 }
 
 _YEAR_PATTERN = re.compile(r"\b(19[89]\d|20[0-3]\d)\b")
 _DOI_PATTERN = re.compile(r"\b10\.\d{4,}/\S+")
 _ARXIV_PATTERN = re.compile(r"arXiv[:\s]+(\d{4}\.\d{4,5})", re.IGNORECASE)
 _DATASET_KEYWORDS = [
-    "CRSP", "Compustat", "Bloomberg", "FactSet", "Quandl", "Ken French",
-    "S&P 500", "Russell", "MSCI", "Fama-French", "TAQ", "TRACE",
-    "Yahoo Finance", "WRDS", "Refinitiv", "Datastream",
+    "CRSP",
+    "Compustat",
+    "Bloomberg",
+    "FactSet",
+    "Quandl",
+    "Ken French",
+    "S&P 500",
+    "Russell",
+    "MSCI",
+    "Fama-French",
+    "TAQ",
+    "TRACE",
+    "Yahoo Finance",
+    "WRDS",
+    "Refinitiv",
+    "Datastream",
 ]
 _FEATURE_KEYWORDS = [
-    "momentum", "value", "size", "quality", "profitability", "volatility",
-    "beta", "book-to-market", "earnings yield", "price-to-earnings",
-    "return reversal", "idiosyncratic", "factor", "signal", "alpha",
-    "Sharpe", "drawdown", "turnover", "liquidity", "sentiment",
+    "momentum",
+    "value",
+    "size",
+    "quality",
+    "profitability",
+    "volatility",
+    "beta",
+    "book-to-market",
+    "earnings yield",
+    "price-to-earnings",
+    "return reversal",
+    "idiosyncratic",
+    "factor",
+    "signal",
+    "alpha",
+    "Sharpe",
+    "drawdown",
+    "turnover",
+    "liquidity",
+    "sentiment",
 ]
 _STAT_KEYWORDS = [
-    "t-statistic", "p-value", "Sharpe ratio", "alpha", "beta", "R-squared",
-    "regression", "OLS", "panel", "bootstrap", "cross-validation", "Fama-MacBeth",
+    "t-statistic",
+    "p-value",
+    "Sharpe ratio",
+    "alpha",
+    "beta",
+    "R-squared",
+    "regression",
+    "OLS",
+    "panel",
+    "bootstrap",
+    "cross-validation",
+    "Fama-MacBeth",
 ]
 
 
@@ -97,6 +149,7 @@ def _extract_pdf(path: Path) -> str:
         return f"[PDF: {path.name} — install pypdf for text extraction]"
     try:
         import pypdf
+
         reader = pypdf.PdfReader(str(path))
         pages = [page.extract_text() or "" for page in reader.pages]
         return "\n\n".join(pages)
@@ -162,11 +215,15 @@ def _extract_section(name: str, text: str) -> str:
 
 
 def _extract_datasets(text: str) -> list[str]:
-    return [kw for kw in _DATASET_KEYWORDS if re.search(rf"\b{re.escape(kw)}\b", text, re.IGNORECASE)]
+    return [
+        kw for kw in _DATASET_KEYWORDS if re.search(rf"\b{re.escape(kw)}\b", text, re.IGNORECASE)
+    ]
 
 
 def _extract_features(text: str) -> list[str]:
-    return [kw for kw in _FEATURE_KEYWORDS if re.search(rf"\b{re.escape(kw)}\b", text, re.IGNORECASE)]
+    return [
+        kw for kw in _FEATURE_KEYWORDS if re.search(rf"\b{re.escape(kw)}\b", text, re.IGNORECASE)
+    ]
 
 
 def _extract_stats(text: str) -> list[str]:

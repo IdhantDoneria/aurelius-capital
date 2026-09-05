@@ -29,8 +29,8 @@ class FactorEngine(ABC):
 
 
 if __name__ == "__main__":
-    from mentisrex.factors.us import USFactorEngine
     from mentisrex.factors.nse import NSEFactorEngine
+    from mentisrex.factors.us import USFactorEngine
 
     assert issubclass(USFactorEngine, FactorEngine)
     assert issubclass(NSEFactorEngine, FactorEngine)

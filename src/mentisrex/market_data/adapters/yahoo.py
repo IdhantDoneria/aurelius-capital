@@ -159,23 +159,27 @@ def parse_raw_history(df: Any, symbol: str, frequency: str = "1d") -> tuple[list
         ts_dt = ts.to_pydatetime()
         if ts_dt.tzinfo is None:
             ts_dt = ts_dt.replace(tzinfo=UTC)
-        bars.append({
-            "symbol": sym,
-            "timestamp": ts_dt,
-            "frequency": frequency,
-            "open": Decimal(str(round(_f(row, "Open"), 8))),
-            "high": Decimal(str(round(_f(row, "High"), 8))),
-            "low": Decimal(str(round(_f(row, "Low"), 8))),
-            "close": Decimal(str(round(close, 8))),
-            "volume": Decimal(str(int(_f(row, "Volume")))),
-            "source": "yahoo_finance",
-        })
+        bars.append(
+            {
+                "symbol": sym,
+                "timestamp": ts_dt,
+                "frequency": frequency,
+                "open": Decimal(str(round(_f(row, "Open"), 8))),
+                "high": Decimal(str(round(_f(row, "High"), 8))),
+                "low": Decimal(str(round(_f(row, "Low"), 8))),
+                "close": Decimal(str(round(close, 8))),
+                "volume": Decimal(str(int(_f(row, "Volume")))),
+                "source": "yahoo_finance",
+            }
+        )
         ratio = _f(row, "Stock Splits")
         if ratio > 0:
-            actions.append({
-                "symbol": sym,
-                "effective_date": ts_dt.date(),
-                "ratio": ratio,
-                "announced_date": ts_dt.date(),
-            })
+            actions.append(
+                {
+                    "symbol": sym,
+                    "effective_date": ts_dt.date(),
+                    "ratio": ratio,
+                    "announced_date": ts_dt.date(),
+                }
+            )
     return bars, actions

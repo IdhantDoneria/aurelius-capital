@@ -19,7 +19,6 @@ fetch() raises NotImplementedError. Use convert(observations, series_id, as_of) 
 
 from __future__ import annotations
 
-from dataclasses import replace
 from datetime import date, datetime
 
 from mentisrex.research.market_data_ops.adapters import SourceAdapter, SourceMetadata
@@ -81,16 +80,20 @@ class FREDSourceAdapter(SourceAdapter):
     """
 
     def __init__(self, *, name: str = "fred") -> None:
-        super().__init__(SourceMetadata(
-            name,
-            frozenset({
-                SourceCapability.HISTORICAL,
-                SourceCapability.RATES,
-            }),
-            schema_version="1.0",
-            description="FRED macro data — bitemporal vintage-aware",
-            vendor="fred",
-        ))
+        super().__init__(
+            SourceMetadata(
+                name,
+                frozenset(
+                    {
+                        SourceCapability.HISTORICAL,
+                        SourceCapability.RATES,
+                    }
+                ),
+                schema_version="1.0",
+                description="FRED macro data — bitemporal vintage-aware",
+                vendor="fred",
+            )
+        )
         self._seq = 0
 
     def fetch(self, as_of: date, *, security_ids=None, fields=None) -> list[SourceMessage]:
@@ -101,8 +104,15 @@ class FREDSourceAdapter(SourceAdapter):
             "convert(response['observations'], series_id, as_of)."
         )
 
-    def convert(self, observations: list[dict], series_id: str, as_of: date,
-                *, unit: str | None = None, currency: str | None = None) -> list[SourceMessage]:
+    def convert(
+        self,
+        observations: list[dict],
+        series_id: str,
+        as_of: date,
+        *,
+        unit: str | None = None,
+        currency: str | None = None,
+    ) -> list[SourceMessage]:
         """Convert FRED observation list to SourceMessage (offline, testable).
 
         observations: list of FRED observation dicts (may include realtime_start for PIT).
@@ -113,10 +123,13 @@ class FREDSourceAdapter(SourceAdapter):
         field = _SERIES_MAP.get(series_id.upper(), series_id.lower())
         msgs = []
         # sort by (realtime_start, date) for deterministic revision numbering
-        sorted_obs = sorted(observations, key=lambda o: (
-            str(o.get("realtime_start") or o.get("date") or ""),
-            str(o.get("date") or ""),
-        ))
+        sorted_obs = sorted(
+            observations,
+            key=lambda o: (
+                str(o.get("realtime_start") or o.get("date") or ""),
+                str(o.get("date") or ""),
+            ),
+        )
         revision_counter: dict[str, int] = {}
         for obs in sorted_obs:
             effective = _parse_date(obs.get("date"))
@@ -156,16 +169,18 @@ class FREDSourceAdapter(SourceAdapter):
                 payload["currency"] = currency
 
             self._seq += 1
-            msgs.append(SourceMessage(
-                source=self.metadata.name,
-                payload=payload,
-                msg_type=MessageType.REVISION if rev > 0 else MessageType.OBSERVATION,
-                vendor_id=f"{series_id}:{effective.isoformat()}",
-                sequence=self._seq,
-                observation_date=knowledge,
-                effective_date=effective,
-                schema_version=self.metadata.schema_version,
-            ))
+            msgs.append(
+                SourceMessage(
+                    source=self.metadata.name,
+                    payload=payload,
+                    msg_type=MessageType.REVISION if rev > 0 else MessageType.OBSERVATION,
+                    vendor_id=f"{series_id}:{effective.isoformat()}",
+                    sequence=self._seq,
+                    observation_date=knowledge,
+                    effective_date=effective,
+                    schema_version=self.metadata.schema_version,
+                )
+            )
         return self._record(msgs)
 
 

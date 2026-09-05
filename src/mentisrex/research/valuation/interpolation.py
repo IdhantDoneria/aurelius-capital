@@ -8,13 +8,13 @@ both dimensions. Kept minimal on purpose — splines are a documented future ext
 from __future__ import annotations
 
 import bisect
-from enum import Enum
+from enum import StrEnum
 
 
-class Extrapolation(str, Enum):
-    FLAT = "flat"          # hold the nearest endpoint value
-    LINEAR = "linear"      # extend the terminal slope
-    ERROR = "error"        # raise outside the knot range
+class Extrapolation(StrEnum):
+    FLAT = "flat"  # hold the nearest endpoint value
+    LINEAR = "linear"  # extend the terminal slope
+    ERROR = "error"  # raise outside the knot range
 
 
 def _locate(xs: list, x: float) -> int:
@@ -53,17 +53,27 @@ def _extrapolate(xs, ys, x, extrap, *, left: bool) -> float:
     return y0 + (y1 - y0) * (x - x0) / (x1 - x0)
 
 
-def log_linear(xs: list, ys: list, x: float, *, extrap: Extrapolation = Extrapolation.FLAT) -> float:
+def log_linear(
+    xs: list, ys: list, x: float, *, extrap: Extrapolation = Extrapolation.FLAT
+) -> float:
     """Log-linear interpolation (for discount factors — keeps forward rates piecewise-constant)."""
     import math
+
     if any(y <= 0 for y in ys):
         raise ValueError("log_linear requires positive ys")
     ly = [math.log(y) for y in ys]
     return math.exp(linear(xs, ly, x, extrap=extrap))
 
 
-def bilinear(xs: list, ys: list, grid: list, x: float, y: float, *,
-             extrap: Extrapolation = Extrapolation.FLAT) -> float:
+def bilinear(
+    xs: list,
+    ys: list,
+    grid: list,
+    x: float,
+    y: float,
+    *,
+    extrap: Extrapolation = Extrapolation.FLAT,
+) -> float:
     """Bilinear interpolation on a grid[i][j] indexed by xs[i], ys[j] (vol surfaces)."""
     row = [linear(ys, grid[i], y, extrap=extrap) for i in range(len(xs))]
     return linear(xs, row, x, extrap=extrap)

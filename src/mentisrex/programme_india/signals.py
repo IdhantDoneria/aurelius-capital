@@ -32,8 +32,9 @@ def momentum_score(hist_close: pd.DataFrame, cfg: IndiaConfig) -> pd.Series:
     return zscore(raw)
 
 
-def quality_score_from_fundamentals(roe: pd.Series, debt_to_equity: pd.Series,
-                                     earnings_stability: pd.Series) -> pd.Series:
+def quality_score_from_fundamentals(
+    roe: pd.Series, debt_to_equity: pd.Series, earnings_stability: pd.Series
+) -> pd.Series:
     """Blend real ROE / debt-to-equity / earnings-stability into one
     quality z-score: 0.5 x ROE - 0.3 x leverage + 0.2 x stability.
     All three inputs must already be point-in-time (no look-ahead) — that
@@ -54,8 +55,9 @@ def composite_score(mom_z: pd.Series, quality_z: pd.Series | None, cfg: IndiaCon
     return composite.where(mom_z.notna())
 
 
-def select_with_sector_cap(ranked_names: list[str], sector_map: dict[str, str], cfg: IndiaConfig,
-                            n_pick: int) -> list[str]:
+def select_with_sector_cap(
+    ranked_names: list[str], sector_map: dict[str, str], cfg: IndiaConfig, n_pick: int
+) -> list[str]:
     """Take the top `n_pick` names from an already-sorted-by-score list,
     greedily skipping any name that would push a single sector's SHARE OF
     THE FINAL BOOK above `cfg.sector_cap`. This is the direct, mechanism-

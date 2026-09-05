@@ -21,8 +21,8 @@ from mentisrex.research.instruments.models import (
     OptionRight,
 )
 from mentisrex.research.valuation import american, bonds, futures, pricing
-from mentisrex.research.valuation import swaps as _swaps
 from mentisrex.research.valuation import cross_currency as _xccy
+from mentisrex.research.valuation import swaps as _swaps
 from mentisrex.research.valuation.daycount import DayCount, year_fraction
 from mentisrex.research.valuation.models import (
     Greeks,
@@ -66,9 +66,15 @@ class ValuationEngine:
         return hashlib.blake2b("|".join(parts).encode(), digest_size=8).hexdigest()
 
     # ── single-instrument valuation ─────────────────────────────────────────────
-    def value(self, inst: Instrument, snap: MarketDataSnapshot,
-              config: ValuationConfiguration | None = None, *, quantity: float = 1.0,
-              cost_basis: float | None = None) -> ValuationResult:
+    def value(
+        self,
+        inst: Instrument,
+        snap: MarketDataSnapshot,
+        config: ValuationConfiguration | None = None,
+        *,
+        quantity: float = 1.0,
+        cost_basis: float | None = None,
+    ) -> ValuationResult:
         config = config or ValuationConfiguration()
         if self.validate_pit_on_value:
             probs = validate_pit(snap, max_staleness_days=config.max_staleness_days)
@@ -116,12 +122,21 @@ class ValuationEngine:
         pnl = 0.0 if cost_basis is None else (price - cost_basis) * quantity * cs
 
         return ValuationResult(
-            instrument_id=inst.instrument_id, valuation_date=snap.as_of, price=price,
-            market_value=market_value, currency=inst.currency, base_value=base_value,
-            model_name=model, model_version=MODEL_VERSION,
+            instrument_id=inst.instrument_id,
+            valuation_date=snap.as_of,
+            price=price,
+            market_value=market_value,
+            currency=inst.currency,
+            base_value=base_value,
+            model_name=model,
+            model_version=MODEL_VERSION,
             input_fingerprint=self._input_fp(inst, config, assumptions),
-            market_data_fingerprint=snap.fingerprint(), quantity=quantity, pnl=pnl,
-            greeks=greeks, assumptions=assumptions)
+            market_data_fingerprint=snap.fingerprint(),
+            quantity=quantity,
+            pnl=pnl,
+            greeks=greeks,
+            assumptions=assumptions,
+        )
 
     def _value_option(self, inst, snap, config, t, assumptions):
         under = inst.underlying
@@ -151,15 +166,26 @@ class ValuationEngine:
             price = pricing.black_scholes_price(is_call, spot, k, r, q, vol, t)
             g = pricing.black_scholes_greeks(is_call, spot, k, r, q, vol, t)
             model = "option.black_scholes"
-        return price, Greeks(**{k2: g.get(k2, 0.0) for k2 in
-                               ("delta", "gamma", "theta", "vega", "rho", "vanna", "volga")}), model
+        return (
+            price,
+            Greeks(
+                **{
+                    k2: g.get(k2, 0.0)
+                    for k2 in ("delta", "gamma", "theta", "vega", "rho", "vanna", "volga")
+                }
+            ),
+            model,
+        )
 
     def _value_bond(self, inst, snap, t, assumptions):
         md = inst.metadata
         spec = bonds.BondSpec(
-            face=float(md.get("face", 100.0)), coupon=float(md.get("coupon", 0.0)),
-            frequency=int(md.get("frequency", 2)), maturity=inst.expiry,
-            issue=md.get("issue"))
+            face=float(md.get("face", 100.0)),
+            coupon=float(md.get("coupon", 0.0)),
+            frequency=int(md.get("frequency", 2)),
+            maturity=inst.expiry,
+            issue=md.get("issue"),
+        )
         curve = snap.rates.get(inst.currency)
         if curve is not None:
             dirty = bonds.price_from_curve(spec, curve, snap.as_of)
@@ -186,47 +212,90 @@ class ValuationEngine:
             return snap.forward(inst.instrument_id), "forward.quoted"
         raise ValuationError(f"forward {inst.instrument_id}: no spot for {under} or quoted forward")
 
-    def _to_base(self, amount: float, currency: str, snap: MarketDataSnapshot,
-                 config: ValuationConfiguration) -> float:
+    def _to_base(
+        self, amount: float, currency: str, snap: MarketDataSnapshot, config: ValuationConfiguration
+    ) -> float:
         if currency == config.base_currency:
             return amount
         return amount * snap.fx_rate(currency, config.base_currency)
 
     # ── swaps (need explicit schedule specs) ─────────────────────────────────────
-    def value_swap(self, inst_id: str, spec: _swaps.SwapSpec, disc_curve, proj_curve=None, *,
-                   snap: MarketDataSnapshot, config: ValuationConfiguration | None = None,
-                   quantity: float = 1.0) -> ValuationResult:
+    def value_swap(
+        self,
+        inst_id: str,
+        spec: _swaps.SwapSpec,
+        disc_curve,
+        proj_curve=None,
+        *,
+        snap: MarketDataSnapshot,
+        config: ValuationConfiguration | None = None,
+        quantity: float = 1.0,
+    ) -> ValuationResult:
         config = config or ValuationConfiguration()
         npv = _swaps.npv(spec, disc_curve, proj_curve)
         base = self._to_base(npv * quantity, spec.currency, snap, config)
-        assumptions = {"par_rate": _swaps.par_rate(spec, disc_curve, proj_curve),
-                       "dv01": _swaps.dv01(spec, disc_curve, proj_curve)}
+        assumptions = {
+            "par_rate": _swaps.par_rate(spec, disc_curve, proj_curve),
+            "dv01": _swaps.dv01(spec, disc_curve, proj_curve),
+        }
         return ValuationResult(
-            instrument_id=inst_id, valuation_date=snap.as_of, price=npv,
-            market_value=npv * quantity, currency=spec.currency, base_value=base,
-            model_name="swap.discount_curve", model_version=MODEL_VERSION,
+            instrument_id=inst_id,
+            valuation_date=snap.as_of,
+            price=npv,
+            market_value=npv * quantity,
+            currency=spec.currency,
+            base_value=base,
+            model_name="swap.discount_curve",
+            model_version=MODEL_VERSION,
             input_fingerprint=hashlib.blake2b(
-                f"{inst_id}|{spec.fixed_rate}|{disc_curve.fingerprint()}".encode(),
-                digest_size=8).hexdigest(),
-            market_data_fingerprint=snap.fingerprint(), quantity=quantity, assumptions=assumptions)
+                f"{inst_id}|{spec.fixed_rate}|{disc_curve.fingerprint()}".encode(), digest_size=8
+            ).hexdigest(),
+            market_data_fingerprint=snap.fingerprint(),
+            quantity=quantity,
+            assumptions=assumptions,
+        )
 
-    def value_cross_currency(self, inst_id: str, recv_leg, pay_leg, recv_curve, pay_curve, *,
-                             snap: MarketDataSnapshot,
-                             config: ValuationConfiguration | None = None) -> ValuationResult:
+    def value_cross_currency(
+        self,
+        inst_id: str,
+        recv_leg,
+        pay_leg,
+        recv_curve,
+        pay_curve,
+        *,
+        snap: MarketDataSnapshot,
+        config: ValuationConfiguration | None = None,
+    ) -> ValuationResult:
         config = config or ValuationConfiguration()
-        res = _xccy.value(recv_leg, pay_leg, recv_curve, pay_curve, snap.fx_provider,
-                          config.base_currency, as_of=snap.as_of)
+        res = _xccy.value(
+            recv_leg,
+            pay_leg,
+            recv_curve,
+            pay_curve,
+            snap.fx_provider,
+            config.base_currency,
+            as_of=snap.as_of,
+        )
         return ValuationResult(
-            instrument_id=inst_id, valuation_date=snap.as_of, price=res["base_npv"],
-            market_value=res["base_npv"], currency=config.base_currency,
-            base_value=res["base_npv"], model_name="xccy_swap.dual_curve",
+            instrument_id=inst_id,
+            valuation_date=snap.as_of,
+            price=res["base_npv"],
+            market_value=res["base_npv"],
+            currency=config.base_currency,
+            base_value=res["base_npv"],
+            model_name="xccy_swap.dual_curve",
             model_version=MODEL_VERSION,
             input_fingerprint=hashlib.blake2b(
                 f"{inst_id}|{recv_curve.fingerprint()}|{pay_curve.fingerprint()}".encode(),
-                digest_size=8).hexdigest(),
+                digest_size=8,
+            ).hexdigest(),
             market_data_fingerprint=snap.fingerprint(),
-            assumptions={"fx_exposure": res["fx_exposure"], "recv_base": res["recv_base"],
-                         "pay_base": res["pay_base"]})
+            assumptions={
+                "fx_exposure": res["fx_exposure"],
+                "recv_base": res["recv_base"],
+                "pay_base": res["pay_base"],
+            },
+        )
 
 
 class PortfolioValuationEngine:
@@ -235,8 +304,12 @@ class PortfolioValuationEngine:
     def __init__(self, engine: ValuationEngine | None = None) -> None:
         self.engine = engine or ValuationEngine()
 
-    def value(self, positions: list, snap: MarketDataSnapshot,
-              config: ValuationConfiguration | None = None) -> PortfolioValuation:
+    def value(
+        self,
+        positions: list,
+        snap: MarketDataSnapshot,
+        config: ValuationConfiguration | None = None,
+    ) -> PortfolioValuation:
         """`positions`: list of (Instrument, quantity, cost_basis|None)."""
         config = config or ValuationConfiguration()
         results, greeks = [], Greeks()
@@ -250,11 +323,25 @@ class PortfolioValuationEngine:
             upnl += res.pnl
             if res.greeks is not None:
                 greeks = greeks + res.greeks.scale(qty * inst.contract_size)
-        risk_inputs = {"portfolio_value": base, "gross_value": gross, "net_value": net,
-                       "delta": greeks.delta, "gamma": greeks.gamma, "vega": greeks.vega,
-                       "rho": greeks.rho, "theta": greeks.theta}
+        risk_inputs = {
+            "portfolio_value": base,
+            "gross_value": gross,
+            "net_value": net,
+            "delta": greeks.delta,
+            "gamma": greeks.gamma,
+            "vega": greeks.vega,
+            "rho": greeks.rho,
+            "theta": greeks.theta,
+        }
         return PortfolioValuation(
-            valuation_date=snap.as_of, base_currency=config.base_currency,
-            gross_market_value=gross, net_market_value=net, base_value=base,
-            unrealized_pnl=upnl, results=results, greeks=greeks, risk_inputs=risk_inputs,
-            market_data_fingerprint=snap.fingerprint())
+            valuation_date=snap.as_of,
+            base_currency=config.base_currency,
+            gross_market_value=gross,
+            net_market_value=net,
+            base_value=base,
+            unrealized_pnl=upnl,
+            results=results,
+            greeks=greeks,
+            risk_inputs=risk_inputs,
+            market_data_fingerprint=snap.fingerprint(),
+        )

@@ -103,7 +103,9 @@ class PitPriceStore:
         with self._conn() as conn:
             conn.register("_raw_in", df)
             try:
-                conn.execute(f"INSERT OR REPLACE INTO raw_ohlcv ({cols}) SELECT {cols} FROM _raw_in")
+                conn.execute(
+                    f"INSERT OR REPLACE INTO raw_ohlcv ({cols}) SELECT {cols} FROM _raw_in"
+                )
             finally:
                 conn.unregister("_raw_in")
         return len(bars)
@@ -117,7 +119,12 @@ class PitPriceStore:
                 "INSERT OR REPLACE INTO corporate_actions "
                 "(symbol, effective_date, kind, ratio, announced_date) VALUES (?, ?, 'split', ?, ?)",
                 [
-                    [a["symbol"], a["effective_date"], Decimal(str(a["ratio"])), a["announced_date"]]
+                    [
+                        a["symbol"],
+                        a["effective_date"],
+                        Decimal(str(a["ratio"])),
+                        a["announced_date"],
+                    ]
                     for a in actions
                 ],
             )
@@ -159,7 +166,10 @@ class PitPriceStore:
         return raw_close * factor
 
     def window_as_of(
-        self, symbol: str, as_of: date, lookback_days: int = 252,
+        self,
+        symbol: str,
+        as_of: date,
+        lookback_days: int = 252,
         knowledge_date: date | None = None,
     ) -> list[dict]:
         """PIT-adjusted daily bars in (as_of − lookback_days, as_of], each
@@ -197,9 +207,11 @@ class PitPriceStore:
             for eff, ratio in splits:
                 if bar_date < eff:  # split effective after this bar, on/before as_of
                     factor /= Decimal(str(ratio))
-            out.append({
-                "date": bar_date,
-                "close": Decimal(str(raw_close)) * factor,
-                "volume": Decimal(str(raw_vol)) / factor,
-            })
+            out.append(
+                {
+                    "date": bar_date,
+                    "close": Decimal(str(raw_close)) * factor,
+                    "volume": Decimal(str(raw_vol)) / factor,
+                }
+            )
         return out

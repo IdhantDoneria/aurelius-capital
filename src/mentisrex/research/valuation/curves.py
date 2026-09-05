@@ -27,10 +27,11 @@ from mentisrex.research.valuation.daycount import (
 @dataclass(frozen=True)
 class ZeroCurve:
     """Zero (spot) rates by tenor in years. Interpolates linearly in zero-rate space."""
+
     curve_id: str
     ref_date: date
-    tenors: tuple                  # increasing year-fractions
-    zeros: tuple                   # zero rates, same length
+    tenors: tuple  # increasing year-fractions
+    zeros: tuple  # zero rates, same length
     compounding: Compounding = Compounding.CONTINUOUS
     day_count: DayCount = DayCount.ACT_365
     extrap: interp.Extrapolation = interp.Extrapolation.FLAT
@@ -60,10 +61,18 @@ class ZeroCurve:
         df1, df2 = self.discount(t1), self.discount(t2)
         return (df1 / df2 - 1.0) / (t2 - t1)
 
-    def as_discount_curve(self) -> "DiscountCurve":
+    def as_discount_curve(self) -> DiscountCurve:
         dfs = tuple(self.discount(t) for t in self.tenors)
-        return DiscountCurve(self.curve_id, self.ref_date, self.tenors, dfs,
-                             self.compounding, self.day_count, self.extrap, self.currency)
+        return DiscountCurve(
+            self.curve_id,
+            self.ref_date,
+            self.tenors,
+            dfs,
+            self.compounding,
+            self.day_count,
+            self.extrap,
+            self.currency,
+        )
 
     def validate(self) -> list:
         problems = []
@@ -74,13 +83,14 @@ class ZeroCurve:
 
     def fingerprint(self) -> str:
         parts = [self.curve_id, str(self.ref_date), self.compounding.value, self.day_count.value]
-        parts += [f"{t:.8g}:{z:.10g}" for t, z in zip(self.tenors, self.zeros)]
+        parts += [f"{t:.8g}:{z:.10g}" for t, z in zip(self.tenors, self.zeros, strict=False)]
         return hashlib.blake2b("|".join(parts).encode(), digest_size=8).hexdigest()
 
 
 @dataclass(frozen=True)
 class DiscountCurve:
     """Discount factors by tenor. Interpolates log-linearly (piecewise-flat forwards)."""
+
     curve_id: str
     ref_date: date
     tenors: tuple
@@ -117,7 +127,7 @@ class DiscountCurve:
     def validate(self) -> list:
         problems = []
         prev = 1.0
-        for t, df in zip(self.tenors, self.dfs):
+        for t, df in zip(self.tenors, self.dfs, strict=False):
             if df <= 0:
                 problems.append(f"{self.curve_id}: DF({t}) <= 0")
             if df > prev + 1e-9:
@@ -127,13 +137,14 @@ class DiscountCurve:
 
     def fingerprint(self) -> str:
         parts = [self.curve_id, str(self.ref_date)]
-        parts += [f"{t:.8g}:{d:.12g}" for t, d in zip(self.tenors, self.dfs)]
+        parts += [f"{t:.8g}:{d:.12g}" for t, d in zip(self.tenors, self.dfs, strict=False)]
         return hashlib.blake2b("|".join(parts).encode(), digest_size=8).hexdigest()
 
 
 @dataclass(frozen=True)
 class ForwardCurve:
     """Forward prices/rates by tenor (e.g. equity forwards, FX forward points, index level)."""
+
     curve_id: str
     ref_date: date
     tenors: tuple
@@ -149,13 +160,26 @@ class ForwardCurve:
 
     def fingerprint(self) -> str:
         parts = [self.curve_id, str(self.ref_date)]
-        parts += [f"{t:.8g}:{f:.10g}" for t, f in zip(self.tenors, self.forwards)]
+        parts += [f"{t:.8g}:{f:.10g}" for t, f in zip(self.tenors, self.forwards, strict=False)]
         return hashlib.blake2b("|".join(parts).encode(), digest_size=8).hexdigest()
 
 
-def flat_curve(curve_id: str, ref_date: date, rate: float, *, currency: str = "USD",
-               compounding: Compounding = Compounding.CONTINUOUS,
-               day_count: DayCount = DayCount.ACT_365) -> ZeroCurve:
+def flat_curve(
+    curve_id: str,
+    ref_date: date,
+    rate: float,
+    *,
+    currency: str = "USD",
+    compounding: Compounding = Compounding.CONTINUOUS,
+    day_count: DayCount = DayCount.ACT_365,
+) -> ZeroCurve:
     """A flat zero curve — the deterministic default when only one rate is known."""
-    return ZeroCurve(curve_id, ref_date, (0.25, 1.0, 5.0, 30.0),
-                     (rate, rate, rate, rate), compounding, day_count, currency=currency)
+    return ZeroCurve(
+        curve_id,
+        ref_date,
+        (0.25, 1.0, 5.0, 30.0),
+        (rate, rate, rate, rate),
+        compounding,
+        day_count,
+        currency=currency,
+    )

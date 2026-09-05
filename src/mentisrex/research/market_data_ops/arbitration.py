@@ -14,45 +14,50 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 from mentisrex.research.market_data_ops.messages import SourceMessage
 
 
-class ArbitrationPolicy(str, Enum):
-    PRIMARY_SOURCE = "primary_source"                # only the named primary source counts
-    SOURCE_PRIORITY = "source_priority"              # first available in a priority list wins
-    LATEST_VALID = "latest_valid"                    # newest knowledge_date wins
+class ArbitrationPolicy(StrEnum):
+    PRIMARY_SOURCE = "primary_source"  # only the named primary source counts
+    SOURCE_PRIORITY = "source_priority"  # first available in a priority list wins
+    LATEST_VALID = "latest_valid"  # newest knowledge_date wins
     CROSS_SOURCE_CONFIRMATION = "cross_source_confirmation"  # require ≥N sources within tolerance
-    REJECT_ON_CONFLICT = "reject_on_conflict"        # any disagreement beyond tolerance → drop key
+    REJECT_ON_CONFLICT = "reject_on_conflict"  # any disagreement beyond tolerance → drop key
 
 
 @dataclass(frozen=True)
 class ArbitrationConfig:
     policy: ArbitrationPolicy = ArbitrationPolicy.SOURCE_PRIORITY
-    priority: tuple = ()                 # source names, highest priority first
+    priority: tuple = ()  # source names, highest priority first
     primary: str | None = None
-    tolerance_frac: float = 1e-6         # relative agreement tolerance
+    tolerance_frac: float = 1e-6  # relative agreement tolerance
     min_confirmations: int = 2
 
     def fingerprint(self) -> str:
-        parts = [self.policy.value, "|".join(self.priority), self.primary or "",
-                 f"{self.tolerance_frac:.3e}", str(self.min_confirmations)]
+        parts = [
+            self.policy.value,
+            "|".join(self.priority),
+            self.primary or "",
+            f"{self.tolerance_frac:.3e}",
+            str(self.min_confirmations),
+        ]
         return hashlib.blake2b("|".join(parts).encode(), digest_size=8).hexdigest()
 
 
 @dataclass(frozen=True)
 class ArbitrationEvent:
     obs_key: tuple
-    code: str                            # resolved | conflict | insufficient_confirmation | dropped
+    code: str  # resolved | conflict | insufficient_confirmation | dropped
     winner_source: str | None
     detail: str = ""
 
 
 @dataclass(frozen=True)
 class ArbitrationResult:
-    winners: tuple = ()                  # one SourceMessage per resolved key
-    dropped: tuple = ()                  # keys dropped by REJECT_ON_CONFLICT / no winner
+    winners: tuple = ()  # one SourceMessage per resolved key
+    dropped: tuple = ()  # keys dropped by REJECT_ON_CONFLICT / no winner
     events: tuple = ()
     policy_fingerprint: str = ""
 
@@ -106,8 +111,11 @@ class SourceArbiter:
             agree = _largest_agreeing_cluster(cands, cfg.tolerance_frac)
             if len({c.source for c in agree}) >= cfg.min_confirmations:
                 return _newest(agree), "resolved", f"{len(agree)} sources confirm"
-            return None, "insufficient_confirmation", \
-                f"only {len({c.source for c in cands})} sources, need {cfg.min_confirmations}"
+            return (
+                None,
+                "insufficient_confirmation",
+                f"only {len({c.source for c in cands})} sources, need {cfg.min_confirmations}",
+            )
 
         if cfg.policy is ArbitrationPolicy.REJECT_ON_CONFLICT:
             if _all_agree(cands, cfg.tolerance_frac):
@@ -119,12 +127,13 @@ class SourceArbiter:
 
 # ── cross-source reconciliation (diagnostic, no winner picked) ─────────────────
 
+
 @dataclass(frozen=True)
 class Disagreement:
     obs_key: tuple
-    sources: tuple                       # (source, value) pairs
+    sources: tuple  # (source, value) pairs
     max_rel_diff: float
-    kind: str                            # value | timestamp | presence
+    kind: str  # value | timestamp | presence
 
 
 @dataclass(frozen=True)
@@ -163,6 +172,7 @@ def reconcile(messages, *, tolerance_frac: float = 1e-6) -> ReconciliationReport
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
+
 def _key(m: SourceMessage) -> tuple:
     return (m.security_hint, m.field_hint, m.effective_date)
 
@@ -179,9 +189,16 @@ def _value(m: SourceMessage):
 
 def _newest(cands):
     from datetime import date, datetime
-    return max(cands, key=lambda c: (c.knowledge_date or date.min,
-                                     c.source_timestamp or datetime.min,
-                                     -1 if c.sequence is None else c.sequence, c.source))
+
+    return max(
+        cands,
+        key=lambda c: (
+            c.knowledge_date or date.min,
+            c.source_timestamp or datetime.min,
+            -1 if c.sequence is None else c.sequence,
+            c.source,
+        ),
+    )
 
 
 def _all_agree(cands, tol) -> bool:
@@ -207,8 +224,11 @@ def _largest_agreeing_cluster(cands, tol):
         av = _value(anchor)
         if av is None:
             continue
-        cluster = [c for c in cands if _value(c) is not None
-                   and abs(_value(c) - av) <= tol * max(abs(av), 1e-12)]
+        cluster = [
+            c
+            for c in cands
+            if _value(c) is not None and abs(_value(c) - av) <= tol * max(abs(av), 1e-12)
+        ]
         if len(cluster) > len(best):
             best = cluster
     return best or list(cands)

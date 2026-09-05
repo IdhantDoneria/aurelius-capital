@@ -25,10 +25,10 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
-from mentisrex.programme.signals import compute_all_signals
 
 from mentisrex.core.logging import get_logger
 from mentisrex.programme.config import ProgrammeConfig
+from mentisrex.programme.signals import compute_all_signals
 
 logger = get_logger(__name__)
 

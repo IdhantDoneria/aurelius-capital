@@ -22,21 +22,22 @@ import hashlib
 import json
 from dataclasses import dataclass, field, replace
 from datetime import date, datetime
-from enum import Enum
+from enum import StrEnum
 
 
-class MessageType(str, Enum):
-    OBSERVATION = "observation"      # a market datum (trade/quote/close/rate/...) in `payload`
-    REVISION = "revision"            # an explicit restatement of a prior observation
-    TOMBSTONE = "tombstone"          # a deletion of a prior observation (key in payload)
-    HEARTBEAT = "heartbeat"          # liveness only, no datum
-    REFERENCE = "reference"          # reference/static data (identifiers, corp actions)
-    STATUS = "status"                # source status/control message
+class MessageType(StrEnum):
+    OBSERVATION = "observation"  # a market datum (trade/quote/close/rate/...) in `payload`
+    REVISION = "revision"  # an explicit restatement of a prior observation
+    TOMBSTONE = "tombstone"  # a deletion of a prior observation (key in payload)
+    HEARTBEAT = "heartbeat"  # liveness only, no datum
+    REFERENCE = "reference"  # reference/static data (identifiers, corp actions)
+    STATUS = "status"  # source status/control message
 
 
-class SourceCapability(str, Enum):
+class SourceCapability(StrEnum):
     """What a source is able to serve. A source declares its capability set; callers gate on it
     instead of assuming every vendor exposes identical semantics."""
+
     HISTORICAL = "historical"
     STREAMING = "streaming"
     QUOTES = "quotes"
@@ -62,6 +63,7 @@ class SourceMessage:
     knowable, `effective_date` the date it is for; either may be None and be inferred from the
     payload.
     """
+
     source: str
     payload: dict
     msg_type: MessageType = MessageType.OBSERVATION
@@ -115,7 +117,9 @@ class SourceMessage:
         if cached is not None:
             return cached
         parts = [
-            self.source, self.msg_type.value, self.vendor_id or "",
+            self.source,
+            self.msg_type.value,
+            self.vendor_id or "",
             "" if self.sequence is None else str(self.sequence),
             self.source_timestamp.isoformat() if self.source_timestamp else "",
             self.observation_date.isoformat() if self.observation_date else "",
@@ -127,7 +131,7 @@ class SourceMessage:
         object.__setattr__(self, "_fp", fp)
         return fp
 
-    def with_receive_timestamp(self, ts: datetime) -> "SourceMessage":
+    def with_receive_timestamp(self, ts: datetime) -> SourceMessage:
         return replace(self, receive_timestamp=ts)
 
 
@@ -148,20 +152,35 @@ def _payload_date(payload, *keys):
     return None
 
 
-def message_from_observation(obs, *, source: str | None = None, sequence: int | None = None,
-                             source_timestamp: datetime | None = None) -> SourceMessage:
+def message_from_observation(
+    obs,
+    *,
+    source: str | None = None,
+    sequence: int | None = None,
+    source_timestamp: datetime | None = None,
+) -> SourceMessage:
     """Wrap an M19 `CanonicalObservation` back into a wire message — used by the replay engine to
     re-emit stored observations as if they arrived from a source."""
     payload = {
-        "id": obs.security_id, "field": obs.field, "type": obs.obs_type.value,
-        "value": obs.value, "currency": obs.currency, "unit": obs.unit.value,
+        "id": obs.security_id,
+        "field": obs.field,
+        "type": obs.obs_type.value,
+        "value": obs.value,
+        "currency": obs.currency,
+        "unit": obs.unit.value,
         "observation_date": obs.observation_date.isoformat(),
         "effective_date": obs.effective_date.isoformat(),
-        "source": obs.source, "revision": obs.revision, **({} if not obs.meta else dict(obs.meta)),
+        "source": obs.source,
+        "revision": obs.revision,
+        **({} if not obs.meta else dict(obs.meta)),
     }
     return SourceMessage(
-        source=source or obs.source, payload=payload,
+        source=source or obs.source,
+        payload=payload,
         msg_type=MessageType.REVISION if obs.revision else MessageType.OBSERVATION,
-        vendor_id=obs.security_id, sequence=sequence,
+        vendor_id=obs.security_id,
+        sequence=sequence,
         source_timestamp=source_timestamp or obs.timestamp,
-        observation_date=obs.observation_date, effective_date=obs.effective_date)
+        observation_date=obs.observation_date,
+        effective_date=obs.effective_date,
+    )

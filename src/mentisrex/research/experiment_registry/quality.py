@@ -9,8 +9,13 @@ from __future__ import annotations
 
 from mentisrex.research.experiment_registry.models import Experiment
 
-_REQUIRED_VERSIONS = ("prices_version", "fundamentals_version", "insiders_version",
-                      "universe_version", "securitymaster_version")
+_REQUIRED_VERSIONS = (
+    "prices_version",
+    "fundamentals_version",
+    "insiders_version",
+    "universe_version",
+    "securitymaster_version",
+)
 
 
 def check(exp: Experiment) -> dict:

@@ -26,12 +26,10 @@ Coverage:
 
 from __future__ import annotations
 
-import json
 import tempfile
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -52,27 +50,23 @@ from mentisrex.research.paper_trading.loop import (
     LoopCycleResult,
     LoopError,
     PaperTradingLoop,
-    StrategyCycleResult,
-    check_cost_compatibility,
     _build_broker,
     _extract_prices,
     _snapshot_fp,
+    check_cost_compatibility,
 )
+from mentisrex.research.paper_trading.risk import PreTradeRiskGate
+from mentisrex.research.paper_trading.risk import RiskLimits as M12RiskLimits
 from mentisrex.research.paper_trading.runtime_state import StrategyRuntimeState
 from mentisrex.research.paper_trading.scheduler import (
     Clock,
     FixedClock,
     RebalanceScheduler,
 )
-from mentisrex.research.paper_trading.session import PaperTradingSession, SessionConfig
-from mentisrex.research.paper_trading.risk import PreTradeRiskGate
-from mentisrex.research.paper_trading.risk import RiskLimits as M12RiskLimits
 from mentisrex.research.risk.engine import RiskEngine, RiskEngineConfig
 from mentisrex.research.risk.limits import RiskLimits
 from mentisrex.research.strategy_deployment import (
-    EvaluationError,
     FeatureSet,
-    ReadinessValidator,
     SignalRecord,
     SignalSet,
     StrategyLogic,
@@ -80,11 +74,9 @@ from mentisrex.research.strategy_deployment import (
     StrategyRuntime,
     StrategySpecification,
     StrategyState,
-    StrategyTransitionError,
     StrategyType,
     make_spec,
 )
-
 
 # ── shared fixtures ───────────────────────────────────────────────────────────
 
@@ -104,11 +96,12 @@ class FakeSnapshot:
     spots: dict = field(default_factory=dict)
 
     def fingerprint(self) -> str:
-        import hashlib, json as _json
+        import hashlib
+        import json as _json
+
         payload = _json.dumps(
-            {"as_of": str(self.as_of),
-             "spots": {k: v for k, v in sorted(self.spots.items())}},
-            sort_keys=True)
+            {"as_of": str(self.as_of), "spots": dict(sorted(self.spots.items()))}, sort_keys=True
+        )
         return hashlib.blake2b(payload.encode(), digest_size=16).hexdigest()
 
 
@@ -130,62 +123,67 @@ class ConstantLogic(StrategyLogic):
     def generate_signal(self, features: FeatureSet, spec) -> SignalSet:
         records = [
             SignalRecord(
-                strategy_id=spec.strategy_id, strategy_version=spec.version,
-                security_id=sid, as_of=features.as_of, signal_value=self._signals[sid],
+                strategy_id=spec.strategy_id,
+                strategy_version=spec.version,
+                security_id=sid,
+                as_of=features.as_of,
+                signal_value=self._signals[sid],
                 input_fingerprint=features.fingerprint(),
                 strategy_fingerprint=features.strategy_fingerprint,
             )
             for sid in self._signals
         ]
         return SignalSet(
-            strategy_id=spec.strategy_id, strategy_version=spec.version,
-            as_of=features.as_of, signals=dict(self._signals), signal_records=records,
+            strategy_id=spec.strategy_id,
+            strategy_version=spec.version,
+            as_of=features.as_of,
+            signals=dict(self._signals),
+            signal_records=records,
             features_fingerprint=features.fingerprint(),
             strategy_fingerprint=features.strategy_fingerprint,
         )
 
 
 def _base_spec(**overrides) -> StrategySpecification:
-    defaults = dict(
-        strategy_id="test-strat",
-        strategy_name="Test Strategy",
-        version="1.0.0",
-        strategy_type=StrategyType.VALIDATED_DEPLOYABLE,
-        research_artifact_id="exp-abc",
-        validation_artifact_id="val-xyz",
-        validation_status="PASS",
-        universe_definition={"type": "equity"},
-        required_data=["close"],
-        feature_definition={"lookback": 1},
-        signal_definition={"type": "constant"},
-        rebalance_frequency="monthly",
-        portfolio_construction_config={"objective": "equal_weight", "long_only": True},
-        risk_config={"max_position": 0.10},
-        execution_config={"algo": "market"},
-        transaction_cost_assumption={"slippage_bps": 5.0},
-        slippage_assumption={"model": "linear"},
-        benchmark="SPY",
-        base_currency="USD",
-        allowed_instruments=["equity"],
-        capital_assumption=100_000.0,
-        model_version="1.0.0",
-    )
+    defaults = {
+        "strategy_id": "test-strat",
+        "strategy_name": "Test Strategy",
+        "version": "1.0.0",
+        "strategy_type": StrategyType.VALIDATED_DEPLOYABLE,
+        "research_artifact_id": "exp-abc",
+        "validation_artifact_id": "val-xyz",
+        "validation_status": "PASS",
+        "universe_definition": {"type": "equity"},
+        "required_data": ["close"],
+        "feature_definition": {"lookback": 1},
+        "signal_definition": {"type": "constant"},
+        "rebalance_frequency": "monthly",
+        "portfolio_construction_config": {"objective": "equal_weight", "long_only": True},
+        "risk_config": {"max_position": 0.10},
+        "execution_config": {"algo": "market"},
+        "transaction_cost_assumption": {"slippage_bps": 5.0},
+        "slippage_assumption": {"model": "linear"},
+        "benchmark": "SPY",
+        "base_currency": "USD",
+        "allowed_instruments": ["equity"],
+        "capital_assumption": 100_000.0,
+        "model_version": "1.0.0",
+    }
     defaults.update(overrides)
     return make_spec(**defaults)
 
 
-def _make_registry(spec: StrategySpecification,
-                   state: StrategyState = StrategyState.PAPER) -> StrategyRegistry:
+def _make_registry(
+    spec: StrategySpecification, state: StrategyState = StrategyState.PAPER
+) -> StrategyRegistry:
     reg = StrategyRegistry()
     reg.register(spec, StrategyState.DRAFT)
-    transitions = {
-        StrategyState.DRAFT: StrategyState.VALIDATING,
-        StrategyState.VALIDATING: StrategyState.VALIDATED,
-        StrategyState.VALIDATED: StrategyState.DEPLOYABLE,
-        StrategyState.DEPLOYABLE: StrategyState.PAPER,
-    }
-    order = [StrategyState.VALIDATING, StrategyState.VALIDATED,
-             StrategyState.DEPLOYABLE, StrategyState.PAPER]
+    order = [
+        StrategyState.VALIDATING,
+        StrategyState.VALIDATED,
+        StrategyState.DEPLOYABLE,
+        StrategyState.PAPER,
+    ]
     for s in order:
         if s.value in [state.value for state in _states_up_to(state)]:
             reg.transition(spec.strategy_id, s)
@@ -193,8 +191,12 @@ def _make_registry(spec: StrategySpecification,
 
 
 def _states_up_to(target: StrategyState) -> list:
-    order = [StrategyState.VALIDATING, StrategyState.VALIDATED,
-             StrategyState.DEPLOYABLE, StrategyState.PAPER]
+    order = [
+        StrategyState.VALIDATING,
+        StrategyState.VALIDATED,
+        StrategyState.DEPLOYABLE,
+        StrategyState.PAPER,
+    ]
     result = []
     for s in order:
         result.append(s)
@@ -206,9 +208,14 @@ def _states_up_to(target: StrategyState) -> list:
 def _permissive_runtime() -> StrategyRuntime:
     """StrategyRuntime with relaxed M13 risk limits so test portfolios pass risk gate."""
     return StrategyRuntime(
-        risk_engine=RiskEngine(RiskEngineConfig(
-            limits=RiskLimits(max_position=None, max_gross=None,
-                              max_net=None, max_leverage=None))))
+        risk_engine=RiskEngine(
+            RiskEngineConfig(
+                limits=RiskLimits(
+                    max_position=None, max_gross=None, max_net=None, max_leverage=None
+                )
+            )
+        )
+    )
 
 
 def _permissive_m12_gate() -> PreTradeRiskGate:
@@ -216,14 +223,18 @@ def _permissive_m12_gate() -> PreTradeRiskGate:
     return PreTradeRiskGate(M12RiskLimits(max_name_weight=1.0, max_gross_leverage=5.0))
 
 
-def _make_loop(spec, logic, *,
-               state: StrategyState = StrategyState.PAPER,
-               capital: float | None = None,
-               permit_experimental: bool = False,
-               validate_readiness: bool = True,
-               slippage_bps: float = 0.0,
-               runtime: StrategyRuntime | None = None,
-               **kw) -> PaperTradingLoop:
+def _make_loop(
+    spec,
+    logic,
+    *,
+    state: StrategyState = StrategyState.PAPER,
+    capital: float | None = None,
+    permit_experimental: bool = False,
+    validate_readiness: bool = True,
+    slippage_bps: float = 0.0,
+    runtime: StrategyRuntime | None = None,
+    **kw,
+) -> PaperTradingLoop:
     reg = _make_registry(spec, state)
     _runtime = runtime or _permissive_runtime()
     cfg = LoopConfig(
@@ -232,18 +243,23 @@ def _make_loop(spec, logic, *,
         validate_readiness=validate_readiness,
     )
     loop = PaperTradingLoop(runtime=_runtime, registry=reg, config=cfg)
-    broker = MockBroker(initial_cash=capital or spec.capital_assumption or 100_000.0) \
-        if slippage_bps == 0.0 else \
-        SimulatedBroker(initial_cash=capital or spec.capital_assumption or 100_000.0,
-                        slippage_bps=slippage_bps)
-    loop.add_strategy(spec.strategy_id, logic, broker=broker,
-                      risk_gate=_permissive_m12_gate(), **kw)
+    broker = (
+        MockBroker(initial_cash=capital or spec.capital_assumption or 100_000.0)
+        if slippage_bps == 0.0
+        else SimulatedBroker(
+            initial_cash=capital or spec.capital_assumption or 100_000.0, slippage_bps=slippage_bps
+        )
+    )
+    loop.add_strategy(
+        spec.strategy_id, logic, broker=broker, risk_gate=_permissive_m12_gate(), **kw
+    )
     return loop
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # A. RebalanceScheduler + Clock
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestRebalanceScheduler:
     def setup_method(self):
@@ -266,29 +282,43 @@ class TestRebalanceScheduler:
         assert self.scheduler.is_due(self.spec_daily, self._rs(date(2024, 1, 1)), date(2024, 1, 2))
 
     def test_daily_not_due_same_day(self):
-        assert not self.scheduler.is_due(self.spec_daily, self._rs(date(2024, 1, 2)), date(2024, 1, 2))
+        assert not self.scheduler.is_due(
+            self.spec_daily, self._rs(date(2024, 1, 2)), date(2024, 1, 2)
+        )
 
     def test_weekly_due_after_7_days(self):
         assert self.scheduler.is_due(self.spec_weekly, self._rs(date(2024, 1, 1)), date(2024, 1, 8))
 
     def test_weekly_not_due_after_6_days(self):
-        assert not self.scheduler.is_due(self.spec_weekly, self._rs(date(2024, 1, 1)), date(2024, 1, 7))
+        assert not self.scheduler.is_due(
+            self.spec_weekly, self._rs(date(2024, 1, 1)), date(2024, 1, 7)
+        )
 
     def test_monthly_due_when_month_changes(self):
-        assert self.scheduler.is_due(self.spec_monthly, self._rs(date(2024, 1, 31)), date(2024, 2, 1))
+        assert self.scheduler.is_due(
+            self.spec_monthly, self._rs(date(2024, 1, 31)), date(2024, 2, 1)
+        )
 
     def test_monthly_not_due_same_month(self):
-        assert not self.scheduler.is_due(self.spec_monthly, self._rs(date(2024, 2, 1)), date(2024, 2, 15))
+        assert not self.scheduler.is_due(
+            self.spec_monthly, self._rs(date(2024, 2, 1)), date(2024, 2, 15)
+        )
 
     def test_quarterly_due_when_quarter_changes(self):
         # Q1 → Q2
-        assert self.scheduler.is_due(self.spec_quarterly, self._rs(date(2024, 3, 31)), date(2024, 4, 1))
+        assert self.scheduler.is_due(
+            self.spec_quarterly, self._rs(date(2024, 3, 31)), date(2024, 4, 1)
+        )
 
     def test_quarterly_not_due_same_quarter(self):
-        assert not self.scheduler.is_due(self.spec_quarterly, self._rs(date(2024, 1, 15)), date(2024, 3, 31))
+        assert not self.scheduler.is_due(
+            self.spec_quarterly, self._rs(date(2024, 1, 15)), date(2024, 3, 31)
+        )
 
     def test_event_driven_never_due_automatically(self):
-        assert not self.scheduler.is_due(self.spec_event, self._rs(date(2024, 1, 1)), date(2024, 12, 31))
+        assert not self.scheduler.is_due(
+            self.spec_event, self._rs(date(2024, 1, 1)), date(2024, 12, 31)
+        )
 
     def test_unknown_frequency_treated_as_daily(self):
         spec = _base_spec(rebalance_frequency="biannual")
@@ -329,6 +359,7 @@ class TestClock:
 # ═══════════════════════════════════════════════════════════════════════════════
 # B. StrategyRuntimeState
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestStrategyRuntimeState:
     def test_to_dict_round_trip(self):
@@ -372,17 +403,29 @@ class TestStrategyRuntimeState:
 # C. CycleRecord / ForwardPerformanceRecord / PerformanceMetrics
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestCycleRecord:
     def _make(self, **kw) -> CycleRecord:
-        defaults = dict(
-            cycle_id="c-000001", strategy_id="s", strategy_version="1",
-            strategy_fingerprint="fp", as_of=date(2024, 1, 2),
-            snapshot_fingerprint="sfp", evaluation_fingerprint="efp",
-            evaluation_id="eval-1", portfolio_value=100_000.0, nav=100_000.0,
-            cash=100_000.0, realized_pnl=0.0, unrealized_pnl=0.0,
-            n_orders=0, n_fills=0, reconciled=True,
-            risk_approved=True, risk_decision="approve",
-        )
+        defaults = {
+            "cycle_id": "c-000001",
+            "strategy_id": "s",
+            "strategy_version": "1",
+            "strategy_fingerprint": "fp",
+            "as_of": date(2024, 1, 2),
+            "snapshot_fingerprint": "sfp",
+            "evaluation_fingerprint": "efp",
+            "evaluation_id": "eval-1",
+            "portfolio_value": 100_000.0,
+            "nav": 100_000.0,
+            "cash": 100_000.0,
+            "realized_pnl": 0.0,
+            "unrealized_pnl": 0.0,
+            "n_orders": 0,
+            "n_fills": 0,
+            "reconciled": True,
+            "risk_approved": True,
+            "risk_decision": "approve",
+        }
         defaults.update(kw)
         return CycleRecord(**defaults)
 
@@ -409,13 +452,24 @@ class TestCycleRecord:
 class TestForwardPerformanceRecord:
     def _record(self, as_of: date, nav: float, **kw) -> CycleRecord:
         return CycleRecord(
-            cycle_id=f"c-{nav}", strategy_id="s", strategy_version="1",
-            strategy_fingerprint="fp", as_of=as_of,
-            snapshot_fingerprint="sfp", evaluation_fingerprint="efp",
-            evaluation_id=f"e-{nav}", portfolio_value=nav, nav=nav,
-            cash=nav * 0.1, realized_pnl=nav - 100_000, unrealized_pnl=0.0,
-            n_orders=kw.get("n_orders", 2), n_fills=kw.get("n_fills", 2),
-            reconciled=True, risk_approved=True, risk_decision="approve",
+            cycle_id=f"c-{nav}",
+            strategy_id="s",
+            strategy_version="1",
+            strategy_fingerprint="fp",
+            as_of=as_of,
+            snapshot_fingerprint="sfp",
+            evaluation_fingerprint="efp",
+            evaluation_id=f"e-{nav}",
+            portfolio_value=nav,
+            nav=nav,
+            cash=nav * 0.1,
+            realized_pnl=nav - 100_000,
+            unrealized_pnl=0.0,
+            n_orders=kw.get("n_orders", 2),
+            n_fills=kw.get("n_fills", 2),
+            reconciled=True,
+            risk_approved=True,
+            risk_decision="approve",
         )
 
     def test_empty_record_zero_returns(self):
@@ -425,8 +479,7 @@ class TestForwardPerformanceRecord:
         assert fpr.daily_returns() == []
 
     def test_single_cycle_zero_daily_returns(self):
-        fpr = ForwardPerformanceRecord("s", "1", "fp",
-                                       [self._record(date(2024, 1, 1), 100_000.0)])
+        fpr = ForwardPerformanceRecord("s", "1", "fp", [self._record(date(2024, 1, 1), 100_000.0)])
         assert fpr.daily_returns() == []
 
     def test_two_cycles_one_daily_return(self):
@@ -507,6 +560,7 @@ class TestForwardPerformanceRecord:
 # ═══════════════════════════════════════════════════════════════════════════════
 # D. Checkpoint save/load + portfolio state serialisation
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestCheckpoint:
     def _make_populated_loop(self):
@@ -598,8 +652,9 @@ class TestCheckpoint:
     def test_cycle_records_preserved_across_checkpoint(self):
         loop = self._make_populated_loop()
         d = _checkpoint_dict(loop)
-        loop2 = _make_loop(_base_spec(), ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}),
-                           validate_readiness=False)
+        loop2 = _make_loop(
+            _base_spec(), ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}), validate_readiness=False
+        )
         _restore_checkpoint(loop2, d)
         assert len(loop2.all_cycle_records) == 2
 
@@ -623,6 +678,7 @@ class TestCheckpoint:
 # E. PaperTradingLoop — basic lifecycle
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestPaperTradingLoopBasic:
     def test_loop_creation(self):
         spec = _base_spec()
@@ -633,9 +689,15 @@ class TestPaperTradingLoopBasic:
     def test_add_strategy_deployable_succeeds(self):
         spec = _base_spec()
         reg = _make_registry(spec, StrategyState.DEPLOYABLE)
-        loop = PaperTradingLoop(runtime=_permissive_runtime(), registry=reg,
-                                config=LoopConfig(validate_readiness=False))
-        loop.add_strategy(spec.strategy_id, ConstantLogic({}), broker=MockBroker(initial_cash=1e5), risk_gate=_permissive_m12_gate())
+        loop = PaperTradingLoop(
+            runtime=_permissive_runtime(), registry=reg, config=LoopConfig(validate_readiness=False)
+        )
+        loop.add_strategy(
+            spec.strategy_id,
+            ConstantLogic({}),
+            broker=MockBroker(initial_cash=1e5),
+            risk_gate=_permissive_m12_gate(),
+        )
         assert spec.strategy_id in loop.active_strategies
 
     def test_add_strategy_paper_succeeds(self):
@@ -647,8 +709,9 @@ class TestPaperTradingLoopBasic:
         spec = _base_spec()
         reg = StrategyRegistry()
         reg.register(spec, StrategyState.DRAFT)
-        loop = PaperTradingLoop(runtime=_permissive_runtime(), registry=reg,
-                                config=LoopConfig(validate_readiness=False))
+        loop = PaperTradingLoop(
+            runtime=_permissive_runtime(), registry=reg, config=LoopConfig(validate_readiness=False)
+        )
         with pytest.raises(LoopError, match="state"):
             loop.add_strategy(spec.strategy_id, ConstantLogic({}))
 
@@ -657,23 +720,26 @@ class TestPaperTradingLoopBasic:
         reg = StrategyRegistry()
         reg.register(spec, StrategyState.DRAFT)
         reg.transition(spec.strategy_id, StrategyState.REJECTED)
-        loop = PaperTradingLoop(runtime=_permissive_runtime(), registry=reg,
-                                config=LoopConfig(validate_readiness=False))
+        loop = PaperTradingLoop(
+            runtime=_permissive_runtime(), registry=reg, config=LoopConfig(validate_readiness=False)
+        )
         with pytest.raises(LoopError):
             loop.add_strategy(spec.strategy_id, ConstantLogic({}))
 
     def test_add_strategy_not_in_registry_fails(self):
         reg = StrategyRegistry()
-        loop = PaperTradingLoop(runtime=_permissive_runtime(), registry=reg,
-                                config=LoopConfig(validate_readiness=False))
+        loop = PaperTradingLoop(
+            runtime=_permissive_runtime(), registry=reg, config=LoopConfig(validate_readiness=False)
+        )
         with pytest.raises(LoopError, match="not found"):
             loop.add_strategy("nonexistent", ConstantLogic({}))
 
     def test_add_strategy_readiness_gate_fires(self):
         spec = _base_spec(research_artifact_id="")  # empty → fails readiness
         reg = _make_registry(spec)
-        loop = PaperTradingLoop(runtime=_permissive_runtime(), registry=reg,
-                                config=LoopConfig(validate_readiness=True))
+        loop = PaperTradingLoop(
+            runtime=_permissive_runtime(), registry=reg, config=LoopConfig(validate_readiness=True)
+        )
         with pytest.raises(LoopError, match="readiness"):
             loop.add_strategy(spec.strategy_id, ConstantLogic({}))
 
@@ -749,6 +815,7 @@ class TestPaperTradingLoopBasic:
 # F. Idempotency (duplicate snapshots)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestIdempotency:
     def test_same_snapshot_second_call_skipped(self):
         spec = _base_spec()
@@ -786,8 +853,11 @@ class TestIdempotency:
 
     def test_different_snapshots_not_skipped(self):
         spec = _base_spec()
-        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0}), validate_readiness=False,
-    )
+        loop = _make_loop(
+            spec,
+            ConstantLogic({"AAPL": 1.0}),
+            validate_readiness=False,
+        )
         snap1 = FakeSnapshot(AS_OF_0, SPOTS)
         snap2 = FakeSnapshot(AS_OF_1, SPOTS_2)  # different date → different fingerprint
         r1 = loop.process_snapshot(snap1)
@@ -809,6 +879,7 @@ class TestIdempotency:
 # ═══════════════════════════════════════════════════════════════════════════════
 # G. Scheduling via loop
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestSchedulingViaLoop:
     def test_daily_evaluated_on_each_snapshot(self):
@@ -879,14 +950,20 @@ class TestSchedulingViaLoop:
 # H. Strategy lifecycle
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestStrategyLifecycle:
     def test_suspended_strategy_skipped(self):
         spec = _base_spec()
         reg = _make_registry(spec, StrategyState.PAPER)
-        loop = PaperTradingLoop(runtime=_permissive_runtime(), registry=reg,
-                                config=LoopConfig(validate_readiness=False))
-        loop.add_strategy(spec.strategy_id, ConstantLogic({"AAPL": 1.0}),
-                          broker=MockBroker(initial_cash=1e5), risk_gate=_permissive_m12_gate())
+        loop = PaperTradingLoop(
+            runtime=_permissive_runtime(), registry=reg, config=LoopConfig(validate_readiness=False)
+        )
+        loop.add_strategy(
+            spec.strategy_id,
+            ConstantLogic({"AAPL": 1.0}),
+            broker=MockBroker(initial_cash=1e5),
+            risk_gate=_permissive_m12_gate(),
+        )
         reg.transition(spec.strategy_id, StrategyState.SUSPENDED)
         result = loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         sr = result.result_for(spec.strategy_id)
@@ -896,10 +973,15 @@ class TestStrategyLifecycle:
     def test_retired_strategy_skipped(self):
         spec = _base_spec()
         reg = _make_registry(spec, StrategyState.PAPER)
-        loop = PaperTradingLoop(runtime=_permissive_runtime(), registry=reg,
-                                config=LoopConfig(validate_readiness=False))
-        loop.add_strategy(spec.strategy_id, ConstantLogic({"AAPL": 1.0}),
-                          broker=MockBroker(initial_cash=1e5), risk_gate=_permissive_m12_gate())
+        loop = PaperTradingLoop(
+            runtime=_permissive_runtime(), registry=reg, config=LoopConfig(validate_readiness=False)
+        )
+        loop.add_strategy(
+            spec.strategy_id,
+            ConstantLogic({"AAPL": 1.0}),
+            broker=MockBroker(initial_cash=1e5),
+            risk_gate=_permissive_m12_gate(),
+        )
         reg.transition(spec.strategy_id, StrategyState.RETIRED)
         result = loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         sr = result.result_for(spec.strategy_id)
@@ -932,10 +1014,15 @@ class TestStrategyLifecycle:
     def test_loop_does_not_mutate_m22_registry_state(self):
         spec = _base_spec()
         reg = _make_registry(spec, StrategyState.PAPER)
-        loop = PaperTradingLoop(runtime=_permissive_runtime(), registry=reg,
-                                config=LoopConfig(validate_readiness=False))
-        loop.add_strategy(spec.strategy_id, ConstantLogic({"AAPL": 1.0}),
-                          broker=MockBroker(initial_cash=1e5), risk_gate=_permissive_m12_gate())
+        loop = PaperTradingLoop(
+            runtime=_permissive_runtime(), registry=reg, config=LoopConfig(validate_readiness=False)
+        )
+        loop.add_strategy(
+            spec.strategy_id,
+            ConstantLogic({"AAPL": 1.0}),
+            broker=MockBroker(initial_cash=1e5),
+            risk_gate=_permissive_m12_gate(),
+        )
         loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         # M22 registry state must be unchanged by loop processing
         assert reg.state(spec.strategy_id) == StrategyState.PAPER
@@ -946,10 +1033,15 @@ class TestStrategyLifecycle:
         risk_engine = RiskEngine(RiskEngineConfig(limits=tight_limits))
         runtime = StrategyRuntime(risk_engine=risk_engine)
         reg = _make_registry(spec)
-        loop = PaperTradingLoop(runtime=runtime, registry=reg,
-                                config=LoopConfig(validate_readiness=False))
-        loop.add_strategy(spec.strategy_id, ConstantLogic({"AAPL": 1.0}),
-                          broker=MockBroker(initial_cash=1e5), risk_gate=_permissive_m12_gate())
+        loop = PaperTradingLoop(
+            runtime=runtime, registry=reg, config=LoopConfig(validate_readiness=False)
+        )
+        loop.add_strategy(
+            spec.strategy_id,
+            ConstantLogic({"AAPL": 1.0}),
+            broker=MockBroker(initial_cash=1e5),
+            risk_gate=_permissive_m12_gate(),
+        )
         result = loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         sr = result.result_for(spec.strategy_id)
         assert not sr.risk_approved
@@ -960,6 +1052,7 @@ class TestStrategyLifecycle:
 # I. Multi-strategy support
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestMultiStrategy:
     def test_two_strategies_both_evaluated(self):
         spec1 = _base_spec(strategy_id="s1", strategy_name="S1")
@@ -967,36 +1060,56 @@ class TestMultiStrategy:
         reg = StrategyRegistry()
         for spec in [spec1, spec2]:
             reg.register(spec, StrategyState.DRAFT)
-            for s in [StrategyState.VALIDATING, StrategyState.VALIDATED,
-                      StrategyState.DEPLOYABLE, StrategyState.PAPER]:
+            for s in [
+                StrategyState.VALIDATING,
+                StrategyState.VALIDATED,
+                StrategyState.DEPLOYABLE,
+                StrategyState.PAPER,
+            ]:
                 reg.transition(spec.strategy_id, s)
-        loop = PaperTradingLoop(runtime=_permissive_runtime(), registry=reg,
-                                config=LoopConfig(validate_readiness=False))
+        loop = PaperTradingLoop(
+            runtime=_permissive_runtime(), registry=reg, config=LoopConfig(validate_readiness=False)
+        )
         for spec in [spec1, spec2]:
-            loop.add_strategy(spec.strategy_id, ConstantLogic({"AAPL": 1.0}),
-                              broker=MockBroker(initial_cash=1e5), risk_gate=_permissive_m12_gate())
+            loop.add_strategy(
+                spec.strategy_id,
+                ConstantLogic({"AAPL": 1.0}),
+                broker=MockBroker(initial_cash=1e5),
+                risk_gate=_permissive_m12_gate(),
+            )
         result = loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         assert len(result.strategy_results) == 2
         ids = {sr.strategy_id for sr in result.strategy_results}
         assert ids == {"s1", "s2"}
 
     def test_separate_portfolios(self):
-        spec1 = _base_spec(strategy_id="s1", strategy_name="S1",
-                           capital_assumption=50_000.0)
-        spec2 = _base_spec(strategy_id="s2", strategy_name="S2",
-                           capital_assumption=200_000.0)
+        spec1 = _base_spec(strategy_id="s1", strategy_name="S1", capital_assumption=50_000.0)
+        spec2 = _base_spec(strategy_id="s2", strategy_name="S2", capital_assumption=200_000.0)
         reg = StrategyRegistry()
         for spec in [spec1, spec2]:
             reg.register(spec, StrategyState.DRAFT)
-            for s in [StrategyState.VALIDATING, StrategyState.VALIDATED,
-                      StrategyState.DEPLOYABLE, StrategyState.PAPER]:
+            for s in [
+                StrategyState.VALIDATING,
+                StrategyState.VALIDATED,
+                StrategyState.DEPLOYABLE,
+                StrategyState.PAPER,
+            ]:
                 reg.transition(spec.strategy_id, s)
-        loop = PaperTradingLoop(runtime=_permissive_runtime(), registry=reg,
-                                config=LoopConfig(validate_readiness=False))
-        loop.add_strategy("s1", ConstantLogic({"AAPL": 1.0}),
-                          broker=MockBroker(initial_cash=50_000.0), risk_gate=_permissive_m12_gate())
-        loop.add_strategy("s2", ConstantLogic({"AAPL": 1.0}),
-                          broker=MockBroker(initial_cash=200_000.0), risk_gate=_permissive_m12_gate())
+        loop = PaperTradingLoop(
+            runtime=_permissive_runtime(), registry=reg, config=LoopConfig(validate_readiness=False)
+        )
+        loop.add_strategy(
+            "s1",
+            ConstantLogic({"AAPL": 1.0}),
+            broker=MockBroker(initial_cash=50_000.0),
+            risk_gate=_permissive_m12_gate(),
+        )
+        loop.add_strategy(
+            "s2",
+            ConstantLogic({"AAPL": 1.0}),
+            broker=MockBroker(initial_cash=200_000.0),
+            risk_gate=_permissive_m12_gate(),
+        )
         result = loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         v1 = result.result_for("s1").portfolio_value
         v2 = result.result_for("s2").portfolio_value
@@ -1009,14 +1122,23 @@ class TestMultiStrategy:
         reg = StrategyRegistry()
         for spec in [spec1, spec2]:
             reg.register(spec, StrategyState.DRAFT)
-            for s in [StrategyState.VALIDATING, StrategyState.VALIDATED,
-                      StrategyState.DEPLOYABLE, StrategyState.PAPER]:
+            for s in [
+                StrategyState.VALIDATING,
+                StrategyState.VALIDATED,
+                StrategyState.DEPLOYABLE,
+                StrategyState.PAPER,
+            ]:
                 reg.transition(spec.strategy_id, s)
-        loop = PaperTradingLoop(runtime=_permissive_runtime(), registry=reg,
-                                config=LoopConfig(validate_readiness=False))
+        loop = PaperTradingLoop(
+            runtime=_permissive_runtime(), registry=reg, config=LoopConfig(validate_readiness=False)
+        )
         for spec in [spec1, spec2]:
-            loop.add_strategy(spec.strategy_id, ConstantLogic({"AAPL": 1.0}),
-                              broker=MockBroker(initial_cash=1e5), risk_gate=_permissive_m12_gate())
+            loop.add_strategy(
+                spec.strategy_id,
+                ConstantLogic({"AAPL": 1.0}),
+                broker=MockBroker(initial_cash=1e5),
+                risk_gate=_permissive_m12_gate(),
+            )
         loop.pause_strategy("s1")
         result = loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         assert result.result_for("s1").skipped
@@ -1028,14 +1150,23 @@ class TestMultiStrategy:
         reg = StrategyRegistry()
         for spec in [spec1, spec2]:
             reg.register(spec, StrategyState.DRAFT)
-            for s in [StrategyState.VALIDATING, StrategyState.VALIDATED,
-                      StrategyState.DEPLOYABLE, StrategyState.PAPER]:
+            for s in [
+                StrategyState.VALIDATING,
+                StrategyState.VALIDATED,
+                StrategyState.DEPLOYABLE,
+                StrategyState.PAPER,
+            ]:
                 reg.transition(spec.strategy_id, s)
-        loop = PaperTradingLoop(runtime=_permissive_runtime(), registry=reg,
-                                config=LoopConfig(validate_readiness=False))
+        loop = PaperTradingLoop(
+            runtime=_permissive_runtime(), registry=reg, config=LoopConfig(validate_readiness=False)
+        )
         for spec in [spec1, spec2]:
-            loop.add_strategy(spec.strategy_id, ConstantLogic({"AAPL": 1.0}),
-                              broker=MockBroker(initial_cash=1e5), risk_gate=_permissive_m12_gate())
+            loop.add_strategy(
+                spec.strategy_id,
+                ConstantLogic({"AAPL": 1.0}),
+                broker=MockBroker(initial_cash=1e5),
+                risk_gate=_permissive_m12_gate(),
+            )
         loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         loop.process_snapshot(FakeSnapshot(AS_OF_1, SPOTS_2))
         records_s1 = loop.strategy_records("s1")
@@ -1048,16 +1179,17 @@ class TestMultiStrategy:
 # J. Cost-model compatibility
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestCostCompatibility:
     def test_supported_keys_compatible(self):
-        spec = _base_spec(transaction_cost_assumption={"slippage_bps": 5.0,
-                                                        "commission_per_share": 0.01})
+        spec = _base_spec(
+            transaction_cost_assumption={"slippage_bps": 5.0, "commission_per_share": 0.01}
+        )
         result = check_cost_compatibility(spec)
         assert result.compatible
 
     def test_unsupported_key_not_compatible(self):
-        spec = _base_spec(transaction_cost_assumption={"commission": 0.001,
-                                                        "spread": 0.0005})
+        spec = _base_spec(transaction_cost_assumption={"commission": 0.001, "spread": 0.0005})
         result = check_cost_compatibility(spec)
         assert not result.compatible
         assert "commission" in result.unmapped_keys
@@ -1073,8 +1205,7 @@ class TestCostCompatibility:
         assert isinstance(broker, MockBroker)
 
     def test_research_fingerprint_differs_from_execution_when_keys_differ(self):
-        spec = _base_spec(transaction_cost_assumption={"commission": 0.001,
-                                                        "slippage_bps": 5.0})
+        spec = _base_spec(transaction_cost_assumption={"commission": 0.001, "slippage_bps": 5.0})
         result = check_cost_compatibility(spec)
         assert result.research_fingerprint != result.execution_fingerprint
 
@@ -1089,6 +1220,7 @@ class TestCostCompatibility:
 # K. Failure handling / fail-closed
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestFailureHandling:
     def test_none_snapshot_raises_loop_error(self):
         spec = _base_spec()
@@ -1100,12 +1232,16 @@ class TestFailureHandling:
         class BrokenLogic(StrategyLogic):
             def compute_features(self, snapshot, spec):
                 raise RuntimeError("deliberate failure")
+
             def generate_signal(self, features, spec):
                 pass
 
         spec = _base_spec()
-        loop = _make_loop(spec, BrokenLogic(), validate_readiness=False,
-    )
+        loop = _make_loop(
+            spec,
+            BrokenLogic(),
+            validate_readiness=False,
+        )
         result = loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         sr = result.result_for(spec.strategy_id)
         assert sr.error != ""
@@ -1114,6 +1250,7 @@ class TestFailureHandling:
         class BrokenLogic(StrategyLogic):
             def compute_features(self, snapshot, spec):
                 raise RuntimeError("fail")
+
             def generate_signal(self, features, spec):
                 pass
 
@@ -1127,16 +1264,23 @@ class TestFailureHandling:
         class BrokenLogic(StrategyLogic):
             def compute_features(self, snapshot, spec):
                 raise RuntimeError("deliberate")
+
             def generate_signal(self, features, spec):
                 pass
 
         spec = _base_spec()
         reg = _make_registry(spec)
-        loop = PaperTradingLoop(runtime=_permissive_runtime(), registry=reg,
-                                config=LoopConfig(validate_readiness=False,
-                                                  fail_closed=False))
-        loop.add_strategy(spec.strategy_id, BrokenLogic(),
-                          broker=MockBroker(initial_cash=1e5), risk_gate=_permissive_m12_gate())
+        loop = PaperTradingLoop(
+            runtime=_permissive_runtime(),
+            registry=reg,
+            config=LoopConfig(validate_readiness=False, fail_closed=False),
+        )
+        loop.add_strategy(
+            spec.strategy_id,
+            BrokenLogic(),
+            broker=MockBroker(initial_cash=1e5),
+            risk_gate=_permissive_m12_gate(),
+        )
         with pytest.raises(RuntimeError, match="deliberate"):
             loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
 
@@ -1153,10 +1297,15 @@ class TestFailureHandling:
         risk_engine = RiskEngine(RiskEngineConfig(limits=tight_limits))
         runtime = StrategyRuntime(risk_engine=risk_engine)
         reg = _make_registry(spec)
-        loop = PaperTradingLoop(runtime=runtime, registry=reg,
-                                config=LoopConfig(validate_readiness=False))
-        loop.add_strategy(spec.strategy_id, ConstantLogic({"AAPL": 1.0}),
-                          broker=MockBroker(initial_cash=1e5), risk_gate=_permissive_m12_gate())
+        loop = PaperTradingLoop(
+            runtime=runtime, registry=reg, config=LoopConfig(validate_readiness=False)
+        )
+        loop.add_strategy(
+            spec.strategy_id,
+            ConstantLogic({"AAPL": 1.0}),
+            broker=MockBroker(initial_cash=1e5),
+            risk_gate=_permissive_m12_gate(),
+        )
         result = loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         sr = result.result_for(spec.strategy_id)
         assert not sr.risk_approved
@@ -1165,8 +1314,9 @@ class TestFailureHandling:
 
     def test_unpriced_security_excluded(self):
         spec = _base_spec()
-        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0, "UNKNOWN": 1.0}),
-                          validate_readiness=False)
+        loop = _make_loop(
+            spec, ConstantLogic({"AAPL": 1.0, "UNKNOWN": 1.0}), validate_readiness=False
+        )
         # UNKNOWN has no price → excluded from targets
         result = loop.process_snapshot(FakeSnapshot(AS_OF_0, {"AAPL": 185.0}))
         sr = result.result_for(spec.strategy_id)
@@ -1177,6 +1327,7 @@ class TestFailureHandling:
 # ═══════════════════════════════════════════════════════════════════════════════
 # L. M22→M12 integration (evaluation → paper execution)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestM22M12Integration:
     def test_evaluation_fingerprint_present(self):
@@ -1195,8 +1346,7 @@ class TestM22M12Integration:
 
     def test_m12_fills_change_portfolio_value(self):
         spec = _base_spec()
-        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}),
-                          validate_readiness=False)
+        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}), validate_readiness=False)
         result = loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         sr = result.result_for(spec.strategy_id)
         # fills executed → n_fills > 0
@@ -1204,8 +1354,7 @@ class TestM22M12Integration:
 
     def test_m12_session_book_reflects_fills(self):
         spec = _base_spec()
-        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}),
-                          validate_readiness=False)
+        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}), validate_readiness=False)
         loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         sess = loop.session(spec.strategy_id)
         # holdings populated after fills
@@ -1220,8 +1369,7 @@ class TestM22M12Integration:
 
     def test_realized_pnl_in_cycle_record(self):
         spec = _base_spec()
-        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}),
-                          validate_readiness=False)
+        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}), validate_readiness=False)
         loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         # sell on second snapshot → realizes some P&L
         loop.process_snapshot(FakeSnapshot(AS_OF_1, SPOTS_2))
@@ -1230,10 +1378,10 @@ class TestM22M12Integration:
         assert all(isinstance(r.realized_pnl, float) for r in records)
 
     def test_m10_portfolio_weights_flow_to_session(self):
-        spec = _base_spec(portfolio_construction_config={
-            "objective": "equal_weight", "long_only": True})
-        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}),
-                          validate_readiness=False)
+        spec = _base_spec(
+            portfolio_construction_config={"objective": "equal_weight", "long_only": True}
+        )
+        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}), validate_readiness=False)
         result = loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         sr = result.result_for(spec.strategy_id)
         # M10 produces weights, M12 executes them
@@ -1268,11 +1416,11 @@ class TestM22M12Integration:
 # M. Multi-day continuity
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestMultiDayContinuity:
     def test_portfolio_state_continuous_across_days(self):
         spec = _base_spec(rebalance_frequency="daily")
-        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}),
-                          validate_readiness=False)
+        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}), validate_readiness=False)
         snapshots = [
             FakeSnapshot(AS_OF_0, SPOTS),
             FakeSnapshot(AS_OF_1, SPOTS_2),
@@ -1289,8 +1437,11 @@ class TestMultiDayContinuity:
     def test_evaluation_count_increments_each_day(self):
         spec = _base_spec(rebalance_frequency="daily")
         loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0}), validate_readiness=False)
-        for snap in [FakeSnapshot(AS_OF_0, SPOTS), FakeSnapshot(AS_OF_1, SPOTS_2),
-                     FakeSnapshot(AS_OF_2, SPOTS_3)]:
+        for snap in [
+            FakeSnapshot(AS_OF_0, SPOTS),
+            FakeSnapshot(AS_OF_1, SPOTS_2),
+            FakeSnapshot(AS_OF_2, SPOTS_3),
+        ]:
             loop.process_snapshot(snap)
         rs = loop.runtime_state(spec.strategy_id)
         assert rs.evaluation_count == 3
@@ -1298,8 +1449,11 @@ class TestMultiDayContinuity:
     def test_nav_series_has_one_entry_per_evaluation(self):
         spec = _base_spec(rebalance_frequency="daily")
         loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0}), validate_readiness=False)
-        for snap in [FakeSnapshot(AS_OF_0, SPOTS), FakeSnapshot(AS_OF_1, SPOTS_2),
-                     FakeSnapshot(AS_OF_2, SPOTS_3)]:
+        for snap in [
+            FakeSnapshot(AS_OF_0, SPOTS),
+            FakeSnapshot(AS_OF_1, SPOTS_2),
+            FakeSnapshot(AS_OF_2, SPOTS_3),
+        ]:
             loop.process_snapshot(snap)
         fpr = loop.forward_record(spec.strategy_id)
         series = fpr.nav_series()
@@ -1307,11 +1461,10 @@ class TestMultiDayContinuity:
 
     def test_holdings_accumulate_across_days(self):
         spec = _base_spec(rebalance_frequency="daily")
-        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}),
-                          validate_readiness=False)
+        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}), validate_readiness=False)
         loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         sess = loop.session(spec.strategy_id)
-        holdings_day1 = dict(sess.book.state.holdings)
+        dict(sess.book.state.holdings)
         loop.process_snapshot(FakeSnapshot(AS_OF_1, SPOTS_2))
         # holdings still present (not reset)
         assert len(sess.book.state.holdings) > 0
@@ -1328,6 +1481,7 @@ class TestMultiDayContinuity:
 # ═══════════════════════════════════════════════════════════════════════════════
 # N. Restart certification
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestRestartCertification:
     def _run_two_days(self, loop, snap_a, snap_b):
@@ -1434,6 +1588,7 @@ class TestRestartCertification:
 # O. Determinism / replay
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestDeterminism:
     def test_same_inputs_same_evaluation_fingerprint(self):
         spec = _base_spec()
@@ -1507,12 +1662,16 @@ class TestDeterminism:
 # P. Forward record / performance comparison
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestForwardRecord:
     def test_forward_record_has_all_cycle_records(self):
         spec = _base_spec(rebalance_frequency="daily")
         loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0}), validate_readiness=False)
-        for snap in [FakeSnapshot(AS_OF_0, SPOTS), FakeSnapshot(AS_OF_1, SPOTS_2),
-                     FakeSnapshot(AS_OF_2, SPOTS_3)]:
+        for snap in [
+            FakeSnapshot(AS_OF_0, SPOTS),
+            FakeSnapshot(AS_OF_1, SPOTS_2),
+            FakeSnapshot(AS_OF_2, SPOTS_3),
+        ]:
             loop.process_snapshot(snap)
         fpr = loop.forward_record(spec.strategy_id)
         assert len(fpr.cycles) == 3
@@ -1534,8 +1693,7 @@ class TestForwardRecord:
 
     def test_metrics_returns_performance_metrics(self):
         spec = _base_spec(rebalance_frequency="daily")
-        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}),
-                          validate_readiness=False)
+        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}), validate_readiness=False)
         loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         loop.process_snapshot(FakeSnapshot(AS_OF_1, SPOTS_2))
         fpr = loop.forward_record(spec.strategy_id)
@@ -1558,6 +1716,7 @@ class TestForwardRecord:
 # ═══════════════════════════════════════════════════════════════════════════════
 # Q. End-to-end certification
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestEndToEndCertification:
     def test_full_pipeline_e2e(self):
@@ -1607,7 +1766,8 @@ class TestEndToEndCertification:
 
         # Verify restart matches reference
         assert abs(ref_value - resumed_value) < 0.01, (
-            f"NAV mismatch: ref={ref_value:.2f} resumed={resumed_value:.2f}")
+            f"NAV mismatch: ref={ref_value:.2f} resumed={resumed_value:.2f}"
+        )
         assert abs(ref_pnl - resumed_pnl) < 0.01
         assert ref_count == resumed_count == 4
 
@@ -1631,11 +1791,16 @@ class TestEndToEndCertification:
 # R. Partial-fill (SimulatedBroker) + duplicate-event safety
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestPartialFillAndDuplicates:
     def test_simulated_broker_partial_fill(self):
         spec = _base_spec()
-        loop = _make_loop(spec, ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}),
-                          validate_readiness=False, slippage_bps=10.0)
+        loop = _make_loop(
+            spec,
+            ConstantLogic({"AAPL": 1.0, "MSFT": 1.0}),
+            validate_readiness=False,
+            slippage_bps=10.0,
+        )
         result = loop.process_snapshot(FakeSnapshot(AS_OF_0, SPOTS))
         sr = result.result_for(spec.strategy_id)
         # SimulatedBroker with slippage still produces fills

@@ -23,10 +23,10 @@ from datetime import date
 class RevisionRecord:
     security_id: str
     field: str
-    effective_date: date          # the date the value is FOR
+    effective_date: date  # the date the value is FOR
     value: float
-    knowledge_date: date          # the date the value was published/known
-    revision: int = 0             # monotone per (security_id, field, effective_date)
+    knowledge_date: date  # the date the value was published/known
+    revision: int = 0  # monotone per (security_id, field, effective_date)
     source: str = "unknown"
 
 
@@ -36,20 +36,30 @@ class RevisionStore:
     def __init__(self) -> None:
         self._records: dict[tuple, list[RevisionRecord]] = {}
 
-    def record(self, security_id: str, field: str, effective_date: date, value: float, *,
-               knowledge_date: date, source: str = "unknown") -> RevisionRecord:
+    def record(
+        self,
+        security_id: str,
+        field: str,
+        effective_date: date,
+        value: float,
+        *,
+        knowledge_date: date,
+        source: str = "unknown",
+    ) -> RevisionRecord:
         key = (security_id, field, effective_date)
         seq = self._records.setdefault(key, [])
-        rev = RevisionRecord(security_id, field, effective_date, float(value),
-                             knowledge_date, len(seq), source)
+        rev = RevisionRecord(
+            security_id, field, effective_date, float(value), knowledge_date, len(seq), source
+        )
         seq.append(rev)
         return rev
 
     def history(self, security_id: str, field: str, effective_date: date) -> list[RevisionRecord]:
         return list(self._records.get((security_id, field, effective_date), ()))
 
-    def known_as_of(self, security_id: str, field: str, effective_date: date,
-                    knowledge_date: date) -> RevisionRecord | None:
+    def known_as_of(
+        self, security_id: str, field: str, effective_date: date, knowledge_date: date
+    ) -> RevisionRecord | None:
         """The value Mentisrex knew on `knowledge_date` — latest revision published by then."""
         best = None
         for r in self._records.get((security_id, field, effective_date), ()):

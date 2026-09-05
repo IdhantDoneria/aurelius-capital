@@ -15,12 +15,12 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass, field
 from datetime import date
-from enum import Enum
+from enum import StrEnum
 
 from mentisrex.research.market_data_ops.reconstruction import ReconstructionResult
 
 
-class SnapshotState(str, Enum):
+class SnapshotState(StrEnum):
     RAW = "raw"
     NORMALIZED = "normalized"
     QUALITY_CHECKED = "quality_checked"
@@ -35,18 +35,19 @@ class SealedSnapshot:
     """Immutable sealed record. `snapshot` is the M18 object the valuation engine consumes; the
     rest is the operational envelope. Equality/reproducibility hinge on `snapshot_id`, which is a
     deterministic function of the content."""
+
     snapshot_id: str
     state: SnapshotState
     as_of: date
     knowledge_date: date
-    snapshot: object                         # M18 MarketDataSnapshot
+    snapshot: object  # M18 MarketDataSnapshot
     source_set: tuple = ()
     input_fingerprint: str = ""
     accepted_fingerprint: str = ""
     rejected_fingerprint: str = ""
     snapshot_fingerprint: str = ""
     reconstruction_fingerprint: str = ""
-    pit_status: str = "unknown"              # clean | look_ahead | stale
+    pit_status: str = "unknown"  # clean | look_ahead | stale
     quality_summary: dict = field(default_factory=dict)
     versions: dict = field(default_factory=dict)
     n_observations: int = 0
@@ -54,17 +55,28 @@ class SealedSnapshot:
     def verify(self) -> bool:
         """Re-derive the sealed fingerprints from the wrapped snapshot and confirm they match —
         tamper/corruption detection for a stored sealed snapshot."""
-        return (self.snapshot_fingerprint == self.snapshot.fingerprint()
-                and self.snapshot_id == _seal_id(self.as_of, self.knowledge_date,
-                                                  self.reconstruction_fingerprint,
-                                                  self.snapshot_fingerprint))
+        return (
+            self.snapshot_fingerprint == self.snapshot.fingerprint()
+            and self.snapshot_id
+            == _seal_id(
+                self.as_of,
+                self.knowledge_date,
+                self.reconstruction_fingerprint,
+                self.snapshot_fingerprint,
+            )
+        )
 
 
 _DEFAULT_VERSIONS = {"m19": "1.0.0", "m20": "1.0.0", "m18_compat": "1.0.0"}
 
 
-def seal(result: ReconstructionResult, *, versions: dict | None = None,
-         calendar_version: str = "", identifier_map_version: str = "") -> SealedSnapshot:
+def seal(
+    result: ReconstructionResult,
+    *,
+    versions: dict | None = None,
+    calendar_version: str = "",
+    identifier_map_version: str = "",
+) -> SealedSnapshot:
     """Seal a reconstruction into an immutable, fully-attributed record."""
     snap = result.snapshot
     winners = result.winners
@@ -93,27 +105,43 @@ def seal(result: ReconstructionResult, *, versions: dict | None = None,
 
     sid = _seal_id(result.valuation_date, result.knowledge_date, result.fingerprint, snap_fp)
     return SealedSnapshot(
-        snapshot_id=sid, state=SnapshotState.SEALED, as_of=result.valuation_date,
-        knowledge_date=result.knowledge_date, snapshot=snap, source_set=sources,
-        input_fingerprint=input_fp, accepted_fingerprint=accepted_fp,
-        rejected_fingerprint=rejected_fp, snapshot_fingerprint=snap_fp,
-        reconstruction_fingerprint=result.fingerprint, pit_status=pit_status,
-        quality_summary=quality_summary, versions=vers, n_observations=len(winners))
+        snapshot_id=sid,
+        state=SnapshotState.SEALED,
+        as_of=result.valuation_date,
+        knowledge_date=result.knowledge_date,
+        snapshot=snap,
+        source_set=sources,
+        input_fingerprint=input_fp,
+        accepted_fingerprint=accepted_fp,
+        rejected_fingerprint=rejected_fp,
+        snapshot_fingerprint=snap_fp,
+        reconstruction_fingerprint=result.fingerprint,
+        pit_status=pit_status,
+        quality_summary=quality_summary,
+        versions=vers,
+        n_observations=len(winners),
+    )
 
 
 def reject(result: ReconstructionResult, reason: str) -> SealedSnapshot:
     """Produce a REJECTED terminal record (still immutable and attributed)."""
     s = seal(result)
     from dataclasses import replace
-    return replace(s, state=SnapshotState.REJECTED,
-                   quality_summary={**s.quality_summary, "rejection_reason": reason})
+
+    return replace(
+        s,
+        state=SnapshotState.REJECTED,
+        quality_summary={**s.quality_summary, "rejection_reason": reason},
+    )
 
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
+
 def _seal_id(as_of, knowledge_date, recon_fp, snap_fp) -> str:
-    return hashlib.blake2b(f"{as_of}|{knowledge_date}|{recon_fp}|{snap_fp}".encode(),
-                           digest_size=8).hexdigest()
+    return hashlib.blake2b(
+        f"{as_of}|{knowledge_date}|{recon_fp}|{snap_fp}".encode(), digest_size=8
+    ).hexdigest()
 
 
 def _hash_fps(fps) -> str:

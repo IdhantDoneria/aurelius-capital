@@ -85,9 +85,23 @@ CREATE TABLE IF NOT EXISTS ingestion_log (
 """
 
 _FACT_COLS = (
-    "cik", "security_id", "taxonomy", "concept", "unit", "period_start", "period_end",
-    "fiscal_year", "fiscal_period", "value", "form", "accession", "filing_date", "frame",
-    "vendor", "source_document", "data_version",
+    "cik",
+    "security_id",
+    "taxonomy",
+    "concept",
+    "unit",
+    "period_start",
+    "period_end",
+    "fiscal_year",
+    "fiscal_period",
+    "value",
+    "form",
+    "accession",
+    "filing_date",
+    "frame",
+    "vendor",
+    "source_document",
+    "data_version",
 )
 
 
@@ -172,9 +186,14 @@ class FundamentalsStore:
 
         now = datetime.now(UTC)
         df = pd.DataFrame(
-            [{**{c: f.get(c) for c in _FACT_COLS},
-              "vendor": f.get("vendor", "sec_edgar"),
-              "data_version": f.get("data_version", 1)} for f in facts],
+            [
+                {
+                    **{c: f.get(c) for c in _FACT_COLS},
+                    "vendor": f.get("vendor", "sec_edgar"),
+                    "data_version": f.get("data_version", 1),
+                }
+                for f in facts
+            ],
             columns=list(_FACT_COLS),
         )
         df["created_at"] = now
@@ -200,15 +219,37 @@ class FundamentalsStore:
                 (accession, cik, security_id, form, filing_date, acceptance_datetime,
                  period_end, report_type, vendor, source_document, data_version, created_at, updated_at)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                [[f["accession"], f["cik"], f.get("security_id"), f.get("form"),
-                  f.get("filing_date"), f.get("acceptance_datetime"), f.get("period_end"),
-                  f.get("report_type") or f.get("form"), f.get("vendor", "sec_edgar"),
-                  f.get("source_document"), f.get("data_version", 1), now, now] for f in filings],
+                [
+                    [
+                        f["accession"],
+                        f["cik"],
+                        f.get("security_id"),
+                        f.get("form"),
+                        f.get("filing_date"),
+                        f.get("acceptance_datetime"),
+                        f.get("period_end"),
+                        f.get("report_type") or f.get("form"),
+                        f.get("vendor", "sec_edgar"),
+                        f.get("source_document"),
+                        f.get("data_version", 1),
+                        now,
+                        now,
+                    ]
+                    for f in filings
+                ],
             )
         return len(filings)
 
-    def log_ingestion(self, cik: str, *, facts: int, filings: int, status: str = "ok",
-                      message: str = "", source_document: str | None = None) -> None:
+    def log_ingestion(
+        self,
+        cik: str,
+        *,
+        facts: int,
+        filings: int,
+        status: str = "ok",
+        message: str = "",
+        source_document: str | None = None,
+    ) -> None:
         now = datetime.now(UTC)
         with self._conn() as conn:
             conn.execute(
@@ -221,8 +262,13 @@ class FundamentalsStore:
     # ── Point-in-time query core ────────────────────────────────────────────────
 
     def fact_as_of(
-        self, cik: str, concept: str, as_of: date, *,
-        knowledge_date: date | None = None, unit: str | None = None,
+        self,
+        cik: str,
+        concept: str,
+        as_of: date,
+        *,
+        knowledge_date: date | None = None,
+        unit: str | None = None,
         fiscal_period: str | None = None,
     ) -> dict | None:
         """The value of `concept` as it was known on `knowledge_date` (default =
@@ -244,17 +290,30 @@ class FundamentalsStore:
         with self._conn() as conn:
             row = conn.execute(
                 f"""SELECT value, period_end, filing_date, accession, unit, form, fiscal_period
-                    FROM fundamental_facts WHERE {' AND '.join(clauses)}
+                    FROM fundamental_facts WHERE {" AND ".join(clauses)}
                     ORDER BY period_end DESC, filing_date DESC, accession DESC LIMIT 1""",
                 params,
             ).fetchone()
         if row is None:
             return None
-        return {"value": row[0], "period_end": row[1], "filing_date": row[2],
-                "accession": row[3], "unit": row[4], "form": row[5], "fiscal_period": row[6]}
+        return {
+            "value": row[0],
+            "period_end": row[1],
+            "filing_date": row[2],
+            "accession": row[3],
+            "unit": row[4],
+            "form": row[5],
+            "fiscal_period": row[6],
+        }
 
-    def cross_section_as_of(self, concept: str, as_of: date, *,
-                            knowledge_date: date | None = None, unit: str | None = None) -> dict[str, float]:
+    def cross_section_as_of(
+        self,
+        concept: str,
+        as_of: date,
+        *,
+        knowledge_date: date | None = None,
+        unit: str | None = None,
+    ) -> dict[str, float]:
         """{cik: value} for ALL companies as of a date — the factor-model path.
         One set-based query (latest period ≤ as_of, latest restatement filed ≤
         knowledge_date, per cik). Far faster than N point calls."""
@@ -269,14 +328,15 @@ class FundamentalsStore:
                 f"""SELECT cik, value FROM (
                         SELECT cik, value,
                                ROW_NUMBER() OVER (PARTITION BY cik ORDER BY period_end DESC, filing_date DESC) rn
-                        FROM fundamental_facts WHERE {' AND '.join(clauses)}
+                        FROM fundamental_facts WHERE {" AND ".join(clauses)}
                     ) t WHERE rn = 1""",
                 params,
             ).fetchall()
-        return {cik: val for cik, val in rows}
+        return dict(rows)
 
-    def series_as_of(self, cik: str, concept: str, knowledge_date: date, *,
-                     unit: str | None = None) -> list[dict]:
+    def series_as_of(
+        self, cik: str, concept: str, knowledge_date: date, *, unit: str | None = None
+    ) -> list[dict]:
         """Full period history of a concept as known on `knowledge_date` — one
         row per period_end, taking the latest restatement filed by then."""
         clauses = ["cik = ?", "concept = ?", "filing_date <= ?"]
@@ -289,8 +349,11 @@ class FundamentalsStore:
                 f"""SELECT period_end, value, filing_date, accession FROM (
                         SELECT period_end, value, filing_date, accession,
                                ROW_NUMBER() OVER (PARTITION BY period_end ORDER BY filing_date DESC) rn
-                        FROM fundamental_facts WHERE {' AND '.join(clauses)}
+                        FROM fundamental_facts WHERE {" AND ".join(clauses)}
                     ) t WHERE rn = 1 ORDER BY period_end""",
                 params,
             ).fetchall()
-        return [{"period_end": r[0], "value": r[1], "filing_date": r[2], "accession": r[3]} for r in rows]
+        return [
+            {"period_end": r[0], "value": r[1], "filing_date": r[2], "accession": r[3]}
+            for r in rows
+        ]

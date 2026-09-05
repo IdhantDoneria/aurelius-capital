@@ -27,6 +27,6 @@ def diagnostics(report) -> dict:
 
 def fingerprint(report) -> str:
     d = serialization.report_to_dict(report)
-    d.pop("generated_at", None)                       # exclude wall-clock → deterministic
+    d.pop("generated_at", None)  # exclude wall-clock → deterministic
     body = json.dumps(d, sort_keys=True, default=str)
     return hashlib.blake2b(body.encode(), digest_size=16).hexdigest()

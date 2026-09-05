@@ -18,9 +18,7 @@ class GovernanceManager:
     def log_access(self, dataset_id: str, actor: str, purpose: str = "") -> GovernanceRecord:
         return self._log(dataset_id, "access", actor, {"purpose": purpose})
 
-    def set_retention(
-        self, dataset_id: str, actor: str, retention_days: int
-    ) -> GovernanceRecord:
+    def set_retention(self, dataset_id: str, actor: str, retention_days: int) -> GovernanceRecord:
         rec = GovernanceRecord(
             dataset_id=dataset_id,
             action="policy_change",
@@ -50,12 +48,8 @@ class GovernanceManager:
     def get_history(self, dataset_id: str) -> list[GovernanceRecord]:
         return self._catalog.governance_history(dataset_id)
 
-    def _log(
-        self, dataset_id: str, action: str, actor: str, details: dict
-    ) -> GovernanceRecord:
-        rec = GovernanceRecord(
-            dataset_id=dataset_id, action=action, actor=actor, details=details
-        )
+    def _log(self, dataset_id: str, action: str, actor: str, details: dict) -> GovernanceRecord:
+        rec = GovernanceRecord(dataset_id=dataset_id, action=action, actor=actor, details=details)
         self._catalog.log_governance(rec)
         logger.info("governance_event", dataset_id=dataset_id, action=action, actor=actor)
         return rec

@@ -76,7 +76,7 @@ class Ensemble:
     weights: dict
     combined_series: list
     sharpe: float
-    t_stat: float                # HAC (M31)
+    t_stat: float  # HAC (M31)
     p_value: float
     diversification_ratio: float
     effective_bets: float
@@ -86,8 +86,13 @@ class Ensemble:
         return self.__dict__.copy()
 
 
-def combine(series_map: dict, *, method: str = "equal", ic_map: dict | None = None,
-            periods_per_year: int = 12) -> Ensemble:
+def combine(
+    series_map: dict,
+    *,
+    method: str = "equal",
+    ic_map: dict | None = None,
+    periods_per_year: int = 12,
+) -> Ensemble:
     names, M = _align(series_map)
     if len(names) == 0:
         raise ValueError("no factors to combine")
@@ -116,7 +121,8 @@ def combine(series_map: dict, *, method: str = "equal", ic_map: dict | None = No
         weights=dict(zip(names, (float(x) for x in w), strict=True)),
         combined_series=[float(x) for x in combined],
         sharpe=sharpe(combined, periods=periods_per_year) if combined.size >= 2 else float("nan"),
-        t_stat=h["hac_t_stat"], p_value=h["hac_p_value"],
+        t_stat=h["hac_t_stat"],
+        p_value=h["hac_p_value"],
         diversification_ratio=diversification_ratio(w, M),
         effective_bets=effective_bets(M),
         avg_correlation=float(off.mean()) if off.size else float("nan"),

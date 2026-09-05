@@ -27,8 +27,12 @@ def market_exposure(returns, benchmark_returns, *, periods: int = 252) -> dict:
     beta = float(np.cov(r, b, ddof=0)[0, 1] / var_b)
     alpha_daily = float(r.mean() - beta * b.mean())
     corr = float(np.corrcoef(r, b)[0, 1])
-    return {"market_beta": beta, "annualized_alpha": alpha_daily * periods,
-            "correlation": corr, "r_squared": corr**2}
+    return {
+        "market_beta": beta,
+        "annualized_alpha": alpha_daily * periods,
+        "correlation": corr,
+        "r_squared": corr**2,
+    }
 
 
 def style_exposure(positions, research_matrix, *, features=None) -> dict:
@@ -59,8 +63,12 @@ def concentration(positions) -> dict:
     w = np.array([abs(x) for x in positions.values()], dtype=float)
     gross = w.sum() or 1.0
     shares = w / gross
-    return {"herfindahl": float((shares**2).sum()), "n_names": int(w.size),
-            "top_name_share": float(shares.max()), "effective_names": float(1.0 / (shares**2).sum())}
+    return {
+        "herfindahl": float((shares**2).sum()),
+        "n_names": int(w.size),
+        "top_name_share": float(shares.max()),
+        "effective_names": float(1.0 / (shares**2).sum()),
+    }
 
 
 def unsupported_exposures() -> dict:
@@ -68,6 +76,11 @@ def unsupported_exposures() -> dict:
     PIT stack today (unblock: add GICS/country to SecurityMaster — M2 extension)."""
     # `supported: False` (not insufficient_data) — a permanent architecture gap, so it
     # must not count as an inconclusive-this-run analysis in the verdict.
-    return {k: {"supported": False, "reason": "no classification map in SecurityMaster",
-                "unblock": "add GICS sector/industry + country/currency to SecurityMaster"}
-            for k in ("sector", "industry", "country", "currency")}
+    return {
+        k: {
+            "supported": False,
+            "reason": "no classification map in SecurityMaster",
+            "unblock": "add GICS sector/industry + country/currency to SecurityMaster",
+        }
+        for k in ("sector", "industry", "country", "currency")
+    }

@@ -24,28 +24,48 @@ def sm() -> SecurityMaster:
 def _sec(ticker: str, exchange: str, first: date, **kw) -> Security:
     return Security(
         security_id=make_security_id(
-            isin=kw.get("isin"), figi=kw.get("figi"), ticker=ticker,
-            exchange=exchange, first_date=first,
+            isin=kw.get("isin"),
+            figi=kw.get("figi"),
+            ticker=ticker,
+            exchange=exchange,
+            first_date=first,
         ),
-        ticker=ticker, exchange=exchange, **kw,
+        ticker=ticker,
+        exchange=exchange,
+        **kw,
     )
 
 
 def test_security_id_is_deterministic_and_listing_stable() -> None:
     # Same (ISIN, exchange) listing → same id regardless of ticker/date (re-ingest collapse).
-    a = make_security_id(isin="US0378331005", figi=None, ticker="AAPL", exchange="XNAS", first_date=date(1980, 12, 12))
-    b = make_security_id(isin="US0378331005", figi=None, ticker="APPLE", exchange="XNAS", first_date=date(2001, 1, 1))
+    a = make_security_id(
+        isin="US0378331005",
+        figi=None,
+        ticker="AAPL",
+        exchange="XNAS",
+        first_date=date(1980, 12, 12),
+    )
+    b = make_security_id(
+        isin="US0378331005", figi=None, ticker="APPLE", exchange="XNAS", first_date=date(2001, 1, 1)
+    )
     assert a == b
     # Different exchange = different listing of the same instrument → different id.
-    c = make_security_id(isin="US0378331005", figi=None, ticker="AAPL", exchange="XNYS", first_date=date(1980, 12, 12))
+    c = make_security_id(
+        isin="US0378331005",
+        figi=None,
+        ticker="AAPL",
+        exchange="XNYS",
+        first_date=date(1980, 12, 12),
+    )
     assert c != a
 
 
 def test_ticker_rename(sm: SecurityMaster) -> None:
     s = _sec("FB", "XNAS", date(2012, 5, 18), isin="US30303M1027")
     sid = sm.register(s, valid_from=date(2012, 5, 18))
-    sm.add_identity_change(sid, new_ticker="META", exchange="XNAS",
-                           valid_from=date(2022, 6, 9), reason="rebrand")
+    sm.add_identity_change(
+        sid, new_ticker="META", exchange="XNAS", valid_from=date(2022, 6, 9), reason="rebrand"
+    )
     # Same entity across the rename.
     assert sm.resolve_as_of("FB", date(2015, 1, 1)) == sid
     assert sm.resolve_as_of("META", date(2023, 1, 1)) == sid
@@ -70,8 +90,9 @@ def test_ticker_reuse_disjoint_periods_resolves_by_date(sm: SecurityMaster) -> N
 def test_exchange_migration_keeps_security_id(sm: SecurityMaster) -> None:
     s = _sec("XYZ", "XASE", date(2005, 1, 1), isin="US_XYZ0000001")
     sid = sm.register(s, valid_from=date(2005, 1, 1))
-    sm.add_identity_change(sid, new_ticker="XYZ", exchange="XNAS",
-                           valid_from=date(2010, 1, 1), reason="uplisting")
+    sm.add_identity_change(
+        sid, new_ticker="XYZ", exchange="XNAS", valid_from=date(2010, 1, 1), reason="uplisting"
+    )
     assert sm.resolve_as_of("XYZ", date(2006, 1, 1)) == sid
     assert sm.resolve_as_of("XYZ", date(2011, 1, 1)) == sid
     assert sm.lookup_by_security_id(sid).exchange == "XNAS"
@@ -103,8 +124,9 @@ def test_delist_then_relist(sm: SecurityMaster) -> None:
     sm.set_status(sid, "delisted", as_of=date(2003, 1, 1))
     assert sm.resolve_as_of("DLST", date(2001, 1, 1)) == sid
     assert sm.resolve_as_of("DLST", date(2004, 1, 1)) is None  # dark
-    sm.add_identity_change(sid, new_ticker="DLST", exchange="XNAS",
-                           valid_from=date(2006, 1, 1), reason="relisting")
+    sm.add_identity_change(
+        sid, new_ticker="DLST", exchange="XNAS", valid_from=date(2006, 1, 1), reason="relisting"
+    )
     sm.set_status(sid, "active")
     assert sm.resolve_as_of("DLST", date(2007, 1, 1)) == sid
 
@@ -131,8 +153,9 @@ def test_spinoff_creates_new_security(sm: SecurityMaster) -> None:
 def test_research_universe_resolution_is_pit(sm: SecurityMaster) -> None:
     fb = _sec("FB", "XNAS", date(2012, 5, 18), isin="US30303M1027")
     fid = sm.register(fb, valid_from=date(2012, 5, 18))
-    sm.add_identity_change(fid, new_ticker="META", exchange="XNAS",
-                           valid_from=date(2022, 6, 9), reason="rebrand")
+    sm.add_identity_change(
+        fid, new_ticker="META", exchange="XNAS", valid_from=date(2022, 6, 9), reason="rebrand"
+    )
     aapl = _sec("AAPL", "XNAS", date(1980, 12, 12), isin="US0378331005")
     aid = sm.register(aapl, valid_from=date(1980, 12, 12))
     # A 2015 universe naming "FB" must map to the same entity a 2023 "META" does.

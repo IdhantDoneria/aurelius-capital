@@ -10,8 +10,9 @@ the engine façade, financial invariants, M16/M17/M18 integration and determinis
 
 from __future__ import annotations
 
+import itertools
 import math
-from datetime import date, datetime
+from datetime import date
 
 import pytest
 
@@ -24,7 +25,6 @@ from mentisrex.research.market_data.sabr import sabr_vol
 from mentisrex.research.valuation.engine import ValuationEngine
 from mentisrex.research.valuation.models import ValuationConfiguration
 
-
 # ── helpers ───────────────────────────────────────────────────────────────────
 
 REF = date(2024, 6, 3)
@@ -32,10 +32,17 @@ REF = date(2024, 6, 3)
 
 def obs(sid="AAPL", field="close", value=190.0, obs_d=REF, eff=None, **kw):
     from mentisrex.research.market_data.models import CanonicalObservation, ObservationType, Unit
+
     return CanonicalObservation(
-        security_id=sid, obs_type=kw.pop("obs_type", ObservationType.CLOSE), field=field,
-        value=value, observation_date=obs_d, effective_date=eff or obs_d,
-        unit=kw.pop("unit", Unit.PRICE), **kw)
+        security_id=sid,
+        obs_type=kw.pop("obs_type", ObservationType.CLOSE),
+        field=field,
+        value=value,
+        observation_date=obs_d,
+        effective_date=eff or obs_d,
+        unit=kw.pop("unit", Unit.PRICE),
+        **kw,
+    )
 
 
 def swap_curve(rates=None):
@@ -54,6 +61,7 @@ def sabr_smile(f, t, underlying="SPX", params=(0.25, 0.5, -0.3, 0.4)):
 # 1. canonical observation model
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_observation_fingerprint_stable():
     assert obs().fingerprint() == obs().fingerprint()
 
@@ -68,14 +76,17 @@ def test_observation_fingerprint_changes_with_revision():
 
 def test_observation_provenance_carries_pit():
     p = obs().provenance()
-    assert p.observation_date == REF and p.instrument_id == "AAPL"
+    assert p.observation_date == REF
+    assert p.instrument_id == "AAPL"
 
 
 def test_observation_with_status_immutable():
     from mentisrex.research.market_data.models import QualityStatus
+
     o = obs()
     o2 = o.with_status(QualityStatus.VALIDATED)
-    assert o.status is QualityStatus.RAW and o2.status is QualityStatus.VALIDATED
+    assert o.status is QualityStatus.RAW
+    assert o2.status is QualityStatus.VALIDATED
 
 
 def test_observation_key_ignores_source_revision():
@@ -84,28 +95,34 @@ def test_observation_key_ignores_source_revision():
 
 def test_observation_types_distinct():
     from mentisrex.research.market_data.models import ObservationType
+
     assert len({t.value for t in ObservationType}) == len(list(ObservationType))
 
 
 def test_quality_diagnostic_rejects():
     from mentisrex.research.market_data.models import QualityDiagnostic, Severity
+
     assert QualityDiagnostic("c", Severity.REJECT, "m").rejects
     assert not QualityDiagnostic("c", Severity.WARNING, "m").rejects
 
 
 def test_unit_enum_has_rate_and_price():
     from mentisrex.research.market_data.models import Unit
-    assert Unit.RATE.value == "rate" and Unit.PRICE.value == "price"
+
+    assert Unit.RATE.value == "rate"
+    assert Unit.PRICE.value == "price"
 
 
 def test_observation_default_unit_price():
     from mentisrex.research.market_data.models import Unit
+
     assert obs().unit is Unit.PRICE
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 2. identifiers (PIT + no collapse)
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_identifier_resolve_basic():
     m = md.IdentifierMap()
@@ -131,11 +148,12 @@ def test_identifier_collision_overlapping_raises():
 def test_identifier_no_collision_disjoint_windows():
     m = md.IdentifierMap()
     m.add(md.IdType.TICKER, "T", "A", end=date(2020, 1, 1))
-    m.add(md.IdType.TICKER, "T", "B", start=date(2020, 1, 1))   # no raise
+    m.add(md.IdType.TICKER, "T", "B", start=date(2020, 1, 1))  # no raise
 
 
 def test_identifier_ambiguous_resolution_raises():
     from mentisrex.research.market_data.identifiers import IdentifierRecord
+
     m = md.IdentifierMap()
     # a corrupted map with two overlapping records for one external id must refuse to resolve
     m._records.append(IdentifierRecord(md.IdType.TICKER, "T", "A"))
@@ -154,7 +172,8 @@ def test_identifier_reverse_lookup():
     m.add(md.IdType.TICKER, "AAPL", "SEC")
     m.add(md.IdType.ISIN, "US037", "SEC")
     ids = m.identifiers("SEC")
-    assert ids["ticker"] == "AAPL" and ids["isin"] == "US037"
+    assert ids["ticker"] == "AAPL"
+    assert ids["isin"] == "US037"
 
 
 def test_identifier_try_resolve_none():
@@ -170,10 +189,11 @@ def test_identifier_types_cover_vendors():
 # 3. calendars
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_weekend_not_business_day():
     c = md.WeekendCalendar()
-    assert not c.is_business_day(date(2024, 6, 1))     # Saturday
-    assert c.is_business_day(date(2024, 6, 3))         # Monday
+    assert not c.is_business_day(date(2024, 6, 1))  # Saturday
+    assert c.is_business_day(date(2024, 6, 3))  # Monday
 
 
 def test_us_holiday_july4():
@@ -212,7 +232,7 @@ def test_adjust_none_raises_on_holiday():
 
 def test_add_business_days_positive():
     c = md.us_calendar()
-    assert c.add_business_days(date(2024, 7, 3), 2) == date(2024, 7, 8)   # skip 4th + weekend
+    assert c.add_business_days(date(2024, 7, 3), 2) == date(2024, 7, 8)  # skip 4th + weekend
 
 
 def test_add_business_days_negative():
@@ -227,8 +247,8 @@ def test_business_days_between():
 
 def test_joint_calendar_union_holidays():
     j = md.JointCalendar([md.us_calendar(), md.uk_calendar()])
-    assert not j.is_business_day(date(2024, 7, 4))         # US holiday
-    assert not j.is_business_day(date(2024, 8, 26))        # UK holiday
+    assert not j.is_business_day(date(2024, 7, 4))  # US holiday
+    assert not j.is_business_day(date(2024, 8, 26))  # UK holiday
 
 
 def test_named_calendar_lookup():
@@ -253,6 +273,7 @@ def test_india_republic_day_holiday():
 # ══════════════════════════════════════════════════════════════════════════════
 # 4. revisions + fixings
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_revision_known_as_of_pit():
     s = md.RevisionStore()
@@ -288,7 +309,8 @@ def test_revision_numbers_monotone():
     s = md.RevisionStore()
     r0 = s.record("X", "v", REF, 1.0, knowledge_date=REF)
     r1 = s.record("X", "v", REF, 2.0, knowledge_date=date(2024, 7, 1))
-    assert r0.revision == 0 and r1.revision == 1
+    assert r0.revision == 0
+    assert r1.revision == 1
 
 
 def test_fixing_pit_visibility():
@@ -322,9 +344,12 @@ def test_fixing_missing_raises():
 # 5. sources
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_static_source_pit_filter():
-    recs = [{"id": "A", "field": "close", "value": 1, "observation_date": "2024-06-03"},
-            {"id": "A", "field": "close", "value": 2, "observation_date": "2024-06-10"}]
+    recs = [
+        {"id": "A", "field": "close", "value": 1, "observation_date": "2024-06-03"},
+        {"id": "A", "field": "close", "value": 2, "observation_date": "2024-06-10"},
+    ]
     s = md.StaticSource(recs)
     assert len(s.fetch(date(2024, 6, 5))) == 1
 
@@ -336,8 +361,12 @@ def test_static_source_no_pit_filter():
 
 
 def test_historical_source_pit():
-    s = md.HistoricalSource({date(2024, 6, 3): [{"id": "A", "field": "close", "value": 1}],
-                             date(2024, 6, 10): [{"id": "A", "field": "close", "value": 2}]})
+    s = md.HistoricalSource(
+        {
+            date(2024, 6, 3): [{"id": "A", "field": "close", "value": 1}],
+            date(2024, 6, 10): [{"id": "A", "field": "close", "value": 2}],
+        }
+    )
     assert len(s.fetch(date(2024, 6, 5))) == 1
     assert len(s.fetch(date(2024, 6, 11))) == 2
 
@@ -350,7 +379,8 @@ def test_mock_source_deterministic():
 def test_source_filter_by_security():
     s = md.DeterministicMockSource({"A": 100.0, "B": 50.0})
     out = s.fetch(REF, security_ids=["A"])
-    assert len(out) == 1 and out[0]["id"] == "A"
+    assert len(out) == 1
+    assert out[0]["id"] == "A"
 
 
 def test_source_filter_by_field():
@@ -362,23 +392,29 @@ def test_source_filter_by_field():
 # 6. normalization
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_normalize_close_alias():
     r = md.Normalizer().normalize([{"id": "A", "field": "adj_close", "value": 10.0}], as_of=REF)
     o = r.observations[0]
-    assert o.field == "close" and o.obs_type.value == "adjusted_close"
+    assert o.field == "close"
+    assert o.obs_type.value == "adjusted_close"
 
 
 def test_normalize_percent_to_rate():
     from mentisrex.research.market_data.models import Unit
+
     r = md.Normalizer().normalize(
-        [{"id": "C", "field": "rate", "value": 5.0, "unit": "percent"}], as_of=REF)
+        [{"id": "C", "field": "rate", "value": 5.0, "unit": "percent"}], as_of=REF
+    )
     o = r.observations[0]
-    assert abs(o.value - 0.05) < 1e-12 and o.unit is Unit.RATE
+    assert abs(o.value - 0.05) < 1e-12
+    assert o.unit is Unit.RATE
 
 
 def test_normalize_basis_points_to_rate():
     r = md.Normalizer().normalize(
-        [{"id": "C", "field": "rate", "value": 50.0, "unit": "bp"}], as_of=REF)
+        [{"id": "C", "field": "rate", "value": 50.0, "unit": "bp"}], as_of=REF
+    )
     assert abs(r.observations[0].value - 0.005) < 1e-12
 
 
@@ -390,16 +426,21 @@ def test_normalize_currency_conversion():
 
 
 def test_normalize_dedup_keeps_highest_revision():
-    raw = [{"id": "A", "field": "close", "value": 1.0, "revision": 0},
-           {"id": "A", "field": "close", "value": 2.0, "revision": 1}]
+    raw = [
+        {"id": "A", "field": "close", "value": 1.0, "revision": 0},
+        {"id": "A", "field": "close", "value": 2.0, "revision": 1},
+    ]
     r = md.Normalizer().normalize(raw, as_of=REF)
-    assert len(r.observations) == 1 and r.observations[0].value == 2.0
+    assert len(r.observations) == 1
+    assert r.observations[0].value == 2.0
 
 
 def test_normalize_missing_id_rejected():
     from mentisrex.research.market_data.models import Severity
+
     r = md.Normalizer().normalize([{"field": "close", "value": 1.0}], as_of=REF)
-    assert not r.observations and any(d.severity is Severity.REJECT for d in r.diagnostics)
+    assert not r.observations
+    assert any(d.severity is Severity.REJECT for d in r.diagnostics)
 
 
 def test_normalize_non_numeric_rejected():
@@ -411,19 +452,29 @@ def test_normalize_id_map_resolution():
     m = md.IdentifierMap()
     m.add(md.IdType.TICKER, "AAPL", "SEC_APPLE")
     n = md.Normalizer(id_map=m)
-    r = n.normalize([{"id": "AAPL", "id_type": "ticker", "field": "close", "value": 1.0}], as_of=REF)
+    r = n.normalize(
+        [{"id": "AAPL", "id_type": "ticker", "field": "close", "value": 1.0}], as_of=REF
+    )
     assert r.observations[0].security_id == "SEC_APPLE"
 
 
 def test_normalize_transform_log_nonempty():
     r = md.Normalizer().normalize(
-        [{"id": "C", "field": "rate", "value": 5.0, "unit": "percent"}], as_of=REF)
+        [{"id": "C", "field": "rate", "value": 5.0, "unit": "percent"}], as_of=REF
+    )
     assert len(r.transform_log) > 0
 
 
 def test_normalize_timestamp_inconsistency_logged():
-    raw = [{"id": "A", "field": "close", "value": 1.0, "observation_date": "2024-06-03",
-            "timestamp": "2024-06-04T10:00:00"}]
+    raw = [
+        {
+            "id": "A",
+            "field": "close",
+            "value": 1.0,
+            "observation_date": "2024-06-03",
+            "timestamp": "2024-06-04T10:00:00",
+        }
+    ]
     r = md.Normalizer().normalize(raw, as_of=REF)
     assert any("timestamp" in line for line in r.transform_log)
 
@@ -434,24 +485,30 @@ def test_normalize_defaults_obs_date_to_as_of():
 
 
 def test_normalize_duplicate_logged():
-    raw = [{"id": "A", "field": "close", "value": 1.0, "revision": 1},
-           {"id": "A", "field": "close", "value": 9.0, "revision": 0}]
+    raw = [
+        {"id": "A", "field": "close", "value": 1.0, "revision": 1},
+        {"id": "A", "field": "close", "value": 9.0, "revision": 0},
+    ]
     r = md.Normalizer().normalize(raw, as_of=REF)
-    assert r.observations[0].value == 1.0 and any("duplicate" in l for l in r.transform_log)
+    assert r.observations[0].value == 1.0
+    assert any("duplicate" in l for l in r.transform_log)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 7. quality engine
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_quality_look_ahead_rejected():
     qe = md.MarketDataQualityEngine()
     rep = qe.check([obs(obs_d=date(2024, 6, 10))], as_of=REF)
-    assert rep.rejected and not rep.ok
+    assert rep.rejected
+    assert not rep.ok
 
 
 def test_quality_stale_warns():
     from mentisrex.research.market_data.models import Severity
+
     qe = md.MarketDataQualityEngine(md.QualityConfig(max_staleness_days=2))
     rep = qe.check([obs(obs_d=date(2024, 5, 1))], as_of=REF)
     assert any(d.code == "stale" and d.severity is Severity.WARNING for d in rep.diagnostics)
@@ -470,38 +527,46 @@ def test_quality_crossed_quote_rejected():
 
 def test_quality_wide_spread_warns():
     from mentisrex.research.market_data.models import Severity
+
     o = obs(meta={"bid": 100.0, "ask": 130.0})
     rep = md.MarketDataQualityEngine().check([o], as_of=REF)
     assert any(d.code == "wide_spread" and d.severity is Severity.WARNING for d in rep.diagnostics)
 
 
 def test_quality_bad_ohlc_rejected():
-    o = obs(value=95.0, meta={"open": 100.0, "high": 99.0, "low": 90.0})   # high<open
+    o = obs(value=95.0, meta={"open": 100.0, "high": 99.0, "low": 90.0})  # high<open
     rep = md.MarketDataQualityEngine().check([o], as_of=REF)
     assert rep.rejected
 
 
 def test_quality_negative_volume_error():
     from mentisrex.research.market_data.models import ObservationType, Severity, Unit
+
     o = obs(field="volume", value=-5.0, obs_type=ObservationType.VOLUME, unit=Unit.SHARES)
     rep = md.MarketDataQualityEngine().check([o], as_of=REF)
-    assert any(d.code == "negative_volume" and d.severity is Severity.ERROR for d in rep.diagnostics)
+    assert any(
+        d.code == "negative_volume" and d.severity is Severity.ERROR for d in rep.diagnostics
+    )
 
 
 def test_quality_price_jump_warns():
     from mentisrex.research.market_data.models import Severity
+
     rep = md.MarketDataQualityEngine().check([obs(value=300.0)], as_of=REF, prior={"AAPL": 190.0})
     assert any(d.code == "price_jump" and d.severity is Severity.WARNING for d in rep.diagnostics)
 
 
 def test_quality_clean_accepted_validated():
     from mentisrex.research.market_data.models import QualityStatus
+
     rep = md.MarketDataQualityEngine().check([obs()], as_of=REF)
-    assert rep.ok and rep.accepted[0].status is QualityStatus.VALIDATED
+    assert rep.ok
+    assert rep.accepted[0].status is QualityStatus.VALIDATED
 
 
 def test_quality_suspect_status_on_warning():
     from mentisrex.research.market_data.models import QualityStatus
+
     o = obs(meta={"bid": 100.0, "ask": 130.0})
     rep = md.MarketDataQualityEngine().check([o], as_of=REF)
     assert rep.accepted[0].status is QualityStatus.SUSPECT
@@ -509,12 +574,14 @@ def test_quality_suspect_status_on_warning():
 
 def test_quality_by_severity():
     from mentisrex.research.market_data.models import Severity
+
     rep = md.MarketDataQualityEngine().check([obs(value=-1.0)], as_of=REF)
     assert rep.by_severity(Severity.REJECT)
 
 
 def test_quality_missing_value_rejected():
-    from mentisrex.research.market_data.models import CanonicalObservation, ObservationType, Unit
+    from mentisrex.research.market_data.models import CanonicalObservation, ObservationType
+
     o = CanonicalObservation("A", ObservationType.CLOSE, "close", float("nan"), REF, REF)
     rep = md.MarketDataQualityEngine().check([o], as_of=REF)
     assert rep.rejected
@@ -523,6 +590,7 @@ def test_quality_missing_value_rejected():
 # ══════════════════════════════════════════════════════════════════════════════
 # 8. diagnostics (pure functions)
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_diag_bad_ohlc():
     assert mdiag.bad_ohlc(100, 99, 90, 95) is not None
@@ -561,12 +629,14 @@ def test_diag_stale_and_lookahead():
 
 
 def test_diag_reexports_m18():
-    assert callable(mdiag.put_call_parity) and callable(mdiag.fx_reciprocal)
+    assert callable(mdiag.put_call_parity)
+    assert callable(mdiag.fx_reciprocal)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 9. rate instruments
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_deposit_maturity():
     assert md.deposit(0.5, 0.05).maturity_years() == 0.5
@@ -574,7 +644,8 @@ def test_deposit_maturity():
 
 def test_fra_maturity_and_start():
     f = md.fra(0.5, 0.75, 0.05)
-    assert f.start == 0.5 and abs(f.maturity_years() - 0.75) < 1e-12
+    assert f.start == 0.5
+    assert abs(f.maturity_years() - 0.75) < 1e-12
 
 
 def test_future_implied_rate():
@@ -595,6 +666,7 @@ def test_instrument_name():
 # 10. curve bootstrapping (financial invariants)
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_bootstrap_reprices_deposits():
     res = md.CurveBootstrapper().bootstrap([md.deposit(0.5, 0.05)], REF)
     assert abs(res.residuals[0][1]) < 1e-8
@@ -602,19 +674,22 @@ def test_bootstrap_reprices_deposits():
 
 def test_bootstrap_reprices_swaps():
     res = md.CurveBootstrapper().bootstrap(
-        [md.deposit(0.25, 0.05), md.swap(2, 0.048), md.swap(5, 0.046), md.swap(10, 0.045)], REF)
+        [md.deposit(0.25, 0.05), md.swap(2, 0.048), md.swap(5, 0.046), md.swap(10, 0.045)], REF
+    )
     assert max(abs(r) for _, r in res.residuals) < 1e-7
 
 
 def test_bootstrap_reprices_fra():
     res = md.CurveBootstrapper().bootstrap(
-        [md.deposit(0.25, 0.05), md.fra(0.25, 0.5, 0.052), md.swap(2, 0.05)], REF)
+        [md.deposit(0.25, 0.05), md.fra(0.25, 0.5, 0.052), md.swap(2, 0.05)], REF
+    )
     assert max(abs(r) for _, r in res.residuals) < 1e-7
 
 
 def test_bootstrap_reprices_futures():
     res = md.CurveBootstrapper().bootstrap(
-        [md.deposit(0.25, 0.05), md.rate_future(0.25, 94.8), md.swap(2, 0.05)], REF)
+        [md.deposit(0.25, 0.05), md.rate_future(0.25, 94.8), md.swap(2, 0.05)], REF
+    )
     assert max(abs(r) for _, r in res.residuals) < 1e-7
 
 
@@ -623,12 +698,14 @@ def test_bootstrap_dfs_positive_and_monotone():
     assert c.validate() == []
     ts = [0.5, 1, 2, 5, 10, 20]
     dfs = [c.discount(t) for t in ts]
-    assert all(d > 0 for d in dfs) and all(a >= b for a, b in zip(dfs, dfs[1:]))
+    assert all(d > 0 for d in dfs)
+    assert all(a >= b for a, b in itertools.pairwise(dfs))
 
 
 def test_bootstrap_report_ok():
     res = md.CurveBootstrapper().bootstrap([md.deposit(0.25, 0.05), md.swap(5, 0.05)], REF)
-    assert res.report.ok and res.report.diagnostics.converged
+    assert res.report.ok
+    assert res.report.diagnostics.converged
 
 
 def test_bootstrap_non_increasing_maturity_raises():
@@ -650,11 +727,18 @@ def test_bootstrap_flat_when_all_equal():
 def test_bootstrap_par_swap_reprices_par_rate():
     import mentisrex.research.valuation.swaps as sw
     from mentisrex.research.valuation.daycount import DayCount
+
     c = swap_curve([(0.25, 0.05), (1, 0.05), (5, 0.05), (10, 0.05)])
     pay_dates = tuple(date(y, 6, 3) for y in range(2025, 2030))
-    spec = sw.SwapSpec(notional=1.0, fixed_rate=0.05, pay_dates=pay_dates, start=REF,
-                       day_count=DayCount.ACT_365, currency="USD")
-    assert 0.045 < sw.par_rate(spec, c) < 0.055     # ~5% flat curve, small convention drift
+    spec = sw.SwapSpec(
+        notional=1.0,
+        fixed_rate=0.05,
+        pay_dates=pay_dates,
+        start=REF,
+        day_count=DayCount.ACT_365,
+        currency="USD",
+    )
+    assert 0.045 < sw.par_rate(spec, c) < 0.055  # ~5% flat curve, small convention drift
 
 
 def test_bootstrap_strict_rejects_bad_curve():
@@ -667,6 +751,7 @@ def test_bootstrap_strict_rejects_bad_curve():
 # ══════════════════════════════════════════════════════════════════════════════
 # 11. multi-curve
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_single_curve_wraps():
     c = swap_curve()
@@ -704,6 +789,7 @@ def test_multicurve_fingerprint_reflects_projection():
 # 12. credit curves
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def _credit():
     disc = swap_curve([(0.5, 0.05), (1, 0.05), (5, 0.05), (10, 0.05)])
     q = [md.CDSQuote(1, 0.01), md.CDSQuote(3, 0.012), md.CDSQuote(5, 0.015), md.CDSQuote(10, 0.018)]
@@ -711,14 +797,15 @@ def _credit():
 
 
 def test_credit_bootstrap_reprices():
-    cc, rep = _credit()
-    assert rep.diagnostics.max_repricing_error < 1e-7 and rep.ok
+    _cc, rep = _credit()
+    assert rep.diagnostics.max_repricing_error < 1e-7
+    assert rep.ok
 
 
 def test_credit_survival_monotone():
     cc, _ = _credit()
     ts = [0.5, 1, 2, 5, 9]
-    assert all(cc.survival(a) >= cc.survival(b) for a, b in zip(ts, ts[1:]))
+    assert all(cc.survival(a) >= cc.survival(b) for a, b in itertools.pairwise(ts))
 
 
 def test_credit_hazards_nonnegative():
@@ -756,6 +843,7 @@ def test_credit_fingerprint_stable():
 # 13. SABR
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_sabr_atm_vol_formula():
     v = sabr_vol(100, 100, 1.0, 0.2, 0.5, -0.3, 0.4)
     # leading order ATM ~ alpha / f^(1-beta) = 0.2/10 = 0.02
@@ -771,13 +859,18 @@ def test_sabr_recovers_truth():
 
 
 def test_sabr_params_validate_clean():
-    cal = md.calibrate_sabr(100, 1.0, [90, 100, 110],
-                            [sabr_vol(100, k, 1.0, 0.2, 0.5, -0.2, 0.3) for k in (90, 100, 110)])
+    cal = md.calibrate_sabr(
+        100,
+        1.0,
+        [90, 100, 110],
+        [sabr_vol(100, k, 1.0, 0.2, 0.5, -0.2, 0.3) for k in (90, 100, 110)],
+    )
     assert cal.params.validate() == []
 
 
 def test_sabr_invalid_params_flagged():
     from mentisrex.research.market_data.sabr import SABRParams
+
     assert SABRParams(-1, 0.5, 0.0, 0.4).validate()
     assert SABRParams(0.2, 0.5, 1.5, 0.4).validate()
     assert SABRParams(0.2, 0.5, 0.0, -0.1).validate()
@@ -803,6 +896,7 @@ def test_sabr_bad_inputs_raise():
 # ══════════════════════════════════════════════════════════════════════════════
 # 14. SVI
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def _svi_market():
     f, t = 100.0, 1.0
@@ -835,6 +929,7 @@ def test_svi_no_butterfly_arbitrage_on_fit():
 
 def test_svi_durrleman_detects_arbitrage():
     from mentisrex.research.market_data.svi import SVIParams
+
     bad = SVIParams(a=0.0, b=2.0, rho=0.9, m=0.0, sigma=0.01)  # steep -> butterfly
     assert md.butterfly_arbitrage(bad)
 
@@ -854,49 +949,66 @@ def test_svi_needs_three_points():
 # 15. vol surface calibration
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_surface_calibration_sabr_materializes_m18_surface():
     from mentisrex.research.valuation.volatility import VolatilitySurface
+
     smiles = [sabr_smile(100, t) for t in (0.5, 1.0, 2.0)]
-    surf, rep, prov = md.VolatilitySurfaceCalibrator(md.VolModel.SABR).calibrate_surface(
-        smiles, "SPX", REF)
-    assert isinstance(surf, VolatilitySurface) and rep.ok
+    surf, rep, _prov = md.VolatilitySurfaceCalibrator(md.VolModel.SABR).calibrate_surface(
+        smiles, "SPX", REF
+    )
+    assert isinstance(surf, VolatilitySurface)
+    assert rep.ok
 
 
 def test_surface_calibration_svi_low_residual():
     smiles = [sabr_smile(100, t) for t in (0.5, 1.0, 2.0)]
     _s, rep, _p = md.VolatilitySurfaceCalibrator(md.VolModel.SVI).calibrate_surface(
-        smiles, "SPX", REF)
+        smiles, "SPX", REF
+    )
     assert rep.max_residual < 1e-3
 
 
 def test_surface_interpolated_model():
     smiles = [sabr_smile(100, t) for t in (0.5, 1.0)]
-    surf, rep, _p = md.VolatilitySurfaceCalibrator(md.VolModel.INTERPOLATED).calibrate_surface(
-        smiles, "SPX", REF)
+    surf, _rep, _p = md.VolatilitySurfaceCalibrator(md.VolModel.INTERPOLATED).calibrate_surface(
+        smiles, "SPX", REF
+    )
     assert surf.vol(100, 0.5) > 0
 
 
 def test_surface_calendar_arbitrage_flagged():
     from mentisrex.research.market_data.vol_calibration import SmileQuotes
+
     # decreasing total variance across maturity at fixed strike -> calendar arb
     s1 = SmileQuotes(100, 1.0, (100,), (0.30,), underlying="X")
     s2 = SmileQuotes(100, 2.0, (100,), (0.10,), underlying="X")
     _s, rep, _p = md.VolatilitySurfaceCalibrator(md.VolModel.INTERPOLATED).calibrate_surface(
-        [s1, s2], "X", REF)
+        [s1, s2], "X", REF
+    )
     assert not rep.ok
 
 
 def test_calibrated_vol_provider_protocol():
     smiles = [sabr_smile(100, t) for t in (0.5, 1.0, 2.0)]
     _s, _r, prov = md.VolatilitySurfaceCalibrator(md.VolModel.SABR).calibrate_surface(
-        smiles, "SPX", REF)
+        smiles, "SPX", REF
+    )
     assert prov.implied_vol("SPX", 105, 1.5) > 0
 
 
 def test_surface_bid_ask_flag():
     from mentisrex.research.market_data.vol_calibration import SmileQuotes
-    s = SmileQuotes(100, 1.0, (90, 100, 110), (0.2, 0.2, 0.2),
-                    bids=(0.30, 0.30, 0.30), asks=(0.31, 0.31, 0.31), underlying="X")
+
+    s = SmileQuotes(
+        100,
+        1.0,
+        (90, 100, 110),
+        (0.2, 0.2, 0.2),
+        bids=(0.30, 0.30, 0.30),
+        asks=(0.31, 0.31, 0.31),
+        underlying="X",
+    )
     fn = md.VolatilitySurfaceCalibrator(md.VolModel.INTERPOLATED).calibrate_smile(s)
     assert any("outside" in d for d in fn.calib.diagnostics)
 
@@ -910,6 +1022,7 @@ def test_surface_empty_raises():
 # 16. PIT snapshot builder
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_builder_assembles_spot():
     b = md.MarketDataSnapshotBuilder()
     raw = [{"id": "A", "field": "close", "value": 190.0, "observation_date": "2024-06-03"}]
@@ -919,8 +1032,10 @@ def test_builder_assembles_spot():
 
 def test_builder_assembles_quote():
     b = md.MarketDataSnapshotBuilder()
-    raw = [{"id": "A", "field": "bid", "value": 189.9, "observation_date": "2024-06-03"},
-           {"id": "A", "field": "ask", "value": 190.1, "observation_date": "2024-06-03"}]
+    raw = [
+        {"id": "A", "field": "bid", "value": 189.9, "observation_date": "2024-06-03"},
+        {"id": "A", "field": "ask", "value": 190.1, "observation_date": "2024-06-03"},
+    ]
     res = b.build(as_of=REF, raw=raw)
     assert "A" in res.snapshot.quotes
 
@@ -943,27 +1058,35 @@ def test_builder_drops_look_ahead():
 def test_builder_injects_curves_and_surfaces():
     b = md.MarketDataSnapshotBuilder()
     c = swap_curve()
-    res = b.build(as_of=REF, raw=[{"id": "A", "field": "close", "value": 1.0,
-                                   "observation_date": "2024-06-03"}], curves={"USD": c})
+    res = b.build(
+        as_of=REF,
+        raw=[{"id": "A", "field": "close", "value": 1.0, "observation_date": "2024-06-03"}],
+        curves={"USD": c},
+    )
     assert res.snapshot.curve("USD") is c
 
 
 def test_builder_fingerprint_present():
     res = md.MarketDataSnapshotBuilder().build(
-        as_of=REF, raw=[{"id": "A", "field": "close", "value": 1.0}])
-    assert res.fingerprint and res.fingerprint == res.snapshot.fingerprint()
+        as_of=REF, raw=[{"id": "A", "field": "close", "value": 1.0}]
+    )
+    assert res.fingerprint
+    assert res.fingerprint == res.snapshot.fingerprint()
 
 
 def test_builder_result_is_m18_snapshot():
     from mentisrex.research.valuation.models import MarketDataSnapshot
+
     res = md.MarketDataSnapshotBuilder().build(
-        as_of=REF, raw=[{"id": "A", "field": "close", "value": 1.0}])
+        as_of=REF, raw=[{"id": "A", "field": "close", "value": 1.0}]
+    )
     assert isinstance(res.snapshot, MarketDataSnapshot)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 17. validators
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_md_validator_flags_lookahead():
     v = md.MarketDataValidator()
@@ -975,7 +1098,7 @@ def test_md_validator_clean():
 
 
 def test_md_validator_flags_price_without_currency():
-    assert md.MarketDataValidator().validate([obs()], as_of=REF)   # currency=None + price unit
+    assert md.MarketDataValidator().validate([obs()], as_of=REF)  # currency=None + price unit
 
 
 def test_curve_validator_clean():
@@ -990,19 +1113,22 @@ def test_calibration_validator_tolerance():
 def test_surface_validator_clean():
     smiles = [sabr_smile(100, t) for t in (0.5, 1.0, 2.0)]
     surf, _r, _p = md.VolatilitySurfaceCalibrator(md.VolModel.SABR).calibrate_surface(
-        smiles, "SPX", REF)
+        smiles, "SPX", REF
+    )
     assert md.VolatilitySurfaceValidator().validate(surf) == []
 
 
 def test_snapshot_validator_missing_spot():
     res = md.MarketDataSnapshotBuilder().build(
-        as_of=REF, raw=[{"id": "A", "field": "close", "value": 1.0}])
+        as_of=REF, raw=[{"id": "A", "field": "close", "value": 1.0}]
+    )
     assert md.SnapshotValidator().validate(res.snapshot, required_spots=["B"])
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 18. serialization round-trips
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_observation_roundtrip():
     o = obs()
@@ -1021,20 +1147,24 @@ def test_discount_curve_roundtrip():
 
 def test_credit_curve_roundtrip():
     cc, _ = _credit()
-    assert ser.credit_curve_from_dict(ser.credit_curve_to_dict(cc)).fingerprint() == cc.fingerprint()
+    assert (
+        ser.credit_curve_from_dict(ser.credit_curve_to_dict(cc)).fingerprint() == cc.fingerprint()
+    )
 
 
 def test_surface_roundtrip():
     smiles = [sabr_smile(100, t) for t in (0.5, 1.0, 2.0)]
     surf, _r, _p = md.VolatilitySurfaceCalibrator(md.VolModel.SABR).calibrate_surface(
-        smiles, "SPX", REF)
+        smiles, "SPX", REF
+    )
     assert ser.surface_from_dict(ser.surface_to_dict(surf)).fingerprint() == surf.fingerprint()
 
 
 def test_report_to_dict():
     res = md.CurveBootstrapper().bootstrap([md.deposit(0.25, 0.05), md.swap(5, 0.05)], REF)
     d = ser.report_to_dict(res.report)
-    assert d["ok"] and d["n_instruments"] == 2
+    assert d["ok"]
+    assert d["n_instruments"] == 2
 
 
 def test_observations_json_deterministic():
@@ -1044,6 +1174,7 @@ def test_observations_json_deterministic():
 
 def test_to_json_clean():
     import json
+
     s = ser.to_json({"a": REF, "b": [1, 2]})
     assert json.loads(s)["a"] == "2024-06-03"
 
@@ -1051,6 +1182,7 @@ def test_to_json_clean():
 # ══════════════════════════════════════════════════════════════════════════════
 # 19. registry
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_registry_default_populated():
     assert len(md.default_market_data_registry().all()) >= 12
@@ -1082,22 +1214,27 @@ def test_registry_unknown_raises():
 # 20. production adapters (contracts only)
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_bloomberg_translation():
     o = md.BloombergAdapter().to_canonical(
         {"id": "AAPL", "field": "PX_LAST", "value": 190.0, "currency": "USD", "date": "2024-06-03"},
-        as_of=REF)
-    assert o.field == "close" and o.value == 190.0
+        as_of=REF,
+    )
+    assert o.field == "close"
+    assert o.value == 190.0
 
 
 def test_refinitiv_translation():
     o = md.RefinitivAdapter().to_canonical(
-        {"id": "AAPL", "field": "TRDPRC_1", "value": 190.0, "date": "2024-06-03"}, as_of=REF)
+        {"id": "AAPL", "field": "TRDPRC_1", "value": 190.0, "date": "2024-06-03"}, as_of=REF
+    )
     assert o.field == "close"
 
 
 def test_exchange_translation():
     o = md.ExchangeFeedAdapter().to_canonical(
-        {"id": "ESZ4", "field": "last", "value": 5000.0}, as_of=REF)
+        {"id": "ESZ4", "field": "last", "value": 5000.0}, as_of=REF
+    )
     assert o.obs_type.value == "trade"
 
 
@@ -1118,8 +1255,10 @@ def test_adapter_fetch_not_implemented():
 
 def test_adapter_yield_maps_to_rate_unit():
     from mentisrex.research.market_data.models import Unit
+
     o = md.BloombergAdapter().to_canonical(
-        {"id": "T", "field": "YLD_YTM_MID", "value": 4.5}, as_of=REF)
+        {"id": "T", "field": "YLD_YTM_MID", "value": 4.5}, as_of=REF
+    )
     assert o.unit is Unit.RATE
 
 
@@ -1127,9 +1266,10 @@ def test_adapter_yield_maps_to_rate_unit():
 # 21. engine façade
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_engine_ingest():
     eng = md.MarketDataEngine()
-    accepted, diags = eng.ingest([{"id": "A", "field": "close", "value": 1.0}], as_of=REF)
+    accepted, _diags = eng.ingest([{"id": "A", "field": "close", "value": 1.0}], as_of=REF)
     assert len(accepted) == 1
 
 
@@ -1142,7 +1282,7 @@ def test_engine_bootstrap_curve():
 def test_engine_calibrate_surface():
     eng = md.MarketDataEngine()
     smiles = [sabr_smile(100, t) for t in (0.5, 1.0)]
-    surf, rep, prov = eng.calibrate_surface(smiles, surface_id="SPX", as_of=REF)
+    _surf, rep, _prov = eng.calibrate_surface(smiles, surface_id="SPX", as_of=REF)
     assert rep.ok
 
 
@@ -1155,16 +1295,22 @@ def test_engine_build_snapshot():
 def test_engine_pipeline_produces_snapshot():
     eng = md.MarketDataEngine()
     raw = [{"id": "AAPL", "field": "close", "value": 190.0, "observation_date": "2024-06-03"}]
-    res = eng.pipeline(as_of=REF, raw=raw,
-                       curve_instruments=[md.deposit(0.25, 0.05), md.swap(5, 0.05)],
-                       smiles=[sabr_smile(190, t, "AAPL") for t in (0.5, 1.0)],
-                       currency="USD", surface_underlying="AAPL")
-    assert res.snapshot.spot("AAPL") == 190.0 and res.snapshot.curve("USD").discount(5) > 0
+    res = eng.pipeline(
+        as_of=REF,
+        raw=raw,
+        curve_instruments=[md.deposit(0.25, 0.05), md.swap(5, 0.05)],
+        smiles=[sabr_smile(190, t, "AAPL") for t in (0.5, 1.0)],
+        currency="USD",
+        surface_underlying="AAPL",
+    )
+    assert res.snapshot.spot("AAPL") == 190.0
+    assert res.snapshot.curve("USD").discount(5) > 0
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 22. M16 FX integration (reuse, not fork)
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_m16_fx_reciprocal_via_diagnostics():
     fx = m16fx.rates.StaticFXRateProvider({"EUR/USD": 1.10})
@@ -1189,43 +1335,62 @@ def test_m16_normalizer_uses_fx_provider():
 # 23. M18 valuation integration (M19 snapshot -> M18 engine)
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def _built_snapshot():
     fx = m16fx.rates.StaticFXRateProvider({"EUR/USD": 1.10})
     eng = md.MarketDataEngine(fx_provider=fx)
     raw = [{"id": "AAPL", "field": "close", "value": 190.0, "observation_date": "2024-06-03"}]
     return eng.pipeline(
-        as_of=REF, raw=raw, curve_instruments=[md.deposit(0.25, 0.05), md.swap(1, 0.05),
-                                               md.swap(5, 0.05), md.swap(10, 0.05)],
+        as_of=REF,
+        raw=raw,
+        curve_instruments=[
+            md.deposit(0.25, 0.05),
+            md.swap(1, 0.05),
+            md.swap(5, 0.05),
+            md.swap(10, 0.05),
+        ],
         smiles=[sabr_smile(190, t, "AAPL") for t in (0.5, 1.0, 2.0)],
-        currency="USD", surface_underlying="AAPL", dividend_yields={"AAPL": 0.005}).snapshot
+        currency="USD",
+        surface_underlying="AAPL",
+        dividend_yields={"AAPL": 0.005},
+    ).snapshot
 
 
 def test_m18_equity_valuation_from_m19_snapshot():
     snap = _built_snapshot()
     eq = ins.equity("AAPL", currency="USD")
     r = ValuationEngine().value(eq, snap, ValuationConfiguration())
-    assert r.price == 190.0 and r.model_name == "equity.spot"
+    assert r.price == 190.0
+    assert r.model_name == "equity.spot"
 
 
 def test_m18_option_valuation_from_m19_snapshot():
     snap = _built_snapshot()
-    opt = ins.option("C", underlying="AAPL", strike=200.0, expiry=date(2025, 6, 3),
-                     right=ins.OptionRight.CALL, currency="USD")
+    opt = ins.option(
+        "C",
+        underlying="AAPL",
+        strike=200.0,
+        expiry=date(2025, 6, 3),
+        right=ins.OptionRight.CALL,
+        currency="USD",
+    )
     r = ValuationEngine().value(opt, snap, ValuationConfiguration())
-    assert r.price > 0 and r.greeks.delta > 0
+    assert r.price > 0
+    assert r.greeks.delta > 0
 
 
 def test_m18_future_valuation_from_m19_snapshot():
     snap = _built_snapshot()
     fut = ins.future("F", underlying="AAPL", expiry=date(2024, 12, 3), currency="USD")
     r = ValuationEngine().value(fut, snap, ValuationConfiguration())
-    assert r.price > 190.0        # cost of carry above spot (r>q)
+    assert r.price > 190.0  # cost of carry above spot (r>q)
 
 
 def test_m18_bond_valuation_from_m19_snapshot():
     snap = _built_snapshot()
-    bond = ins.bond("B", currency="USD", maturity=date(2029, 6, 3), face=100.0, coupon=0.05,
-                    frequency=2)
+    bond = ins.bond(
+        "B", currency="USD", maturity=date(2029, 6, 3), face=100.0, coupon=0.05, frequency=2
+    )
     r = ValuationEngine().value(bond, snap, ValuationConfiguration())
     assert r.price > 0
 
@@ -1240,31 +1405,44 @@ def test_m18_valuation_reproducible_key():
 
 def test_m18_portfolio_valuation_from_m19_snapshot():
     from mentisrex.research.valuation.engine import PortfolioValuationEngine
+
     snap = _built_snapshot()
     eq = ins.equity("AAPL", currency="USD")
-    opt = ins.option("C", underlying="AAPL", strike=200.0, expiry=date(2025, 6, 3),
-                     right=ins.OptionRight.CALL, currency="USD")
-    pv = PortfolioValuationEngine().value([(eq, 100, None), (opt, 10, None)], snap,
-                                          ValuationConfiguration())
-    assert pv.gross_market_value > 0 and "delta" in pv.risk_inputs
+    opt = ins.option(
+        "C",
+        underlying="AAPL",
+        strike=200.0,
+        expiry=date(2025, 6, 3),
+        right=ins.OptionRight.CALL,
+        currency="USD",
+    )
+    pv = PortfolioValuationEngine().value(
+        [(eq, 100, None), (opt, 10, None)], snap, ValuationConfiguration()
+    )
+    assert pv.gross_market_value > 0
+    assert "delta" in pv.risk_inputs
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 24. M17 vol provider integration
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_calibrated_provider_feeds_option_vol():
     smiles = [sabr_smile(190, t, "AAPL") for t in (0.5, 1.0, 2.0)]
     _s, _r, prov = md.VolatilitySurfaceCalibrator(md.VolModel.SABR).calibrate_surface(
-        smiles, "AAPL", REF)
+        smiles, "AAPL", REF
+    )
     # provider matches the M18 VolatilityProvider protocol used by the engine
     v = prov.implied_vol("AAPL", 200.0, 1.0)
-    assert v > 0 and abs(v - sabr_vol(190, 200, 1.0, 0.25, 0.5, -0.3, 0.4)) < 1e-2
+    assert v > 0
+    assert abs(v - sabr_vol(190, 200, 1.0, 0.25, 0.5, -0.3, 0.4)) < 1e-2
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 25. determinism / fingerprints
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_determinism_snapshot_fingerprint():
     assert _built_snapshot().fingerprint() == _built_snapshot().fingerprint()
@@ -1295,14 +1473,21 @@ def test_determinism_credit_bootstrap():
 
 def test_determinism_pipeline_end_to_end():
     eng = md.MarketDataEngine()
-    args = dict(as_of=REF, raw=[{"id": "A", "field": "close", "value": 1.0}],
-                curve_instruments=[md.deposit(0.25, 0.05), md.swap(5, 0.05)], currency="USD")
-    assert eng.pipeline(**args).snapshot.fingerprint() == eng.pipeline(**args).snapshot.fingerprint()
+    args = {
+        "as_of": REF,
+        "raw": [{"id": "A", "field": "close", "value": 1.0}],
+        "curve_instruments": [md.deposit(0.25, 0.05), md.swap(5, 0.05)],
+        "currency": "USD",
+    }
+    assert (
+        eng.pipeline(**args).snapshot.fingerprint() == eng.pipeline(**args).snapshot.fingerprint()
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 26. edge cases
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_edge_single_node_curve():
     c = md.CurveBootstrapper().bootstrap([md.deposit(1.0, 0.05)], REF).curve
@@ -1320,14 +1505,16 @@ def test_edge_empty_raw_builds_empty_snapshot():
 
 def test_edge_flat_surface_single_expiry():
     surf, _r, _p = md.VolatilitySurfaceCalibrator(md.VolModel.SABR).calibrate_surface(
-        [sabr_smile(100, 1.0)], "X", REF)
+        [sabr_smile(100, 1.0)], "X", REF
+    )
     assert surf.vol(100, 1.0) > 0
 
 
 def test_edge_credit_single_quote():
     disc = swap_curve([(0.5, 0.05), (5, 0.05)])
     cc, rep = md.bootstrap_credit([md.CDSQuote(5, 0.015)], disc)
-    assert rep.ok and cc.survival(5) < 1.0
+    assert rep.ok
+    assert cc.survival(5) < 1.0
 
 
 def test_edge_normalizer_empty():
@@ -1346,10 +1533,13 @@ def test_edge_identifier_map_empty_identifiers():
 # 27. additional coverage
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_ois_instrument_bootstraps():
     res = md.CurveBootstrapper().bootstrap(
-        [md.deposit(0.25, 0.05), md.ois(1, 0.05), md.ois(5, 0.05)], REF)
-    assert res.report.ok and max(abs(r) for _, r in res.residuals) < 1e-7
+        [md.deposit(0.25, 0.05), md.ois(1, 0.05), md.ois(5, 0.05)], REF
+    )
+    assert res.report.ok
+    assert max(abs(r) for _, r in res.residuals) < 1e-7
 
 
 def test_builder_from_source():
@@ -1360,8 +1550,9 @@ def test_builder_from_source():
 
 def test_engine_pipeline_with_source():
     eng = md.MarketDataEngine()
-    src = md.StaticSource([{"id": "A", "field": "close", "value": 5.0,
-                            "observation_date": "2024-06-03"}])
+    src = md.StaticSource(
+        [{"id": "A", "field": "close", "value": 5.0, "observation_date": "2024-06-03"}]
+    )
     res = eng.build_snapshot(as_of=REF, source=src)
     assert res.snapshot.spot("A") == 5.0
 
@@ -1373,7 +1564,8 @@ def test_normalize_yield_alias():
 
 def test_normalize_discount_factor_alias():
     r = md.Normalizer().normalize(
-        [{"id": "C", "field": "discount_factor", "value": 0.95}], as_of=REF)
+        [{"id": "C", "field": "discount_factor", "value": 0.95}], as_of=REF
+    )
     assert r.observations[0].obs_type.value == "discount_factor"
 
 
@@ -1406,15 +1598,17 @@ def test_credit_recovery_effect_on_hazard():
 
 def test_quality_custom_reject_on_error():
     from mentisrex.research.market_data.models import ObservationType, Severity, Unit
+
     cfg = md.QualityConfig(reject_severities=(Severity.REJECT, Severity.ERROR))
     o = obs(field="volume", value=-5.0, obs_type=ObservationType.VOLUME, unit=Unit.SHARES)
     rep = md.MarketDataQualityEngine(cfg).check([o], as_of=REF)
-    assert rep.rejected      # negative volume is ERROR -> now rejected
+    assert rep.rejected  # negative volume is ERROR -> now rejected
 
 
 def test_builder_transform_log_present():
     res = md.MarketDataSnapshotBuilder().build(
-        as_of=REF, raw=[{"id": "C", "field": "rate", "value": 5.0, "unit": "percent"}])
+        as_of=REF, raw=[{"id": "C", "field": "rate", "value": 5.0, "unit": "percent"}]
+    )
     assert len(res.transform_log) > 0
 
 

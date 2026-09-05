@@ -23,7 +23,7 @@ def auto_lag(n: int) -> int:
     """Newey-West (1994) automatic Bartlett lag. Non-negative, < n."""
     if n < 2:
         return 0
-    return min(n - 1, int(math.floor(4.0 * (n / 100.0) ** (2.0 / 9.0))))
+    return min(n - 1, math.floor(4.0 * (n / 100.0) ** (2.0 / 9.0)))
 
 
 def hac_long_run_variance(returns, lag: int | None = None) -> float:
@@ -72,9 +72,16 @@ def hac_significance(returns, lag: int | None = None) -> dict:
     used_lag = auto_lag(n) if lag is None else max(0, min(lag, max(n - 1, 0)))
     se = hac_standard_error(r, lag)
     if n < 2 or not math.isfinite(se) or se == 0.0:
-        return {"hac_se": 0.0 if n >= 2 else float("nan"),
-                "hac_t_stat": 0.0, "hac_p_value": 1.0, "hac_lag": used_lag}
+        return {
+            "hac_se": 0.0 if n >= 2 else float("nan"),
+            "hac_t_stat": 0.0,
+            "hac_p_value": 1.0,
+            "hac_lag": used_lag,
+        }
     t = float(r.mean()) / se
-    return {"hac_se": float(se), "hac_t_stat": float(t),
-            "hac_p_value": float(student_t_two_sided_p(t, n - 1)),
-            "hac_lag": used_lag}
+    return {
+        "hac_se": float(se),
+        "hac_t_stat": float(t),
+        "hac_p_value": float(student_t_two_sided_p(t, n - 1)),
+        "hac_lag": used_lag,
+    }

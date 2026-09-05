@@ -11,7 +11,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
-from mentisrex.research.instruments.options import intrinsic_value
 from mentisrex.research.instruments.models import (
     ExerciseStatus,
     InstrumentEventType,
@@ -19,6 +18,7 @@ from mentisrex.research.instruments.models import (
     OptionRight,
     SettlementStyle,
 )
+from mentisrex.research.instruments.options import intrinsic_value
 
 
 @dataclass(frozen=True)
@@ -28,7 +28,7 @@ class ExerciseResult:
     quantity: float
     intrinsic: float
     cash: float
-    underlying_fill: dict | None = None      # physical settlement hand-off
+    underlying_fill: dict | None = None  # physical settlement hand-off
 
 
 def exercise(book, instrument, spot: float, *, when: date | None = None) -> ExerciseResult:
@@ -41,11 +41,16 @@ def exercise(book, instrument, spot: float, *, when: date | None = None) -> Exer
     iv = intrinsic_value(inst, spot)
 
     if qty == 0 or iv <= 0:
-        if qty != 0:                          # OTM: close at 0 so the premium P&L realizes
+        if qty != 0:  # OTM: close at 0 so the premium P&L realizes
             book.book_trade(inst, -qty, 0.0, trade_date=when)
         book._closed.add(inst.instrument_id)
-        book._emit(InstrumentEventType.EXPIRY, inst.instrument_id, price=spot, when=when,
-                   detail="worthless")
+        book._emit(
+            InstrumentEventType.EXPIRY,
+            inst.instrument_id,
+            price=spot,
+            when=when,
+            detail="worthless",
+        )
         return ExerciseResult(inst.instrument_id, ExerciseStatus.EXPIRED, qty, iv, 0.0)
 
     status = ExerciseStatus.EXERCISED if qty > 0 else ExerciseStatus.ASSIGNED
@@ -55,9 +60,11 @@ def exercise(book, instrument, spot: float, *, when: date | None = None) -> Exer
     if inst.settlement_style is SettlementStyle.PHYSICAL:
         # deliver the underlying: long call / short put receive shares, etc. Sign per right.
         direction = 1 if inst.right is OptionRight.CALL else -1
-        underlying_fill = {"security_id": inst.underlying,
-                           "quantity": direction * qty * inst.contract_size,
-                           "price": inst.strike}
+        underlying_fill = {
+            "security_id": inst.underlying,
+            "quantity": direction * qty * inst.contract_size,
+            "price": inst.strike,
+        }
 
     # Flatten the option at intrinsic. Under PRINCIPAL convention this single close IS the
     # cash settlement: sell-to-close at intrinsic pays the long / charges the short exactly

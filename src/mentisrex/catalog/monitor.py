@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from mentisrex.catalog.models import DatasetHealth, DatasetRecord
 from mentisrex.catalog.store import CatalogStore
@@ -42,7 +42,7 @@ class HealthMonitor:
         scores = [h.quality_score for h in all_h]
         avg_score = round(sum(scores) / total, 1) if total else 0.0
         return {
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "total_datasets": total,
             "active": sum(1 for h in all_h if h.status == "active"),
             "deprecated": sum(1 for h in all_h if h.status in ("deprecated", "replaced")),

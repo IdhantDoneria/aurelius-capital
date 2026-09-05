@@ -21,17 +21,26 @@ from mentisrex.research.paper_trading.models import DriftReport
 
 @dataclass(frozen=True)
 class DriftThresholds:
-    weight: float = 0.02          # 2% absolute weight drift
-    position: float = 0.05        # 5% gross share mismatch
-    cash: float = 0.01            # 1% of value
+    weight: float = 0.02  # 2% absolute weight drift
+    position: float = 0.05  # 5% gross share mismatch
+    cash: float = 0.01  # 1% of value
     execution_bps: float = 25.0
     timing_days: float = 2.0
-    cost_frac: float = 0.50       # 50% over expected
+    cost_frac: float = 0.50  # 50% over expected
 
 
-def compute_drift(internal, external, target, *, when=None, timing_gap_days=0.0,
-                  execution_bps=0.0, expected_cost=None, actual_cost=None,
-                  thresholds: DriftThresholds | None = None) -> DriftReport:
+def compute_drift(
+    internal,
+    external,
+    target,
+    *,
+    when=None,
+    timing_gap_days=0.0,
+    execution_bps=0.0,
+    expected_cost=None,
+    actual_cost=None,
+    thresholds: DriftThresholds | None = None,
+) -> DriftReport:
     t = thresholds or DriftThresholds()
     iw = internal.weights()
     sids = set(iw) | set(target or {})
@@ -41,8 +50,10 @@ def compute_drift(internal, external, target, *, when=None, timing_gap_days=0.0,
     ep = external.positions
     ih = internal.holdings
     gross_shares = sum(abs(h.shares) for h in ih.values()) or 1.0
-    pos_mismatch = sum(abs((ih[s].shares if s in ih else 0.0) - (ep[s].quantity if s in ep else 0.0))
-                       for s in set(ih) | set(ep))
+    pos_mismatch = sum(
+        abs((ih[s].shares if s in ih else 0.0) - (ep[s].quantity if s in ep else 0.0))
+        for s in set(ih) | set(ep)
+    )
     position_drift = pos_mismatch / gross_shares
 
     value = max(internal.total_value(), 1.0)
@@ -66,7 +77,14 @@ def compute_drift(internal, external, target, *, when=None, timing_gap_days=0.0,
     if cost_drift > t.cost_frac:
         alerts.append(f"cost_drift {cost_drift:.2f} > {t.cost_frac}")
 
-    return DriftReport(as_of=when, weight_drift=weight_drift, max_weight_drift=max_wd,
-                       position_drift=position_drift, cash_drift=cash_drift,
-                       execution_drift=execution_bps, timing_drift=timing_gap_days,
-                       cost_drift=cost_drift, alerts=alerts)
+    return DriftReport(
+        as_of=when,
+        weight_drift=weight_drift,
+        max_weight_drift=max_wd,
+        position_drift=position_drift,
+        cash_drift=cash_drift,
+        execution_drift=execution_bps,
+        timing_drift=timing_gap_days,
+        cost_drift=cost_drift,
+        alerts=alerts,
+    )

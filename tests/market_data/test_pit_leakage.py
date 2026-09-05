@@ -13,7 +13,7 @@ Run: pytest tests/market_data/test_pit_leakage.py -v
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from mentisrex.market_data.storage.duckdb_store import DuckDBStore
@@ -21,11 +21,17 @@ from mentisrex.market_data.storage.pit_store import PitPriceStore
 
 
 def _bar(day: int, close: str) -> dict:
-    ts = datetime(2020, 1, day, tzinfo=timezone.utc)
+    ts = datetime(2020, 1, day, tzinfo=UTC)
     c = Decimal(close)
     return {
-        "symbol": "AAA", "timestamp": ts, "frequency": "1d",
-        "open": c, "high": c, "low": c, "close": c, "volume": Decimal("1000"),
+        "symbol": "AAA",
+        "timestamp": ts,
+        "frequency": "1d",
+        "open": c,
+        "high": c,
+        "low": c,
+        "close": c,
+        "volume": Decimal("1000"),
     }
 
 
@@ -49,10 +55,16 @@ def test_pit_store_is_leak_free() -> None:
     try:
         # Immutable RAW price, ingested once — never restated.
         store.write_raw_bars([_bar(2, "100")])
-        store.record_actions([
-            {"symbol": "AAA", "effective_date": date(2020, 1, 10),
-             "ratio": 2, "announced_date": date(2020, 1, 10)},
-        ])
+        store.record_actions(
+            [
+                {
+                    "symbol": "AAA",
+                    "effective_date": date(2020, 1, 10),
+                    "ratio": 2,
+                    "announced_date": date(2020, 1, 10),
+                },
+            ]
+        )
 
         # As-of 2020-01-02: the split (effective 01-10) is in the future → not applied.
         assert store.close_as_of("AAA", date(2020, 1, 2)) == Decimal("100")
@@ -62,6 +74,8 @@ def test_pit_store_is_leak_free() -> None:
 
         # Knowledge-date guard: even at as_of 01-15, if we only knew up to 01-05,
         # the split (announced 01-10) is unknown → no adjustment.
-        assert store.close_as_of("AAA", date(2020, 1, 15), knowledge_date=date(2020, 1, 5)) == Decimal("100")
+        assert store.close_as_of(
+            "AAA", date(2020, 1, 15), knowledge_date=date(2020, 1, 5)
+        ) == Decimal("100")
     finally:
         store.close()

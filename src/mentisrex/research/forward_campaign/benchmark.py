@@ -28,11 +28,9 @@ from __future__ import annotations
 import dataclasses
 import hashlib
 import json
-from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from dataclasses import dataclass
+from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import Optional
-
 
 _BENCHMARK_SYMBOL = "SPY"
 _BENCHMARK_DATA_LIMITATION = (
@@ -45,6 +43,7 @@ _BENCHMARK_DATA_LIMITATION = (
 
 
 # ── sealed per-cycle record ───────────────────────────────────────────────────
+
 
 @dataclass
 class BenchmarkCycleRecord:
@@ -59,36 +58,36 @@ class BenchmarkCycleRecord:
     # IDENTITY
     cycle_id: str = ""
     benchmark_symbol: str = _BENCHMARK_SYMBOL
-    evaluation_date: Optional[date] = None
-    knowledge_as_of: Optional[date] = None
+    evaluation_date: date | None = None
+    knowledge_as_of: date | None = None
     campaign_id: str = ""
     mode: str = "PAPER_FORWARD"
 
     # PRICE
-    spy_price: float = 0.0            # benchmark price at this evaluation
-    spy_price_prior: float = 0.0      # price at prior evaluation (for period return)
-    inception_price: float = 0.0      # price at benchmark inception
-    inception_date: Optional[date] = None
+    spy_price: float = 0.0  # benchmark price at this evaluation
+    spy_price_prior: float = 0.0  # price at prior evaluation (for period return)
+    inception_price: float = 0.0  # price at benchmark inception
+    inception_date: date | None = None
 
     # POSITION
-    shares: float = 0.0               # benchmark shares held (buy-and-hold)
-    cash: float = 0.0                 # residual cash (from fractional shares)
+    shares: float = 0.0  # benchmark shares held (buy-and-hold)
+    cash: float = 0.0  # residual cash (from fractional shares)
 
     # NAV ACCOUNTING
     inception_nav: float = 1_000_000.0
-    starting_nav: float = 0.0         # NAV at start of this period
-    ending_nav: float = 0.0           # NAV at close of this period
+    starting_nav: float = 0.0  # NAV at start of this period
+    ending_nav: float = 0.0  # NAV at close of this period
 
     # RETURNS
-    period_return: float = 0.0        # return for this cycle period
-    cumulative_return: float = 0.0    # cumulative return from inception
-    max_drawdown: float = 0.0         # max drawdown from inception to this cycle
+    period_return: float = 0.0  # return for this cycle period
+    cumulative_return: float = 0.0  # cumulative return from inception
+    max_drawdown: float = 0.0  # max drawdown from inception to this cycle
 
     # DATA PROVENANCE
     provider: str = "yahoo_finance"
     snapshot_fingerprint: str = ""
-    pit_violation: bool = False        # True if price date > knowledge_as_of
-    is_inception_cycle: bool = False   # True for the first (buy) cycle
+    pit_violation: bool = False  # True if price date > knowledge_as_of
+    is_inception_cycle: bool = False  # True for the first (buy) cycle
 
     # OPERATIONS
     start_time: str = ""
@@ -105,20 +104,23 @@ class BenchmarkCycleRecord:
     def seal(self, status: str = "SUCCESS") -> None:
         if not self.sealed_at:
             self.status = status
-            self.sealed_at = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+            self.sealed_at = datetime.now(UTC).replace(tzinfo=None).isoformat()
 
     @property
     def is_sealed(self) -> bool:
         return bool(self.sealed_at)
 
     def record_fingerprint(self) -> str:
-        body = json.dumps({
-            "cycle_id": self.cycle_id,
-            "benchmark_symbol": self.benchmark_symbol,
-            "spy_price": self.spy_price,
-            "ending_nav": self.ending_nav,
-            "status": self.status,
-        }, sort_keys=True)
+        body = json.dumps(
+            {
+                "cycle_id": self.cycle_id,
+                "benchmark_symbol": self.benchmark_symbol,
+                "spy_price": self.spy_price,
+                "ending_nav": self.ending_nav,
+                "status": self.status,
+            },
+            sort_keys=True,
+        )
         return hashlib.blake2b(body.encode(), digest_size=16).hexdigest()
 
     def to_dict(self) -> dict:
@@ -132,9 +134,8 @@ class BenchmarkCycleRecord:
         return d
 
     @classmethod
-    def from_dict(cls, d: dict) -> "BenchmarkCycleRecord":
-        kw = {k: v for k, v in d.items()
-              if k in {f.name for f in dataclasses.fields(cls)}}
+    def from_dict(cls, d: dict) -> BenchmarkCycleRecord:
+        kw = {k: v for k, v in d.items() if k in {f.name for f in dataclasses.fields(cls)}}
         for dk in ("evaluation_date", "knowledge_as_of", "inception_date"):
             raw = kw.get(dk)
             if isinstance(raw, str) and raw:
@@ -144,21 +145,23 @@ class BenchmarkCycleRecord:
 
 # ── benchmark ledger ──────────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class BenchmarkPerformanceSummary:
     """Computed benchmark statistics.  Mirrors ForwardPerformanceSummary shape."""
+
     n_cycles: int
     benchmark_symbol: str
-    inception_date: Optional[date]
+    inception_date: date | None
     inception_price: float
     inception_nav: float
     current_nav: float
     cumulative_return: float
     monthly_returns: list
     max_drawdown: float
-    annualized_return: Optional[float]
-    annualized_return_label: str     # "ESTIMATED" | "INSUFFICIENT_SAMPLE"
-    volatility: Optional[float]
+    annualized_return: float | None
+    annualized_return_label: str  # "ESTIMATED" | "INSUFFICIENT_SAMPLE"
+    volatility: float | None
     volatility_label: str
     data_limitation: str
 
@@ -183,10 +186,10 @@ class BenchmarkLedger:
                 recs.append(BenchmarkCycleRecord.from_dict(json.loads(p.read_text())))
             except Exception:
                 continue
-        recs.sort(key=lambda r: (r.evaluation_date or date.min))
+        recs.sort(key=lambda r: r.evaluation_date or date.min)
         return recs
 
-    def get_cycle(self, cycle_id: str) -> Optional[BenchmarkCycleRecord]:
+    def get_cycle(self, cycle_id: str) -> BenchmarkCycleRecord | None:
         p = self._bdir / f"{cycle_id}.json"
         if not p.exists():
             return None
@@ -195,7 +198,7 @@ class BenchmarkLedger:
         except Exception:
             return None
 
-    def latest_cycle(self) -> Optional[BenchmarkCycleRecord]:
+    def latest_cycle(self) -> BenchmarkCycleRecord | None:
         cycles = [c for c in self.list_cycles() if c.status == "SUCCESS"]
         return cycles[-1] if cycles else None
 
@@ -232,6 +235,7 @@ class BenchmarkLedger:
 
         # annualized return (need >= 12 cycles)
         import statistics
+
         if len(success) >= 12:
             ann = (1 + cum_return) ** (12 / len(success)) - 1
             ann_label = "ESTIMATED"
@@ -241,7 +245,7 @@ class BenchmarkLedger:
 
         # volatility (need >= 2 monthly returns)
         if len(monthly_returns) >= 2:
-            vol: Optional[float] = statistics.stdev(monthly_returns) * (12 ** 0.5)
+            vol: float | None = statistics.stdev(monthly_returns) * (12**0.5)
             vol_label = "ESTIMATED"
         else:
             vol = None
@@ -266,6 +270,7 @@ class BenchmarkLedger:
 
 
 # ── benchmark portfolio ───────────────────────────────────────────────────────
+
 
 class BenchmarkPortfolio:
     """Passive buy-and-hold SPY benchmark, sealed per forward cycle.
@@ -300,7 +305,7 @@ class BenchmarkPortfolio:
         spy_price: float,
         *,
         campaign_id: str = "",
-        evaluation_date: Optional[date] = None,
+        evaluation_date: date | None = None,
     ) -> BenchmarkCycleRecord:
         """Evaluate benchmark for one cycle.
 
@@ -318,7 +323,7 @@ class BenchmarkPortfolio:
         if existing is not None:
             return existing
 
-        start_time = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+        start_time = datetime.now(UTC).replace(tzinfo=None).isoformat()
         eval_date = evaluation_date or date(as_of.year, as_of.month, 1)
 
         # get prior cycle for starting_nav and prior price
@@ -348,16 +353,17 @@ class BenchmarkPortfolio:
         # returns
         period_return = (
             (spy_price - spy_price_prior) / spy_price_prior
-            if (not is_inception) and spy_price_prior > 0 else 0.0
+            if (not is_inception) and spy_price_prior > 0
+            else 0.0
         )
         cumulative_return = (
             (ending_nav - self._inception_nav) / self._inception_nav
-            if self._inception_nav > 0 else 0.0
+            if self._inception_nav > 0
+            else 0.0
         )
 
         # max drawdown from inception (read all prior + this)
-        all_navs = [c.ending_nav for c in self.ledger.list_cycles()
-                    if c.status == "SUCCESS"]
+        all_navs = [c.ending_nav for c in self.ledger.list_cycles() if c.status == "SUCCESS"]
         all_navs.append(ending_nav)
         mdd = 0.0
         peak = all_navs[0] if all_navs else ending_nav
@@ -369,7 +375,8 @@ class BenchmarkPortfolio:
         # build fingerprint from price + date
         snap_body = json.dumps(
             {"symbol": _BENCHMARK_SYMBOL, "price": spy_price, "as_of": as_of.isoformat()},
-            sort_keys=True)
+            sort_keys=True,
+        )
         snap_fp = hashlib.blake2b(snap_body.encode(), digest_size=16).hexdigest()
 
         rec = BenchmarkCycleRecord(
@@ -393,13 +400,13 @@ class BenchmarkPortfolio:
             snapshot_fingerprint=snap_fp,
             is_inception_cycle=is_inception,
             start_time=start_time,
-            end_time=datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
+            end_time=datetime.now(UTC).replace(tzinfo=None).isoformat(),
         )
         rec.seal("SUCCESS")
         self._persist(rec)
         return rec
 
-    def _load_sealed(self, cycle_id: str) -> Optional[BenchmarkCycleRecord]:
+    def _load_sealed(self, cycle_id: str) -> BenchmarkCycleRecord | None:
         p = self._dir / f"{cycle_id}.json"
         if not p.exists():
             return None
@@ -420,7 +427,8 @@ class BenchmarkPortfolio:
 
 # ── SPY price fetcher ─────────────────────────────────────────────────────────
 
-def fetch_spy_price(as_of: date) -> Optional[float]:
+
+def fetch_spy_price(as_of: date) -> float | None:
     """Fetch SPY closing price for as_of using yfinance.
 
     Returns the last available close price on or before as_of.
@@ -430,13 +438,14 @@ def fetch_spy_price(as_of: date) -> Optional[float]:
     This function must never be called with a future date.
     """
     try:
-        import yfinance as yf  # type: ignore[import]
         from datetime import timedelta
+
+        import yfinance as yf  # type: ignore[import]
+
         end = as_of + timedelta(days=1)
         start = as_of - timedelta(days=10)
         ticker = yf.Ticker(_BENCHMARK_SYMBOL)
-        df = ticker.history(start=start.isoformat(), end=end.isoformat(),
-                            auto_adjust=False)
+        df = ticker.history(start=start.isoformat(), end=end.isoformat(), auto_adjust=False)
         if df is None or df.empty:
             return None
         # use raw Close (not Adj Close) to avoid retroactive adjustments

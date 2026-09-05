@@ -39,14 +39,40 @@ from mentisrex.research.market_data_ops.messages import (
 )
 
 # fields to emit as individual SourceMessage observations
-_INCOME_FIELDS = ("revenue", "gross_profit", "operating_income", "net_income", "ebitda",
-                  "eps", "eps_diluted", "shares_outstanding", "rd_expense",
-                  "income_tax", "interest_expense", "total_expenses")
-_BALANCE_FIELDS = ("total_assets", "current_assets", "cash", "total_liabilities",
-                   "current_liabilities", "long_term_debt", "stockholders_equity",
-                   "retained_earnings", "goodwill", "intangibles")
-_CASHFLOW_FIELDS = ("cash_flow_operations", "cash_flow_investing", "cash_flow_financing",
-                    "capex", "free_cash_flow", "dividends_paid")
+_INCOME_FIELDS = (
+    "revenue",
+    "gross_profit",
+    "operating_income",
+    "net_income",
+    "ebitda",
+    "eps",
+    "eps_diluted",
+    "shares_outstanding",
+    "rd_expense",
+    "income_tax",
+    "interest_expense",
+    "total_expenses",
+)
+_BALANCE_FIELDS = (
+    "total_assets",
+    "current_assets",
+    "cash",
+    "total_liabilities",
+    "current_liabilities",
+    "long_term_debt",
+    "stockholders_equity",
+    "retained_earnings",
+    "goodwill",
+    "intangibles",
+)
+_CASHFLOW_FIELDS = (
+    "cash_flow_operations",
+    "cash_flow_investing",
+    "cash_flow_financing",
+    "capex",
+    "free_cash_flow",
+    "dividends_paid",
+)
 _ALL_FIELDS = frozenset(_INCOME_FIELDS + _BALANCE_FIELDS + _CASHFLOW_FIELDS)
 
 
@@ -54,13 +80,15 @@ class FinanceToolkitSourceAdapter(SourceAdapter):
     """Production contract wrapping FinanceToolkit-style financial records."""
 
     def __init__(self, *, name: str = "financetoolkit") -> None:
-        super().__init__(SourceMetadata(
-            name,
-            frozenset({SourceCapability.HISTORICAL, SourceCapability.FUNDAMENTALS}),
-            schema_version="1.0",
-            description="FinanceToolkit-style financial statement adapter",
-            vendor="financetoolkit",
-        ))
+        super().__init__(
+            SourceMetadata(
+                name,
+                frozenset({SourceCapability.HISTORICAL, SourceCapability.FUNDAMENTALS}),
+                schema_version="1.0",
+                description="FinanceToolkit-style financial statement adapter",
+                vendor="financetoolkit",
+            )
+        )
         self._seq = 0
 
     def fetch(self, as_of: date, *, security_ids=None, fields=None) -> list[SourceMessage]:
@@ -74,8 +102,10 @@ class FinanceToolkitSourceAdapter(SourceAdapter):
         if self._state.value == "disconnected":
             self.connect()
         msgs = []
-        for r in sorted(records, key=lambda x: (str(x.get("date") or ""),
-                                                  str(x.get("symbol") or x.get("id") or ""))):
+        for r in sorted(
+            records,
+            key=lambda x: (str(x.get("date") or ""), str(x.get("symbol") or x.get("id") or "")),
+        ):
             for msg in self._one(r, as_of):
                 self._seq += 1
                 msgs.append(replace(msg, sequence=self._seq))
@@ -91,14 +121,14 @@ class FinanceToolkitSourceAdapter(SourceAdapter):
             return []
         symbol = str(r.get("symbol") or r.get("id") or "unknown")
         currency = str(r.get("currency", "USD"))
-        base = dict(
-            source=self.metadata.name,
-            msg_type=MessageType.OBSERVATION,
-            vendor_id=symbol,
-            observation_date=knowledge_date,
-            effective_date=rec_date,
-            schema_version=self.metadata.schema_version,
-        )
+        base = {
+            "source": self.metadata.name,
+            "msg_type": MessageType.OBSERVATION,
+            "vendor_id": symbol,
+            "observation_date": knowledge_date,
+            "effective_date": rec_date,
+            "schema_version": self.metadata.schema_version,
+        }
         msgs = []
         for field in _ALL_FIELDS:
             val = r.get(field)
@@ -109,7 +139,9 @@ class FinanceToolkitSourceAdapter(SourceAdapter):
             except (TypeError, ValueError):
                 continue
             payload = {
-                "id": symbol, "field": field, "value": fval,
+                "id": symbol,
+                "field": field,
+                "value": fval,
                 "observation_date": knowledge_date.isoformat(),
                 "effective_date": rec_date.isoformat(),
                 "source": self.metadata.name,

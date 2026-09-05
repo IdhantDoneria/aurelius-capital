@@ -22,7 +22,9 @@ class BrokerAdapter(Broker):
     name = "adapter"
 
     def connect(self) -> None:
-        raise NotImplementedError(f"{type(self).__name__}: live connectivity not implemented (M12 is offline)")
+        raise NotImplementedError(
+            f"{type(self).__name__}: live connectivity not implemented (M12 is offline)"
+        )
 
     def disconnect(self) -> None:
         raise NotImplementedError
@@ -43,20 +45,24 @@ class BrokerAdapter(Broker):
 class InteractiveBrokersAdapter(BrokerAdapter):
     """TWS / IB Gateway via ib_insync or the native API. Needs: gateway session,
     contract resolution, order translation, execDetails → BrokerFill."""
+
     name = "interactive_brokers"
 
 
 class AlpacaAdapter(BrokerAdapter):
     """Alpaca REST/streaming. Needs: API key/secret, /v2/orders, trade-update WS."""
+
     name = "alpaca"
 
 
 class ZerodhaAdapter(BrokerAdapter):
     """Zerodha Kite Connect. Needs: api_key + access_token, /orders, postback fills."""
+
     name = "zerodha"
 
 
 class FIXAdapter(BrokerAdapter):
     """Generic FIX 4.2/4.4 OMS. Needs: session (logon/heartbeat), NewOrderSingle(D),
     ExecutionReport(8) → BrokerFill, position/collateral report → BrokerAccount."""
+
     name = "fix"

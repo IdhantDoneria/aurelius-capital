@@ -31,7 +31,9 @@ def fingerprint(engine) -> str:
     d = diagnostics(engine)
     scalar = "|".join(f"{k}={d[k]}" for k in sorted(d) if k != "per_book_fingerprint")
     books = "|".join(f"{c}={h}" for c, h in sorted(d["per_book_fingerprint"].items()))
-    conv = ",".join(f"{c.conversion_id}:{c.from_currency}{c.to_currency}:{round(c.rate, 8)}"
-                    for c in engine.conversions)
+    conv = ",".join(
+        f"{c.conversion_id}:{c.from_currency}{c.to_currency}:{round(c.rate, 8)}"
+        for c in engine.conversions
+    )
     payload = f"{scalar}||{books}||conv={conv}"
     return hashlib.blake2b(payload.encode(), digest_size=16).hexdigest()

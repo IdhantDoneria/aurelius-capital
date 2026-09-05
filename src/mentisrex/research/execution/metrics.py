@@ -19,8 +19,13 @@ def _moment(xs: list[float], k: int, mean: float) -> float:
     return sum((x - mean) ** k for x in xs) / len(xs)
 
 
-def compute_metrics(pm: Any, *, benchmark_returns: list[float] | None = None,
-                    trading_days: int = 252, risk_free: float = 0.05) -> dict[str, float]:
+def compute_metrics(
+    pm: Any,
+    *,
+    benchmark_returns: list[float] | None = None,
+    trading_days: int = 252,
+    risk_free: float = 0.05,
+) -> dict[str, float]:
     """Full metric set. `pm` is a backtester PerformanceMetrics; `benchmark_returns`
     are daily benchmark returns aligned to pm.daily_returns (optional → alpha/beta/
     IR are None)."""
@@ -72,14 +77,20 @@ def compute_metrics(pm: Any, *, benchmark_returns: list[float] | None = None,
         wins = [p for p in pnls if p > 0]
         losses = [p for p in pnls if p <= 0]
         out["AverageTrade"] = statistics.mean(pnls)
-        out["Expectancy"] = statistics.mean(pnls)          # currency expectancy per trade
+        out["Expectancy"] = statistics.mean(pnls)  # currency expectancy per trade
         out["LargestWin"] = max(pnls)
         out["LargestLoss"] = min(pnls)
         out["AverageWin"] = statistics.mean(wins) if wins else 0.0
         out["AverageLoss"] = statistics.mean(losses) if losses else 0.0
     else:
-        for k in ("AverageTrade", "Expectancy", "LargestWin", "LargestLoss",
-                  "AverageWin", "AverageLoss"):
+        for k in (
+            "AverageTrade",
+            "Expectancy",
+            "LargestWin",
+            "LargestLoss",
+            "AverageWin",
+            "AverageLoss",
+        ):
             out[k] = 0.0
 
     # ── benchmark-relative ──
@@ -128,7 +139,7 @@ def _benchmark_relative(r, bench, td, rf):
     cov = sum((r[i] - mr) * (bench[i] - mb) for i in range(n)) / n
     beta = cov / var_b
     rf_daily = (1 + rf) ** (1.0 / td) - 1
-    alpha = ((mr - rf_daily) - beta * (mb - rf_daily)) * td   # annualized
+    alpha = ((mr - rf_daily) - beta * (mb - rf_daily)) * td  # annualized
     active = [r[i] - bench[i] for i in range(n)]
     te = statistics.pstdev(active)
     ir = (statistics.mean(active) / te * math.sqrt(td)) if te > 0 else None

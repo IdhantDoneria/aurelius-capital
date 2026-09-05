@@ -32,7 +32,7 @@ from __future__ import annotations
 
 import warnings
 from decimal import Decimal
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -48,12 +48,11 @@ from mentisrex.paper import (
     PositionReconciliationResult,
 )
 from mentisrex.paper.alpaca_broker import (
-    ALPACA_PAPER_BASE_URL,
     _LIVE_ENDPOINTS,
+    ALPACA_PAPER_BASE_URL,
     _make_client_order_id,
     _validate_order,
 )
-
 
 # ── fixtures ──────────────────────────────────────────────────────────────────
 
@@ -65,6 +64,7 @@ def _mock_response(status_code: int = 200, body=None):
     m.json.return_value = body or {}
     if status_code >= 400:
         import httpx
+
         m.raise_for_status.side_effect = httpx.HTTPStatusError(
             f"HTTP {status_code}",
             request=MagicMock(),
@@ -76,13 +76,16 @@ def _mock_response(status_code: int = 200, body=None):
 
 
 def _account_resp(status: str = "ACTIVE") -> MagicMock:
-    return _mock_response(200, {
-        "id": "abc123def456xyz",
-        "status": status,
-        "cash": "50000.00",
-        "equity": "100000.00",
-        "buying_power": "50000.00",
-    })
+    return _mock_response(
+        200,
+        {
+            "id": "abc123def456xyz",
+            "status": status,
+            "cash": "50000.00",
+            "equity": "100000.00",
+            "buying_power": "50000.00",
+        },
+    )
 
 
 def _positions_resp(positions: list | None = None) -> MagicMock:
@@ -99,17 +102,20 @@ def _order_submit_resp(
     status: str = "new",
     client_order_id: str = "mr-test",
 ) -> MagicMock:
-    return _mock_response(200, {
-        "id": "alpaca-uuid-001",
-        "client_order_id": client_order_id,
-        "symbol": symbol,
-        "side": side,
-        "type": "market",
-        "time_in_force": "day",
-        "qty": "1",
-        "status": status,
-        "submitted_at": "2026-08-14T00:00:00Z",
-    })
+    return _mock_response(
+        200,
+        {
+            "id": "alpaca-uuid-001",
+            "client_order_id": client_order_id,
+            "symbol": symbol,
+            "side": side,
+            "type": "market",
+            "time_in_force": "day",
+            "qty": "1",
+            "status": status,
+            "submitted_at": "2026-08-14T00:00:00Z",
+        },
+    )
 
 
 def _make_mock_http(
@@ -165,6 +171,7 @@ class TestLiveEndpointRejected:
     def test_no_base_url_parameter_on_alpaca_paper_broker(self):
         """AlpacaPaperBroker has no base_url parameter. Only paper endpoint possible."""
         import inspect
+
         sig = inspect.signature(AlpacaPaperBroker.__init__)
         assert "base_url" not in sig.parameters, (
             "AlpacaPaperBroker must NOT have a base_url parameter — "
@@ -221,7 +228,6 @@ class TestLiveLookingConfigRejected:
 class TestAccountVerificationRejected:
     def test_verify_paper_account_http_error_raises(self, monkeypatch):
         monkeypatch.setenv("MENTISREX_LIVE_TRADING", "false")
-        import httpx
 
         http = MagicMock()
         http.get.return_value = _mock_response(401, {"message": "forbidden"})
@@ -255,9 +261,7 @@ class TestLiveExecutionModeRejected:
     def test_mentisrex_live_trading_true_blocks_construction(self, monkeypatch):
         monkeypatch.setenv("MENTISREX_LIVE_TRADING", "true")
         with pytest.raises(LiveTradingBlockedError, match="MENTISREX_LIVE_TRADING"):
-            AlpacaPaperBroker(
-                api_key="K", api_secret="S", _http=_make_mock_http()
-            )
+            AlpacaPaperBroker(api_key="K", api_secret="S", _http=_make_mock_http())
 
     def test_mentisrex_live_trading_true_blocks_submit(self, monkeypatch):
         b = _broker()
@@ -379,8 +383,11 @@ class TestOrderValidation:
         # qty=10 * limit_price=200 = 2000 > max_notional=1000
         with pytest.raises(InvalidPaperOrderError, match="notional"):
             self.b.submit_order(
-                "SPY", "buy", Decimal("10"),
-                order_type="limit", limit_price=Decimal("200"),
+                "SPY",
+                "buy",
+                Decimal("10"),
+                order_type="limit",
+                limit_price=Decimal("200"),
             )
 
     def test_valid_market_order_accepted(self):
@@ -428,10 +435,9 @@ class TestIdempotency:
     def test_same_logical_order_in_process_not_duplicated(self):
         b = _broker()
         rec1 = b.submit_order("SPY", "buy", Decimal("1"), cycle_id="aug")
-        call_count = b._http.post.call_count
         # Force same seq/client_id by manipulating seq (tricky without internal access)
         # Instead: pre-insert the record
-        rec2_client_id = list(b._order_records.keys())[0]
+        rec2_client_id = next(iter(b._order_records.keys()))
         # Simulate a second call that resolves to the same client_order_id
         b._order_records[rec2_client_id] = rec1  # already there
         # Re-inserting same key returns existing — test via side effect only
@@ -508,9 +514,7 @@ class TestRestartRecovery:
         http.post.return_value = _mock_response(200, {})
         http.close = MagicMock()
 
-        b = AlpacaPaperBroker(
-            api_key="K", api_secret="S", _http=http
-        )
+        b = AlpacaPaperBroker(api_key="K", api_secret="S", _http=http)
         rec = b._find_existing_by_client_id(client_oid, "strat", "fp")
         assert rec is not None
         assert rec.alpaca_order_id == "alpaca-existing-uuid"
@@ -534,6 +538,7 @@ class TestLiveBrokerInstantiation:
     def test_no_alpaca_live_broker_class_exists(self):
         """There must be no AlpacaLiveBroker class in the codebase."""
         from mentisrex import paper
+
         assert not hasattr(paper, "AlpacaLiveBroker")
 
     def test_no_live_mode_in_broker_mode_enum(self):
@@ -604,7 +609,9 @@ class TestAuditTrailNoCredentials:
         raw_id = "abc123def456xyz"
         assert raw_id not in str(report.get("account_id", ""))
         # Should be masked (truncated + ...)
-        assert "..." in str(report.get("account_id", "")) or len(str(report.get("account_id", ""))) < len(raw_id)
+        assert "..." in str(report.get("account_id", "")) or len(
+            str(report.get("account_id", ""))
+        ) < len(raw_id)
         b.close()
 
 
@@ -613,22 +620,23 @@ class TestAuditTrailNoCredentials:
 
 class TestClientOrderIdDeterminism:
     def test_same_inputs_same_output(self):
-        kwargs = dict(strategy_id="s1", symbol="SPY", side="buy", cycle_id="c1", seq=1)
+        kwargs = {"strategy_id": "s1", "symbol": "SPY", "side": "buy", "cycle_id": "c1", "seq": 1}
         assert _make_client_order_id(**kwargs) == _make_client_order_id(**kwargs)
 
     def test_different_seq_different_output(self):
-        base = dict(strategy_id="s1", symbol="SPY", side="buy", cycle_id="c1")
+        base = {"strategy_id": "s1", "symbol": "SPY", "side": "buy", "cycle_id": "c1"}
         assert _make_client_order_id(**base, seq=1) != _make_client_order_id(**base, seq=2)
 
     def test_different_side_different_output(self):
-        base = dict(strategy_id="s1", symbol="SPY", cycle_id="c1", seq=1)
-        assert _make_client_order_id(**base, side="buy") != _make_client_order_id(**base, side="sell")
+        base = {"strategy_id": "s1", "symbol": "SPY", "cycle_id": "c1", "seq": 1}
+        assert _make_client_order_id(**base, side="buy") != _make_client_order_id(
+            **base, side="sell"
+        )
 
     def test_different_cycle_different_output(self):
-        base = dict(strategy_id="s1", symbol="SPY", side="buy", seq=1)
-        assert (
-            _make_client_order_id(**base, cycle_id="aug")
-            != _make_client_order_id(**base, cycle_id="sep")
+        base = {"strategy_id": "s1", "symbol": "SPY", "side": "buy", "seq": 1}
+        assert _make_client_order_id(**base, cycle_id="aug") != _make_client_order_id(
+            **base, cycle_id="sep"
         )
 
 
@@ -695,14 +703,19 @@ class TestNavReconciliation:
     def _broker_with_equity(self, equity: str) -> AlpacaPaperBroker:
         http = _make_mock_http(account_resp=_account_resp())
         # Override equity return
-        http.get.side_effect = lambda path, **kw: _mock_response(200, {
-            "id": "abc123def",
-            "status": "ACTIVE",
-            "cash": "50000.00",
-            "equity": equity,
-            "buying_power": "50000.00",
-        }) if "v2/account" in path and "orders" not in path and "positions" not in path else (
-            _mock_response(200, []) if "positions" in path else _mock_response(200, [])
+        http.get.side_effect = lambda path, **kw: (
+            _mock_response(
+                200,
+                {
+                    "id": "abc123def",
+                    "status": "ACTIVE",
+                    "cash": "50000.00",
+                    "equity": equity,
+                    "buying_power": "50000.00",
+                },
+            )
+            if "v2/account" in path and "orders" not in path and "positions" not in path
+            else (_mock_response(200, []) if "positions" in path else _mock_response(200, []))
         )
         return AlpacaPaperBroker(api_key="K", api_secret="S", _http=http)
 
@@ -761,8 +774,14 @@ class TestFillRetrieval:
 
     def test_unfilled_order_returns_empty(self):
         b = _broker()
-        order_data = {"id": "alpaca-002", "symbol": "SPY", "side": "buy", "status": "new",
-                      "qty": "1", "type": "market"}
+        order_data = {
+            "id": "alpaca-002",
+            "symbol": "SPY",
+            "side": "buy",
+            "status": "new",
+            "qty": "1",
+            "type": "market",
+        }
         b._http.get.return_value = _mock_response(200, order_data)
         fills = b.get_fills("alpaca-002")
         assert fills == []
@@ -774,13 +793,18 @@ class TestFillRetrieval:
 
 class TestAccountMasking:
     def test_account_id_masked_in_status_report(self):
-        http = _make_mock_http(account_resp=_mock_response(200, {
-            "id": "abcdef1234567890",
-            "status": "ACTIVE",
-            "cash": "50000.00",
-            "equity": "100000.00",
-            "buying_power": "50000.00",
-        }))
+        http = _make_mock_http(
+            account_resp=_mock_response(
+                200,
+                {
+                    "id": "abcdef1234567890",
+                    "status": "ACTIVE",
+                    "cash": "50000.00",
+                    "equity": "100000.00",
+                    "buying_power": "50000.00",
+                },
+            )
+        )
         b = AlpacaPaperBroker(api_key="K", api_secret="S", _http=http)
         b._account_id_masked = "abcdef12..."
         b._verified = True
@@ -795,6 +819,7 @@ class TestAccountMasking:
 class TestNetworkFailureHandling:
     def test_timeout_on_submit_raises_with_idempotency_guidance(self):
         import httpx
+
         b = _broker()
         b._http.post.side_effect = httpx.TimeoutException("timeout")
         with pytest.raises(RuntimeError, match="[Tt]imeout"):
@@ -803,6 +828,7 @@ class TestNetworkFailureHandling:
 
     def test_http_error_on_submit_raises_runtime_error(self):
         import httpx
+
         b = _broker()
         err_resp = MagicMock()
         err_resp.status_code = 422
@@ -858,7 +884,8 @@ class TestAlpacaBrokerAlias:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             b = AlpacaBroker(
-                api_key="K", api_secret="S",
+                api_key="K",
+                api_secret="S",
                 _http=_make_mock_http(),
             )
             b.close()
@@ -917,14 +944,12 @@ class TestRealAlpacaPaperConnectivity:
 
     def test_submit_and_cancel_market_order(self):
         broker = AlpacaPaperBroker()
-        rec = broker.submit_order(
-            "SPY", "buy", Decimal("1"), cycle_id="m28-smoke-test"
-        )
+        rec = broker.submit_order("SPY", "buy", Decimal("1"), cycle_id="m28-smoke-test")
         assert rec.alpaca_order_id
         assert rec.broker == "ALPACA"
         assert rec.environment == "PAPER"
         # Cancel immediately (smoke test cleanup)
-        cancelled = broker.cancel_order(rec.alpaca_order_id)
+        broker.cancel_order(rec.alpaca_order_id)
         status = broker.get_order_status(rec.alpaca_order_id)
         assert status["status"] in ("canceled", "pending_cancel", "filled")
         broker.close()

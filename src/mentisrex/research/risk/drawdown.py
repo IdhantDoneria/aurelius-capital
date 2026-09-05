@@ -24,10 +24,14 @@ def drawdown_report(values, *, window: int = 63, halt_threshold: float = -0.25) 
     rp = np.maximum.accumulate(seg)
     rolling = float(((seg - rp) / rp).min()) if seg.size else 0.0
     return DrawdownReport(
-        max_drawdown=m11.max_drawdown, avg_drawdown=m11.avg_drawdown,
-        current_drawdown=current, max_recovery_days=m11.max_recovery_days,
-        time_underwater_frac=m11.time_underwater_frac, rolling_max_drawdown=rolling,
-        halt_triggered=bool(current <= halt_threshold or m11.max_drawdown <= halt_threshold))
+        max_drawdown=m11.max_drawdown,
+        avg_drawdown=m11.avg_drawdown,
+        current_drawdown=current,
+        max_recovery_days=m11.max_recovery_days,
+        time_underwater_frac=m11.time_underwater_frac,
+        rolling_max_drawdown=rolling,
+        halt_triggered=bool(current <= halt_threshold or m11.max_drawdown <= halt_threshold),
+    )
 
 
 def should_halt(values, *, halt_threshold: float = -0.25) -> bool:

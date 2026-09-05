@@ -20,12 +20,13 @@ def assemble_report(artifact: ForwardValidationArtifact) -> ForwardValidationRep
     if stored is not None:
         discrepancy_categories = stored
     else:
-        discrepancy_categories = sorted({
-            r.get("category", "")
-            for r in artifact.diagnostic_results
-            if r.get("severity") in ("WARNING", "ERROR", "CRITICAL")
-            and r.get("category")
-        })
+        discrepancy_categories = sorted(
+            {
+                r.get("category", "")
+                for r in artifact.diagnostic_results
+                if r.get("severity") in ("WARNING", "ERROR", "CRITICAL") and r.get("category")
+            }
+        )
 
     # limitations list — always include standard M24 limitations
     limitations = [
@@ -77,7 +78,8 @@ def assemble_report(artifact: ForwardValidationArtifact) -> ForwardValidationRep
 def _extract_section(artifact: ForwardValidationArtifact, prefix: str) -> dict:
     """Extract diagnostic records for a category prefix into a summary dict."""
     matching = [
-        r for r in artifact.diagnostic_results
+        r
+        for r in artifact.diagnostic_results
         if r.get("category", "").startswith(prefix.upper())
         or r.get("diagnostic_id", "").startswith(prefix)
     ]

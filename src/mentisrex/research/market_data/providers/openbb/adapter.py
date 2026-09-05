@@ -30,19 +30,23 @@ class OpenBBSourceAdapter(SourceAdapter):
     """
 
     def __init__(self, *, name: str = "openbb") -> None:
-        super().__init__(SourceMetadata(
-            name,
-            frozenset({
-                SourceCapability.HISTORICAL,
-                SourceCapability.BARS,
-                SourceCapability.FUNDAMENTALS,
-                SourceCapability.RATES,
-                SourceCapability.FX,
-            }),
-            schema_version="1.0",
-            description="OpenBB aggregated open-data adapter",
-            vendor="openbb",
-        ))
+        super().__init__(
+            SourceMetadata(
+                name,
+                frozenset(
+                    {
+                        SourceCapability.HISTORICAL,
+                        SourceCapability.BARS,
+                        SourceCapability.FUNDAMENTALS,
+                        SourceCapability.RATES,
+                        SourceCapability.FX,
+                    }
+                ),
+                schema_version="1.0",
+                description="OpenBB aggregated open-data adapter",
+                vendor="openbb",
+            )
+        )
         self._seq = 0
 
     def fetch(self, as_of: date, *, security_ids=None, fields=None) -> list[SourceMessage]:
@@ -94,11 +98,11 @@ class OpenBBSourceAdapter(SourceAdapter):
             "source": self.metadata.name,
         }
         if r.get("adj_close") is not None:
-            payload.update({"field": "close", "type": "adjusted_close",
-                            "value": float(r["adj_close"])})
+            payload.update(
+                {"field": "close", "type": "adjusted_close", "value": float(r["adj_close"])}
+            )
         elif r.get("close") is not None:
-            payload.update({"field": "close", "type": "close",
-                            "value": float(r["close"])})
+            payload.update({"field": "close", "type": "close", "value": float(r["close"])})
         if r.get("open") is not None:
             payload["open"] = float(r["open"])
         if r.get("high") is not None:
@@ -188,11 +192,14 @@ def _parse_date(v) -> date | None:
 
 
 def _sort_key(r: dict):
-    return (str(r.get("date") or r.get("observation_date") or ""),
-            str(r.get("symbol") or r.get("id") or r.get("series_id") or ""),
-            str(r.get("field") or ""))
+    return (
+        str(r.get("date") or r.get("observation_date") or ""),
+        str(r.get("symbol") or r.get("id") or r.get("series_id") or ""),
+        str(r.get("field") or ""),
+    )
 
 
 def _with_seq(msg: SourceMessage, seq: int) -> SourceMessage:
     from dataclasses import replace
+
     return replace(msg, sequence=seq)

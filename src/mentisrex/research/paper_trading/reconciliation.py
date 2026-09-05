@@ -20,15 +20,23 @@ from mentisrex.research.paper_trading.models import ReconciliationReport, StateD
 @dataclass(frozen=True)
 class ReconciliationConfig:
     qty_tol: float = 1e-6
-    cash_tol_frac: float = 1e-4           # of total value
+    cash_tol_frac: float = 1e-4  # of total value
     price_tol_bps: float = 1.0
     cost_basis_tol_bps: float = 10.0
     stale_order_days: int = 5
 
 
-def reconcile(internal, external, *, when=None, config: ReconciliationConfig | None = None,
-              pending_orders=None, applied_fill_ids=None, broker_fill_ids=None,
-              as_of_seq=None) -> ReconciliationReport:
+def reconcile(
+    internal,
+    external,
+    *,
+    when=None,
+    config: ReconciliationConfig | None = None,
+    pending_orders=None,
+    applied_fill_ids=None,
+    broker_fill_ids=None,
+    as_of_seq=None,
+) -> ReconciliationReport:
     """`internal`: M11 PortfolioState. `external`: BrokerAccount.
     `pending_orders`: list of (client_order_id, age_days) still open → stale check.
     `applied_fill_ids` / `broker_fill_ids`: for duplicate/missing-fill detection."""
@@ -64,21 +72,29 @@ def reconcile(internal, external, *, when=None, config: ReconciliationConfig | N
     # cash
     cash_diff = internal.cash - external.cash
     if abs(cash_diff) > cfg.cash_tol_frac * value:
-        diffs.append(StateDifference(None, "cash_mismatch", internal.cash, external.cash,
-                                     cash_diff, "critical"))
+        diffs.append(
+            StateDifference(
+                None, "cash_mismatch", internal.cash, external.cash, cash_diff, "critical"
+            )
+        )
 
     # stale orders
-    for entry in (pending_orders or []):
+    for entry in pending_orders or []:
         coid, age = entry
         if age is not None and age >= cfg.stale_order_days:
-            diffs.append(StateDifference(coid, "stale_order", float(age), 0.0, float(age), "warning"))
+            diffs.append(
+                StateDifference(coid, "stale_order", float(age), 0.0, float(age), "warning")
+            )
 
     # duplicate / missing fills (id-set comparison)
     applied = set(applied_fill_ids or [])
     broker = set(broker_fill_ids or [])
     if len(applied_fill_ids or []) != len(applied):
-        diffs.append(StateDifference(None, "duplicate_fill", len(applied_fill_ids or []),
-                                     len(applied), 0.0, "critical"))
+        diffs.append(
+            StateDifference(
+                None, "duplicate_fill", len(applied_fill_ids or []), len(applied), 0.0, "critical"
+            )
+        )
     for missing in sorted(broker - applied):
         diffs.append(StateDifference(missing, "missing_fill", 0.0, 1.0, 1.0, "critical"))
 
@@ -87,6 +103,13 @@ def reconcile(internal, external, *, when=None, config: ReconciliationConfig | N
         categories[d.category] = categories.get(d.category, 0) + 1
 
     return ReconciliationReport(
-        as_of=when, ok=not diffs, differences=diffs,
-        internal_cash=internal.cash, external_cash=external.cash, cash_diff=cash_diff,
-        n_internal_positions=len(ih), n_external_positions=len(ep), categories=categories)
+        as_of=when,
+        ok=not diffs,
+        differences=diffs,
+        internal_cash=internal.cash,
+        external_cash=external.cash,
+        cash_diff=cash_diff,
+        n_internal_positions=len(ih),
+        n_external_positions=len(ep),
+        categories=categories,
+    )

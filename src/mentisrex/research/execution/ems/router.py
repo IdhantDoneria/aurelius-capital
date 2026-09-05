@@ -23,8 +23,9 @@ _TYPE_TO_ALGO = {
 
 
 class ExecutionRouter:
-    def __init__(self, brokers: dict, *, default_broker: str | None = None,
-                 default_algo: str = "immediate") -> None:
+    def __init__(
+        self, brokers: dict, *, default_broker: str | None = None, default_algo: str = "immediate"
+    ) -> None:
         if not brokers:
             raise ValueError("router needs at least one broker")
         self.brokers = brokers
@@ -44,8 +45,13 @@ class ExecutionRouter:
         # high-urgency parents collapse to immediate regardless of type
         if order.urgency == "high" and algo != "immediate":
             algo, reason = "immediate", "urgency:high"
-        return RoutingDecision(order_id=order.order_id, broker=broker, algo=algo,
-                               reason=reason, constraints=dict(constraints))
+        return RoutingDecision(
+            order_id=order.order_id,
+            broker=broker,
+            algo=algo,
+            reason=reason,
+            constraints=dict(constraints),
+        )
 
     def broker_for(self, decision: RoutingDecision):
         return self.brokers[decision.broker]

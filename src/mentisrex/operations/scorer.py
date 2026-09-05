@@ -11,7 +11,6 @@ from typing import Any
 
 from mentisrex.operations.models import PaperScore
 
-
 # Weights sum to 1.0
 _WEIGHTS = {
     "novelty": 0.20,
@@ -65,6 +64,7 @@ def score_paper(paper_id: str, meta: dict[str, Any]) -> PaperScore:
 
 # ── individual factor functions (return 0.0 - 1.0) ──────────────────────────
 
+
 def _novelty(meta: dict) -> float:
     """Newer papers = more novel. Bonus for arXiv preprints."""
     year = meta.get("year")
@@ -104,8 +104,14 @@ def _dataset_availability(meta: dict) -> float:
     """How many mentioned datasets are commonly available."""
     # Known open/widely-available datasets
     _available = {
-        "Ken French", "Fama-French", "CRSP", "Yahoo Finance", "S&P 500",
-        "Russell", "MSCI", "Quandl",
+        "Ken French",
+        "Fama-French",
+        "CRSP",
+        "Yahoo Finance",
+        "S&P 500",
+        "Russell",
+        "MSCI",
+        "Quandl",
     }
     mentioned = set(meta.get("datasets_mentioned", []))
     if not mentioned:

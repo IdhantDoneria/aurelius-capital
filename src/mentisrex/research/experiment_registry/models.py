@@ -10,7 +10,7 @@ from datetime import datetime
 class Experiment:
     experiment_id: str
     name: str
-    status: str                                   # running | finished | failed
+    status: str  # running | finished | failed
     description: str = ""
     # lineage / metadata (auto-captured)
     git_commit: str | None = None
@@ -30,7 +30,9 @@ class Experiment:
     parameters: dict = field(default_factory=dict)
     features: list[str] = field(default_factory=list)
     metrics: dict = field(default_factory=dict)
-    artifacts: list[dict] = field(default_factory=list)  # {artifact_type, artifact_location, artifact_hash}
+    artifacts: list[dict] = field(
+        default_factory=list
+    )  # {artifact_type, artifact_location, artifact_hash}
     # identity
     fingerprint: str | None = None
     parameter_hash: str | None = None

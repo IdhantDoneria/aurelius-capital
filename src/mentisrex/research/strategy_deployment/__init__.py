@@ -45,29 +45,29 @@ from mentisrex.research.strategy_deployment.runtime import (
 )
 
 __all__ = [
+    "ConsistencyChecker",
+    "ConsistencyReport",
+    "DeploymentManifest",
+    "EvaluationError",
+    "FeatureSet",
+    "OrderIntentRecord",
+    "ReadinessReport",
+    # validators
+    "ReadinessValidator",
+    "SignalRecord",
+    "SignalSet",
+    "StrategyEntry",
+    "StrategyEvaluation",
+    "StrategyLogic",
+    # registry
+    "StrategyRegistry",
+    # runtime
+    "StrategyRuntime",
     # models
     "StrategySpecification",
     "StrategyState",
-    "StrategyType",
-    "FeatureSet",
-    "SignalRecord",
-    "SignalSet",
-    "OrderIntentRecord",
-    "StrategyEvaluation",
-    "DeploymentManifest",
-    "ReadinessReport",
-    "ConsistencyReport",
-    "make_spec",
-    "make_manifest",
-    # registry
-    "StrategyRegistry",
-    "StrategyEntry",
     "StrategyTransitionError",
-    # runtime
-    "StrategyRuntime",
-    "StrategyLogic",
-    "EvaluationError",
-    # validators
-    "ReadinessValidator",
-    "ConsistencyChecker",
+    "StrategyType",
+    "make_manifest",
+    "make_spec",
 ]

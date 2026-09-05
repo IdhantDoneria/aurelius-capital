@@ -25,9 +25,9 @@ class TestGateIsWorseOfTwo:
         """This is the specific, load-bearing fix documented in the
         handbook: a calm large-cap trend must NOT be able to mask a real
         broad-market breadth warning by averaging it away."""
-        cfg = IndiaConfig(gate_mode="min")
+        IndiaConfig(gate_mode="min")
         idx = pd.bdate_range("2020-01-01", periods=5)
-        trend = pd.Series(1.0, index=idx)    # large-cap looks fine
+        trend = pd.Series(1.0, index=idx)  # large-cap looks fine
         breadth = pd.Series(0.1, index=idx)  # broad market is breaking down
 
         gate_min = np.minimum(trend, breadth)
@@ -62,9 +62,9 @@ class TestBreadthScore:
     def test_all_names_above_ma_gives_full_breadth(self):
         cfg = IndiaConfig()
         idx = pd.bdate_range("2020-01-01", periods=200)
-        panel = pd.DataFrame({
-            f"N{i}": np.linspace(100, 100 + 50 * (i + 1), 200) for i in range(10)
-        }, index=idx)
+        panel = pd.DataFrame(
+            {f"N{i}": np.linspace(100, 100 + 50 * (i + 1), 200) for i in range(10)}, index=idx
+        )
         breadth = breadth_score(panel, cfg)
         assert breadth.iloc[-1] == pytest.approx(1.0, abs=0.01)
 
@@ -83,9 +83,9 @@ class TestExposureOverlayIntegration:
     def test_never_exceeds_leverage_cap(self):
         cfg = IndiaConfig(leverage_cap=1.5)
         bench = _bench_series()
-        universe = pd.DataFrame({
-            f"N{i}": _bench_series(seed=i + 10).values for i in range(5)
-        }, index=bench.index)
+        universe = pd.DataFrame(
+            {f"N{i}": _bench_series(seed=i + 10).values for i in range(5)}, index=bench.index
+        )
         exposure = exposure_overlay(bench, universe, bench.index, cfg)
         valid = exposure.dropna()
         assert (valid <= cfg.leverage_cap + 1e-9).all()

@@ -21,17 +21,22 @@ def historical_var(returns, *, confidences=CONFIDENCES, horizon_days: int = 1) -
     scale = np.sqrt(horizon_days)
     var, es = {}, {}
     if r.size == 0:
-        var = {c: 0.0 for c in confidences}
+        var = dict.fromkeys(confidences, 0.0)
         es = dict(var)
     else:
         for c in confidences:
-            q = np.quantile(r, 1 - c)                    # left-tail return
+            q = np.quantile(r, 1 - c)  # left-tail return
             var[c] = float(max(-q, 0.0) * scale)
             tail = r[r <= q]
             es[c] = float(max(-tail.mean(), 0.0) * scale) if tail.size else var[c]
     vol = float(r.std(ddof=1)) if r.size > 1 else 0.0
-    return VaRReport(method="historical", horizon_days=horizon_days, var=_key(var),
-                     expected_shortfall=_key(es), volatility=vol)
+    return VaRReport(
+        method="historical",
+        horizon_days=horizon_days,
+        var=_key(var),
+        expected_shortfall=_key(es),
+        volatility=vol,
+    )
 
 
 def parametric_var(returns, *, confidences=CONFIDENCES, horizon_days: int = 1) -> VaRReport:
@@ -46,8 +51,13 @@ def parametric_var(returns, *, confidences=CONFIDENCES, horizon_days: int = 1) -
         # Gaussian ES: φ(z)/(1-c)·σ
         pdf = np.exp(-0.5 * z * z) / np.sqrt(2 * np.pi)
         es[c] = float(max(pdf / (1 - c) * sigma - mu, 0.0) * scale)
-    return VaRReport(method="parametric", horizon_days=horizon_days, var=_key(var),
-                     expected_shortfall=_key(es), volatility=sigma)
+    return VaRReport(
+        method="parametric",
+        horizon_days=horizon_days,
+        var=_key(var),
+        expected_shortfall=_key(es),
+        volatility=sigma,
+    )
 
 
 def _key(d: dict) -> dict:

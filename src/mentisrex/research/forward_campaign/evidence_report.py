@@ -31,7 +31,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Optional
 
 from mentisrex.research.forward_campaign.benchmark import (
     BenchmarkLedger,
@@ -42,7 +41,6 @@ from mentisrex.research.forward_campaign.ledger import (
     ForwardPerformanceSummary,
 )
 from mentisrex.research.forward_campaign.record import CycleStatus
-
 
 # ── evidence stage thresholds ─────────────────────────────────────────────────
 
@@ -81,6 +79,7 @@ _INSUFFICIENT_MSG = (
 
 # ── M9/SIM backtest snapshot ──────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class BacktestSnapshot:
     """Immutable snapshot of M9 backtest expectations for ew-momentum-exp.
@@ -94,15 +93,16 @@ class BacktestSnapshot:
     NOT be recalibrated using forward results.  Forward results must NOT
     feed back into the backtest.
     """
+
     manifest_hash: str = "696a411bed6731a997c399584bfa9c4f"
     experiment_id: str = "SIM"
     overall_verdict: str = "PASS"
     confidence_score: float = 88.1
-    n_observations: int = 729           # daily observations
+    n_observations: int = 729  # daily observations
     sharpe_annualized: float = 2.119975
     mean_daily_return: float = 0.000424
     std_daily_return: float = 0.003176
-    annualized_return: float = 0.10687   # mean_daily * 252
+    annualized_return: float = 0.10687  # mean_daily * 252
     annualized_volatility: float = 0.05042  # std_daily * sqrt(252)
     p_value: float = 0.000332
     annual_turnover: float = 0.467
@@ -118,17 +118,18 @@ class BacktestSnapshot:
     )
 
     @classmethod
-    def load(cls) -> "BacktestSnapshot":
+    def load(cls) -> BacktestSnapshot:
         """Load from canonical SIM validation report file."""
         try:
             import json
             from pathlib import Path
+
             repo_root = Path(__file__).resolve().parent.parent.parent.parent.parent
             report_path = repo_root / "data" / "validation" / "SIM" / "validation_report.json"
             if report_path.exists():
                 d = json.loads(report_path.read_text())
                 sig = d.get("statistical_summary", {}).get("significance", {})
-                cap = d.get("capacity_summary", {}).get("capacity", {})
+                d.get("capacity_summary", {}).get("capacity", {})
                 cap_turn = d.get("capacity_summary", {}).get("turnover", {})
                 meta = d.get("execution_metadata", {})
                 sharpe = sig.get("sharpe", cls.sharpe_annualized)
@@ -144,7 +145,7 @@ class BacktestSnapshot:
                     mean_daily_return=mean_d,
                     std_daily_return=std_d,
                     annualized_return=mean_d * 252,
-                    annualized_volatility=std_d * (252 ** 0.5),
+                    annualized_volatility=std_d * (252**0.5),
                     p_value=sig.get("p_value", cls.p_value),
                     annual_turnover=cap_turn.get("annual_turnover", cls.annual_turnover),
                     num_trades=cap_turn.get("num_trades", cls.num_trades),
@@ -156,14 +157,16 @@ class BacktestSnapshot:
 
 # ── per-cycle comparison ──────────────────────────────────────────────────────
 
+
 @dataclass
 class CycleComparison:
     """Strategy vs benchmark for a single cycle."""
+
     cycle_id: str
-    evaluation_date: Optional[date]
+    evaluation_date: date | None
     strategy_return: float
     benchmark_return: float
-    excess_return: float            # strategy_return - benchmark_return
+    excess_return: float  # strategy_return - benchmark_return
     strategy_nav: float
     benchmark_nav: float
     strategy_cumulative_return: float
@@ -172,6 +175,7 @@ class CycleComparison:
 
 
 # ── main evidence report ──────────────────────────────────────────────────────
+
 
 @dataclass
 class ForwardEvidenceReport:
@@ -200,17 +204,17 @@ class ForwardEvidenceReport:
     cycles_skipped: int = 0
     cycles_failed: int = 0
     latest_cycle_id: str = ""
-    latest_as_of_date: Optional[date] = None
-    first_as_of_date: Optional[date] = None
+    latest_as_of_date: date | None = None
+    first_as_of_date: date | None = None
 
     # C. Strategy performance
     strategy_current_nav: float = 0.0
     strategy_cumulative_return: float = 0.0
     strategy_monthly_returns: list = field(default_factory=list)
     strategy_max_drawdown: float = 0.0
-    strategy_annualized_return: Optional[float] = None
+    strategy_annualized_return: float | None = None
     strategy_annualized_return_label: str = "INSUFFICIENT_SAMPLE"
-    strategy_sharpe: Optional[float] = None
+    strategy_sharpe: float | None = None
     strategy_sharpe_label: str = "INSUFFICIENT_SAMPLE"
     strategy_total_turnover: float = 0.0
     strategy_total_fills: int = 0
@@ -221,14 +225,14 @@ class ForwardEvidenceReport:
     benchmark_cumulative_return: float = 0.0
     benchmark_monthly_returns: list = field(default_factory=list)
     benchmark_max_drawdown: float = 0.0
-    benchmark_annualized_return: Optional[float] = None
+    benchmark_annualized_return: float | None = None
     benchmark_annualized_return_label: str = "INSUFFICIENT_SAMPLE"
-    benchmark_inception_date: Optional[date] = None
+    benchmark_inception_date: date | None = None
     benchmark_inception_price: float = 0.0
     benchmark_data_limitation: str = ""
 
     # E. Relative performance
-    cycle_comparisons: list = field(default_factory=list)    # list[CycleComparison]
+    cycle_comparisons: list = field(default_factory=list)  # list[CycleComparison]
     cumulative_excess_return: float = 0.0
     excess_return_label: str = "INSUFFICIENT_SAMPLE"
 
@@ -240,7 +244,7 @@ class ForwardEvidenceReport:
     total_missing_securities: list = field(default_factory=list)
 
     # G. Backtest comparison
-    backtest: Optional[BacktestSnapshot] = None
+    backtest: BacktestSnapshot | None = None
     backtest_vs_forward: dict = field(default_factory=dict)
 
     # H. Statistical status
@@ -259,21 +263,22 @@ class ForwardEvidenceReport:
     research_data_isolated: str = "YES"
 
     # M29 — Alpaca execution quality
-    alpaca_execution_cycles: int = 0         # cycles with Alpaca paper execution
+    alpaca_execution_cycles: int = 0  # cycles with Alpaca paper execution
     alpaca_orders_submitted: int = 0
     alpaca_orders_filled: int = 0
-    alpaca_fill_rate: Optional[float] = None  # None if no Alpaca cycles yet
-    avg_slippage_bps: Optional[float] = None
-    avg_execution_latency_ms: Optional[float] = None
+    alpaca_fill_rate: float | None = None  # None if no Alpaca cycles yet
+    avg_slippage_bps: float | None = None
+    avg_execution_latency_ms: float | None = None
     execution_quality_label: str = "NO_ALPACA_EXECUTION"
-    reconciliation_pass_rate: Optional[float] = None
+    reconciliation_pass_rate: float | None = None
     execution_quality: dict = field(default_factory=dict)  # raw summary dict
 
     # M29 — structured forward vs backtest comparison
-    forward_vs_backtest: Optional[object] = None  # ForwardVsBacktestComparison
+    forward_vs_backtest: object | None = None  # ForwardVsBacktestComparison
 
     def to_dict(self) -> dict:
         import dataclasses as dc
+
         d = {}
         for f in dc.fields(self):
             v = getattr(self, f.name)
@@ -307,7 +312,9 @@ class ForwardEvidenceReport:
         print(f"  strategy_id         : {self.strategy_id}")
         print(f"  strategy_version    : {self.strategy_version}")
         print(f"  strategy_fingerprint: {self.strategy_fingerprint}")
-        print(f"  universe            : {', '.join(self.universe[:5])}{'...' if len(self.universe) > 5 else ''}")
+        print(
+            f"  universe            : {', '.join(self.universe[:5])}{'...' if len(self.universe) > 5 else ''}"
+        )
         print(f"  initial_capital     : ${self.initial_capital:,.0f}")
 
         print()
@@ -324,11 +331,13 @@ class ForwardEvidenceReport:
         print(f"  current_nav         : ${self.strategy_current_nav:,.2f}")
         print(f"  cumulative_return   : {self.strategy_cumulative_return:.4%}")
         print(f"  max_drawdown        : {self.strategy_max_drawdown:.4%}")
-        ann = (f"{self.strategy_annualized_return:.4%}"
-               if self.strategy_annualized_return is not None else "N/A")
+        ann = (
+            f"{self.strategy_annualized_return:.4%}"
+            if self.strategy_annualized_return is not None
+            else "N/A"
+        )
         print(f"  annualized_return   : {ann} [{self.strategy_annualized_return_label}]")
-        sharpe = (f"{self.strategy_sharpe:.3f}"
-                  if self.strategy_sharpe is not None else "N/A")
+        sharpe = f"{self.strategy_sharpe:.3f}" if self.strategy_sharpe is not None else "N/A"
         print(f"  sharpe              : {sharpe} [{self.strategy_sharpe_label}]")
         print(f"  total_fills         : {self.strategy_total_fills}")
 
@@ -340,16 +349,21 @@ class ForwardEvidenceReport:
         print(f"  current_nav         : ${self.benchmark_current_nav:,.2f}")
         print(f"  cumulative_return   : {self.benchmark_cumulative_return:.4%}")
         print(f"  max_drawdown        : {self.benchmark_max_drawdown:.4%}")
-        bann = (f"{self.benchmark_annualized_return:.4%}"
-                if self.benchmark_annualized_return is not None else "N/A")
+        bann = (
+            f"{self.benchmark_annualized_return:.4%}"
+            if self.benchmark_annualized_return is not None
+            else "N/A"
+        )
         print(f"  annualized_return   : {bann} [{self.benchmark_annualized_return_label}]")
         print(f"  data_limitation     : {self.benchmark_data_limitation[:80]}...")
 
         print()
         print("E. RELATIVE PERFORMANCE")
-        print(f"  cumulative_excess   : {self.cumulative_excess_return:.4%} [{self.excess_return_label}]")
+        print(
+            f"  cumulative_excess   : {self.cumulative_excess_return:.4%} [{self.excess_return_label}]"
+        )
         if self.cycle_comparisons:
-            print(f"  per-cycle summary:")
+            print("  per-cycle summary:")
             for cc in self.cycle_comparisons:
                 if isinstance(cc, CycleComparison):
                     cid = cc.cycle_id
@@ -384,8 +398,12 @@ class ForwardEvidenceReport:
             print(f"  p_value             : {bt.p_value:.6f}")
             print(f"  data_limitation     : {bt.data_limitation[:70]}...")
         if self.backtest_vs_forward:
-            print(f"  forward_sharpe      : {self.backtest_vs_forward.get('forward_sharpe', 'N/A')}")
-            print(f"  forward_ann_return  : {self.backtest_vs_forward.get('forward_ann_return', 'N/A')}")
+            print(
+                f"  forward_sharpe      : {self.backtest_vs_forward.get('forward_sharpe', 'N/A')}"
+            )
+            print(
+                f"  forward_ann_return  : {self.backtest_vs_forward.get('forward_ann_return', 'N/A')}"
+            )
             print(f"  note                : {self.backtest_vs_forward.get('note', '')}")
 
         print()
@@ -407,6 +425,7 @@ class ForwardEvidenceReport:
 
 
 # ── report builder ────────────────────────────────────────────────────────────
+
 
 class EvidenceReportBuilder:
     """Build a ForwardEvidenceReport from ledger + benchmark + backtest.
@@ -442,27 +461,23 @@ class EvidenceReportBuilder:
         self._universe = list(universe)
         self._initial_capital = initial_capital
 
-    def build(self, *, load_backtest: bool = True,
-              include_alpaca_execution: bool = True) -> ForwardEvidenceReport:
+    def build(
+        self, *, load_backtest: bool = True, include_alpaca_execution: bool = True
+    ) -> ForwardEvidenceReport:
         """Assemble the full evidence report."""
         fwd_summary: ForwardPerformanceSummary = self._fwd_ledger.performance_summary()
         bmk_summary: BenchmarkPerformanceSummary = self._bmk_ledger.performance_summary()
         backtest = BacktestSnapshot.load() if load_backtest else BacktestSnapshot()
 
         # all successful cycles from forward ledger
-        all_fwd = [c for c in self._fwd_ledger.list_cycles()
-                   if c.status == CycleStatus.SUCCESS]
-        all_bmk = {c.cycle_id: c for c in self._bmk_ledger.list_cycles()
-                   if c.status == "SUCCESS"}
+        all_fwd = [c for c in self._fwd_ledger.list_cycles() if c.status == CycleStatus.SUCCESS]
+        all_bmk = {c.cycle_id: c for c in self._bmk_ledger.list_cycles() if c.status == "SUCCESS"}
         n_genuine = len(all_fwd)
 
         # per-cycle comparison
         comparisons: list[CycleComparison] = []
         strat_nav = self._initial_capital
-        bmk_nav = self._initial_capital
         cumulative_excess = 0.0
-        prior_strat_nav = self._initial_capital
-        prior_bmk_nav = self._initial_capital
 
         for fc in all_fwd:
             bc = all_bmk.get(fc.cycle_id)
@@ -471,33 +486,38 @@ class EvidenceReportBuilder:
             excess = strat_ret - bmk_ret
             strat_nav = fc.ending_nav
             bmk_nav_val = bc.ending_nav if bc else self._initial_capital
-            strat_cum = (strat_nav / self._initial_capital - 1.0
-                         if self._initial_capital > 0 else 0.0)
-            bmk_cum = (bmk_nav_val / self._initial_capital - 1.0
-                       if self._initial_capital > 0 else 0.0)
+            strat_cum = (
+                strat_nav / self._initial_capital - 1.0 if self._initial_capital > 0 else 0.0
+            )
+            bmk_cum = (
+                bmk_nav_val / self._initial_capital - 1.0 if self._initial_capital > 0 else 0.0
+            )
             cumulative_excess = strat_cum - bmk_cum
 
-            comparisons.append(CycleComparison(
-                cycle_id=fc.cycle_id,
-                evaluation_date=fc.evaluation_date,
-                strategy_return=strat_ret,
-                benchmark_return=bmk_ret,
-                excess_return=excess,
-                strategy_nav=strat_nav,
-                benchmark_nav=bmk_nav_val,
-                strategy_cumulative_return=strat_cum,
-                benchmark_cumulative_return=bmk_cum,
-                cumulative_excess_return=cumulative_excess,
-            ))
+            comparisons.append(
+                CycleComparison(
+                    cycle_id=fc.cycle_id,
+                    evaluation_date=fc.evaluation_date,
+                    strategy_return=strat_ret,
+                    benchmark_return=bmk_ret,
+                    excess_return=excess,
+                    strategy_nav=strat_nav,
+                    benchmark_nav=bmk_nav_val,
+                    strategy_cumulative_return=strat_cum,
+                    benchmark_cumulative_return=bmk_cum,
+                    cumulative_excess_return=cumulative_excess,
+                )
+            )
 
         # data quality aggregation
         all_fwd_all = self._fwd_ledger.list_cycles()
-        total_accepted = sum(c.observations_accepted for c in all_fwd_all
-                             if c.status == CycleStatus.SUCCESS)
-        total_rejected = sum(c.observations_rejected for c in all_fwd_all
-                             if c.status == CycleStatus.SUCCESS)
-        total_pit = sum(c.pit_violations for c in all_fwd_all
-                        if c.status == CycleStatus.SUCCESS)
+        total_accepted = sum(
+            c.observations_accepted for c in all_fwd_all if c.status == CycleStatus.SUCCESS
+        )
+        total_rejected = sum(
+            c.observations_rejected for c in all_fwd_all if c.status == CycleStatus.SUCCESS
+        )
+        total_pit = sum(c.pit_violations for c in all_fwd_all if c.status == CycleStatus.SUCCESS)
         missing: list = []
         for c in all_fwd_all:
             missing.extend(c.missing_securities)
@@ -509,11 +529,12 @@ class EvidenceReportBuilder:
                 f"against backtest ({n_genuine} cycle(s) vs {backtest.n_observations} "
                 "daily backtest observations).  Comparison will be meaningful "
                 "at n >= 12 forward cycles."
-            ) if n_genuine < 12 else (
-                "n >= 12 forward cycles — preliminary comparison possible."
-            ),
+            )
+            if n_genuine < 12
+            else ("n >= 12 forward cycles — preliminary comparison possible."),
             "forward_sharpe": (
-                f"{fwd_summary.sharpe:.3f}" if fwd_summary.sharpe is not None
+                f"{fwd_summary.sharpe:.3f}"
+                if fwd_summary.sharpe is not None
                 else f"N/A [{fwd_summary.sharpe_label}]"
             ),
             "forward_ann_return": (
@@ -523,9 +544,7 @@ class EvidenceReportBuilder:
             ),
             "backtest_sharpe": f"{backtest.sharpe_annualized:.3f}",
             "backtest_ann_return": f"{backtest.annualized_return:.4%}",
-            "comparison_validity": (
-                "INSUFFICIENT_SAMPLE" if n_genuine < 12 else "PRELIMINARY"
-            ),
+            "comparison_validity": ("INSUFFICIENT_SAMPLE" if n_genuine < 12 else "PRELIMINARY"),
         }
 
         # latest cycle metadata
@@ -538,8 +557,8 @@ class EvidenceReportBuilder:
         stat_msg = (
             f"n={n_genuine} monthly forward observations are insufficient to "
             "establish economic validity."
-            if n_genuine < 12 else
-            f"n={n_genuine} monthly forward observations: preliminary annual "
+            if n_genuine < 12
+            else f"n={n_genuine} monthly forward observations: preliminary annual "
             "comparison possible.  Economic validity not yet established."
         )
 
@@ -548,11 +567,11 @@ class EvidenceReportBuilder:
         exec_cycles = 0
         exec_orders_submitted = 0
         exec_orders_filled = 0
-        exec_fill_rate: Optional[float] = None
-        exec_avg_slippage: Optional[float] = None
-        exec_avg_latency: Optional[float] = None
+        exec_fill_rate: float | None = None
+        exec_avg_slippage: float | None = None
+        exec_avg_latency: float | None = None
         exec_quality_label = "NO_ALPACA_EXECUTION"
-        exec_recon_pass_rate: Optional[float] = None
+        exec_recon_pass_rate: float | None = None
         fvb_comparison = None
 
         if include_alpaca_execution:
@@ -561,6 +580,7 @@ class EvidenceReportBuilder:
                     AlpacaExecutionLedger,
                     build_forward_vs_backtest_comparison,
                 )
+
                 exec_ledger = AlpacaExecutionLedger(self._campaign_dir)
                 exec_quality = exec_ledger.execution_quality_summary()
                 exec_cycles = exec_quality.get("n_cycles", 0)
@@ -574,11 +594,8 @@ class EvidenceReportBuilder:
                 exec_avg_latency = float(lt) if isinstance(lt, (int, float)) else None
                 rp = exec_quality.get("reconciliation_pass_rate", "UNAVAILABLE")
                 exec_recon_pass_rate = float(rp) if isinstance(rp, (int, float)) else None
-                exec_quality_label = (
-                    "ALPACA_PAPER" if exec_cycles > 0 else "NO_ALPACA_EXECUTION"
-                )
-                fvb_comparison = build_forward_vs_backtest_comparison(
-                    backtest, fwd_summary)
+                exec_quality_label = "ALPACA_PAPER" if exec_cycles > 0 else "NO_ALPACA_EXECUTION"
+                fvb_comparison = build_forward_vs_backtest_comparison(backtest, fwd_summary)
             except Exception:
                 pass
 
@@ -621,9 +638,7 @@ class EvidenceReportBuilder:
             # E
             cycle_comparisons=comparisons,
             cumulative_excess_return=cumulative_excess if comparisons else 0.0,
-            excess_return_label=(
-                "INSUFFICIENT_SAMPLE" if n_genuine < 6 else "ESTIMATED"
-            ),
+            excess_return_label=("INSUFFICIENT_SAMPLE" if n_genuine < 6 else "ESTIMATED"),
             # F
             provider="yahoo_finance",
             total_observations_accepted=total_accepted,

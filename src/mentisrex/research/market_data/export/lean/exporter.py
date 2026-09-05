@@ -49,8 +49,12 @@ class LeanExporter:
     # ── OHLCV ────────────────────────────────────────────────────────────────
 
     def export_ohlcv(
-        self, observations, output_dir: str | Path, *,
-        market: str = "usa", resolution: str = "daily",
+        self,
+        observations,
+        output_dir: str | Path,
+        *,
+        market: str = "usa",
+        resolution: str = "daily",
     ) -> dict[str, Path]:
         """Export CanonicalObservation sequences as Lean daily equity zip files.
 
@@ -75,14 +79,16 @@ class LeanExporter:
                 row = date_rows[d]
                 close = row.get("close", 0.0)
                 # Lean uses 10000ths of a dollar for equity; volume is raw shares
-                rows.append([
-                    d.strftime("%Y%m%d 00:00"),
-                    int(row.get("open", close) * 10000),
-                    int(row.get("high", close) * 10000),
-                    int(row.get("low", close) * 10000),
-                    int(close * 10000),
-                    int(row.get("volume", 0)),
-                ])
+                rows.append(
+                    [
+                        d.strftime("%Y%m%d 00:00"),
+                        int(row.get("open", close) * 10000),
+                        int(row.get("high", close) * 10000),
+                        int(row.get("low", close) * 10000),
+                        int(close * 10000),
+                        int(row.get("volume", 0)),
+                    ]
+                )
 
             zip_path = root / f"{safe_ticker}.zip"
             buf = io.StringIO()
@@ -97,7 +103,8 @@ class LeanExporter:
     # ── Universe ─────────────────────────────────────────────────────────────
 
     def export_universe(
-        self, universe_by_date: dict,
+        self,
+        universe_by_date: dict,
         output_path: str | Path,
     ) -> Path:
         """Export universe membership to a Lean-compatible universe CSV.
@@ -109,7 +116,7 @@ class LeanExporter:
         rows = []
         for d in sorted(universe_by_date):
             tickers = sorted(universe_by_date[d])
-            rows.append([d.isoformat()] + tickers)
+            rows.append([d.isoformat(), *tickers])
         with open(out, "w", newline="") as f:
             csv.writer(f).writerows(rows)
         return out
@@ -117,7 +124,8 @@ class LeanExporter:
     # ── Signals ──────────────────────────────────────────────────────────────
 
     def export_signals(
-        self, signals: list[dict],
+        self,
+        signals: list[dict],
         output_path: str | Path,
     ) -> Path:
         """Export signals to Lean alpha model CSV format.
@@ -126,25 +134,29 @@ class LeanExporter:
         """
         out = Path(output_path)
         out.parent.mkdir(parents=True, exist_ok=True)
-        sorted_signals = sorted(signals, key=lambda s: (
-            str(s.get("date")), str(s.get("ticker")), str(s.get("signal_name"))
-        ))
+        sorted_signals = sorted(
+            signals,
+            key=lambda s: (str(s.get("date")), str(s.get("ticker")), str(s.get("signal_name"))),
+        )
         with open(out, "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=["date", "ticker", "signal_name", "value"])
             writer.writeheader()
             for s in sorted_signals:
-                writer.writerow({
-                    "date": s["date"].isoformat() if isinstance(s["date"], date) else s["date"],
-                    "ticker": s["ticker"],
-                    "signal_name": s["signal_name"],
-                    "value": s["value"],
-                })
+                writer.writerow(
+                    {
+                        "date": s["date"].isoformat() if isinstance(s["date"], date) else s["date"],
+                        "ticker": s["ticker"],
+                        "signal_name": s["signal_name"],
+                        "value": s["value"],
+                    }
+                )
         return out
 
     # ── Portfolio targets ─────────────────────────────────────────────────────
 
     def export_targets(
-        self, targets: list[dict],
+        self,
+        targets: list[dict],
         output_path: str | Path,
     ) -> Path:
         """Export portfolio targets to Lean format.
@@ -158,9 +170,11 @@ class LeanExporter:
             writer = csv.DictWriter(f, fieldnames=["date", "ticker", "weight"])
             writer.writeheader()
             for t in sorted_targets:
-                writer.writerow({
-                    "date": t["date"].isoformat() if isinstance(t["date"], date) else t["date"],
-                    "ticker": t["ticker"],
-                    "weight": round(float(t["weight"]), 8),
-                })
+                writer.writerow(
+                    {
+                        "date": t["date"].isoformat() if isinstance(t["date"], date) else t["date"],
+                        "ticker": t["ticker"],
+                        "weight": round(float(t["weight"]), 8),
+                    }
+                )
         return out

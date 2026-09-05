@@ -1,9 +1,7 @@
 """Tests for the operations monitor."""
 
-import tempfile
-from pathlib import Path
-
 import pytest
+
 from mentisrex.operations.config import OperationsConfig
 from mentisrex.operations.monitor import OperationsMonitor
 

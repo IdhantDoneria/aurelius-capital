@@ -22,7 +22,7 @@ def _resample(r: np.ndarray, method: str, block: int, rng: np.random.Generator) 
     if method == "moving_block":
         nblocks = -(-n // block)
         starts = rng.integers(0, max(n - block + 1, 1), size=nblocks)
-        out = np.concatenate([r[s:s + block] for s in starts])
+        out = np.concatenate([r[s : s + block] for s in starts])
         return out[:n]
     if method == "circular_block":
         nblocks = -(-n // block)
@@ -45,8 +45,15 @@ def _resample(r: np.ndarray, method: str, block: int, rng: np.random.Generator) 
     raise ValueError(f"unknown bootstrap method: {method}")
 
 
-def bootstrap_distribution(returns, stat_fn, *, n_samples: int = 1000, method: str = "stationary",
-                           block: int = 20, seed: int = 0) -> np.ndarray:
+def bootstrap_distribution(
+    returns,
+    stat_fn,
+    *,
+    n_samples: int = 1000,
+    method: str = "stationary",
+    block: int = 20,
+    seed: int = 0,
+) -> np.ndarray:
     """Bootstrap sampling distribution of `stat_fn` over resampled returns."""
     r = np.asarray(returns, dtype=float)
     if r.size < 3:
@@ -55,14 +62,29 @@ def bootstrap_distribution(returns, stat_fn, *, n_samples: int = 1000, method: s
     return np.array([stat_fn(_resample(r, method, block, rng)) for _ in range(n_samples)])
 
 
-def bootstrap_ci(returns, stat_fn, *, n_samples: int = 1000, method: str = "stationary",
-                 block: int = 20, alpha: float = 0.05, seed: int = 0) -> dict:
+def bootstrap_ci(
+    returns,
+    stat_fn,
+    *,
+    n_samples: int = 1000,
+    method: str = "stationary",
+    block: int = 20,
+    alpha: float = 0.05,
+    seed: int = 0,
+) -> dict:
     """Percentile bootstrap point estimate + (1-alpha) CI + p(stat<=0)."""
-    dist = bootstrap_distribution(returns, stat_fn, n_samples=n_samples, method=method,
-                                  block=block, seed=seed)
+    dist = bootstrap_distribution(
+        returns, stat_fn, n_samples=n_samples, method=method, block=block, seed=seed
+    )
     if dist.size == 0:
-        return {"method": method, "estimate": float("nan"), "ci_low": float("nan"),
-                "ci_high": float("nan"), "prob_le_zero": float("nan"), "n_samples": 0}
+        return {
+            "method": method,
+            "estimate": float("nan"),
+            "ci_low": float("nan"),
+            "ci_high": float("nan"),
+            "prob_le_zero": float("nan"),
+            "n_samples": 0,
+        }
     return {
         "method": method,
         "estimate": float(np.median(dist)),

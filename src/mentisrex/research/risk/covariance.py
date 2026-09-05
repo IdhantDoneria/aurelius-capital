@@ -30,7 +30,7 @@ class EWMACovariance(CovarianceEstimator):
         X = np.asarray(returns, dtype=float)
         T, _ = X.shape
         Xc = X - X.mean(axis=0)
-        w = self.lam ** np.arange(T - 1, -1, -1)       # oldest→newest weight
+        w = self.lam ** np.arange(T - 1, -1, -1)  # oldest→newest weight
         w /= w.sum()
         return (Xc * w[:, None]).T @ Xc
 
@@ -50,8 +50,8 @@ class FactorCovariance(CovarianceEstimator):
             return self.base.estimate(X)
         F = np.asarray(self.factor_returns, dtype=float)
         # OLS loadings B (N×K), residual (specific) variance D
-        B, *_ = np.linalg.lstsq(F, X, rcond=None)       # (K, N)
-        B = B.T                                         # (N, K)
+        B, *_ = np.linalg.lstsq(F, X, rcond=None)  # (K, N)
+        B = B.T  # (N, K)
         resid = X - F @ B.T
         Fcov = np.cov(F, rowvar=False)
         D = np.diag(np.var(resid, axis=0, ddof=1))

@@ -69,8 +69,8 @@ from mentisrex.research.market_data_ops.monitoring import (
 )
 from mentisrex.research.market_data_ops.ordering import (
     OrderingCode,
-    OrderingEvent,
     OrderingError,
+    OrderingEvent,
     OrderingPolicy,
     OrderingReport,
     SequenceManager,
@@ -113,32 +113,76 @@ from mentisrex.research.market_data_ops.store import (
 __version__ = "1.0.0"
 
 __all__ = [
-    "MarketDataOperationsEngine",
-    # messages
-    "SourceMessage", "MessageType", "SourceCapability", "message_from_observation",
-    # adapters
-    "SourceAdapter", "SourceMetadata", "ConnectionState", "AdapterHealthSample", "CapabilityError",
-    "LocalSourceAdapter", "MessageLogAdapter", "FixtureVendorAdapter", "ProductionSourceAdapter",
-    # ordering
-    "SequenceManager", "OrderingPolicy", "OrderingReport", "OrderingEvent", "OrderingCode",
-    "OrderingError",
-    # arbitration / reconciliation
-    "SourceArbiter", "ArbitrationConfig", "ArbitrationPolicy", "ArbitrationResult",
-    "ArbitrationEvent", "reconcile", "ReconciliationReport", "Disagreement",
-    # replay / reconstruction
-    "MarketDataReplayEngine", "ReplayConfig", "ReplayResult", "ReplayCheckpoint",
-    "HistoricalReconstructor", "ReconstructionResult",
-    # lifecycle / store / incremental
-    "SealedSnapshot", "SnapshotState", "seal", "reject",
-    "SnapshotStore", "SnapshotStoreError", "IntegrityError",
-    "MarketDataState", "IngestReport",
+    "AdapterHealthSample",
+    "ArbitrationConfig",
+    "ArbitrationEvent",
+    "ArbitrationPolicy",
+    "ArbitrationResult",
+    "CapabilityError",
+    "ConnectionState",
+    "CoverageReport",
+    "DeserializationError",
+    "Disagreement",
+    "FaultSpec",
+    "FeedHealth",
+    "FeedStatus",
+    "FixtureVendorAdapter",
     # monitoring
-    "HealthMonitor", "FeedHealth", "FeedStatus", "coverage", "CoverageReport",
-    "QualityMonitor", "QualityHealthReport",
+    "HealthMonitor",
+    "HistoricalReconstructor",
+    "IngestReport",
+    "IntegrityError",
+    "LocalSourceAdapter",
+    "MarketDataOperationsEngine",
+    # replay / reconstruction
+    "MarketDataReplayEngine",
+    "MarketDataState",
+    "MessageLogAdapter",
+    "MessageType",
+    "OrderingCode",
+    "OrderingError",
+    "OrderingEvent",
+    "OrderingPolicy",
+    "OrderingReport",
+    "ProductionSourceAdapter",
+    "QualityHealthReport",
+    "QualityMonitor",
+    "ReconciliationReport",
+    "ReconstructionResult",
+    "ReplayCheckpoint",
+    "ReplayConfig",
+    "ReplayResult",
+    # lifecycle / store / incremental
+    "SealedSnapshot",
+    # ordering
+    "SequenceManager",
+    "SimConfig",
+    "SnapshotLineage",
+    "SnapshotState",
+    "SnapshotStore",
+    "SnapshotStoreError",
+    # adapters
+    "SourceAdapter",
+    # arbitration / reconciliation
+    "SourceArbiter",
+    "SourceCapability",
+    # messages
+    "SourceMessage",
+    "SourceMetadata",
     # simulator
-    "StreamingSimulator", "SimConfig", "FaultSpec",
+    "StreamingSimulator",
+    "coverage",
+    "default_ops_registry",
+    "lineage_of",
+    "message_from_dict",
+    "message_from_observation",
     # serialization / registry
-    "message_to_dict", "message_from_dict", "messages_to_json", "messages_from_json",
-    "sealed_to_dict", "sealed_to_json", "DeserializationError",
-    "default_ops_registry", "SnapshotLineage", "lineage_of",
+    "message_to_dict",
+    "messages_from_json",
+    "messages_to_json",
+    "reconcile",
+    "reject",
+    "seal",
+    "sealed_to_dict",
+    "sealed_to_json",
 ]

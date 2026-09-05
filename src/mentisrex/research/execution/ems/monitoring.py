@@ -22,7 +22,9 @@ def metrics(session) -> ExecutionMetrics:
     req_shares = sum(abs(r.requested_quantity) for r in reports) or 1.0
     fill_shares = sum(abs(r.filled_quantity) for r in reports)
 
-    is_num = sum(r.implementation_shortfall_bps * abs(r.filled_quantity * r.avg_fill_price) for r in filled)
+    is_num = sum(
+        r.implementation_shortfall_bps * abs(r.filled_quantity * r.avg_fill_price) for r in filled
+    )
 
     return ExecutionMetrics(
         n_orders=len(reports),
@@ -39,7 +41,8 @@ def metrics(session) -> ExecutionMetrics:
         total_cost_bps=(total_cost / fill_notional * 1e4) if fill_notional > 0 else 0.0,
         avg_slippage_bps=aggregate_slippage_bps(filled),
         avg_implementation_shortfall_bps=(is_num / fill_notional) if fill_notional > 0 else 0.0,
-        alerts=_alerts(session, reports))
+        alerts=_alerts(session, reports),
+    )
 
 
 def by_algorithm(session) -> dict:

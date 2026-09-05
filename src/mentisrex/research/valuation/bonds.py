@@ -17,9 +17,10 @@ from mentisrex.research.valuation.daycount import DayCount, year_fraction
 @dataclass(frozen=True)
 class BondSpec:
     """A fixed-coupon (or zero-coupon) bond, quoted per 100 face."""
+
     face: float = 100.0
-    coupon: float = 0.0                    # annual coupon rate (0.04 = 4%)
-    frequency: int = 2                     # coupons/year (0 => zero-coupon)
+    coupon: float = 0.0  # annual coupon rate (0.04 = 4%)
+    frequency: int = 2  # coupons/year (0 => zero-coupon)
     issue: date | None = None
     maturity: date | None = None
     day_count: DayCount = DayCount.THIRTY_360
@@ -48,7 +49,7 @@ def cash_flows(spec: BondSpec) -> list:
     cpn = spec.coupon / spec.frequency * 100.0 if spec.frequency > 0 else 0.0
     flows = [(d, cpn) for d in dts]
     d_last, a_last = flows[-1]
-    flows[-1] = (d_last, a_last + 100.0)                    # redeem principal
+    flows[-1] = (d_last, a_last + 100.0)  # redeem principal
     return flows
 
 
@@ -99,10 +100,13 @@ def dirty_price_from_yield(spec: BondSpec, ytm: float, settle: date) -> float:
     """PV of remaining cash flows discounted at `ytm` (per 100 face) — the dirty price."""
     flows = [(d, a) for d, a in cash_flows(spec) if d > settle]
     m = spec.frequency if spec.frequency > 0 else 1
-    exps = _period_exponents(spec, settle) if spec.frequency > 0 else \
-        [year_fraction(settle, d, DayCount.ACT_365) for d, _ in flows]
+    exps = (
+        _period_exponents(spec, settle)
+        if spec.frequency > 0
+        else [year_fraction(settle, d, DayCount.ACT_365) for d, _ in flows]
+    )
     pv = 0.0
-    for (d, a), e in zip(flows, exps):
+    for (_d, a), e in zip(flows, exps, strict=False):
         pv += a / (1.0 + ytm / m) ** e
     return pv
 
@@ -111,8 +115,9 @@ def clean_price_from_yield(spec: BondSpec, ytm: float, settle: date) -> float:
     return dirty_price_from_yield(spec, ytm, settle) - accrued_interest(spec, settle)
 
 
-def yield_to_maturity(spec: BondSpec, clean_price: float, settle: date, *,
-                      tol: float = 1e-10, max_iter: int = 100) -> float:
+def yield_to_maturity(
+    spec: BondSpec, clean_price: float, settle: date, *, tol: float = 1e-10, max_iter: int = 100
+) -> float:
     """Solve for YTM from a clean price. Bisection — robust and deterministic."""
     target = clean_price + accrued_interest(spec, settle)
     lo, hi = -0.5, 2.0
@@ -121,7 +126,7 @@ def yield_to_maturity(spec: BondSpec, clean_price: float, settle: date, *,
         pv = dirty_price_from_yield(spec, mid, settle)
         if abs(pv - target) < tol:
             return mid
-        if pv > target:                                    # price too high → yield too low
+        if pv > target:  # price too high → yield too low
             lo = mid
         else:
             hi = mid
@@ -131,11 +136,14 @@ def yield_to_maturity(spec: BondSpec, clean_price: float, settle: date, *,
 def macaulay_duration(spec: BondSpec, ytm: float, settle: date) -> float:
     flows = [(d, a) for d, a in cash_flows(spec) if d > settle]
     m = spec.frequency if spec.frequency > 0 else 1
-    exps = _period_exponents(spec, settle) if spec.frequency > 0 else \
-        [m * year_fraction(settle, d, DayCount.ACT_365) for d, _ in flows]
+    exps = (
+        _period_exponents(spec, settle)
+        if spec.frequency > 0
+        else [m * year_fraction(settle, d, DayCount.ACT_365) for d, _ in flows]
+    )
     pv_total = twt = 0.0
-    for (d, a), e in zip(flows, exps):
-        t = e / m                                          # time in years (periods / freq)
+    for (_d, a), e in zip(flows, exps, strict=False):
+        t = e / m  # time in years (periods / freq)
         pv = a / (1.0 + ytm / m) ** e
         pv_total += pv
         twt += t * pv
@@ -150,10 +158,13 @@ def modified_duration(spec: BondSpec, ytm: float, settle: date) -> float:
 def convexity(spec: BondSpec, ytm: float, settle: date) -> float:
     flows = [(d, a) for d, a in cash_flows(spec) if d > settle]
     m = spec.frequency if spec.frequency > 0 else 1
-    exps = _period_exponents(spec, settle) if spec.frequency > 0 else \
-        [m * year_fraction(settle, d, DayCount.ACT_365) for d, _ in flows]
+    exps = (
+        _period_exponents(spec, settle)
+        if spec.frequency > 0
+        else [m * year_fraction(settle, d, DayCount.ACT_365) for d, _ in flows]
+    )
     pv_total = cx = 0.0
-    for (d, a), e in zip(flows, exps):
+    for (_d, a), e in zip(flows, exps, strict=False):
         t = e / m
         pv = a / (1.0 + ytm / m) ** e
         pv_total += pv

@@ -279,8 +279,7 @@ def evaluate(inputs: RiskInputs, config: RiskConfig) -> RiskVerdict:
             Breach(
                 "GROSS_HARD",
                 Severity.HALT,
-                "Flatten. This is a software bug, not a market event, and must be "
-                "treated as one.",
+                "Flatten. This is a software bug, not a market event, and must be treated as one.",
                 inputs.proposed_gross,
                 config.gross_hard,
             )
@@ -359,9 +358,10 @@ def evaluate(inputs: RiskInputs, config: RiskConfig) -> RiskVerdict:
     # COST_DIVERGENCE — Table 16: realised cost > 5 bps from model -> SOFT,
     # "alert, re-derive expected Sharpe". Spec's claim: n/a. Skipped (not a
     # breach either way) when the caller has no realised-cost measurement yet.
-    if inputs.realised_cost_bps is not None and abs(
-        inputs.realised_cost_bps
-    ) > config.cost_divergence_bps:
+    if (
+        inputs.realised_cost_bps is not None
+        and abs(inputs.realised_cost_bps) > config.cost_divergence_bps
+    ):
         breaches.append(
             Breach(
                 "COST_DIVERGENCE",
@@ -432,8 +432,10 @@ def sleeve_health(
 def _health_multiplier(config: RiskConfig) -> float:
     """Floor of last resort so a misconfigured (non-positive) multiplier can
     never actually zero out a sleeve. See `_SLEEVE_HEALTH_FLOOR`."""
-    return config.sleeve_health_multiplier if config.sleeve_health_multiplier > 0.0 else (
-        _SLEEVE_HEALTH_FLOOR
+    return (
+        config.sleeve_health_multiplier
+        if config.sleeve_health_multiplier > 0.0
+        else (_SLEEVE_HEALTH_FLOOR)
     )
 
 

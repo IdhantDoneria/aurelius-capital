@@ -26,39 +26,28 @@ Coverage (17 categories per M27 spec §19):
 from __future__ import annotations
 
 import json
-import shutil
-import tempfile
-from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
-from pathlib import Path
-from typing import Optional
-from unittest.mock import MagicMock, patch
+from datetime import UTC, date, datetime
 
 import pytest
 
 from mentisrex.research.forward_campaign import (
+    BacktestSnapshot,
     BenchmarkCycleRecord,
     BenchmarkLedger,
     BenchmarkPortfolio,
-    BenchmarkPerformanceSummary,
-    BacktestSnapshot,
-    CycleComparison,
+    CycleStatus,
     EvidenceReportBuilder,
     ForwardCampaign,
     ForwardLedger,
-    CycleStatus,
     make_forward_cycle_id,
 )
-from mentisrex.research.forward_campaign.benchmark import _BENCHMARK_DATA_LIMITATION
 from mentisrex.research.forward_campaign.evidence_report import (
     _evidence_stage,
-    _INSUFFICIENT_MSG,
 )
-from mentisrex.research.paper_trading.loop import PaperTradingLoop, LoopConfig
+from mentisrex.research.paper_trading.loop import LoopConfig, PaperTradingLoop
 from mentisrex.research.strategy_deployment.models import StrategyState, StrategyType, make_spec
 from mentisrex.research.strategy_deployment.registry import StrategyRegistry
-from mentisrex.research.strategy_deployment.runtime import StrategyRuntime, StrategyLogic
-
+from mentisrex.research.strategy_deployment.runtime import StrategyLogic, StrategyRuntime
 
 # ── shared fixtures ────────────────────────────────────────────────────────────
 
@@ -69,10 +58,10 @@ STRATEGY_VERSION = "1.0.0"
 STRATEGY_FINGERPRINT = "b69961b65bab226a500d71f45709945b"
 
 # SPY prices for fixture cycles
-SPY_AUG = 550.00    # 2026-08-13
-SPY_SEP = 560.00    # 2026-09-10
-SPY_OCT = 545.00    # 2026-10-08
-SPY_NOV = 570.00    # 2026-11-05
+SPY_AUG = 550.00  # 2026-08-13
+SPY_SEP = 560.00  # 2026-09-10
+SPY_OCT = 545.00  # 2026-10-08
+SPY_NOV = 570.00  # 2026-11-05
 
 AS_OF_AUG = date(2026, 8, 13)
 AS_OF_SEP = date(2026, 9, 10)
@@ -85,68 +74,184 @@ CYCLE_OCT = make_forward_cycle_id(STRATEGY_ID, STRATEGY_VERSION, AS_OF_OCT)
 CYCLE_NOV = make_forward_cycle_id(STRATEGY_ID, STRATEGY_VERSION, AS_OF_NOV)
 
 FIXTURE_RECORDS_AUG = [
-    {"symbol": "AAPL",  "date": "2026-08-01", "close": 185.0, "adj_close": 185.0,
-     "open": 183.0, "high": 186.0, "low": 182.0, "volume": 50_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
-    {"symbol": "MSFT",  "date": "2026-08-01", "close": 415.0, "adj_close": 413.0,
-     "open": 412.0, "high": 416.0, "low": 410.0, "volume": 20_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
-    {"symbol": "GOOGL", "date": "2026-08-01", "close": 172.0, "adj_close": 172.0,
-     "open": 170.0, "high": 173.5, "low": 169.0, "volume": 15_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
+    {
+        "symbol": "AAPL",
+        "date": "2026-08-01",
+        "close": 185.0,
+        "adj_close": 185.0,
+        "open": 183.0,
+        "high": 186.0,
+        "low": 182.0,
+        "volume": 50_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
+    {
+        "symbol": "MSFT",
+        "date": "2026-08-01",
+        "close": 415.0,
+        "adj_close": 413.0,
+        "open": 412.0,
+        "high": 416.0,
+        "low": 410.0,
+        "volume": 20_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
+    {
+        "symbol": "GOOGL",
+        "date": "2026-08-01",
+        "close": 172.0,
+        "adj_close": 172.0,
+        "open": 170.0,
+        "high": 173.5,
+        "low": 169.0,
+        "volume": 15_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
 ]
 FIXTURE_RECORDS_SEP = [
-    {"symbol": "AAPL",  "date": "2026-09-01", "close": 190.0, "adj_close": 190.0,
-     "open": 188.0, "high": 191.0, "low": 187.0, "volume": 48_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
-    {"symbol": "MSFT",  "date": "2026-09-01", "close": 420.0, "adj_close": 420.0,
-     "open": 418.0, "high": 422.0, "low": 417.0, "volume": 19_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
-    {"symbol": "GOOGL", "date": "2026-09-01", "close": 175.0, "adj_close": 175.0,
-     "open": 173.0, "high": 176.0, "low": 172.0, "volume": 14_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
+    {
+        "symbol": "AAPL",
+        "date": "2026-09-01",
+        "close": 190.0,
+        "adj_close": 190.0,
+        "open": 188.0,
+        "high": 191.0,
+        "low": 187.0,
+        "volume": 48_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
+    {
+        "symbol": "MSFT",
+        "date": "2026-09-01",
+        "close": 420.0,
+        "adj_close": 420.0,
+        "open": 418.0,
+        "high": 422.0,
+        "low": 417.0,
+        "volume": 19_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
+    {
+        "symbol": "GOOGL",
+        "date": "2026-09-01",
+        "close": 175.0,
+        "adj_close": 175.0,
+        "open": 173.0,
+        "high": 176.0,
+        "low": 172.0,
+        "volume": 14_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
 ]
 FIXTURE_RECORDS_OCT = [
-    {"symbol": "AAPL",  "date": "2026-10-01", "close": 195.0, "adj_close": 195.0,
-     "open": 193.0, "high": 196.0, "low": 192.0, "volume": 47_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
-    {"symbol": "MSFT",  "date": "2026-10-01", "close": 425.0, "adj_close": 425.0,
-     "open": 423.0, "high": 427.0, "low": 422.0, "volume": 18_500_000,
-     "dividends": 0.0, "stock_splits": 0.0},
-    {"symbol": "GOOGL", "date": "2026-10-01", "close": 178.0, "adj_close": 178.0,
-     "open": 176.0, "high": 179.0, "low": 175.0, "volume": 13_500_000,
-     "dividends": 0.0, "stock_splits": 0.0},
+    {
+        "symbol": "AAPL",
+        "date": "2026-10-01",
+        "close": 195.0,
+        "adj_close": 195.0,
+        "open": 193.0,
+        "high": 196.0,
+        "low": 192.0,
+        "volume": 47_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
+    {
+        "symbol": "MSFT",
+        "date": "2026-10-01",
+        "close": 425.0,
+        "adj_close": 425.0,
+        "open": 423.0,
+        "high": 427.0,
+        "low": 422.0,
+        "volume": 18_500_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
+    {
+        "symbol": "GOOGL",
+        "date": "2026-10-01",
+        "close": 178.0,
+        "adj_close": 178.0,
+        "open": 176.0,
+        "high": 179.0,
+        "low": 175.0,
+        "volume": 13_500_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
 ]
 FIXTURE_RECORDS_NOV = [
-    {"symbol": "AAPL",  "date": "2026-11-01", "close": 200.0, "adj_close": 200.0,
-     "open": 198.0, "high": 201.0, "low": 197.0, "volume": 46_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
-    {"symbol": "MSFT",  "date": "2026-11-01", "close": 430.0, "adj_close": 430.0,
-     "open": 428.0, "high": 432.0, "low": 427.0, "volume": 18_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
-    {"symbol": "GOOGL", "date": "2026-11-01", "close": 180.0, "adj_close": 180.0,
-     "open": 178.0, "high": 181.0, "low": 177.0, "volume": 13_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
+    {
+        "symbol": "AAPL",
+        "date": "2026-11-01",
+        "close": 200.0,
+        "adj_close": 200.0,
+        "open": 198.0,
+        "high": 201.0,
+        "low": 197.0,
+        "volume": 46_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
+    {
+        "symbol": "MSFT",
+        "date": "2026-11-01",
+        "close": 430.0,
+        "adj_close": 430.0,
+        "open": 428.0,
+        "high": 432.0,
+        "low": 427.0,
+        "volume": 18_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
+    {
+        "symbol": "GOOGL",
+        "date": "2026-11-01",
+        "close": 180.0,
+        "adj_close": 180.0,
+        "open": 178.0,
+        "high": 181.0,
+        "low": 177.0,
+        "volume": 13_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
 ]
 
 
 # ── strategy helpers ───────────────────────────────────────────────────────────
+
 
 class _EWLogic(StrategyLogic):
     def __init__(self, universe: list) -> None:
         self._universe = universe
 
     def generate_signals(self, snapshot, state):
-        return {s: 1.0 for s in self._universe if hasattr(snapshot, "spots")
-                and s in snapshot.spots and float(snapshot.spots[s].mid
-                if hasattr(snapshot.spots[s], "mid") else snapshot.spots[s]) > 0}
+        return {
+            s: 1.0
+            for s in self._universe
+            if hasattr(snapshot, "spots")
+            and s in snapshot.spots
+            and float(
+                snapshot.spots[s].mid if hasattr(snapshot.spots[s], "mid") else snapshot.spots[s]
+            )
+            > 0
+        }
 
     def construct_portfolio(self, signals, state):
         n = len(signals)
         if n == 0:
             return {}
         w = 1.0 / n
-        return {s: w for s in signals}
+        return dict.fromkeys(signals, w)
 
 
 def _make_spec():
@@ -196,19 +301,26 @@ def _make_loop(spec):
 
 def _run_campaign_cycle(spec, as_of, provider_records, tmp_dir, loop=None):
     """Helper: run one campaign cycle with fixture data."""
-    campaign = ForwardCampaign.init(
-        spec, _EWLogic(UNIVERSE), data_dir=tmp_dir,
-        universe=UNIVERSE, starting_capital=STARTING_CAPITAL,
-        campaign_id="TEST_CAMPAIGN",
-        _loop=loop,
-    ) if not (tmp_dir / "campaign_manifest.json").exists() else \
-        ForwardCampaign.resume(spec, _EWLogic(UNIVERSE), tmp_dir)
+    campaign = (
+        ForwardCampaign.init(
+            spec,
+            _EWLogic(UNIVERSE),
+            data_dir=tmp_dir,
+            universe=UNIVERSE,
+            starting_capital=STARTING_CAPITAL,
+            campaign_id="TEST_CAMPAIGN",
+            _loop=loop,
+        )
+        if not (tmp_dir / "campaign_manifest.json").exists()
+        else ForwardCampaign.resume(spec, _EWLogic(UNIVERSE), tmp_dir)
+    )
     return campaign.run(as_of, provider_records=provider_records)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 1. September cycle creation (infrastructure test — fixture-based)
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestSeptemberCycleCreation:
     """Verify September cycle can be created with fixture data.
@@ -250,6 +362,7 @@ class TestSeptemberCycleCreation:
 # 2. Multi-month accumulation (Aug → Sep → Oct → Nov)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestMultiMonthAccumulation:
     """Fixture-based multi-cycle accumulation test.
 
@@ -266,7 +379,7 @@ class TestMultiMonthAccumulation:
         return bp, [aug, sep, oct_, nov]
 
     def test_four_cycles_accumulated(self, tmp_path):
-        bp, recs = self._setup_four_cycles(tmp_path)
+        bp, _recs = self._setup_four_cycles(tmp_path)
         all_recs = bp.ledger.list_cycles()
         assert len(all_recs) == 4
 
@@ -305,6 +418,7 @@ class TestMultiMonthAccumulation:
 # 3. Benchmark initialization
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestBenchmarkInitialization:
     def test_inception_cycle_creates_record(self, tmp_path):
         bp = BenchmarkPortfolio(tmp_path, inception_nav=STARTING_CAPITAL)
@@ -341,6 +455,7 @@ class TestBenchmarkInitialization:
 # 4. Benchmark accounting invariant
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestBenchmarkAccountingInvariant:
     """Benchmark cash + shares * spy_price == ending_nav (within fp tolerance)."""
 
@@ -364,10 +479,12 @@ class TestBenchmarkAccountingInvariant:
 
     def test_multi_cycle_invariants(self, tmp_path):
         bp = BenchmarkPortfolio(tmp_path, inception_nav=STARTING_CAPITAL)
-        spy_prices = [(CYCLE_AUG, AS_OF_AUG, SPY_AUG),
-                      (CYCLE_SEP, AS_OF_SEP, SPY_SEP),
-                      (CYCLE_OCT, AS_OF_OCT, SPY_OCT),
-                      (CYCLE_NOV, AS_OF_NOV, SPY_NOV)]
+        spy_prices = [
+            (CYCLE_AUG, AS_OF_AUG, SPY_AUG),
+            (CYCLE_SEP, AS_OF_SEP, SPY_SEP),
+            (CYCLE_OCT, AS_OF_OCT, SPY_OCT),
+            (CYCLE_NOV, AS_OF_NOV, SPY_NOV),
+        ]
         for cycle_id, as_of, price in spy_prices:
             rec = bp.evaluate(cycle_id, as_of=as_of, spy_price=price)
             self._check_invariant(rec)
@@ -384,6 +501,7 @@ class TestBenchmarkAccountingInvariant:
 # 5. Benchmark isolation
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestBenchmarkIsolation:
     """Benchmark cannot alter strategy; strategy cannot alter benchmark NAV."""
 
@@ -398,7 +516,7 @@ class TestBenchmarkIsolation:
     def test_benchmark_nav_independent_of_strategy_signals(self, tmp_path):
         """Benchmark NAV depends only on SPY price, not on strategy signals."""
         bp = BenchmarkPortfolio(tmp_path, inception_nav=STARTING_CAPITAL)
-        rec1 = bp.evaluate(CYCLE_AUG, as_of=AS_OF_AUG, spy_price=SPY_AUG)
+        bp.evaluate(CYCLE_AUG, as_of=AS_OF_AUG, spy_price=SPY_AUG)
         rec2 = bp.evaluate(CYCLE_SEP, as_of=AS_OF_SEP, spy_price=SPY_SEP)
         # NAV = shares * price; shares = 1_000_000 / SPY_AUG
         expected_nav = (STARTING_CAPITAL / SPY_AUG) * SPY_SEP
@@ -425,14 +543,15 @@ class TestBenchmarkIsolation:
 # 6. Strategy/benchmark reconciliation
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestStrategyBenchmarkReconciliation:
     def test_excess_return_strategy_minus_benchmark(self, tmp_path):
         bp = BenchmarkPortfolio(tmp_path, inception_nav=STARTING_CAPITAL)
-        aug = bp.evaluate(CYCLE_AUG, as_of=AS_OF_AUG, spy_price=SPY_AUG)
+        bp.evaluate(CYCLE_AUG, as_of=AS_OF_AUG, spy_price=SPY_AUG)
         sep = bp.evaluate(CYCLE_SEP, as_of=AS_OF_SEP, spy_price=SPY_SEP)
 
         # Simulate strategy with flat return (equal weight, prices up +2.7% on avg)
-        strategy_return = 0.027   # example
+        strategy_return = 0.027  # example
         benchmark_return = sep.period_return
         excess = strategy_return - benchmark_return
         assert isinstance(excess, float)
@@ -451,6 +570,7 @@ class TestStrategyBenchmarkReconciliation:
 # 7. Excess return calculation
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestExcessReturnCalculation:
     def _build_report(self, tmp_path, strategy_nav, benchmark_nav):
         """Minimal report builder for excess return tests."""
@@ -462,6 +582,7 @@ class TestExcessReturnCalculation:
 
         # strategy cycle Aug (inception, return=0)
         from mentisrex.research.forward_campaign.record import ForwardCycleRecord
+
         aug_rec = ForwardCycleRecord(
             cycle_id=CYCLE_AUG,
             strategy_id=STRATEGY_ID,
@@ -474,10 +595,11 @@ class TestExcessReturnCalculation:
             gross_return=0.0,
             fills=10,
             status=CycleStatus.SUCCESS,
-            sealed_at=datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
+            sealed_at=datetime.now(UTC).replace(tzinfo=None).isoformat(),
         )
         (cycles_dir / f"{CYCLE_AUG}.json").write_text(
-            json.dumps(aug_rec.to_dict(), indent=2, default=str))
+            json.dumps(aug_rec.to_dict(), indent=2, default=str)
+        )
 
         # strategy cycle Sep
         sep_strat_return = (strategy_nav - STARTING_CAPITAL) / STARTING_CAPITAL
@@ -493,10 +615,11 @@ class TestExcessReturnCalculation:
             gross_return=sep_strat_return,
             fills=3,
             status=CycleStatus.SUCCESS,
-            sealed_at=datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
+            sealed_at=datetime.now(UTC).replace(tzinfo=None).isoformat(),
         )
         (cycles_dir / f"{CYCLE_SEP}.json").write_text(
-            json.dumps(sep_rec.to_dict(), indent=2, default=str))
+            json.dumps(sep_rec.to_dict(), indent=2, default=str)
+        )
 
         # benchmark cycles
         aug_bm = BenchmarkCycleRecord(
@@ -516,10 +639,11 @@ class TestExcessReturnCalculation:
             cumulative_return=0.0,
             is_inception_cycle=True,
             status="SUCCESS",
-            sealed_at=datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
+            sealed_at=datetime.now(UTC).replace(tzinfo=None).isoformat(),
         )
         (benchmark_dir / f"{CYCLE_AUG}.json").write_text(
-            json.dumps(aug_bm.to_dict(), indent=2, default=str))
+            json.dumps(aug_bm.to_dict(), indent=2, default=str)
+        )
 
         bmk_period_return = (benchmark_nav - STARTING_CAPITAL) / STARTING_CAPITAL
         sep_bm = BenchmarkCycleRecord(
@@ -540,18 +664,24 @@ class TestExcessReturnCalculation:
             cumulative_return=bmk_period_return,
             is_inception_cycle=False,
             status="SUCCESS",
-            sealed_at=datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
+            sealed_at=datetime.now(UTC).replace(tzinfo=None).isoformat(),
         )
         (benchmark_dir / f"{CYCLE_SEP}.json").write_text(
-            json.dumps(sep_bm.to_dict(), indent=2, default=str))
+            json.dumps(sep_bm.to_dict(), indent=2, default=str)
+        )
 
         # write manifest
-        (tmp_path / "campaign_manifest.json").write_text(json.dumps({
-            "campaign_id": "TEST", "strategy_id": STRATEGY_ID,
-            "strategy_version": STRATEGY_VERSION,
-            "strategy_fingerprint": STRATEGY_FINGERPRINT,
-            "starting_capital": STARTING_CAPITAL,
-        }))
+        (tmp_path / "campaign_manifest.json").write_text(
+            json.dumps(
+                {
+                    "campaign_id": "TEST",
+                    "strategy_id": STRATEGY_ID,
+                    "strategy_version": STRATEGY_VERSION,
+                    "strategy_fingerprint": STRATEGY_FINGERPRINT,
+                    "starting_capital": STARTING_CAPITAL,
+                }
+            )
+        )
 
         return EvidenceReportBuilder(
             campaign_dir=tmp_path,
@@ -565,8 +695,8 @@ class TestExcessReturnCalculation:
     def test_excess_return_strategy_outperforms(self, tmp_path):
         report = self._build_report(
             tmp_path,
-            strategy_nav=1_050_000.0,     # strategy +5%
-            benchmark_nav=1_020_000.0,    # benchmark +2%
+            strategy_nav=1_050_000.0,  # strategy +5%
+            benchmark_nav=1_020_000.0,  # benchmark +2%
         )
         # excess = strategy_cum - benchmark_cum = 5% - 2% = 3%
         assert report.cumulative_excess_return > 0
@@ -574,8 +704,8 @@ class TestExcessReturnCalculation:
     def test_excess_return_benchmark_outperforms(self, tmp_path):
         report = self._build_report(
             tmp_path,
-            strategy_nav=1_010_000.0,     # strategy +1%
-            benchmark_nav=1_030_000.0,    # benchmark +3%
+            strategy_nav=1_010_000.0,  # strategy +1%
+            benchmark_nav=1_030_000.0,  # benchmark +3%
         )
         assert report.cumulative_excess_return < 0
 
@@ -602,6 +732,7 @@ class TestExcessReturnCalculation:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 8. Benchmark drawdown
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestBenchmarkDrawdown:
     def test_drawdown_zero_when_rising(self, tmp_path):
@@ -637,6 +768,7 @@ class TestBenchmarkDrawdown:
 # 9. Forward-vs-backtest comparison
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestForwardVsBacktestComparison:
     def test_backtest_snapshot_loads(self):
         bt = BacktestSnapshot.load()
@@ -653,12 +785,17 @@ class TestForwardVsBacktestComparison:
         # empty campaign directory
         (tmp_path / "cycles").mkdir()
         (tmp_path / "benchmark").mkdir()
-        (tmp_path / "campaign_manifest.json").write_text(json.dumps({
-            "campaign_id": "TEST", "strategy_id": STRATEGY_ID,
-            "strategy_version": STRATEGY_VERSION,
-            "strategy_fingerprint": STRATEGY_FINGERPRINT,
-            "starting_capital": STARTING_CAPITAL,
-        }))
+        (tmp_path / "campaign_manifest.json").write_text(
+            json.dumps(
+                {
+                    "campaign_id": "TEST",
+                    "strategy_id": STRATEGY_ID,
+                    "strategy_version": STRATEGY_VERSION,
+                    "strategy_fingerprint": STRATEGY_FINGERPRINT,
+                    "starting_capital": STARTING_CAPITAL,
+                }
+            )
+        )
         builder = EvidenceReportBuilder(
             campaign_dir=tmp_path,
             strategy_id=STRATEGY_ID,
@@ -684,6 +821,7 @@ class TestForwardVsBacktestComparison:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 10. Insufficient-sample labeling
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestInsufficientSampleLabeling:
     def test_evidence_stage_0_obs(self):
@@ -713,12 +851,17 @@ class TestInsufficientSampleLabeling:
     def test_insufficient_sample_message_includes_n(self, tmp_path):
         (tmp_path / "cycles").mkdir()
         (tmp_path / "benchmark").mkdir()
-        (tmp_path / "campaign_manifest.json").write_text(json.dumps({
-            "campaign_id": "T", "strategy_id": STRATEGY_ID,
-            "strategy_version": STRATEGY_VERSION,
-            "strategy_fingerprint": STRATEGY_FINGERPRINT,
-            "starting_capital": STARTING_CAPITAL,
-        }))
+        (tmp_path / "campaign_manifest.json").write_text(
+            json.dumps(
+                {
+                    "campaign_id": "T",
+                    "strategy_id": STRATEGY_ID,
+                    "strategy_version": STRATEGY_VERSION,
+                    "strategy_fingerprint": STRATEGY_FINGERPRINT,
+                    "starting_capital": STARTING_CAPITAL,
+                }
+            )
+        )
         report = EvidenceReportBuilder(
             campaign_dir=tmp_path,
             strategy_id=STRATEGY_ID,
@@ -746,6 +889,7 @@ class TestInsufficientSampleLabeling:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 11. Immutable records
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestImmutableRecords:
     def test_benchmark_record_not_overwritten(self, tmp_path):
@@ -778,6 +922,7 @@ class TestImmutableRecords:
 # 12. Repeated execution (idempotency)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestRepeatedExecutionIdempotency:
     def test_repeated_benchmark_eval_idempotent(self, tmp_path):
         bp = BenchmarkPortfolio(tmp_path, inception_nav=STARTING_CAPITAL)
@@ -808,6 +953,7 @@ class TestRepeatedExecutionIdempotency:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 13. Provider revision handling
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestProviderRevisionHandling:
     def test_sealed_record_survives_price_revision(self, tmp_path):
@@ -842,6 +988,7 @@ class TestProviderRevisionHandling:
 # 14. PIT enforcement
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestPITEnforcement:
     def test_benchmark_record_stores_knowledge_as_of(self, tmp_path):
         bp = BenchmarkPortfolio(tmp_path, inception_nav=STARTING_CAPITAL)
@@ -858,10 +1005,12 @@ class TestPITEnforcement:
 
     def test_fetch_spy_price_returns_none_for_future(self):
         """fetch_spy_price with a far-future date should return None or error."""
-        from mentisrex.research.forward_campaign.benchmark import fetch_spy_price
         # We don't actually call the network (would fail in offline test),
         # but we verify the function exists and has the right signature.
         import inspect
+
+        from mentisrex.research.forward_campaign.benchmark import fetch_spy_price
+
         sig = inspect.signature(fetch_spy_price)
         assert "as_of" in sig.parameters
 
@@ -869,6 +1018,7 @@ class TestPITEnforcement:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 15. Research-data isolation
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestResearchDataIsolation:
     def test_benchmark_dir_separate_from_research(self, tmp_path):
@@ -878,34 +1028,42 @@ class TestResearchDataIsolation:
         # benchmark dir exists; no research files in it
         bdir = tmp_path / "benchmark"
         assert bdir.exists()
-        non_benchmark = [f for f in bdir.iterdir()
-                         if not f.name.endswith(".json")]
+        non_benchmark = [f for f in bdir.iterdir() if not f.name.endswith(".json")]
         assert len(non_benchmark) == 0
 
     def test_forward_ledger_does_not_expose_research_pipeline(self, tmp_path):
         """ForwardLedger has no method to push data to research pipeline."""
         ledger = ForwardLedger(tmp_path)
-        research_methods = [m for m in dir(ledger)
-                            if any(k in m for k in
-                                   ("train", "optimize", "backtest", "fit", "calibrate"))]
+        research_methods = [
+            m
+            for m in dir(ledger)
+            if any(k in m for k in ("train", "optimize", "backtest", "fit", "calibrate"))
+        ]
         assert len(research_methods) == 0
 
     def test_benchmark_ledger_does_not_expose_research_pipeline(self, tmp_path):
         ledger = BenchmarkLedger(tmp_path)
-        research_methods = [m for m in dir(ledger)
-                            if any(k in m for k in
-                                   ("train", "optimize", "backtest", "fit", "calibrate"))]
+        research_methods = [
+            m
+            for m in dir(ledger)
+            if any(k in m for k in ("train", "optimize", "backtest", "fit", "calibrate"))
+        ]
         assert len(research_methods) == 0
 
     def test_evidence_report_research_isolated_flag(self, tmp_path):
         (tmp_path / "cycles").mkdir()
         (tmp_path / "benchmark").mkdir()
-        (tmp_path / "campaign_manifest.json").write_text(json.dumps({
-            "campaign_id": "T", "strategy_id": STRATEGY_ID,
-            "strategy_version": STRATEGY_VERSION,
-            "strategy_fingerprint": STRATEGY_FINGERPRINT,
-            "starting_capital": STARTING_CAPITAL,
-        }))
+        (tmp_path / "campaign_manifest.json").write_text(
+            json.dumps(
+                {
+                    "campaign_id": "T",
+                    "strategy_id": STRATEGY_ID,
+                    "strategy_version": STRATEGY_VERSION,
+                    "strategy_fingerprint": STRATEGY_FINGERPRINT,
+                    "starting_capital": STARTING_CAPITAL,
+                }
+            )
+        )
         report = EvidenceReportBuilder(
             campaign_dir=tmp_path,
             strategy_id=STRATEGY_ID,
@@ -920,6 +1078,7 @@ class TestResearchDataIsolation:
 # ═══════════════════════════════════════════════════════════════════════════════
 # 16. Failure handling
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestFailureHandling:
     def test_zero_spy_price_does_not_crash(self, tmp_path):
@@ -960,6 +1119,7 @@ class TestFailureHandling:
 # 17. Real-data integration (fixture variant; @real_data for live network)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 class TestRealDataIntegrationFixture:
     """Fixture-based variant of real-data test.  No network calls."""
 
@@ -981,12 +1141,17 @@ class TestRealDataIntegrationFixture:
     def test_evidence_report_governance_labels(self, tmp_path):
         (tmp_path / "cycles").mkdir()
         (tmp_path / "benchmark").mkdir()
-        (tmp_path / "campaign_manifest.json").write_text(json.dumps({
-            "campaign_id": "T", "strategy_id": STRATEGY_ID,
-            "strategy_version": STRATEGY_VERSION,
-            "strategy_fingerprint": STRATEGY_FINGERPRINT,
-            "starting_capital": STARTING_CAPITAL,
-        }))
+        (tmp_path / "campaign_manifest.json").write_text(
+            json.dumps(
+                {
+                    "campaign_id": "T",
+                    "strategy_id": STRATEGY_ID,
+                    "strategy_version": STRATEGY_VERSION,
+                    "strategy_fingerprint": STRATEGY_FINGERPRINT,
+                    "starting_capital": STARTING_CAPITAL,
+                }
+            )
+        )
         report = EvidenceReportBuilder(
             campaign_dir=tmp_path,
             strategy_id=STRATEGY_ID,
@@ -1016,6 +1181,7 @@ class TestRealDataBenchmark:
 
     def test_fetch_spy_price_returns_positive(self):
         from mentisrex.research.forward_campaign.benchmark import fetch_spy_price
+
         price = fetch_spy_price(date(2026, 8, 13))
         # If the date is in the future, may return None — acceptable
         if price is not None:
@@ -1023,6 +1189,7 @@ class TestRealDataBenchmark:
 
     def test_real_spy_price_august_2026(self):
         from mentisrex.research.forward_campaign.benchmark import fetch_spy_price
+
         price = fetch_spy_price(AS_OF_AUG)
         # August 13 2026 has already passed at time of running
         if price is not None:
@@ -1030,8 +1197,8 @@ class TestRealDataBenchmark:
 
     def test_september_benchmark_pending(self):
         """Verify September 2026 benchmark is pending — not yet available."""
-        from mentisrex.research.forward_campaign.benchmark import fetch_spy_price
         from datetime import date
+
         today = date.today()
         assert today < date(2026, 9, 10), (
             "September 2026 has arrived — run genuine forward_benchmark for September."
@@ -1041,6 +1208,7 @@ class TestRealDataBenchmark:
 # ═══════════════════════════════════════════════════════════════════════════════
 # Additional: BenchmarkPerformanceSummary and EvidenceReport integration
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 class TestBenchmarkPerformanceSummary:
     def test_summary_insufficient_sample_on_one_cycle(self, tmp_path):
@@ -1075,12 +1243,17 @@ class TestEvidenceReportIntegration:
     def test_report_strategy_fingerprint_preserved(self, tmp_path):
         (tmp_path / "cycles").mkdir()
         (tmp_path / "benchmark").mkdir()
-        (tmp_path / "campaign_manifest.json").write_text(json.dumps({
-            "campaign_id": "T", "strategy_id": STRATEGY_ID,
-            "strategy_version": STRATEGY_VERSION,
-            "strategy_fingerprint": STRATEGY_FINGERPRINT,
-            "starting_capital": STARTING_CAPITAL,
-        }))
+        (tmp_path / "campaign_manifest.json").write_text(
+            json.dumps(
+                {
+                    "campaign_id": "T",
+                    "strategy_id": STRATEGY_ID,
+                    "strategy_version": STRATEGY_VERSION,
+                    "strategy_fingerprint": STRATEGY_FINGERPRINT,
+                    "starting_capital": STARTING_CAPITAL,
+                }
+            )
+        )
         report = EvidenceReportBuilder(
             campaign_dir=tmp_path,
             strategy_id=STRATEGY_ID,
@@ -1094,12 +1267,17 @@ class TestEvidenceReportIntegration:
     def test_report_serializes_to_dict(self, tmp_path):
         (tmp_path / "cycles").mkdir()
         (tmp_path / "benchmark").mkdir()
-        (tmp_path / "campaign_manifest.json").write_text(json.dumps({
-            "campaign_id": "T", "strategy_id": STRATEGY_ID,
-            "strategy_version": STRATEGY_VERSION,
-            "strategy_fingerprint": STRATEGY_FINGERPRINT,
-            "starting_capital": STARTING_CAPITAL,
-        }))
+        (tmp_path / "campaign_manifest.json").write_text(
+            json.dumps(
+                {
+                    "campaign_id": "T",
+                    "strategy_id": STRATEGY_ID,
+                    "strategy_version": STRATEGY_VERSION,
+                    "strategy_fingerprint": STRATEGY_FINGERPRINT,
+                    "starting_capital": STARTING_CAPITAL,
+                }
+            )
+        )
         report = EvidenceReportBuilder(
             campaign_dir=tmp_path,
             strategy_id=STRATEGY_ID,

@@ -19,8 +19,6 @@ fetch() raises NotImplementedError. Use convert(company_facts_json, as_of) offli
 
 from __future__ import annotations
 
-import hashlib
-from dataclasses import replace
 from datetime import date, datetime
 
 from mentisrex.research.market_data_ops.adapters import SourceAdapter, SourceMetadata
@@ -90,17 +88,21 @@ class SECSourceAdapter(SourceAdapter):
     """
 
     def __init__(self, *, name: str = "sec_edgar") -> None:
-        super().__init__(SourceMetadata(
-            name,
-            frozenset({
-                SourceCapability.HISTORICAL,
-                SourceCapability.FUNDAMENTALS,
-                SourceCapability.REFERENCE_DATA,
-            }),
-            schema_version="1.0",
-            description="SEC/EDGAR company facts — PIT financial statements",
-            vendor="sec",
-        ))
+        super().__init__(
+            SourceMetadata(
+                name,
+                frozenset(
+                    {
+                        SourceCapability.HISTORICAL,
+                        SourceCapability.FUNDAMENTALS,
+                        SourceCapability.REFERENCE_DATA,
+                    }
+                ),
+                schema_version="1.0",
+                description="SEC/EDGAR company facts — PIT financial statements",
+                vendor="sec",
+            )
+        )
         self._seq = 0
 
     def fetch(self, as_of: date, *, security_ids=None, fields=None) -> list[SourceMessage]:
@@ -110,8 +112,9 @@ class SECSourceAdapter(SourceAdapter):
             "parse the JSON, then call convert(company_facts, as_of)."
         )
 
-    def convert(self, company_facts: dict, as_of: date,
-                *, security_id: str | None = None) -> list[SourceMessage]:
+    def convert(
+        self, company_facts: dict, as_of: date, *, security_id: str | None = None
+    ) -> list[SourceMessage]:
         """Convert EDGAR company-facts JSON to SourceMessage (offline, testable).
 
         security_id: canonical internal id for this entity. Falls back to CIK string.
@@ -138,11 +141,20 @@ class SECSourceAdapter(SourceAdapter):
                         # PIT gate: reject filings not yet knowable as_of
                         if filed > as_of:
                             continue
-                        raw_filings.append((
-                            filed, end, field, currency, float(val),
-                            obs.get("accn", ""), obs.get("form", ""),
-                            taxonomy, concept, unit_label,
-                        ))
+                        raw_filings.append(
+                            (
+                                filed,
+                                end,
+                                field,
+                                currency,
+                                float(val),
+                                obs.get("accn", ""),
+                                obs.get("form", ""),
+                                taxonomy,
+                                concept,
+                                unit_label,
+                            )
+                        )
 
         # sort by (concept, period_end, filed) for deterministic revision numbering
         raw_filings.sort(key=lambda t: (t[2], t[1].isoformat(), t[0].isoformat()))
@@ -150,7 +162,18 @@ class SECSourceAdapter(SourceAdapter):
         # assign revision numbers per (field, period_end) — earlier filings = lower revision
         revision_counter: dict[tuple, int] = {}
         msgs = []
-        for (filed, end, field, currency, val, accn, form, taxonomy, concept, unit_label) in raw_filings:
+        for (
+            filed,
+            end,
+            field,
+            currency,
+            val,
+            accn,
+            form,
+            taxonomy,
+            concept,
+            unit_label,
+        ) in raw_filings:
             key = (field, end)
             rev = revision_counter.get(key, 0)
             revision_counter[key] = rev + 1
@@ -159,8 +182,8 @@ class SECSourceAdapter(SourceAdapter):
                 "id": sec_id,
                 "field": field,
                 "value": val,
-                "observation_date": filed.isoformat(),   # when knowable (filing date)
-                "effective_date": end.isoformat(),        # accounting period end
+                "observation_date": filed.isoformat(),  # when knowable (filing date)
+                "effective_date": end.isoformat(),  # accounting period end
                 "source": self.metadata.name,
                 "revision": rev,
                 "accn": accn,
@@ -175,16 +198,18 @@ class SECSourceAdapter(SourceAdapter):
                 payload["currency"] = currency
 
             self._seq += 1
-            msgs.append(SourceMessage(
-                source=self.metadata.name,
-                payload=payload,
-                msg_type=MessageType.REVISION if rev > 0 else MessageType.OBSERVATION,
-                vendor_id=f"{cik}:{concept}:{end.isoformat()}",
-                sequence=self._seq,
-                observation_date=filed,
-                effective_date=end,
-                schema_version=self.metadata.schema_version,
-            ))
+            msgs.append(
+                SourceMessage(
+                    source=self.metadata.name,
+                    payload=payload,
+                    msg_type=MessageType.REVISION if rev > 0 else MessageType.OBSERVATION,
+                    vendor_id=f"{cik}:{concept}:{end.isoformat()}",
+                    sequence=self._seq,
+                    observation_date=filed,
+                    effective_date=end,
+                    schema_version=self.metadata.schema_version,
+                )
+            )
 
         return self._record(msgs)
 

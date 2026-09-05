@@ -16,36 +16,32 @@ state weights + same config → same evaluation fingerprint.
 
 from __future__ import annotations
 
-import hashlib
-import json
 import uuid
 from abc import ABC, abstractmethod
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from typing import Any
 
-from mentisrex.research.execution.ems.models import OrderRequest, OrderType
+from mentisrex.research.execution.ems.models import OrderType
 from mentisrex.research.execution.ems.orders import (
+    MarketInfo,
     build_requests,
     intents_from_target,
-    MarketInfo,
 )
 from mentisrex.research.portfolio.constraints import ConstraintSet
 from mentisrex.research.portfolio.engine import PortfolioEngine
-from mentisrex.research.portfolio.objectives import Objective
-from mentisrex.research.risk.engine import RiskEngine, RiskEngineConfig
+from mentisrex.research.risk.engine import RiskEngine
 from mentisrex.research.risk.models import RiskDecision
 from mentisrex.research.strategy_deployment.models import (
     FeatureSet,
     OrderIntentRecord,
-    SignalRecord,
     SignalSet,
     StrategyEvaluation,
     StrategySpecification,
     _fp,
 )
 
-
 # ── strategy logic protocol ───────────────────────────────────────────────────
+
 
 class StrategyLogic(ABC):
     """Abstract base for user-supplied strategy computation.
@@ -66,8 +62,7 @@ class StrategyLogic(ABC):
         """
 
     @abstractmethod
-    def generate_signal(self, features: FeatureSet,
-                        spec: StrategySpecification) -> SignalSet:
+    def generate_signal(self, features: FeatureSet, spec: StrategySpecification) -> SignalSet:
         """Compute signals from a FeatureSet.
 
         No future data may be used. Signal as_of == features.as_of.
@@ -76,6 +71,7 @@ class StrategyLogic(ABC):
 
 
 # ── runtime ───────────────────────────────────────────────────────────────────
+
 
 class EvaluationError(Exception):
     """Raised when a strategy evaluation fails deterministically."""
@@ -88,20 +84,25 @@ class StrategyRuntime:
     is testable without live infrastructure.
     """
 
-    def __init__(self, *,
-                 portfolio_engine: PortfolioEngine | None = None,
-                 risk_engine: RiskEngine | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        portfolio_engine: PortfolioEngine | None = None,
+        risk_engine: RiskEngine | None = None,
+    ) -> None:
         self._portfolio = portfolio_engine or PortfolioEngine()
         self._risk = risk_engine or RiskEngine()
 
-    def evaluate(self,
-                 spec: StrategySpecification,
-                 logic: StrategyLogic,
-                 snapshot,                         # M18 MarketDataSnapshot
-                 portfolio_state,                  # M11 PortfolioState
-                 *,
-                 evaluation_id: str | None = None,
-                 order_id_prefix: str | None = None) -> StrategyEvaluation:
+    def evaluate(
+        self,
+        spec: StrategySpecification,
+        logic: StrategyLogic,
+        snapshot,  # M18 MarketDataSnapshot
+        portfolio_state,  # M11 PortfolioState
+        *,
+        evaluation_id: str | None = None,
+        order_id_prefix: str | None = None,
+    ) -> StrategyEvaluation:
         """Run one full strategy evaluation cycle.
 
         Steps:
@@ -181,23 +182,20 @@ class StrategyRuntime:
         risk_fp = _risk_fingerprint(risk_report)
         risk_approved = risk_report.decision != RiskDecision.REJECT
         if not risk_approved:
-            warnings.append(
-                f"Risk gate REJECTED: {[v.message for v in risk_report.violations]}"
-            )
+            warnings.append(f"Risk gate REJECTED: {[v.message for v in risk_report.violations]}")
 
         # ── 6. build M22 order intents with full lineage ─────────────────────
         current_shares = (
             {sid: h.shares for sid, h in portfolio_state.holdings.items()}
-            if portfolio_state is not None else {}
+            if portfolio_state is not None
+            else {}
         )
         target_shares = {
-            p.security_id: p.shares
-            for p in portfolio.positions
-            if abs(p.shares) > 1e-9
+            p.security_id: p.shares for p in portfolio.positions if abs(p.shares) > 1e-9
         }
         ems_intents = intents_from_target(target_shares, current_shares)
 
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        now = datetime.now(UTC).replace(tzinfo=None)
         spec_fp = spec.configuration_fingerprint or spec.fingerprint()
         sig_fp = signal_set.fingerprint()
 
@@ -226,24 +224,30 @@ class StrategyRuntime:
 
         # ── 7. build M14-ready OrderRequests for EMS ─────────────────────────
         market = MarketInfo(prices=prices or {})
-        ems_requests = build_requests(
-            ems_intents,
-            market=market,
-            id_prefix=order_prefix,
-            order_type=OrderType.MARKET,
-        ) if risk_approved else []
+        ems_requests = (
+            build_requests(
+                ems_intents,
+                market=market,
+                id_prefix=order_prefix,
+                order_type=OrderType.MARKET,
+            )
+            if risk_approved
+            else []
+        )
 
         # ── 8. deterministic evaluation fingerprint ───────────────────────────
-        eval_fp = _fp({
-            "strategy_id": spec.strategy_id,
-            "version": spec.version,
-            "spec_fingerprint": spec_fp,
-            "snapshot_fingerprint": snap_fp,
-            "portfolio_fingerprint": portfolio_fp,
-            "signal_fingerprint": sig_fp,
-            "risk_fingerprint": risk_fp,
-            "n_intents": len(order_intents),
-        })
+        eval_fp = _fp(
+            {
+                "strategy_id": spec.strategy_id,
+                "version": spec.version,
+                "spec_fingerprint": spec_fp,
+                "snapshot_fingerprint": snap_fp,
+                "portfolio_fingerprint": portfolio_fp,
+                "signal_fingerprint": sig_fp,
+                "risk_fingerprint": risk_fp,
+                "n_intents": len(order_intents),
+            }
+        )
 
         provenance = {
             "m10_portfolio_engine": type(self._portfolio).__name__,
@@ -277,33 +281,47 @@ class StrategyRuntime:
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
+
 def _snapshot_fingerprint(snapshot) -> str:
     try:
         return snapshot.fingerprint()
     except AttributeError:
-        return _fp({"as_of": str(getattr(snapshot, "as_of", None)),
-                    "n_spots": len(getattr(snapshot, "spots", {}))})
+        return _fp(
+            {
+                "as_of": str(getattr(snapshot, "as_of", None)),
+                "n_spots": len(getattr(snapshot, "spots", {})),
+            }
+        )
 
 
 def _portfolio_fingerprint(portfolio) -> str:
-    return _fp({
-        "date": str(portfolio.date),
-        "n_positions": len(portfolio.positions),
-        "gross_exposure": portfolio.gross_exposure,
-        "turnover": portfolio.turnover,
-    })
+    return _fp(
+        {
+            "date": str(portfolio.date),
+            "n_positions": len(portfolio.positions),
+            "gross_exposure": portfolio.gross_exposure,
+            "turnover": portfolio.turnover,
+        }
+    )
 
 
 def _risk_fingerprint(risk_report) -> str:
-    return _fp({
-        "decision": risk_report.decision.value if hasattr(risk_report.decision, "value") else str(risk_report.decision),
-        "n_violations": len(risk_report.violations) if hasattr(risk_report, "violations") else 0,
-        "volatility": getattr(risk_report, "volatility", 0.0),
-    })
+    return _fp(
+        {
+            "decision": risk_report.decision.value
+            if hasattr(risk_report.decision, "value")
+            else str(risk_report.decision),
+            "n_violations": len(risk_report.violations)
+            if hasattr(risk_report, "violations")
+            else 0,
+            "volatility": getattr(risk_report, "volatility", 0.0),
+        }
+    )
 
 
 def _validate_signals(signals: dict, warnings: list, errors: list) -> None:
     import math
+
     for sid, val in signals.items():
         if not isinstance(val, (int, float)):
             errors.append(f"signal for {sid!r} is not numeric: {val!r}")
@@ -334,6 +352,7 @@ def _prices_from_snapshot(snapshot, universe: list[str]) -> dict:
 def _build_constraints(spec: StrategySpecification) -> ConstraintSet:
     cfg = spec.portfolio_construction_config
     from mentisrex.research.portfolio.constraints import ConstraintSet
+
     kwargs: dict[str, Any] = {}
     if "max_position_weight" in cfg:
         kwargs["max_position_weight"] = float(cfg["max_position_weight"])

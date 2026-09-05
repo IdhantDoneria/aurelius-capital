@@ -44,16 +44,29 @@ def drawdown(values) -> DrawdownReport:
         max_drawdown=float(dd.min()),
         avg_drawdown=float(neg.mean()) if neg.size else 0.0,
         max_recovery_days=float(max_run),
-        time_underwater_frac=float(underwater.mean()))
+        time_underwater_frac=float(underwater.mean()),
+    )
 
 
-def performance_metrics(values, *, periods: int = TRADING_DAYS, n_years: float | None = None) -> dict:
+def performance_metrics(
+    values, *, periods: int = TRADING_DAYS, n_years: float | None = None
+) -> dict:
     v = np.asarray(values, dtype=float)
     if v.size < 2:
-        return {"total_return": 0.0, "cagr": 0.0, "volatility": 0.0, "sharpe": 0.0,
-                "sortino": 0.0, "calmar": 0.0, "omega": 0.0, "hit_rate": 0.0,
-                "profit_factor": 0.0, "gain_loss_ratio": 0.0,
-                "max_drawdown": 0.0, "avg_drawdown": 0.0}
+        return {
+            "total_return": 0.0,
+            "cagr": 0.0,
+            "volatility": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "calmar": 0.0,
+            "omega": 0.0,
+            "hit_rate": 0.0,
+            "profit_factor": 0.0,
+            "gain_loss_ratio": 0.0,
+            "max_drawdown": 0.0,
+            "avg_drawdown": 0.0,
+        }
     r = returns_from_values(v)
     total_return = float(v[-1] / v[0] - 1.0)
     years = n_years if n_years else max(v.size / periods, 1e-9)
@@ -69,26 +82,54 @@ def performance_metrics(values, *, periods: int = TRADING_DAYS, n_years: float |
         "sharpe": _sharpe(r, periods) if r.size > 1 else 0.0,
         "sortino": float(r.mean() / downside * math.sqrt(periods)) if downside > 0 else 0.0,
         "calmar": float(cagr / abs(dd.max_drawdown)) if dd.max_drawdown < 0 else 0.0,
-        "omega": float(pos.sum() / abs(neg.sum())) if neg.sum() != 0 else float("inf") if pos.sum() > 0 else 0.0,
+        "omega": float(pos.sum() / abs(neg.sum()))
+        if neg.sum() != 0
+        else float("inf")
+        if pos.sum() > 0
+        else 0.0,
         "hit_rate": float((r > 0).mean()),
-        "profit_factor": float(pos.sum() / abs(neg.sum())) if neg.size else float("inf") if pos.size else 0.0,
+        "profit_factor": float(pos.sum() / abs(neg.sum()))
+        if neg.size
+        else float("inf")
+        if pos.size
+        else 0.0,
         "gain_loss_ratio": float(pos.mean() / abs(neg.mean())) if neg.size and pos.size else 0.0,
         "max_drawdown": dd.max_drawdown,
         "avg_drawdown": dd.avg_drawdown,
     }
 
 
-def build_summary(values, *, n_rebalances: int, annualized_turnover: float,
-                  avg_holding_days: float, total_cost: float, cost_drag_annualized: float,
-                  periods: int = TRADING_DAYS, n_years: float | None = None) -> SimulationSummary:
+def build_summary(
+    values,
+    *,
+    n_rebalances: int,
+    annualized_turnover: float,
+    avg_holding_days: float,
+    total_cost: float,
+    cost_drag_annualized: float,
+    periods: int = TRADING_DAYS,
+    n_years: float | None = None,
+) -> SimulationSummary:
     m = performance_metrics(values, periods=periods, n_years=n_years)
     v = np.asarray(values, dtype=float)
     return SimulationSummary(
-        total_return=m["total_return"], cagr=m["cagr"], volatility=m["volatility"],
-        sharpe=m["sharpe"], sortino=m["sortino"], calmar=m["calmar"], omega=m["omega"],
-        max_drawdown=m["max_drawdown"], avg_drawdown=m["avg_drawdown"],
-        hit_rate=m["hit_rate"], profit_factor=m["profit_factor"],
-        gain_loss_ratio=m["gain_loss_ratio"], annualized_turnover=annualized_turnover,
-        avg_holding_days=avg_holding_days, total_cost=total_cost,
-        cost_drag_annualized=cost_drag_annualized, final_value=float(v[-1]) if v.size else 0.0,
-        n_rebalances=n_rebalances, n_periods=int(v.size))
+        total_return=m["total_return"],
+        cagr=m["cagr"],
+        volatility=m["volatility"],
+        sharpe=m["sharpe"],
+        sortino=m["sortino"],
+        calmar=m["calmar"],
+        omega=m["omega"],
+        max_drawdown=m["max_drawdown"],
+        avg_drawdown=m["avg_drawdown"],
+        hit_rate=m["hit_rate"],
+        profit_factor=m["profit_factor"],
+        gain_loss_ratio=m["gain_loss_ratio"],
+        annualized_turnover=annualized_turnover,
+        avg_holding_days=avg_holding_days,
+        total_cost=total_cost,
+        cost_drag_annualized=cost_drag_annualized,
+        final_value=float(v[-1]) if v.size else 0.0,
+        n_rebalances=n_rebalances,
+        n_periods=int(v.size),
+    )

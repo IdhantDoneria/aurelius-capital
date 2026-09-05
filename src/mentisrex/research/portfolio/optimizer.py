@@ -16,8 +16,8 @@ import numpy as np
 from mentisrex.research.portfolio.constraints import ConstraintSet
 from mentisrex.research.portfolio.solvers.base import Solver
 
-
 # ── covariance estimators ───────────────────────────────────────────────────────
+
 
 class CovarianceEstimator(ABC):
     @abstractmethod
@@ -67,6 +67,7 @@ class ShrinkageCovariance(CovarianceEstimator):
 
 # ── expected-return models ──────────────────────────────────────────────────────
 
+
 class ExpectedReturnModel(ABC):
     @abstractmethod
     def estimate(self, signal: np.ndarray, **ctx) -> np.ndarray: ...
@@ -113,6 +114,7 @@ class BayesianExpectedReturns(ExpectedReturnModel):
 
 # ── DI optimizer ────────────────────────────────────────────────────────────────
 
+
 class Optimizer:
     """Binds a Solver to a ConstraintSet. `optimize` solves then projects into the
     feasible set — the single place solver output meets constraints."""
@@ -122,6 +124,7 @@ class Optimizer:
         self.constraints = constraints or ConstraintSet()
 
     def optimize(self, expected_returns, covariance, *, ctx: dict | None = None):
-        raw = self.solver.solve(np.asarray(expected_returns, dtype=float),
-                                np.asarray(covariance, dtype=float), ctx=ctx)
+        raw = self.solver.solve(
+            np.asarray(expected_returns, dtype=float), np.asarray(covariance, dtype=float), ctx=ctx
+        )
         return self.constraints.enforce(raw)

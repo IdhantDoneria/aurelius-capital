@@ -17,8 +17,12 @@ def currency_balances(book) -> dict:
     for ccy, eng in book.books.items():
         cl = eng.cash_ledger
         out[ccy] = CurrencyBalance(
-            currency=ccy, economic=cl.economic_balance(), settled=cl.settled_balance(),
-            pending_in=cl.pending_inflows(), pending_out=cl.pending_outflows())
+            currency=ccy,
+            economic=cl.economic_balance(),
+            settled=cl.settled_balance(),
+            pending_in=cl.pending_inflows(),
+            pending_out=cl.pending_outflows(),
+        )
     return out
 
 
@@ -26,5 +30,10 @@ def multi_currency_cash(book, *, as_of: date | None = None) -> MultiCurrencyCash
     bals = currency_balances(book)
     te = sum(b.economic * book.base_rate(c, as_of) for c, b in bals.items())
     ts = sum(b.settled * book.base_rate(c, as_of) for c, b in bals.items())
-    return MultiCurrencyCash(base_currency=book.base_currency, balances=bals, as_of=as_of,
-                             total_base_economic=te, total_base_settled=ts)
+    return MultiCurrencyCash(
+        base_currency=book.base_currency,
+        balances=bals,
+        as_of=as_of,
+        total_base_economic=te,
+        total_base_settled=ts,
+    )

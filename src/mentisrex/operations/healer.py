@@ -6,7 +6,7 @@ import time
 from typing import Any
 
 from mentisrex.core.logging import get_logger
-from mentisrex.operations.models import JobStatus, PermanentIngestError, PipelineJob
+from mentisrex.operations.models import PermanentIngestError, PipelineJob
 
 logger = get_logger(__name__)
 
@@ -40,11 +40,13 @@ class SelfHealer:
         return job.retry_count < self._max_retries
 
     def wait_before_retry(self, job: PipelineJob, max_wait: float | None = None) -> None:
-        delay = self._retry_delay * (2 ** job.retry_count)  # exponential backoff
+        delay = self._retry_delay * (2**job.retry_count)  # exponential backoff
         capped = min(delay, 300)  # cap at 5 minutes
         if max_wait is not None:
             capped = min(capped, max_wait)  # never sleep past the per-file deadline
-        logger.info("retry_backoff", job_id=job.id, delay_seconds=capped, retry_count=job.retry_count)
+        logger.info(
+            "retry_backoff", job_id=job.id, delay_seconds=capped, retry_count=job.retry_count
+        )
         if capped > 0:
             time.sleep(capped)
 
@@ -91,7 +93,6 @@ class SelfHealer:
 
     def needs_escalation(self, job: PipelineJob) -> bool:
         """True if job should be flagged for human review."""
-        return (
-            job.retry_count >= self._max_retries
-            or any(s.stage in _FATAL_STAGES and s.status == "failed" for s in job.stages)
+        return job.retry_count >= self._max_retries or any(
+            s.stage in _FATAL_STAGES and s.status == "failed" for s in job.stages
         )

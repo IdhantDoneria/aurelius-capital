@@ -8,10 +8,11 @@ so a decision is always current and never stale. Steps 2-6 of the Phase-16 spec.
 from __future__ import annotations
 
 import enum
-import duckdb
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
+
+import duckdb
 
 from mentisrex.core.logging import get_logger
 from mentisrex.director.scoring import (

@@ -15,15 +15,16 @@ from datetime import date, datetime
 
 from mentisrex.research.valuation.daycount import Compounding, DayCount
 
-
 # ── provenance & point-in-time ───────────────────────────────────────────────
+
 
 @dataclass(frozen=True)
 class Provenance:
     """Where a datum came from and when it was seen — the PIT audit stamp."""
+
     source: str = "unknown"
-    observation_date: date | None = None     # when the value was observed
-    effective_date: date | None = None       # when the value is effective/for
+    observation_date: date | None = None  # when the value was observed
+    effective_date: date | None = None  # when the value is effective/for
     timestamp: datetime | None = None
     currency: str | None = None
     instrument_id: str | None = None
@@ -32,6 +33,7 @@ class Provenance:
 @dataclass(frozen=True)
 class MarketQuote:
     """One observed number with its PIT metadata."""
+
     instrument_id: str
     value: float
     currency: str = "USD"
@@ -49,27 +51,37 @@ class MarketQuote:
 
 # ── valuation configuration ──────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class ValuationConfiguration:
     """Model & convention choices that, with the snapshot, fully determine a valuation."""
+
     base_currency: str = "USD"
     day_count: DayCount = DayCount.ACT_365
     compounding: Compounding = Compounding.CONTINUOUS
-    max_staleness_days: int | None = None     # reject data older than this vs valuation date
+    max_staleness_days: int | None = None  # reject data older than this vs valuation date
     allow_extrapolation: bool = True
     equity_model: str = "spot"
-    option_model: str = "black_scholes"       # black_scholes | black_76 | binomial
+    option_model: str = "black_scholes"  # black_scholes | black_76 | binomial
     american_steps: int = 200
-    fd_bump: float = 1e-4                      # finite-difference bump for numerical Greeks
+    fd_bump: float = 1e-4  # finite-difference bump for numerical Greeks
 
     def fingerprint(self) -> str:
-        parts = [self.base_currency, self.day_count.value, self.compounding.value,
-                 str(self.max_staleness_days), str(self.allow_extrapolation),
-                 self.equity_model, self.option_model, str(self.american_steps)]
+        parts = [
+            self.base_currency,
+            self.day_count.value,
+            self.compounding.value,
+            str(self.max_staleness_days),
+            str(self.allow_extrapolation),
+            self.equity_model,
+            self.option_model,
+            str(self.american_steps),
+        ]
         return hashlib.blake2b("|".join(parts).encode(), digest_size=8).hexdigest()
 
 
 # ── market data snapshot ─────────────────────────────────────────────────────
+
 
 @dataclass(frozen=True)
 class MarketDataSnapshot:
@@ -79,17 +91,18 @@ class MarketDataSnapshot:
     FX is NOT duplicated — an M16 `FXRateProvider` is injected via `fx_provider`. Curves and
     vol surfaces are stored by id and are themselves immutable M18 objects.
     """
+
     as_of: date
-    spots: dict = field(default_factory=dict)              # id -> float (or MarketQuote)
-    rates: dict = field(default_factory=dict)              # curve_id -> ZeroCurve
-    discount_factors: dict = field(default_factory=dict)   # curve_id -> DiscountCurve (optional)
-    forwards: dict = field(default_factory=dict)           # id -> forward price
-    dividend_yields: dict = field(default_factory=dict)    # id -> continuous div yield
-    vol_surfaces: dict = field(default_factory=dict)       # id -> VolatilitySurface
+    spots: dict = field(default_factory=dict)  # id -> float (or MarketQuote)
+    rates: dict = field(default_factory=dict)  # curve_id -> ZeroCurve
+    discount_factors: dict = field(default_factory=dict)  # curve_id -> DiscountCurve (optional)
+    forwards: dict = field(default_factory=dict)  # id -> forward price
+    dividend_yields: dict = field(default_factory=dict)  # id -> continuous div yield
+    vol_surfaces: dict = field(default_factory=dict)  # id -> VolatilitySurface
     corporate_actions: dict = field(default_factory=dict)  # id -> assumption dict
-    fx_provider: object = None                             # M16 FXRateProvider
+    fx_provider: object = None  # M16 FXRateProvider
     provenance: Provenance = field(default_factory=Provenance)
-    quotes: dict = field(default_factory=dict)             # id -> MarketQuote (bid/ask/volume)
+    quotes: dict = field(default_factory=dict)  # id -> MarketQuote (bid/ask/volume)
 
     # ── accessors (raise on missing so nothing is silently defaulted) ───────────
     def spot(self, instrument_id: str) -> float:
@@ -153,6 +166,7 @@ class MarketDataSnapshot:
 
 # ── valuation result ─────────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class Greeks:
     delta: float = 0.0
@@ -163,30 +177,43 @@ class Greeks:
     vanna: float = 0.0
     volga: float = 0.0
 
-    def scale(self, f: float) -> "Greeks":
-        return Greeks(self.delta * f, self.gamma * f, self.theta * f, self.vega * f,
-                      self.rho * f, self.vanna * f, self.volga * f)
+    def scale(self, f: float) -> Greeks:
+        return Greeks(
+            self.delta * f,
+            self.gamma * f,
+            self.theta * f,
+            self.vega * f,
+            self.rho * f,
+            self.vanna * f,
+            self.volga * f,
+        )
 
-    def __add__(self, o: "Greeks") -> "Greeks":
-        return Greeks(self.delta + o.delta, self.gamma + o.gamma, self.theta + o.theta,
-                      self.vega + o.vega, self.rho + o.rho, self.vanna + o.vanna,
-                      self.volga + o.volga)
+    def __add__(self, o: Greeks) -> Greeks:
+        return Greeks(
+            self.delta + o.delta,
+            self.gamma + o.gamma,
+            self.theta + o.theta,
+            self.vega + o.vega,
+            self.rho + o.rho,
+            self.vanna + o.vanna,
+            self.volga + o.volga,
+        )
 
 
 @dataclass(frozen=True)
 class ValuationResult:
     instrument_id: str
     valuation_date: date
-    price: float                          # per-unit theoretical price / NPV per contract
-    market_value: float                   # price * quantity * contract_size (position value)
+    price: float  # per-unit theoretical price / NPV per contract
+    market_value: float  # price * quantity * contract_size (position value)
     currency: str
-    base_value: float                     # market_value converted to config.base_currency
+    base_value: float  # market_value converted to config.base_currency
     model_name: str
     model_version: str
     input_fingerprint: str
     market_data_fingerprint: str
     quantity: float = 0.0
-    pnl: float = 0.0                       # unrealized vs supplied cost basis
+    pnl: float = 0.0  # unrealized vs supplied cost basis
     greeks: Greeks | None = None
     valuation_adjustments: dict = field(default_factory=dict)
     assumptions: dict = field(default_factory=dict)
@@ -205,7 +232,7 @@ class PortfolioValuation:
     net_market_value: float
     base_value: float
     unrealized_pnl: float
-    results: list = field(default_factory=list)      # list[ValuationResult]
+    results: list = field(default_factory=list)  # list[ValuationResult]
     greeks: Greeks | None = None
     risk_inputs: dict = field(default_factory=dict)
     market_data_fingerprint: str = ""

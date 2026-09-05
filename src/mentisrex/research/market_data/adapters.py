@@ -27,8 +27,9 @@ from mentisrex.research.market_data.sources import MarketDataSource
 class VendorAdapter(MarketDataSource):
     """Base production adapter: a vendor field map + a pure raw→canonical translation. Subclasses
     only differ by `FIELD_MAP`/`source`; the live `fetch` is left unimplemented on purpose."""
+
     source = "vendor"
-    FIELD_MAP: dict = {}                    # vendor field name -> (canonical field, ObservationType)
+    FIELD_MAP: dict = {}  # vendor field name -> (canonical field, ObservationType)
 
     def to_canonical(self, raw: dict, *, as_of: date) -> CanonicalObservation:
         """Translate one vendor record into a canonical observation (no network — pure mapping)."""
@@ -37,20 +38,31 @@ class VendorAdapter(MarketDataSource):
         if canon is None:
             raise KeyError(f"{self.source}: unmapped vendor field {vendor_field!r}")
         field_name, obs_type = canon
-        unit = Unit.RATE if obs_type in (ObservationType.INTEREST_RATE, ObservationType.YIELD) else Unit.PRICE
+        unit = (
+            Unit.RATE
+            if obs_type in (ObservationType.INTEREST_RATE, ObservationType.YIELD)
+            else Unit.PRICE
+        )
         obs_d = _d(raw.get("date") or raw.get("asof") or as_of)
         return CanonicalObservation(
             security_id=str(raw.get("id") or raw.get("ticker") or raw.get("security")),
-            obs_type=obs_type, field=field_name, value=float(raw["value"]),
-            observation_date=obs_d, effective_date=_d(raw.get("effective") or obs_d),
-            source=self.source, currency=raw.get("currency"), unit=unit,
-            revision=int(raw.get("revision", 0)))
+            obs_type=obs_type,
+            field=field_name,
+            value=float(raw["value"]),
+            observation_date=obs_d,
+            effective_date=_d(raw.get("effective") or obs_d),
+            source=self.source,
+            currency=raw.get("currency"),
+            unit=unit,
+            revision=int(raw.get("revision", 0)),
+        )
 
     def fetch(self, as_of: date, *, security_ids=None, fields=None) -> list[dict]:
         raise NotImplementedError(
             f"{self.source}: no live feed in this offline platform. Unblock: implement fetch() "
             f"against the real endpoint (auth + request) returning raw records; to_canonical() "
-            f"already maps them to PIT-tagged canonical observations.")
+            f"already maps them to PIT-tagged canonical observations."
+        )
 
 
 class BloombergAdapter(VendorAdapter):

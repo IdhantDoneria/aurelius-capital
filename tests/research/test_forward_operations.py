@@ -31,27 +31,21 @@ deterministically offline. These are NOT genuine forward evidence.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
 from datetime import date
-from pathlib import Path
 
 import pytest
 
 from mentisrex.research.forward_campaign import (
     CycleStatus,
     ForwardCampaign,
-    ForwardCycleRecord,
     ForwardLedger,
     ForwardOperationsRunner,
-    RunnerConfig,
     make_forward_cycle_id,
 )
-from mentisrex.research.forward_campaign.campaign import CampaignConfig
-from mentisrex.research.paper_trading.scheduler import RebalanceScheduler
 from mentisrex.research.paper_trading.runtime_state import StrategyRuntimeState
-from mentisrex.research.strategy_deployment.models import StrategyState, StrategyType, make_spec
-from mentisrex.research.strategy_deployment.runtime import StrategyLogic, StrategyRuntime
-
+from mentisrex.research.paper_trading.scheduler import RebalanceScheduler
+from mentisrex.research.strategy_deployment.models import StrategyType, make_spec
+from mentisrex.research.strategy_deployment.runtime import StrategyLogic
 
 # ── shared fixtures ────────────────────────────────────────────────────────────
 
@@ -60,23 +54,53 @@ STARTING_CAPITAL = 500_000.0
 
 # Monthly fixture records — one set per calendar month
 _BASE = {
-    "open": 183.0, "high": 186.0, "low": 182.0,
-    "dividends": 0.0, "stock_splits": 0.0,
+    "open": 183.0,
+    "high": 186.0,
+    "low": 182.0,
+    "dividends": 0.0,
+    "stock_splits": 0.0,
 }
 
 
 def _records(month_date: str, aapl=185.0, msft=415.0, googl=172.0) -> list[dict]:
     """Offline Yahoo-shaped records for a given month date string."""
     return [
-        {"symbol": "AAPL", "date": month_date, "close": aapl, "adj_close": aapl,
-         "open": aapl * 0.99, "high": aapl * 1.01, "low": aapl * 0.98,
-         "volume": 50_000_000, "dividends": 0.0, "stock_splits": 0.0},
-        {"symbol": "MSFT", "date": month_date, "close": msft, "adj_close": msft,
-         "open": msft * 0.99, "high": msft * 1.01, "low": msft * 0.98,
-         "volume": 20_000_000, "dividends": 0.0, "stock_splits": 0.0},
-        {"symbol": "GOOGL", "date": month_date, "close": googl, "adj_close": googl,
-         "open": googl * 0.99, "high": googl * 1.01, "low": googl * 0.98,
-         "volume": 15_000_000, "dividends": 0.0, "stock_splits": 0.0},
+        {
+            "symbol": "AAPL",
+            "date": month_date,
+            "close": aapl,
+            "adj_close": aapl,
+            "open": aapl * 0.99,
+            "high": aapl * 1.01,
+            "low": aapl * 0.98,
+            "volume": 50_000_000,
+            "dividends": 0.0,
+            "stock_splits": 0.0,
+        },
+        {
+            "symbol": "MSFT",
+            "date": month_date,
+            "close": msft,
+            "adj_close": msft,
+            "open": msft * 0.99,
+            "high": msft * 1.01,
+            "low": msft * 0.98,
+            "volume": 20_000_000,
+            "dividends": 0.0,
+            "stock_splits": 0.0,
+        },
+        {
+            "symbol": "GOOGL",
+            "date": month_date,
+            "close": googl,
+            "adj_close": googl,
+            "open": googl * 0.99,
+            "high": googl * 1.01,
+            "low": googl * 0.98,
+            "volume": 15_000_000,
+            "dividends": 0.0,
+            "stock_splits": 0.0,
+        },
     ]
 
 
@@ -109,8 +133,11 @@ def _make_spec(strategy_id: str = "test-ops-strategy", version: str = "1.0.0"):
         feature_definition={"type": "price_level", "lookback_days": 0},
         signal_definition={"type": "equal_weight"},
         rebalance_frequency="monthly",
-        portfolio_construction_config={"objective": "equal_weight", "long_only": True,
-                                       "max_position_weight": 0.5},
+        portfolio_construction_config={
+            "objective": "equal_weight",
+            "long_only": True,
+            "max_position_weight": 0.5,
+        },
         risk_config={"max_position": 0.5, "max_gross_leverage": 1.0, "long_only": True},
         execution_config={"algo": "market"},
         transaction_cost_assumption={"slippage_bps": 5.0},
@@ -130,6 +157,7 @@ class _EqualWeightLogic(StrategyLogic):
 
     def compute_features(self, snapshot, spec):
         from mentisrex.research.strategy_deployment.models import FeatureSet
+
         spots = getattr(snapshot, "spots", {})
         features = {}
         for sid in self._universe:
@@ -154,13 +182,10 @@ class _EqualWeightLogic(StrategyLogic):
 
     def generate_signal(self, features, spec):
         from mentisrex.research.strategy_deployment.models import SignalRecord, SignalSet
+
         spec_fp = spec.configuration_fingerprint or spec.fingerprint()
         feat_fp = features.fingerprint()
-        signals = {
-            sid: 1.0
-            for sid, fv in features.features.items()
-            if fv.get("price", 0.0) > 0.0
-        }
+        signals = {sid: 1.0 for sid, fv in features.features.items() if fv.get("price", 0.0) > 0.0}
         records = [
             SignalRecord(
                 strategy_id=spec.strategy_id,
@@ -184,35 +209,41 @@ class _EqualWeightLogic(StrategyLogic):
         )
 
 
-@pytest.fixture()
+@pytest.fixture
 def spec():
     return _make_spec()
 
 
-@pytest.fixture()
+@pytest.fixture
 def logic():
     return _EqualWeightLogic(UNIVERSE)
 
 
-@pytest.fixture()
+@pytest.fixture
 def campaign_dir(tmp_path):
     return tmp_path / "m26_forward_campaign"
 
 
-@pytest.fixture()
+@pytest.fixture
 def campaign(campaign_dir, spec, logic):
     return ForwardCampaign.init(
-        spec, logic, campaign_dir,
+        spec,
+        logic,
+        campaign_dir,
         universe=UNIVERSE,
         starting_capital=STARTING_CAPITAL,
         campaign_id="m26-test-campaign",
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def runner(campaign_dir, spec, logic):
     return ForwardOperationsRunner(
-        spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL,
+        spec,
+        logic,
+        campaign_dir,
+        UNIVERSE,
+        STARTING_CAPITAL,
         campaign_id="m26-test-campaign",
     )
 
@@ -221,8 +252,8 @@ def runner(campaign_dir, spec, logic):
 # 1. Scheduler — next_due and cadence
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestSchedulerNextDue:
 
+class TestSchedulerNextDue:
     def test_next_due_after_august_is_september(self):
         sched = RebalanceScheduler()
         spec = _make_spec()
@@ -266,8 +297,8 @@ class TestSchedulerNextDue:
 # 2. Monthly cadence — multi-month progression
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestMonthlyCadence:
 
+class TestMonthlyCadence:
     def test_four_months_produce_four_sealed_cycles(self, runner, spec, logic):
         results = runner.run_months(ALL_DATES, ALL_RECORDS)
         successes = [r for r in results if r.status == CycleStatus.SUCCESS]
@@ -299,8 +330,8 @@ class TestMonthlyCadence:
 # 3. Due-cycle detection — runner-level
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestDueCycleDetectionRunner:
 
+class TestDueCycleDetectionRunner:
     def test_check_and_run_first_cycle_succeeds(self, runner):
         result = runner.check_and_run(AUG_DATE, provider_records=AUG_RECORDS)
         assert result.status == CycleStatus.SUCCESS
@@ -325,8 +356,8 @@ class TestDueCycleDetectionRunner:
 # 4. Missed cycle — offline after intended date
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestMissedCycle:
 
+class TestMissedCycle:
     def test_missed_month_caught_when_runner_resumes(self, runner, spec, logic):
         """Runner offline for a month — next call runs the overdue cycle."""
         runner.check_and_run(AUG_DATE, provider_records=AUG_RECORDS)
@@ -347,8 +378,8 @@ class TestMissedCycle:
 # 5. Automatic retry — re-run after failure
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestAutomaticRetry:
 
+class TestAutomaticRetry:
     def test_failed_cycle_prevents_retry_same_month(self, runner, spec, logic):
         """FAILED evidence is locked. Retry returns ALREADY_SEALED."""
         r1 = runner.check_and_run(AUG_DATE, provider_records=[])  # force FAILED
@@ -362,12 +393,14 @@ class TestAutomaticRetry:
 
     def test_session_failure_count_not_carried_across_restarts(self, campaign_dir, spec, logic):
         """Session state resets when runner is re-created (durable state is in campaign dir)."""
-        r1 = ForwardOperationsRunner(spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL,
-                                     campaign_id="retry-test")
+        r1 = ForwardOperationsRunner(
+            spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL, campaign_id="retry-test"
+        )
         r1.check_and_run(AUG_DATE, provider_records=[])
         # create new runner (simulates restart)
-        r2 = ForwardOperationsRunner(spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL,
-                                     campaign_id="retry-test")
+        r2 = ForwardOperationsRunner(
+            spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL, campaign_id="retry-test"
+        )
         assert r2._session_failures == 0  # session reset
         assert r2._run_count == 0
 
@@ -376,8 +409,8 @@ class TestAutomaticRetry:
 # 6. Provider failure — no trade on empty data
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestProviderFailureRunner:
 
+class TestProviderFailureRunner:
     def test_empty_provider_returns_failed_not_success(self, runner):
         result = runner.check_and_run(AUG_DATE, provider_records=[])
         assert result.status == CycleStatus.FAILED
@@ -406,12 +439,14 @@ class TestProviderFailureRunner:
 # 7. Data health gate — min_universe_coverage enforcement
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestDataHealthGate:
 
+class TestDataHealthGate:
     def test_full_coverage_passes_health_gate(self, spec, logic, tmp_path):
         """Full universe coverage passes even with strict threshold."""
         campaign = ForwardCampaign.init(
-            spec, logic, tmp_path / "hg1",
+            spec,
+            logic,
+            tmp_path / "hg1",
             universe=UNIVERSE,
             starting_capital=STARTING_CAPITAL,
             campaign_id="hg-full",
@@ -423,7 +458,9 @@ class TestDataHealthGate:
     def test_insufficient_coverage_fails_health_gate(self, spec, logic, tmp_path):
         """Only 1 of 3 securities + 100% threshold → health gate fails."""
         campaign = ForwardCampaign.init(
-            spec, logic, tmp_path / "hg2",
+            spec,
+            logic,
+            tmp_path / "hg2",
             universe=UNIVERSE,
             starting_capital=STARTING_CAPITAL,
             campaign_id="hg-insufficient",
@@ -448,7 +485,9 @@ class TestDataHealthGate:
     def test_health_gate_failure_produces_sealed_record(self, spec, logic, tmp_path):
         """Health gate failure → FAILED record sealed, not PARTIAL."""
         campaign = ForwardCampaign.init(
-            spec, logic, tmp_path / "hg3",
+            spec,
+            logic,
+            tmp_path / "hg3",
             universe=UNIVERSE,
             starting_capital=STARTING_CAPITAL,
             campaign_id="hg-seal",
@@ -462,7 +501,9 @@ class TestDataHealthGate:
     def test_health_gate_no_trade_on_failure(self, spec, logic, tmp_path):
         """Health gate blocks trading — NAV unchanged after gate failure."""
         campaign = ForwardCampaign.init(
-            spec, logic, tmp_path / "hg4",
+            spec,
+            logic,
+            tmp_path / "hg4",
             universe=UNIVERSE,
             starting_capital=STARTING_CAPITAL,
             campaign_id="hg-notrade",
@@ -479,8 +520,8 @@ class TestDataHealthGate:
 # 8. PIT failure — future-dated records rejected
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestPITFailureRunner:
 
+class TestPITFailureRunner:
     def test_future_dated_records_do_not_trade(self, runner, spec, logic):
         """Records dated after as_of are PIT violations and are rejected."""
         future_records = [dict(r, date="2099-01-01") for r in AUG_RECORDS]
@@ -501,26 +542,30 @@ class TestPITFailureRunner:
 # 9. Restart — runner re-created from same campaign dir
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestRunnerRestart:
 
+class TestRunnerRestart:
     def test_new_runner_instance_finds_existing_campaign(self, campaign_dir, spec, logic):
         """Runner 1 runs Aug. Runner 2 (restart) resumes correctly."""
-        r1 = ForwardOperationsRunner(spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL,
-                                     campaign_id="restart-test")
+        r1 = ForwardOperationsRunner(
+            spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL, campaign_id="restart-test"
+        )
         r1.check_and_run(AUG_DATE, provider_records=AUG_RECORDS)
 
-        r2 = ForwardOperationsRunner(spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL,
-                                     campaign_id="restart-test")
+        r2 = ForwardOperationsRunner(
+            spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL, campaign_id="restart-test"
+        )
         result = r2.check_and_run(AUG_DATE, provider_records=AUG_RECORDS)
         assert result.status == CycleStatus.ALREADY_SEALED
 
     def test_restart_continues_accumulating_cycles(self, campaign_dir, spec, logic):
-        r1 = ForwardOperationsRunner(spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL,
-                                     campaign_id="restart-accum")
+        r1 = ForwardOperationsRunner(
+            spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL, campaign_id="restart-accum"
+        )
         r1.check_and_run(AUG_DATE, provider_records=AUG_RECORDS)
 
-        r2 = ForwardOperationsRunner(spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL,
-                                     campaign_id="restart-accum")
+        r2 = ForwardOperationsRunner(
+            spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL, campaign_id="restart-accum"
+        )
         r2.check_and_run(SEP_DATE, provider_records=SEP_RECORDS)
 
         ledger = ForwardLedger(campaign_dir)
@@ -528,13 +573,15 @@ class TestRunnerRestart:
         assert len(cycles) == 2
 
     def test_session_state_resets_on_restart(self, campaign_dir, spec, logic):
-        r1 = ForwardOperationsRunner(spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL,
-                                     campaign_id="session-reset")
+        r1 = ForwardOperationsRunner(
+            spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL, campaign_id="session-reset"
+        )
         r1.check_and_run(AUG_DATE, provider_records=AUG_RECORDS)
         assert r1._run_count == 1
 
-        r2 = ForwardOperationsRunner(spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL,
-                                     campaign_id="session-reset")
+        r2 = ForwardOperationsRunner(
+            spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL, campaign_id="session-reset"
+        )
         assert r2._run_count == 0  # session resets
 
 
@@ -542,19 +589,21 @@ class TestRunnerRestart:
 # 10. Checkpoint recovery
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestCheckpointRecovery:
 
+class TestCheckpointRecovery:
     def test_campaign_checkpoint_written_after_successful_cycle(self, runner, campaign_dir):
         runner.check_and_run(AUG_DATE, provider_records=AUG_RECORDS)
         assert (campaign_dir / "campaign_checkpoint.json").exists()
 
     def test_new_runner_restores_loop_state_from_checkpoint(self, campaign_dir, spec, logic):
-        r1 = ForwardOperationsRunner(spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL,
-                                     campaign_id="ckpt-test")
+        r1 = ForwardOperationsRunner(
+            spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL, campaign_id="ckpt-test"
+        )
         r1.check_and_run(AUG_DATE, provider_records=AUG_RECORDS)
 
-        r2 = ForwardOperationsRunner(spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL,
-                                     campaign_id="ckpt-test")
+        r2 = ForwardOperationsRunner(
+            spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL, campaign_id="ckpt-test"
+        )
         campaign = r2._get_campaign()
         loop = campaign._get_loop()
         rs = loop.runtime_state(spec.strategy_id)
@@ -562,13 +611,14 @@ class TestCheckpointRecovery:
         assert rs.last_eval_date is not None
 
     def test_corrupted_checkpoint_raises_runtime_error(self, campaign_dir, spec, logic):
-        ForwardOperationsRunner(spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL,
-                                campaign_id="corrupt-ckpt").check_and_run(
-            AUG_DATE, provider_records=AUG_RECORDS)
+        ForwardOperationsRunner(
+            spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL, campaign_id="corrupt-ckpt"
+        ).check_and_run(AUG_DATE, provider_records=AUG_RECORDS)
         # corrupt the checkpoint
         (campaign_dir / "campaign_checkpoint.json").write_text("INVALID JSON {{{{")
-        runner2 = ForwardOperationsRunner(spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL,
-                                          campaign_id="corrupt-ckpt")
+        runner2 = ForwardOperationsRunner(
+            spec, logic, campaign_dir, UNIVERSE, STARTING_CAPITAL, campaign_id="corrupt-ckpt"
+        )
         with pytest.raises(RuntimeError, match="corrupted"):
             runner2._get_campaign()._loop = None
             runner2._get_campaign()._get_loop()
@@ -578,12 +628,11 @@ class TestCheckpointRecovery:
 # 11. Duplicate execution
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestDuplicateExecution:
 
+class TestDuplicateExecution:
     def test_three_runs_same_month_all_safe(self, runner, spec, logic):
         statuses = [
-            runner.check_and_run(AUG_DATE, provider_records=AUG_RECORDS).status
-            for _ in range(3)
+            runner.check_and_run(AUG_DATE, provider_records=AUG_RECORDS).status for _ in range(3)
         ]
         assert statuses[0] == CycleStatus.SUCCESS
         assert statuses[1] == statuses[2] == CycleStatus.ALREADY_SEALED
@@ -602,8 +651,8 @@ class TestDuplicateExecution:
 # 12. Already-sealed behavior
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestAlreadySealedBehavior:
 
+class TestAlreadySealedBehavior:
     def test_already_sealed_returns_original_record(self, runner, spec, logic):
         r1 = runner.check_and_run(AUG_DATE, provider_records=AUG_RECORDS)
         r2 = runner.check_and_run(AUG_DATE, provider_records=AUG_RECORDS)
@@ -628,8 +677,8 @@ class TestAlreadySealedBehavior:
 #     OPERATIONAL SIMULATION — not genuine forward evidence
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestMultipleMonthlyCycles:
 
+class TestMultipleMonthlyCycles:
     def test_four_month_simulation_produces_four_records(self, runner, campaign_dir, spec, logic):
         runner.run_months(ALL_DATES, ALL_RECORDS)
         ledger = ForwardLedger(campaign_dir)
@@ -667,17 +716,28 @@ class TestMultipleMonthlyCycles:
 # 14. Monitoring — operational_status() fields
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestMonitoring:
 
+class TestMonitoring:
     def test_operational_status_has_required_fields(self, runner, spec, logic):
         runner.check_and_run(AUG_DATE, provider_records=AUG_RECORDS)
         op = runner.operational_status()
         required = [
-            "campaign_id", "strategy_id", "strategy_fingerprint", "mode",
-            "n_sealed_cycles", "n_successful_cycles", "n_failed_cycles",
-            "current_nav", "last_evaluation_date", "next_expected_cycle",
-            "checkpoint_exists", "runner_state", "last_error",
-            "session_run_count", "session_successes", "session_failures",
+            "campaign_id",
+            "strategy_id",
+            "strategy_fingerprint",
+            "mode",
+            "n_sealed_cycles",
+            "n_successful_cycles",
+            "n_failed_cycles",
+            "current_nav",
+            "last_evaluation_date",
+            "next_expected_cycle",
+            "checkpoint_exists",
+            "runner_state",
+            "last_error",
+            "session_run_count",
+            "session_successes",
+            "session_failures",
         ]
         for field in required:
             assert field in op, f"Missing field: {field}"
@@ -712,8 +772,8 @@ class TestMonitoring:
 # 15. Status reporting — next_expected_cycle and runner_state
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestStatusReporting:
 
+class TestStatusReporting:
     def test_next_expected_cycle_advances_each_month(self, runner, spec, logic):
         runner.check_and_run(AUG_DATE, provider_records=AUG_RECORDS)
         nec_after_aug = runner.operational_status()["next_expected_cycle"]
@@ -752,8 +812,8 @@ class TestStatusReporting:
 # 16. NAV reconciliation
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestNAVReconciliation:
 
+class TestNAVReconciliation:
     def test_starting_nav_matches_capital_on_first_cycle(self, runner, spec, logic):
         result = runner.check_and_run(AUG_DATE, provider_records=AUG_RECORDS)
         if result.status == CycleStatus.SUCCESS:
@@ -781,8 +841,8 @@ class TestNAVReconciliation:
 # 17. Position reconciliation
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestPositionReconciliation:
 
+class TestPositionReconciliation:
     def test_positions_dict_type(self, runner, spec, logic):
         result = runner.check_and_run(AUG_DATE, provider_records=AUG_RECORDS)
         if result.status == CycleStatus.SUCCESS:
@@ -808,8 +868,8 @@ class TestPositionReconciliation:
 # 18. Forward-record integrity
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestForwardRecordIntegrity:
 
+class TestForwardRecordIntegrity:
     def test_sealed_record_not_modified_on_second_run(self, runner, campaign_dir, spec, logic):
         r1 = runner.check_and_run(AUG_DATE, provider_records=AUG_RECORDS)
         cycle_id = r1.cycle_id
@@ -845,12 +905,14 @@ class TestForwardRecordIntegrity:
 # 19. Strategy fingerprint preservation
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestStrategyFingerprintPreservationOps:
 
+class TestStrategyFingerprintPreservationOps:
     def test_fingerprint_identical_across_four_months(self, runner, campaign_dir, spec, logic):
         runner.run_months(ALL_DATES, ALL_RECORDS)
         ledger = ForwardLedger(campaign_dir)
-        fps = {c.strategy_fingerprint for c in ledger.list_cycles() if c.status == CycleStatus.SUCCESS}
+        fps = {
+            c.strategy_fingerprint for c in ledger.list_cycles() if c.status == CycleStatus.SUCCESS
+        }
         assert len(fps) == 1  # all cycles same fingerprint
 
     def test_fingerprint_in_operational_status(self, runner, spec, logic):
@@ -870,8 +932,8 @@ class TestStrategyFingerprintPreservationOps:
 # 20. Research-data isolation
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestResearchDataIsolationOps:
 
+class TestResearchDataIsolationOps:
     def test_campaign_dir_separate_from_research_dir(self, campaign_dir):
         research_dir = campaign_dir.parent / "research"
         assert campaign_dir != research_dir

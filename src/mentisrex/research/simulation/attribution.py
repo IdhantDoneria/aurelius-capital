@@ -12,9 +12,16 @@ from __future__ import annotations
 from mentisrex.research.simulation.models import AttributionReport
 
 
-def attribution(*, weight_history: list[dict], price_history: list[dict], total_cost: float,
-                initial_capital: float, total_return: float, avg_cash_weight: float,
-                sectors: dict | None = None) -> AttributionReport:
+def attribution(
+    *,
+    weight_history: list[dict],
+    price_history: list[dict],
+    total_cost: float,
+    initial_capital: float,
+    total_return: float,
+    avg_cash_weight: float,
+    sectors: dict | None = None,
+) -> AttributionReport:
     """weight_history[t] and price_history[t] aligned by date (t=0..T)."""
     sec: dict[str, float] = {}
     for t in range(1, len(price_history)):
@@ -36,8 +43,11 @@ def attribution(*, weight_history: list[dict], price_history: list[dict], total_
         security_contribution=sec,
         sector_contribution=sector_contrib or {"insufficient_data": True},
         cost_drag=cost_drag,
-        cash_drag=avg_cash_weight * total_return,     # return foregone on idle cash (approx)
-        turnover_drag=cost_drag,                       # realized cost is the turnover drag
+        cash_drag=avg_cash_weight * total_return,  # return foregone on idle cash (approx)
+        turnover_drag=cost_drag,  # realized cost is the turnover drag
         total_return=total_return,
-        metadata={"brinson": "insufficient_data — needs benchmark sector weights+returns",
-                  "note": "security_contribution sums approximate total_return up to costs/cash"})
+        metadata={
+            "brinson": "insufficient_data — needs benchmark sector weights+returns",
+            "note": "security_contribution sums approximate total_return up to costs/cash",
+        },
+    )

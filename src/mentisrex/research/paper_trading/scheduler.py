@@ -8,22 +8,23 @@ mode uses the real clock.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 
 class Clock:
     """Real-time clock. Inject a FixedClock in tests / replay."""
 
     def now(self) -> datetime:
-        return datetime.now(timezone.utc).replace(tzinfo=None)
+        return datetime.now(UTC).replace(tzinfo=None)
 
     def today(self) -> date:
-        return datetime.now(timezone.utc).date()
+        return datetime.now(UTC).date()
 
 
 @dataclass(frozen=True)
 class FixedClock:
     """Deterministic clock for tests and replay. Returns a constant datetime."""
+
     fixed: datetime
 
     def now(self) -> datetime:
@@ -72,6 +73,7 @@ class RebalanceScheduler:
     def next_due(self, spec, runtime_state) -> date | None:
         """Best-effort next evaluation date given last eval. None if unknown."""
         from datetime import timedelta
+
         freq = getattr(spec, "rebalance_frequency", "daily")
         last: date | None = getattr(runtime_state, "last_eval_date", None)
         if last is None:

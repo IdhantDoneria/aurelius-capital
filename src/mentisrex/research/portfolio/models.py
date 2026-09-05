@@ -9,17 +9,23 @@ from datetime import date
 @dataclass(frozen=True)
 class PortfolioPosition:
     security_id: str
-    weight: float                 # final target weight (fraction of capital)
+    weight: float  # final target weight (fraction of capital)
     shares: float = 0.0
     price: float | None = None
     market_value: float = 0.0
-    target_weight: float = 0.0    # optimizer output before rounding to shares
-    current_weight: float = 0.0   # weight held before this rebalance
+    target_weight: float = 0.0  # optimizer output before rounding to shares
+    current_weight: float = 0.0  # weight held before this rebalance
 
     def to_dict(self) -> dict:
-        return {"security_id": self.security_id, "weight": self.weight, "shares": self.shares,
-                "price": self.price, "market_value": self.market_value,
-                "target_weight": self.target_weight, "current_weight": self.current_weight}
+        return {
+            "security_id": self.security_id,
+            "weight": self.weight,
+            "shares": self.shares,
+            "price": self.price,
+            "market_value": self.market_value,
+            "target_weight": self.target_weight,
+            "current_weight": self.current_weight,
+        }
 
 
 @dataclass
@@ -47,8 +53,12 @@ class Portfolio:
         return {
             "date": self.date.isoformat() if self.date else None,
             "positions": [p.to_dict() for p in self.positions],
-            "gross_exposure": self.gross_exposure, "net_exposure": self.net_exposure,
-            "turnover": self.turnover, "cash": self.cash,
-            "expected_return": self.expected_return, "expected_risk": self.expected_risk,
-            "metadata": self.metadata, "diagnostics": self.diagnostics,
+            "gross_exposure": self.gross_exposure,
+            "net_exposure": self.net_exposure,
+            "turnover": self.turnover,
+            "cash": self.cash,
+            "expected_return": self.expected_return,
+            "expected_risk": self.expected_risk,
+            "metadata": self.metadata,
+            "diagnostics": self.diagnostics,
         }

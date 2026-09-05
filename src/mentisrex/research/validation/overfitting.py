@@ -32,24 +32,48 @@ def inverse_normal(p: float) -> float:
         return -math.inf
     if p >= 1:
         return math.inf
-    a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02,
-         1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00]
-    b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02,
-         6.680131188771972e+01, -1.328068155288572e+01]
-    c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00,
-         -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00]
-    d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00,
-         3.754408661907416e+00]
+    a = [
+        -3.969683028665376e01,
+        2.209460984245205e02,
+        -2.759285104469687e02,
+        1.383577518672690e02,
+        -3.066479806614716e01,
+        2.506628277459239e00,
+    ]
+    b = [
+        -5.447609879822406e01,
+        1.615858368580409e02,
+        -1.556989798598866e02,
+        6.680131188771972e01,
+        -1.328068155288572e01,
+    ]
+    c = [
+        -7.784894002430293e-03,
+        -3.223964580411365e-01,
+        -2.400758277161838e00,
+        -2.549732539343734e00,
+        4.374664141464968e00,
+        2.938163982698783e00,
+    ]
+    d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e00, 3.754408661907416e00]
     plow, phigh = 0.02425, 1 - 0.02425
     if p < plow:
         q = math.sqrt(-2 * math.log(p))
-        return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1)
+        return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / (
+            (((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1
+        )
     if p > phigh:
         q = math.sqrt(-2 * math.log(1 - p))
-        return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1)
+        return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / (
+            (((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1
+        )
     q = p - 0.5
     r = q * q
-    return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1)
+    return (
+        (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5])
+        * q
+        / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1)
+    )
 
 
 def _psr(sr_hat: float, sr_ref: float, n: int, skew: float, kurt_excess: float) -> float:
@@ -65,9 +89,12 @@ def probabilistic_sharpe_ratio(returns, *, sr_benchmark: float = 0.0) -> dict:
     n = m["n"]
     if n < 3 or m["std"] == 0:
         return {"psr": float("nan"), "n": n}
-    sr_hat = m["mean"] / m["std"]                    # per-period Sharpe
-    return {"psr": _psr(sr_hat, sr_benchmark, n, m["skew"], m["kurtosis"]),
-            "sr_per_period": sr_hat, "n": n}
+    sr_hat = m["mean"] / m["std"]  # per-period Sharpe
+    return {
+        "psr": _psr(sr_hat, sr_benchmark, n, m["skew"], m["kurtosis"]),
+        "sr_per_period": sr_hat,
+        "n": n,
+    }
 
 
 def deflated_sharpe_ratio(returns, *, n_trials: int, sr_variance: float | None = None) -> dict:
@@ -85,11 +112,16 @@ def deflated_sharpe_ratio(returns, *, n_trials: int, sr_variance: float | None =
         sr_variance = (1 - m["skew"] * sr_hat + (m["kurtosis"] + 2) / 4.0 * sr_hat**2) / (n - 1)
     v = max(sr_variance, 1e-12)
     N = max(n_trials, 2)
-    sr0 = math.sqrt(v) * ((1 - _EULER) * inverse_normal(1 - 1.0 / N)
-                          + _EULER * inverse_normal(1 - 1.0 / (N * math.e)))
-    return {"dsr": _psr(sr_hat, sr0, n, m["skew"], m["kurtosis"]),
-            "sr0_expected_max": sr0, "sr_per_period": sr_hat, "n_trials": N,
-            "sr_variance_substituted": substituted}
+    sr0 = math.sqrt(v) * (
+        (1 - _EULER) * inverse_normal(1 - 1.0 / N) + _EULER * inverse_normal(1 - 1.0 / (N * math.e))
+    )
+    return {
+        "dsr": _psr(sr_hat, sr0, n, m["skew"], m["kurtosis"]),
+        "sr0_expected_max": sr0,
+        "sr_per_period": sr_hat,
+        "n_trials": N,
+        "sr_variance_substituted": substituted,
+    }
 
 
 def pbo_cscv(returns_matrix, *, n_splits: int = 10) -> dict:
@@ -115,16 +147,20 @@ def pbo_cscv(returns_matrix, *, n_splits: int = 10) -> dict:
         is_sr = np.array([sr(R[is_idx, j]) for j in range(N)])
         oos_sr = np.array([sr(R[oos_idx, j]) for j in range(N)])
         best = int(np.argmax(is_sr))
-        rank = (np.sum(oos_sr <= oos_sr[best])) / (N + 1)       # relative OOS rank
+        rank = (np.sum(oos_sr <= oos_sr[best])) / (N + 1)  # relative OOS rank
         rank = min(max(rank, 1e-6), 1 - 1e-6)
         logits.append(math.log(rank / (1 - rank)))
     logits = np.array(logits)
-    return {"pbo": float((logits <= 0).mean()), "n_combinations": int(logits.size),
-            "median_logit": float(np.median(logits))}
+    return {
+        "pbo": float((logits <= 0).mean()),
+        "n_combinations": int(logits.size),
+        "median_logit": float(np.median(logits)),
+    }
 
 
-def whites_reality_check(excess_matrix, *, n_boot: int = 1000, block: int = 20,
-                         seed: int = 0) -> dict:
+def whites_reality_check(
+    excess_matrix, *, n_boot: int = 1000, block: int = 20, seed: int = 0
+) -> dict:
     """White's Reality Check: H0 = best of N strategies is no better than benchmark.
     excess_matrix: (T, N) excess returns over the benchmark. Stationary-bootstrap
     the max mean statistic."""
@@ -132,6 +168,7 @@ def whites_reality_check(excess_matrix, *, n_boot: int = 1000, block: int = 20,
     if X.ndim != 2 or X.shape[1] < 1 or X.shape[0] < 3:
         return {"insufficient_data": True, "reason": "need (T, N) excess matrix"}
     from mentisrex.research.validation.bootstrap import _resample
+
     T, N = X.shape
     means = X.mean(axis=0)
     v_obs = math.sqrt(T) * means.max()
@@ -142,5 +179,8 @@ def whites_reality_check(excess_matrix, *, n_boot: int = 1000, block: int = 20,
         resampled = _resample(idx.astype(float), "stationary", block, rng).astype(int)
         bmeans = X[resampled].mean(axis=0)
         null[b] = math.sqrt(T) * (bmeans - means).max()
-    return {"reality_check_p": float((null >= v_obs).mean()), "statistic": float(v_obs),
-            "n_strategies": int(N)}
+    return {
+        "reality_check_p": float((null >= v_obs).mean()),
+        "statistic": float(v_obs),
+        "n_strategies": int(N),
+    }

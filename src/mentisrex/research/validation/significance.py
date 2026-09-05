@@ -20,6 +20,7 @@ TRADING_DAYS = 252
 
 # ── regularized incomplete beta → Student-t p-value ─────────────────────────────
 
+
 def _betacf(a: float, b: float, x: float) -> float:
     tiny = 1e-30
     qab, qap, qam = a + b, a + 1.0, a - 1.0
@@ -56,8 +57,7 @@ def betainc(a: float, b: float, x: float) -> float:
         return 0.0
     if x >= 1.0:
         return 1.0
-    lb = (math.lgamma(a + b) - math.lgamma(a) - math.lgamma(b)
-          + a * math.log(x) + b * math.log1p(-x))
+    lb = math.lgamma(a + b) - math.lgamma(a) - math.lgamma(b) + a * math.log(x) + b * math.log1p(-x)
     front = math.exp(lb)
     if x < (a + 1.0) / (a + b + 2.0):
         return front * _betacf(a, b, x) / a
@@ -78,12 +78,19 @@ def normal_cdf(z: float) -> float:
 
 # ── moments ─────────────────────────────────────────────────────────────────────
 
+
 def moments(returns) -> dict:
     r = np.asarray(returns, dtype=float)
     n = r.size
     if n < 2:
-        return {"n": n, "mean": float(r.mean()) if n else 0.0, "std": 0.0,
-                "skew": 0.0, "kurtosis": 0.0, "tail_ratio": 0.0}
+        return {
+            "n": n,
+            "mean": float(r.mean()) if n else 0.0,
+            "std": 0.0,
+            "skew": 0.0,
+            "kurtosis": 0.0,
+            "tail_ratio": 0.0,
+        }
     mean = float(r.mean())
     std = float(r.std(ddof=1))
     sd0 = r.std(ddof=0)
@@ -95,6 +102,7 @@ def moments(returns) -> dict:
 
 
 # ── Sharpe + significance ───────────────────────────────────────────────────────
+
 
 def sharpe(returns, periods: int = TRADING_DAYS, rf: float = 0.0) -> float:
     r = np.asarray(returns, dtype=float)
@@ -129,10 +137,18 @@ def significance(returns, periods: int = TRADING_DAYS, *, hac_lag: int | None = 
     m = moments(returns)
     n = m["n"]
     if n < 2 or m["std"] == 0:
-        return {**m, "t_stat": 0.0, "p_value": 1.0, "standard_error": 0.0,
-                "ci_low": 0.0, "ci_high": 0.0, "effect_size": 0.0,
-                "sharpe": 0.0, "sharpe_se": float("nan"),
-                **hac_significance(r, hac_lag)}
+        return {
+            **m,
+            "t_stat": 0.0,
+            "p_value": 1.0,
+            "standard_error": 0.0,
+            "ci_low": 0.0,
+            "ci_high": 0.0,
+            "effect_size": 0.0,
+            "sharpe": 0.0,
+            "sharpe_se": float("nan"),
+            **hac_significance(r, hac_lag),
+        }
     se = m["std"] / math.sqrt(n)
     t = m["mean"] / se
     p = student_t_two_sided_p(t, n - 1)
@@ -144,7 +160,7 @@ def significance(returns, periods: int = TRADING_DAYS, *, hac_lag: int | None = 
         "standard_error": float(se),
         "ci_low": float(m["mean"] - tcrit * se),
         "ci_high": float(m["mean"] + tcrit * se),
-        "effect_size": float(m["mean"] / m["std"]),   # Cohen's d
+        "effect_size": float(m["mean"] / m["std"]),  # Cohen's d
         "sharpe": sharpe(returns, periods),
         "sharpe_se": sharpe_standard_error(returns, periods),
         **hac_significance(r, hac_lag),

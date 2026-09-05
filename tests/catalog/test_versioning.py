@@ -1,7 +1,7 @@
 """Tests for VersionManager — snapshot, hash, reproducibility lookup."""
 
-import pytest
 import duckdb
+import pytest
 
 from mentisrex.catalog.models import DatasetRecord
 from mentisrex.catalog.store import CatalogStore

@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-import threading
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
 
 from fastapi import APIRouter, Body, HTTPException
 from fastapi.responses import HTMLResponse
 
 from mentisrex.core.logging import get_logger
 from mentisrex.operations.config import OperationsConfig
-from mentisrex.operations.models import DailyReport, HealthStatus, PipelineJob
+from mentisrex.operations.models import DailyReport, HealthStatus
 from mentisrex.operations.monitor import OperationsMonitor
 from mentisrex.operations.reporter import DailyReporter
 
@@ -25,7 +23,7 @@ _config: OperationsConfig | None = None
 _monitor: OperationsMonitor | None = None
 _reporter: DailyReporter | None = None
 _pipeline = None  # PipelineOrchestrator
-_watcher = None   # FolderWatcher
+_watcher = None  # FolderWatcher
 
 
 def configure(
@@ -57,6 +55,7 @@ def _require_monitor():
 
 # ── health & metrics ─────────────────────────────────────────────────────────
 
+
 @operations_router.get("/health", response_model=HealthStatus)
 def get_health():
     return _require_monitor().health()
@@ -68,6 +67,7 @@ def get_metrics() -> dict:
 
 
 # ── paper ingestion ───────────────────────────────────────────────────────────
+
 
 @operations_router.post("/ingest/path", response_model=dict)
 def ingest_from_path(payload: dict = Body(...)) -> dict:
@@ -90,13 +90,15 @@ def ingest_from_path(payload: dict = Body(...)) -> dict:
 
 # ── queue inspection ──────────────────────────────────────────────────────────
 
+
 @operations_router.get("/queue")
 def get_queue() -> dict:
     """Return current file counts in each pipeline folder."""
     config = _config or OperationsConfig()
     return {
         folder: sum(1 for p in path.iterdir() if p.is_file() and not p.name.startswith("."))
-        if path.exists() else 0
+        if path.exists()
+        else 0
         for folder, path in [
             ("incoming", config.incoming),
             ("processing", config.processing),
@@ -116,6 +118,7 @@ def list_experiments() -> list[dict]:
     for spec_file in sorted(config.experiments.glob("*_spec.json")):
         try:
             import json
+
             results.append(json.loads(spec_file.read_text()))
         except Exception:
             pass
@@ -123,6 +126,7 @@ def list_experiments() -> list[dict]:
 
 
 # ── reports ───────────────────────────────────────────────────────────────────
+
 
 @operations_router.get("/reports", response_model=list)
 def list_reports() -> list:
@@ -153,6 +157,7 @@ def generate_report() -> DailyReport:
 
 # ── watcher control ───────────────────────────────────────────────────────────
 
+
 @operations_router.post("/watcher/start")
 def start_watcher() -> dict:
     if _watcher is None:
@@ -170,6 +175,7 @@ def stop_watcher() -> dict:
 
 
 # ── dashboard ─────────────────────────────────────────────────────────────────
+
 
 @operations_router.get("/dashboard", response_class=HTMLResponse)
 def dashboard() -> HTMLResponse:

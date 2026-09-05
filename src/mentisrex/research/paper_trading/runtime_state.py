@@ -8,7 +8,7 @@ cycles have we run, is there an operational pause in effect.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date
 
 
@@ -18,6 +18,7 @@ class StrategyRuntimeState:
 
     Not thread-safe — one loop instance owns the mutable state.
     """
+
     strategy_id: str
     strategy_version: str
     strategy_fingerprint: str

@@ -46,10 +46,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.execute(
-        "CREATE TABLE market_data_ohlcv_default "
-        "PARTITION OF market_data_ohlcv DEFAULT"
-    )
+    op.execute("CREATE TABLE market_data_ohlcv_default PARTITION OF market_data_ohlcv DEFAULT")
 
 
 def downgrade() -> None:

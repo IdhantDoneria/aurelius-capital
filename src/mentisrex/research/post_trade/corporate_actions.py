@@ -68,15 +68,29 @@ def apply(engine, action, *, when: date | None = None) -> CorporateActionEvent:
         if abs(delta) > 1e-12:
             position_impact += abs(delta)
             pos_ev = PositionEvent(
-                seq=engine.log.next_seq(), security_id=s, delta_shares=delta,
-                new_shares=engine.accounting.shares(s), cost_basis=engine._cost_basis(s),
-                trade_id=None, when=when, reason="corporate_action")
+                seq=engine.log.next_seq(),
+                security_id=s,
+                delta_shares=delta,
+                new_shares=engine.accounting.shares(s),
+                cost_basis=engine._cost_basis(s),
+                trade_id=None,
+                when=when,
+                reason="corporate_action",
+            )
             engine.position_ledger.record(pos_ev)
             engine.log.append(pos_ev)
 
-    ev = engine.log.emit(lambda seq: CorporateActionEvent(
-        seq=seq, action_id=action.action_id, action_type=action.action_type, security_id=sid,
-        ex_date=when, cash_impact=cash_impact, position_impact=position_impact,
-        detail=action.detail or action.action_type))
+    ev = engine.log.emit(
+        lambda seq: CorporateActionEvent(
+            seq=seq,
+            action_id=action.action_id,
+            action_type=action.action_type,
+            security_id=sid,
+            ex_date=when,
+            cash_impact=cash_impact,
+            position_impact=position_impact,
+            detail=action.detail or action.action_type,
+        )
+    )
     engine.trades.setdefault(action.action_id, LifecycleState.RECONCILED)
     return ev

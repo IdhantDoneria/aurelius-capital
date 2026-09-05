@@ -34,11 +34,23 @@ _ALLOWED = {
     "submit": {OrderStatus.APPROVED},
     "acknowledge": {OrderStatus.SUBMITTED},
     "fill": {OrderStatus.SUBMITTED, OrderStatus.ACKNOWLEDGED, OrderStatus.PARTIALLY_FILLED},
-    "request_cancel": {OrderStatus.SUBMITTED, OrderStatus.ACKNOWLEDGED, OrderStatus.PARTIALLY_FILLED},
-    "confirm_cancel": {OrderStatus.PENDING_CANCEL, OrderStatus.SUBMITTED,
-                       OrderStatus.ACKNOWLEDGED, OrderStatus.PARTIALLY_FILLED},
-    "expire": {OrderStatus.SUBMITTED, OrderStatus.ACKNOWLEDGED, OrderStatus.PARTIALLY_FILLED,
-               OrderStatus.APPROVED},
+    "request_cancel": {
+        OrderStatus.SUBMITTED,
+        OrderStatus.ACKNOWLEDGED,
+        OrderStatus.PARTIALLY_FILLED,
+    },
+    "confirm_cancel": {
+        OrderStatus.PENDING_CANCEL,
+        OrderStatus.SUBMITTED,
+        OrderStatus.ACKNOWLEDGED,
+        OrderStatus.PARTIALLY_FILLED,
+    },
+    "expire": {
+        OrderStatus.SUBMITTED,
+        OrderStatus.ACKNOWLEDGED,
+        OrderStatus.PARTIALLY_FILLED,
+        OrderStatus.APPROVED,
+    },
 }
 
 
@@ -63,7 +75,7 @@ class _ManagedOrder:
         self.status = OrderStatus.NEW
         self.filled_quantity = 0.0
         self.cost = 0.0
-        self._notional_signed = 0.0          # Σ qty*price, for avg price
+        self._notional_signed = 0.0  # Σ qty*price, for avg price
         self.broker_order_id: str | None = None
         self.events: list = []
         self.fills: list = []
@@ -105,29 +117,46 @@ class OMS:
         mo.broker_order_id = broker_order_id
         self._transition(mo, "acknowledge", OrderStatus.ACKNOWLEDGED, f"ack:{broker_order_id}")
 
-    def record_fill(self, order_id: str, quantity: float, price: float, cost: float,
-                    *, when: date | None = None, fill_id: str | None = None) -> OrderStatus:
+    def record_fill(
+        self,
+        order_id: str,
+        quantity: float,
+        price: float,
+        cost: float,
+        *,
+        when: date | None = None,
+        fill_id: str | None = None,
+    ) -> OrderStatus:
         mo = self._get(order_id)
         self._require(mo, "fill")
         mo.filled_quantity += quantity
         mo._notional_signed += quantity * price
         mo.cost += cost
-        mo.fills.append({"fill_id": fill_id, "quantity": quantity, "price": price,
-                         "cost": cost, "when": when})
+        mo.fills.append(
+            {"fill_id": fill_id, "quantity": quantity, "price": price, "cost": cost, "when": when}
+        )
         complete = abs(mo.filled_quantity - mo.request.quantity) < _FILL_TOL
         status = OrderStatus.FILLED if complete else OrderStatus.PARTIALLY_FILLED
         mo.status = status
-        self._emit(mo, "fill" if complete else "partial_fill", status,
-                   f"qty={quantity:g}@{price:g}", filled=mo.filled_quantity, when=when)
+        self._emit(
+            mo,
+            "fill" if complete else "partial_fill",
+            status,
+            f"qty={quantity:g}@{price:g}",
+            filled=mo.filled_quantity,
+            when=when,
+        )
         return status
 
     def request_cancel(self, order_id: str) -> None:
-        self._transition(self._get(order_id), "request_cancel", OrderStatus.PENDING_CANCEL,
-                         "cancel_requested")
+        self._transition(
+            self._get(order_id), "request_cancel", OrderStatus.PENDING_CANCEL, "cancel_requested"
+        )
 
     def confirm_cancel(self, order_id: str, *, reason: str = "") -> None:
-        self._transition(self._get(order_id), "confirm_cancel", OrderStatus.CANCELLED,
-                         reason or "cancelled")
+        self._transition(
+            self._get(order_id), "confirm_cancel", OrderStatus.CANCELLED, reason or "cancelled"
+        )
 
     def reject(self, order_id: str, reason: str) -> None:
         mo = self._get(order_id)
@@ -159,16 +188,28 @@ class OMS:
         avg = mo.avg_fill_price
         slip = arrival_slippage_bps(avg, req.arrival_price, mo.filled_quantity)
         notional = abs(mo.filled_quantity * avg)
-        is_bps = (((avg - req.arrival_price) * mo.filled_quantity + mo.cost) / notional * 1e4) \
-            if notional > 0 else 0.0
+        is_bps = (
+            (((avg - req.arrival_price) * mo.filled_quantity + mo.cost) / notional * 1e4)
+            if notional > 0
+            else 0.0
+        )
         n_children = len({f["fill_id"] for f in mo.fills if f["fill_id"]}) or len(mo.fills)
         return ExecutionReport(
-            order_id=order_id, security_id=req.security_id,
-            requested_quantity=req.quantity, filled_quantity=mo.filled_quantity,
-            avg_fill_price=avg, arrival_price=req.arrival_price, total_cost=mo.cost,
-            status=mo.status, slippage_bps=slip, implementation_shortfall_bps=is_bps,
-            n_child_orders=n_children, n_fills=len(mo.fills),
-            events=list(mo.events), fills=list(mo.fills))
+            order_id=order_id,
+            security_id=req.security_id,
+            requested_quantity=req.quantity,
+            filled_quantity=mo.filled_quantity,
+            avg_fill_price=avg,
+            arrival_price=req.arrival_price,
+            total_cost=mo.cost,
+            status=mo.status,
+            slippage_bps=slip,
+            implementation_shortfall_bps=is_bps,
+            n_child_orders=n_children,
+            n_fills=len(mo.fills),
+            events=list(mo.events),
+            fills=list(mo.fills),
+        )
 
     def reports(self) -> list:
         return [self.report(oid) for oid in self._orders]
@@ -191,5 +232,14 @@ class OMS:
 
     def _emit(self, mo, kind, status, detail="", *, filled=0.0, when=None) -> None:
         self._seq += 1
-        mo.events.append(OrderEvent(seq=self._seq, order_id=mo.request.order_id, kind=kind,
-                                    status=status, detail=detail, filled_quantity=filled, when=when))
+        mo.events.append(
+            OrderEvent(
+                seq=self._seq,
+                order_id=mo.request.order_id,
+                kind=kind,
+                status=status,
+                detail=detail,
+                filled_quantity=filled,
+                when=when,
+            )
+        )

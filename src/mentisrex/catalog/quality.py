@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import math
 import statistics
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import duckdb
 
@@ -53,7 +53,9 @@ class QualityEngine:
         try:
             conn = duckdb.connect(db_path, read_only=True)
             try:
-                cols = value_cols or self._numeric_cols(conn, table, exclude={date_col, symbol_col or ""})
+                cols = value_cols or self._numeric_cols(
+                    conn, table, exclude={date_col, symbol_col or ""}
+                )
                 missing_pct = self._check_missing(conn, table, cols, details)
                 dupe_count = self._check_duplicates(conn, table, date_col, symbol_col, details)
                 gap_count = self._check_gaps(conn, table, date_col, details)
@@ -65,11 +67,15 @@ class QualityEngine:
         except Exception as exc:
             logger.warning("quality_check_failed", dataset_id=dataset.id, error=str(exc))
             details["error"] = str(exc)
-            report = QualityReport(dataset_id=dataset.id, overall_score=0.0, passed=False, details=details)
+            report = QualityReport(
+                dataset_id=dataset.id, overall_score=0.0, passed=False, details=details
+            )
             self._catalog.save_quality_report(report)
             return report
 
-        score = _score(missing_pct, dupe_count, gap_count, outlier_count, schema_drift, feed_delayed)
+        score = _score(
+            missing_pct, dupe_count, gap_count, outlier_count, schema_drift, feed_delayed
+        )
         report = QualityReport(
             dataset_id=dataset.id,
             missing_pct=missing_pct,
@@ -92,9 +98,15 @@ class QualityEngine:
     def _numeric_cols(conn: duckdb.DuckDBPyConnection, table: str, exclude: set[str]) -> list[str]:
         try:
             info = conn.execute(f"PRAGMA table_info('{table}')").fetchall()
-            return [c[1] for c in info if c[1] not in exclude and any(
-                t in c[2].upper() for t in ("INT", "FLOAT", "DOUBLE", "DECIMAL", "REAL", "NUMERIC")
-            )]
+            return [
+                c[1]
+                for c in info
+                if c[1] not in exclude
+                and any(
+                    t in c[2].upper()
+                    for t in ("INT", "FLOAT", "DOUBLE", "DECIMAL", "REAL", "NUMERIC")
+                )
+            ]
         except Exception:
             return []
 
@@ -220,7 +232,7 @@ class QualityEngine:
                 details["feed_status"] = "no_data"
                 return True
             latest = datetime.fromisoformat(str(row[0]))
-            threshold = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=freshness_days)
+            threshold = datetime.now(UTC).replace(tzinfo=None) - timedelta(days=freshness_days)
             delayed = latest < threshold
             if delayed:
                 details["feed_last_date"] = str(row[0])

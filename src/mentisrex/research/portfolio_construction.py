@@ -63,8 +63,7 @@ def exposures(weights: list[tuple[float, int]]) -> dict:
     net = sum(w * s for w, s in weights)
     max_w = max(w for w, _ in weights)
     hhi = sum(w * w for w, _ in weights)
-    return {"gross": gross, "net": net, "max_weight": max_w, "hhi": hhi,
-            "n": len(weights)}
+    return {"gross": gross, "net": net, "max_weight": max_w, "hhi": hhi, "n": len(weights)}
 
 
 if __name__ == "__main__":
@@ -76,14 +75,15 @@ if __name__ == "__main__":
     # severe shrink: baseline concentrates to 15% single name
     assert baseline_weight(5, B) == 0.15
     # invariant floors the denominator at n_min -> de-levered, bounded weight
-    assert invariant_weight(5, B, WMAX, NMIN) == B / NMIN     # 0.075 (floor binds)
-    assert invariant_weight(3, B, WMAX, NMIN) == B / NMIN     # same floor
+    assert invariant_weight(5, B, WMAX, NMIN) == B / NMIN  # 0.075 (floor binds)
+    assert invariant_weight(3, B, WMAX, NMIN) == B / NMIN  # same floor
     # the single-name cap binds independently when n_min is small
-    assert invariant_weight(5, 1.0, 0.05, 1) == 0.05          # cap binds, not floor
+    assert invariant_weight(5, 1.0, 0.05, 1) == 0.05  # cap binds, not floor
     # both bounds keep invariant weight <= baseline under shrink
     assert invariant_weight(5, B, WMAX, NMIN) < baseline_weight(5, B)
     # exposure snapshot: symmetric L/S -> net 0, gross = 2*count*w
     legs = [(0.0075, 1)] * 100 + [(0.0075, -1)] * 100
     ex = exposures(legs)
-    assert abs(ex["net"]) < 1e-12 and abs(ex["gross"] - 1.5) < 1e-9
+    assert abs(ex["net"]) < 1e-12
+    assert abs(ex["gross"] - 1.5) < 1e-9
     print("portfolio_construction self-check OK")

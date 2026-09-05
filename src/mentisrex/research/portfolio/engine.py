@@ -17,32 +17,50 @@ from mentisrex.research.portfolio.constraints import ConstraintSet
 from mentisrex.research.portfolio.diagnostics import build_diagnostics
 from mentisrex.research.portfolio.models import Portfolio, PortfolioPosition
 from mentisrex.research.portfolio.objectives import DEFINITIONS, Objective
-from mentisrex.research.portfolio.risk import diagonal_risk_diagnostics
-from mentisrex.research.portfolio.solvers.base import l1_normalize
 from mentisrex.research.portfolio.optimizer import (
     CovarianceEstimator,
     ExpectedReturnModel,
     SampleCovariance,
     SignalExpectedReturns,
 )
+from mentisrex.research.portfolio.risk import diagonal_risk_diagnostics
 from mentisrex.research.portfolio.solvers import SOLVER_REGISTRY
-from mentisrex.research.portfolio.solvers.base import Solver
+from mentisrex.research.portfolio.solvers.base import Solver, l1_normalize
 
 _DEFAULT_ANNUAL_VAR = 0.04
 
 
 class PortfolioEngine:
-    def __init__(self, *, expected_return_model: ExpectedReturnModel | None = None,
-                 cov_estimator: CovarianceEstimator | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        expected_return_model: ExpectedReturnModel | None = None,
+        cov_estimator: CovarianceEstimator | None = None,
+    ) -> None:
         self._er = expected_return_model or SignalExpectedReturns()
         self._cov_est = cov_estimator or SampleCovariance()
 
-    def construct(self, signals: dict, universe, constraints: ConstraintSet,
-                  objective, as_of: date | None = None, *,
-                  covariance=None, returns_matrix=None, vols=None, prices=None,
-                  current_weights=None, benchmark_weights=None, solver: Solver | None = None,
-                  sectors=None, adv=None, cost_model=None, capital: float = 1e7,
-                  tracking_error_budget: float = 0.05) -> Portfolio:
+    def construct(
+        self,
+        signals: dict,
+        universe,
+        constraints: ConstraintSet,
+        objective,
+        as_of: date | None = None,
+        *,
+        covariance=None,
+        returns_matrix=None,
+        vols=None,
+        prices=None,
+        current_weights=None,
+        benchmark_weights=None,
+        solver: Solver | None = None,
+        sectors=None,
+        adv=None,
+        cost_model=None,
+        capital: float = 1e7,
+        tracking_error_budget: float = 0.05,
+    ) -> Portfolio:
         ids = [u["security_id"] if isinstance(u, dict) else u for u in universe]
         n = len(ids)
         if n == 0:
@@ -52,7 +70,9 @@ class PortfolioEngine:
         mu = np.asarray(self._er.estimate(signal), dtype=float)
 
         obj = Objective(objective) if not isinstance(objective, Objective) else objective
-        bench = np.asarray(benchmark_weights, dtype=float) if benchmark_weights is not None else None
+        bench = (
+            np.asarray(benchmark_weights, dtype=float) if benchmark_weights is not None else None
+        )
         ctx = {"benchmark_weights": bench, "tracking_error_budget": tracking_error_budget}
 
         # dense path only when a real covariance/returns matrix is supplied; otherwise
@@ -63,9 +83,16 @@ class PortfolioEngine:
             solver = solver or SOLVER_REGISTRY[obj.value]()
             raw = solver.solve(mu, cov, ctx=ctx)
         else:
-            var = np.asarray(vols, dtype=float) ** 2 if vols is not None else np.full(n, _DEFAULT_ANNUAL_VAR)
-            raw = (solver.solve(mu, np.diag(var), ctx=ctx) if solver is not None
-                   else _diagonal_solve(mu, var, obj, bench, tracking_error_budget))
+            var = (
+                np.asarray(vols, dtype=float) ** 2
+                if vols is not None
+                else np.full(n, _DEFAULT_ANNUAL_VAR)
+            )
+            raw = (
+                solver.solve(mu, np.diag(var), ctx=ctx)
+                if solver is not None
+                else _diagonal_solve(mu, var, obj, bench, tracking_error_budget)
+            )
         w = constraints.enforce(raw)
 
         prev = _align(current_weights, ids)
@@ -73,8 +100,11 @@ class PortfolioEngine:
         gross = float(np.abs(w).sum())
         net = float(w.sum())
         exp_ret = float(w @ mu)
-        exp_risk = (float(np.sqrt(max(w @ cov @ w, 0.0))) if dense
-                    else float(np.sqrt(max((w**2 * var).sum(), 0.0))))
+        exp_risk = (
+            float(np.sqrt(max(w @ cov @ w, 0.0)))
+            if dense
+            else float(np.sqrt(max((w**2 * var).sum(), 0.0)))
+        )
 
         adv_vec = _align(adv, ids) if adv is not None else None
         cost = None
@@ -83,8 +113,9 @@ class PortfolioEngine:
             trade_notional = np.abs(w - prev) * capital
             cost = cost_model.estimate(trade_notional, adv_vec)
             if adv_vec is not None:
-                participation = np.divide(trade_notional, adv_vec,
-                                          out=np.zeros_like(trade_notional), where=adv_vec > 0)
+                participation = np.divide(
+                    trade_notional, adv_vec, out=np.zeros_like(trade_notional), where=adv_vec > 0
+                )
 
         px = _align(prices, ids, default=None)
         positions = []
@@ -92,10 +123,17 @@ class PortfolioEngine:
             price = px[i] if px is not None and px[i] is not None else None
             shares = (w[i] * capital / price) if (price and price > 0) else 0.0
             mv = shares * price if price else w[i] * capital
-            positions.append(PortfolioPosition(
-                security_id=sid, weight=float(w[i]), shares=float(shares), price=price,
-                market_value=float(mv), target_weight=float(raw[i] if i < raw.size else 0.0),
-                current_weight=float(prev[i])))
+            positions.append(
+                PortfolioPosition(
+                    security_id=sid,
+                    weight=float(w[i]),
+                    shares=float(shares),
+                    price=price,
+                    market_value=float(mv),
+                    target_weight=float(raw[i] if i < raw.size else 0.0),
+                    current_weight=float(prev[i]),
+                )
+            )
 
         if dense:
             diag = build_diagnostics(w, cov, mu, sectors=sectors, cost=cost, turnover=turnover)
@@ -106,19 +144,34 @@ class PortfolioEngine:
             if cost is not None:
                 diag["cost"] = cost
         return Portfolio(
-            date=as_of, positions=positions, gross_exposure=gross, net_exposure=net,
-            turnover=turnover, cash=float(capital * (1 - gross)),
-            expected_return=exp_ret, expected_risk=exp_risk, diagnostics=diag,
+            date=as_of,
+            positions=positions,
+            gross_exposure=gross,
+            net_exposure=net,
+            turnover=turnover,
+            cash=float(capital * (1 - gross)),
+            expected_return=exp_ret,
+            expected_risk=exp_risk,
+            diagnostics=diag,
             metadata={
-                "objective": obj.value, "solver": solver.name if solver is not None else "diagonal_analytic",
+                "objective": obj.value,
+                "solver": solver.name if solver is not None else "diagonal_analytic",
                 "objective_spec": DEFINITIONS.get(obj.value, {}),
                 "constraints": _constraints_dict(constraints),
-                "covariance_method": type(self._cov_est).__name__ if covariance is None and returns_matrix is not None
-                else ("provided" if covariance is not None else ("diagonal_vols" if vols is not None else "default")),
+                "covariance_method": type(self._cov_est).__name__
+                if covariance is None and returns_matrix is not None
+                else (
+                    "provided"
+                    if covariance is not None
+                    else ("diagonal_vols" if vols is not None else "default")
+                ),
                 "expected_return_model": type(self._er).__name__,
-                "capital": capital, "n_universe": n, "participation": participation.tolist() if participation is not None else None,
+                "capital": capital,
+                "n_universe": n,
+                "participation": participation.tolist() if participation is not None else None,
                 "as_of": as_of.isoformat() if as_of else None,
-            })
+            },
+        )
 
     # ── helpers ──────────────────────────────────────────────────────────────
 
@@ -141,11 +194,11 @@ def _diagonal_solve(mu, var, obj: Objective, bench, te_budget: float) -> np.ndar
     if obj == Objective.EQUAL_WEIGHT:
         w = np.ones(n)
     elif obj == Objective.MIN_VARIANCE:
-        w = 1.0 / var                                  # Σ⁻¹1 with diagonal Σ
+        w = 1.0 / var  # Σ⁻¹1 with diagonal Σ
     elif obj == Objective.MAX_SHARPE:
-        w = mu / var                                   # Σ⁻¹μ
+        w = mu / var  # Σ⁻¹μ
     elif obj in (Objective.RISK_PARITY, Objective.MAX_DIVERSIFICATION):
-        w = 1.0 / np.sqrt(var)                         # equal RC / max DR when uncorrelated
+        w = 1.0 / np.sqrt(var)  # equal RC / max DR when uncorrelated
     elif obj == Objective.TRACKING_ERROR and bench is not None:
         tilt = mu / var
         denom = np.sqrt(max((tilt**2 * var).sum(), 1e-16))
@@ -156,6 +209,7 @@ def _diagonal_solve(mu, var, obj: Objective, bench, te_budget: float) -> np.ndar
 
 
 # ── integration helpers ─────────────────────────────────────────────────────────
+
 
 def signals_from_matrix(matrix, column: str, *, universe=None) -> dict:
     """Extract a return-aligned signal from a M6 ResearchMatrix column. Applies
@@ -175,22 +229,35 @@ def signals_from_matrix(matrix, column: str, *, universe=None) -> dict:
     return out
 
 
-def record_portfolio(registry, experiment, portfolio: Portfolio, *, optimizer_name: str,
-                     constraints: ConstraintSet, cost_model=None, rebalance=None) -> None:
+def record_portfolio(
+    registry,
+    experiment,
+    portfolio: Portfolio,
+    *,
+    optimizer_name: str,
+    constraints: ConstraintSet,
+    cost_model=None,
+    rebalance=None,
+) -> None:
     """Capture the portfolio config + key metrics in the M7 registry (via the
     existing store — no schema change)."""
     if registry is None or experiment is None:
         return
     exp = registry.load(experiment.experiment_id) or experiment
-    exp.metrics = {**(exp.metrics or {}),
-                   "PortfolioTurnover": portfolio.turnover,
-                   "PortfolioGrossExposure": portfolio.gross_exposure,
-                   "PortfolioExpectedRisk": portfolio.expected_risk,
-                   "PortfolioEffectiveHoldings": portfolio.diagnostics.get("effective_holdings", 0.0)}
-    cfg = {"optimizer": optimizer_name, "objective": portfolio.metadata.get("objective"),
-           "constraints": _constraints_dict(constraints),
-           "cost_model": asdict(cost_model) if cost_model is not None else None,
-           "rebalance": asdict(rebalance) if rebalance is not None else None}
+    exp.metrics = {
+        **(exp.metrics or {}),
+        "PortfolioTurnover": portfolio.turnover,
+        "PortfolioGrossExposure": portfolio.gross_exposure,
+        "PortfolioExpectedRisk": portfolio.expected_risk,
+        "PortfolioEffectiveHoldings": portfolio.diagnostics.get("effective_holdings", 0.0),
+    }
+    cfg = {
+        "optimizer": optimizer_name,
+        "objective": portfolio.metadata.get("objective"),
+        "constraints": _constraints_dict(constraints),
+        "cost_model": asdict(cost_model) if cost_model is not None else None,
+        "rebalance": asdict(rebalance) if rebalance is not None else None,
+    }
     exp.notes = f"portfolio objective={cfg['objective']} optimizer={optimizer_name} turnover={portfolio.turnover:.3f}"
     exp.parameters = {**(exp.parameters or {}), "portfolio_config": cfg}
     # full upsert (update_run persists metrics/status but not parameter_sets); insert

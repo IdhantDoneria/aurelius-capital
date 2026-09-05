@@ -17,15 +17,15 @@ from mentisrex.catalog.versioning import VersionManager
 
 __all__ = [
     "CatalogStore",
-    "DatasetRecord",
     "DataVersion",
-    "LineageEdge",
-    "QualityReport",
-    "GovernanceRecord",
     "DatasetHealth",
-    "QualityEngine",
-    "LineageTracker",
-    "VersionManager",
+    "DatasetRecord",
     "GovernanceManager",
+    "GovernanceRecord",
     "HealthMonitor",
+    "LineageEdge",
+    "LineageTracker",
+    "QualityEngine",
+    "QualityReport",
+    "VersionManager",
 ]

@@ -56,5 +56,6 @@ def validate_session(session) -> ValidationResult:
 def check_determinism(run_fn, *, n: int = 2) -> bool:
     """Run `run_fn` `n` times; True iff every run yields the same fingerprint."""
     from mentisrex.research.execution.ems.diagnostics import fingerprint
+
     fps = {fingerprint(run_fn()) for _ in range(n)}
     return len(fps) == 1

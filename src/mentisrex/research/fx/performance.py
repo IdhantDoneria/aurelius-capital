@@ -16,7 +16,10 @@ def currency_attribution(book, snap0: dict, snap1: dict) -> CurrencyAttributionR
     base0 = sum(v * r for v, r in snap0.values()) or 1.0
     return CurrencyAttributionReport(
         base_currency=book.base_currency,
-        local_return=rep.local_pnl / base0, fx_return=rep.fx_pnl / base0,
-        interaction=rep.interaction / base0, total_return=rep.total_pnl / base0,
+        local_return=rep.local_pnl / base0,
+        fx_return=rep.fx_pnl / base0,
+        interaction=rep.interaction / base0,
+        total_return=rep.total_pnl / base0,
         by_currency={c: p.total_base / base0 for c, p in rep.by_currency.items()},
-        reconciles=rep.reconciles)
+        reconciles=rep.reconciles,
+    )

@@ -135,8 +135,7 @@ def combine(
     benchmark = panel.benchmark
 
     core_frames = [
-        sleeves[name].weights.reindex(columns=columns, fill_value=0.0)
-        * multipliers.get(name, 1.0)
+        sleeves[name].weights.reindex(columns=columns, fill_value=0.0) * multipliers.get(name, 1.0)
         for name in CORE_SLEEVES
     ]
     core_weights = sum(core_frames) / len(core_frames) * allocator_cfg.k_core
@@ -155,9 +154,9 @@ def combine(
     )
 
     satellite_frames = [
-        sleeves[name].weights.reindex(columns=columns, fill_value=0.0).mul(
-            satellite_scalars[name], axis=0
-        )
+        sleeves[name]
+        .weights.reindex(columns=columns, fill_value=0.0)
+        .mul(satellite_scalars[name], axis=0)
         * multipliers.get(name, 1.0)
         for name in SATELLITE_SLEEVES
     ]

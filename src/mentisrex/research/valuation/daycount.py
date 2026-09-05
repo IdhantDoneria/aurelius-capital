@@ -8,10 +8,10 @@ curves, bonds and swaps so no module hard-codes ACT/365. Deterministic, calendar
 from __future__ import annotations
 
 from datetime import date
-from enum import Enum
+from enum import StrEnum
 
 
-class DayCount(str, Enum):
+class DayCount(StrEnum):
     ACT_365 = "ACT/365"
     ACT_360 = "ACT/360"
     THIRTY_360 = "30/360"
@@ -35,16 +35,19 @@ def year_fraction(start: date, end: date, convention: DayCount = DayCount.ACT_36
     raise ValueError(f"unknown day-count {convention}")
 
 
-class Compounding(str, Enum):
+class Compounding(StrEnum):
     CONTINUOUS = "continuous"
     ANNUAL = "annual"
     SIMPLE = "simple"
     SEMIANNUAL = "semiannual"
 
 
-def discount_factor(zero_rate: float, t: float, compounding: Compounding = Compounding.CONTINUOUS) -> float:
+def discount_factor(
+    zero_rate: float, t: float, compounding: Compounding = Compounding.CONTINUOUS
+) -> float:
     """Discount factor for a zero rate over year-fraction `t`."""
     import math
+
     if t < 0:
         raise ValueError("t must be >= 0")
     if compounding is Compounding.CONTINUOUS:
@@ -61,6 +64,7 @@ def discount_factor(zero_rate: float, t: float, compounding: Compounding = Compo
 def zero_from_df(df: float, t: float, compounding: Compounding = Compounding.CONTINUOUS) -> float:
     """Invert `discount_factor`: recover the zero rate from a discount factor."""
     import math
+
     if df <= 0:
         raise ValueError("discount factor must be > 0")
     if t <= 0:

@@ -17,22 +17,20 @@ Architecture under test:
         ↓
     PaperTradingLoop.process_snapshot(snapshot)          [M23]
 """
+
 from __future__ import annotations
 
 from datetime import date
 
-import pytest
-
+from mentisrex.research.market_data.normalization import Normalizer
+from mentisrex.research.market_data.pit import MarketDataSnapshotBuilder, PITPolicy
+from mentisrex.research.market_data.providers.yahoo.adapter import YahooFinanceSourceAdapter
+from mentisrex.research.market_data_ops.messages import MessageType
 from mentisrex.research.paper_trading.live_feed import (
     FeedMetrics,
     LiveFeedBuilder,
     LiveFeedConfig,
 )
-from mentisrex.research.market_data.providers.yahoo.adapter import YahooFinanceSourceAdapter
-from mentisrex.research.market_data_ops.messages import MessageType
-from mentisrex.research.market_data.normalization import Normalizer
-from mentisrex.research.market_data.pit import MarketDataSnapshotBuilder, PITPolicy
-
 
 # ── fixtures ──────────────────────────────────────────────────────────────────
 
@@ -40,25 +38,53 @@ UNIVERSE = ["AAPL", "MSFT", "GOOGL"]
 AS_OF = date(2026, 8, 1)
 
 FIXTURE_RECORDS = [
-    {"symbol": "AAPL",  "date": "2026-08-01", "close": 185.0,  "adj_close": 185.0,
-     "open": 183.0, "high": 186.0, "low": 182.0, "volume": 50_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
-    {"symbol": "MSFT",  "date": "2026-08-01", "close": 415.0,  "adj_close": 413.0,
-     "open": 412.0, "high": 416.0, "low": 410.0, "volume": 20_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
-    {"symbol": "GOOGL", "date": "2026-08-01", "close": 172.0,  "adj_close": 172.0,
-     "open": 170.0, "high": 173.5, "low": 169.0, "volume": 15_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
+    {
+        "symbol": "AAPL",
+        "date": "2026-08-01",
+        "close": 185.0,
+        "adj_close": 185.0,
+        "open": 183.0,
+        "high": 186.0,
+        "low": 182.0,
+        "volume": 50_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
+    {
+        "symbol": "MSFT",
+        "date": "2026-08-01",
+        "close": 415.0,
+        "adj_close": 413.0,
+        "open": 412.0,
+        "high": 416.0,
+        "low": 410.0,
+        "volume": 20_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
+    {
+        "symbol": "GOOGL",
+        "date": "2026-08-01",
+        "close": 172.0,
+        "adj_close": 172.0,
+        "open": 170.0,
+        "high": 173.5,
+        "low": 169.0,
+        "volume": 15_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
 ]
 
 
 def make_config(**kw):
-    defaults = dict(universe=tuple(UNIVERSE), fetch_window_days=5, max_staleness_days=5)
+    defaults = {"universe": tuple(UNIVERSE), "fetch_window_days": 5, "max_staleness_days": 5}
     defaults.update(kw)
     return LiveFeedConfig(**defaults)
 
 
 # ── M21 → M20: provider → SourceMessages ──────────────────────────────────────
+
 
 class TestYahooAdapterConvert:
     def test_valid_records_produce_source_messages(self):
@@ -74,9 +100,16 @@ class TestYahooAdapterConvert:
 
     def test_future_dated_records_excluded(self):
         future_record = {
-            "symbol": "AAPL", "date": "2030-01-01", "close": 999.0,
-            "adj_close": 999.0, "open": 998.0, "high": 1000.0, "low": 997.0,
-            "volume": 1_000, "dividends": 0.0, "stock_splits": 0.0,
+            "symbol": "AAPL",
+            "date": "2030-01-01",
+            "close": 999.0,
+            "adj_close": 999.0,
+            "open": 998.0,
+            "high": 1000.0,
+            "low": 997.0,
+            "volume": 1_000,
+            "dividends": 0.0,
+            "stock_splits": 0.0,
         }
         adapter = YahooFinanceSourceAdapter()
         msgs = adapter.convert([future_record], AS_OF)
@@ -93,10 +126,16 @@ class TestYahooAdapterConvert:
 
     def test_adjusted_close_emits_separate_message_when_different(self):
         record = {
-            "symbol": "MSFT", "date": "2026-08-01",
-            "close": 415.0, "adj_close": 413.0,  # different → two messages
-            "open": 412.0, "high": 416.0, "low": 410.0, "volume": 1_000_000,
-            "dividends": 0.0, "stock_splits": 0.0,
+            "symbol": "MSFT",
+            "date": "2026-08-01",
+            "close": 415.0,
+            "adj_close": 413.0,  # different → two messages
+            "open": 412.0,
+            "high": 416.0,
+            "low": 410.0,
+            "volume": 1_000_000,
+            "dividends": 0.0,
+            "stock_splits": 0.0,
         }
         adapter = YahooFinanceSourceAdapter()
         msgs = adapter.convert([record], AS_OF)
@@ -105,10 +144,16 @@ class TestYahooAdapterConvert:
 
     def test_dividend_record_emits_reference_message(self):
         record = {
-            "symbol": "AAPL", "date": "2026-08-01",
-            "close": 185.0, "adj_close": 185.0,
-            "open": 183.0, "high": 186.0, "low": 182.0, "volume": 50_000_000,
-            "dividends": 0.24, "stock_splits": 0.0,
+            "symbol": "AAPL",
+            "date": "2026-08-01",
+            "close": 185.0,
+            "adj_close": 185.0,
+            "open": 183.0,
+            "high": 186.0,
+            "low": 182.0,
+            "volume": 50_000_000,
+            "dividends": 0.24,
+            "stock_splits": 0.0,
         }
         adapter = YahooFinanceSourceAdapter()
         msgs = adapter.convert([record], AS_OF)
@@ -127,10 +172,16 @@ class TestYahooAdapterConvert:
     def test_zero_price_close_is_passed_through(self):
         """Zero price: adapter converts it; normalizer/quality engine rejects downstream."""
         record = {
-            "symbol": "AAPL", "date": "2026-08-01",
-            "close": 0.0, "adj_close": 0.0,
-            "open": 0.0, "high": 0.0, "low": 0.0, "volume": 0,
-            "dividends": 0.0, "stock_splits": 0.0,
+            "symbol": "AAPL",
+            "date": "2026-08-01",
+            "close": 0.0,
+            "adj_close": 0.0,
+            "open": 0.0,
+            "high": 0.0,
+            "low": 0.0,
+            "volume": 0,
+            "dividends": 0.0,
+            "stock_splits": 0.0,
         }
         adapter = YahooFinanceSourceAdapter()
         msgs = adapter.convert([record], AS_OF)
@@ -140,6 +191,7 @@ class TestYahooAdapterConvert:
 
 
 # ── M19: Normalizer processes payloads ────────────────────────────────────────
+
 
 class TestNormalizerOnYahooPayloads:
     def _payloads(self, records=None):
@@ -166,8 +218,13 @@ class TestNormalizerOnYahooPayloads:
                 assert obs.value > 0
 
     def test_unknown_field_does_not_crash(self):
-        bad_payload = {"id": "AAPL", "field": "UNKNOWN_FIELD_XYZ",
-                       "value": 42.0, "observation_date": "2026-08-01", "source": "test"}
+        bad_payload = {
+            "id": "AAPL",
+            "field": "UNKNOWN_FIELD_XYZ",
+            "value": 42.0,
+            "observation_date": "2026-08-01",
+            "source": "test",
+        }
         # unknown field → treated as REFERENCE obs_type, no diagnostic but no crash
         result = Normalizer().normalize([bad_payload], as_of=AS_OF)
         assert result is not None  # no exception
@@ -180,6 +237,7 @@ class TestNormalizerOnYahooPayloads:
 
 
 # ── M18: MarketDataSnapshotBuilder ────────────────────────────────────────────
+
 
 class TestSnapshotBuilderFromYahooPayloads:
     def _raw_payloads(self):
@@ -218,32 +276,60 @@ class TestSnapshotBuilderFromYahooPayloads:
 
     def test_snapshot_fingerprint_changes_on_different_prices(self):
         adapter = YahooFinanceSourceAdapter()
-        records2 = [{**r, "close": r["close"] + 10, "adj_close": r["adj_close"] + 10}
-                    for r in FIXTURE_RECORDS]
-        raw1 = [m.payload for m in adapter.convert(FIXTURE_RECORDS, AS_OF)
-                if m.msg_type == MessageType.OBSERVATION]
-        raw2 = [m.payload for m in adapter.convert(records2, AS_OF)
-                if m.msg_type == MessageType.OBSERVATION]
+        records2 = [
+            {**r, "close": r["close"] + 10, "adj_close": r["adj_close"] + 10}
+            for r in FIXTURE_RECORDS
+        ]
+        raw1 = [
+            m.payload
+            for m in adapter.convert(FIXTURE_RECORDS, AS_OF)
+            if m.msg_type == MessageType.OBSERVATION
+        ]
+        raw2 = [
+            m.payload
+            for m in adapter.convert(records2, AS_OF)
+            if m.msg_type == MessageType.OBSERVATION
+        ]
         builder = MarketDataSnapshotBuilder()
         r1 = builder.build(as_of=AS_OF, raw=raw1, policy=PITPolicy(fail_closed=False))
         r2 = builder.build(as_of=AS_OF, raw=raw2, policy=PITPolicy(fail_closed=False))
         assert r1.snapshot.fingerprint() != r2.snapshot.fingerprint()
 
     def test_future_observation_rejected_by_pit(self):
-        future = [{"symbol": "AAPL", "date": "2030-01-01",
-                   "close": 999.0, "adj_close": 999.0,
-                   "open": 998.0, "high": 1000.0, "low": 997.0,
-                   "volume": 1_000, "dividends": 0.0, "stock_splits": 0.0}]
+        future = [
+            {
+                "symbol": "AAPL",
+                "date": "2030-01-01",
+                "close": 999.0,
+                "adj_close": 999.0,
+                "open": 998.0,
+                "high": 1000.0,
+                "low": 997.0,
+                "volume": 1_000,
+                "dividends": 0.0,
+                "stock_splits": 0.0,
+            }
+        ]
         adapter = YahooFinanceSourceAdapter()
         msgs = adapter.convert(future, AS_OF)  # adapter already filters future
         raw = [m.payload for m in msgs if m.msg_type == MessageType.OBSERVATION]
         assert len(raw) == 0  # filtered at adapter level
 
     def test_zero_price_rejected_by_quality_engine(self):
-        zero = [{"symbol": "AAPL", "date": "2026-08-01",
-                 "close": 0.0, "adj_close": 0.0,
-                 "open": 0.0, "high": 0.0, "low": 0.0,
-                 "volume": 0, "dividends": 0.0, "stock_splits": 0.0}]
+        zero = [
+            {
+                "symbol": "AAPL",
+                "date": "2026-08-01",
+                "close": 0.0,
+                "adj_close": 0.0,
+                "open": 0.0,
+                "high": 0.0,
+                "low": 0.0,
+                "volume": 0,
+                "dividends": 0.0,
+                "stock_splits": 0.0,
+            }
+        ]
         adapter = YahooFinanceSourceAdapter()
         msgs = adapter.convert(zero, AS_OF)
         raw = [m.payload for m in msgs if m.msg_type == MessageType.OBSERVATION]
@@ -254,6 +340,7 @@ class TestSnapshotBuilderFromYahooPayloads:
 
 
 # ── LiveFeedBuilder: full offline pipeline ────────────────────────────────────
+
 
 class TestLiveFeedBuilderOffline:
     def make_builder(self, **kw) -> LiveFeedBuilder:
@@ -277,7 +364,8 @@ class TestLiveFeedBuilderOffline:
         b2 = self.make_builder()
         r1 = b1.fetch_snapshot_from_records(FIXTURE_RECORDS, AS_OF)
         r2 = b2.fetch_snapshot_from_records(FIXTURE_RECORDS, AS_OF)
-        assert r1 is not None and r2 is not None
+        assert r1 is not None
+        assert r2 is not None
         assert r1.snapshot.fingerprint() == r2.snapshot.fingerprint()
 
     def test_empty_records_returns_none(self):
@@ -287,9 +375,18 @@ class TestLiveFeedBuilderOffline:
 
     def test_all_zero_prices_returns_none_or_empty_spots(self):
         zero_records = [
-            {"symbol": "AAPL", "date": "2026-08-01", "close": 0.0, "adj_close": 0.0,
-             "open": 0.0, "high": 0.0, "low": 0.0, "volume": 0,
-             "dividends": 0.0, "stock_splits": 0.0},
+            {
+                "symbol": "AAPL",
+                "date": "2026-08-01",
+                "close": 0.0,
+                "adj_close": 0.0,
+                "open": 0.0,
+                "high": 0.0,
+                "low": 0.0,
+                "volume": 0,
+                "dividends": 0.0,
+                "stock_splits": 0.0,
+            },
         ]
         builder = self.make_builder()
         result = builder.fetch_snapshot_from_records(zero_records, AS_OF)
@@ -328,22 +425,33 @@ class TestLiveFeedBuilderOffline:
         builder = self.make_builder()
         r_dupes = builder.fetch_snapshot_from_records(dupes, AS_OF)
         r_single = builder.fetch_snapshot_from_records(FIXTURE_RECORDS, AS_OF)
-        assert r_dupes is not None and r_single is not None
+        assert r_dupes is not None
+        assert r_single is not None
         # same snapshot fingerprint — deduplication preserved semantics
         assert r_dupes.snapshot.fingerprint() == r_single.snapshot.fingerprint()
 
 
 # ── M23: snapshot compatible with PaperTradingLoop ───────────────────────────
 
+
 class TestLiveFeedSnapshotInPaperTradingLoop:
     """Full offline integration: fixture records → snapshot → M23 evaluation."""
 
     def _build_loop(self):
         import sys
-        sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent.parent.parent /
-                                "scripts" / "forward_run"))
-        from spec import SPEC, STARTING_CAPITAL, UNIVERSE as STRAT_UNIVERSE
+
+        sys.path.insert(
+            0,
+            str(
+                __import__("pathlib").Path(__file__).parent.parent.parent
+                / "scripts"
+                / "forward_run"
+            ),
+        )
         from logic import EqualWeightMomentumLogic
+        from spec import SPEC, STARTING_CAPITAL
+        from spec import UNIVERSE as STRAT_UNIVERSE
+
         from mentisrex.research.paper_trading.loop import LoopConfig, PaperTradingLoop
         from mentisrex.research.strategy_deployment.models import StrategyState
         from mentisrex.research.strategy_deployment.registry import StrategyRegistry
@@ -354,35 +462,62 @@ class TestLiveFeedSnapshotInPaperTradingLoop:
         reg.transition(SPEC.strategy_id, StrategyState.VALIDATING)
         reg.transition(SPEC.strategy_id, StrategyState.VALIDATED)
         runtime = StrategyRuntime()
-        cfg = LoopConfig(initial_capital=STARTING_CAPITAL, permit_experimental=True,
-                         fail_closed=True, validate_readiness=True, mode="PAPER_LIVE_FEED")
+        cfg = LoopConfig(
+            initial_capital=STARTING_CAPITAL,
+            permit_experimental=True,
+            fail_closed=True,
+            validate_readiness=True,
+            mode="PAPER_LIVE_FEED",
+        )
         loop = PaperTradingLoop(runtime=runtime, registry=reg, config=cfg)
         loop.add_strategy(SPEC.strategy_id, EqualWeightMomentumLogic(STRAT_UNIVERSE))
         return loop, SPEC, STRAT_UNIVERSE
 
     def _full_fixture_records(self):
-        from spec import UNIVERSE as STRAT_UNIVERSE
         import sys
-        sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent.parent.parent /
-                                "scripts" / "forward_run"))
+
         from spec import UNIVERSE as STRAT_UNIVERSE
+
+        sys.path.insert(
+            0,
+            str(
+                __import__("pathlib").Path(__file__).parent.parent.parent
+                / "scripts"
+                / "forward_run"
+            ),
+        )
         return [
-            {"symbol": sid, "date": "2026-08-01",
-             "close": 100.0 + i * 10, "adj_close": 100.0 + i * 10,
-             "open": 99.0 + i * 10, "high": 101.0 + i * 10,
-             "low": 98.0 + i * 10, "volume": 1_000_000,
-             "dividends": 0.0, "stock_splits": 0.0}
+            {
+                "symbol": sid,
+                "date": "2026-08-01",
+                "close": 100.0 + i * 10,
+                "adj_close": 100.0 + i * 10,
+                "open": 99.0 + i * 10,
+                "high": 101.0 + i * 10,
+                "low": 98.0 + i * 10,
+                "volume": 1_000_000,
+                "dividends": 0.0,
+                "stock_splits": 0.0,
+            }
             for i, sid in enumerate(STRAT_UNIVERSE)
         ]
 
     def test_snapshot_passes_process_snapshot(self):
         import sys
-        sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent.parent.parent /
-                                "scripts" / "forward_run"))
-        loop, spec, strat_universe = self._build_loop()
+
+        sys.path.insert(
+            0,
+            str(
+                __import__("pathlib").Path(__file__).parent.parent.parent
+                / "scripts"
+                / "forward_run"
+            ),
+        )
+        loop, _spec, strat_universe = self._build_loop()
         records = self._full_fixture_records()
-        cfg = LiveFeedConfig(universe=tuple(strat_universe), fetch_window_days=5,
-                             max_staleness_days=5)
+        cfg = LiveFeedConfig(
+            universe=tuple(strat_universe), fetch_window_days=5, max_staleness_days=5
+        )
         builder = LiveFeedBuilder(cfg)
         result = builder.fetch_snapshot_from_records(records, AS_OF)
         assert result is not None
@@ -393,12 +528,20 @@ class TestLiveFeedSnapshotInPaperTradingLoop:
 
     def test_evaluation_generates_signals_for_all_present_securities(self):
         import sys
-        sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent.parent.parent /
-                                "scripts" / "forward_run"))
+
+        sys.path.insert(
+            0,
+            str(
+                __import__("pathlib").Path(__file__).parent.parent.parent
+                / "scripts"
+                / "forward_run"
+            ),
+        )
         loop, spec, strat_universe = self._build_loop()
         records = self._full_fixture_records()
-        cfg = LiveFeedConfig(universe=tuple(strat_universe), fetch_window_days=5,
-                             max_staleness_days=5)
+        cfg = LiveFeedConfig(
+            universe=tuple(strat_universe), fetch_window_days=5, max_staleness_days=5
+        )
         builder = LiveFeedBuilder(cfg)
         result = builder.fetch_snapshot_from_records(records, AS_OF)
         snap = result.snapshot
@@ -409,12 +552,20 @@ class TestLiveFeedSnapshotInPaperTradingLoop:
 
     def test_strategy_fingerprint_unchanged_after_live_cycle(self):
         import sys
-        sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent.parent.parent /
-                                "scripts" / "forward_run"))
+
+        sys.path.insert(
+            0,
+            str(
+                __import__("pathlib").Path(__file__).parent.parent.parent
+                / "scripts"
+                / "forward_run"
+            ),
+        )
         loop, spec, strat_universe = self._build_loop()
         records = self._full_fixture_records()
-        cfg = LiveFeedConfig(universe=tuple(strat_universe), fetch_window_days=5,
-                             max_staleness_days=5)
+        cfg = LiveFeedConfig(
+            universe=tuple(strat_universe), fetch_window_days=5, max_staleness_days=5
+        )
         builder = LiveFeedBuilder(cfg)
         result = builder.fetch_snapshot_from_records(records, AS_OF)
         snap = result.snapshot
@@ -425,12 +576,20 @@ class TestLiveFeedSnapshotInPaperTradingLoop:
 
     def test_duplicate_snapshot_idempotent(self):
         import sys
-        sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent.parent.parent /
-                                "scripts" / "forward_run"))
-        loop, spec, strat_universe = self._build_loop()
+
+        sys.path.insert(
+            0,
+            str(
+                __import__("pathlib").Path(__file__).parent.parent.parent
+                / "scripts"
+                / "forward_run"
+            ),
+        )
+        loop, _spec, strat_universe = self._build_loop()
         records = self._full_fixture_records()
-        cfg = LiveFeedConfig(universe=tuple(strat_universe), fetch_window_days=5,
-                             max_staleness_days=5)
+        cfg = LiveFeedConfig(
+            universe=tuple(strat_universe), fetch_window_days=5, max_staleness_days=5
+        )
         builder = LiveFeedBuilder(cfg)
         result = builder.fetch_snapshot_from_records(records, AS_OF)
         snap = result.snapshot
@@ -442,12 +601,20 @@ class TestLiveFeedSnapshotInPaperTradingLoop:
 
     def test_reconciliation_ok_after_live_cycle(self):
         import sys
-        sys.path.insert(0, str(__import__("pathlib").Path(__file__).parent.parent.parent /
-                                "scripts" / "forward_run"))
+
+        sys.path.insert(
+            0,
+            str(
+                __import__("pathlib").Path(__file__).parent.parent.parent
+                / "scripts"
+                / "forward_run"
+            ),
+        )
         loop, spec, strat_universe = self._build_loop()
         records = self._full_fixture_records()
-        cfg = LiveFeedConfig(universe=tuple(strat_universe), fetch_window_days=5,
-                             max_staleness_days=5)
+        cfg = LiveFeedConfig(
+            universe=tuple(strat_universe), fetch_window_days=5, max_staleness_days=5
+        )
         builder = LiveFeedBuilder(cfg)
         result = builder.fetch_snapshot_from_records(records, AS_OF)
         snap = result.snapshot
@@ -458,6 +625,7 @@ class TestLiveFeedSnapshotInPaperTradingLoop:
 
 
 # ── Failure handling ──────────────────────────────────────────────────────────
+
 
 class TestLiveFeedFailureHandling:
     def test_provider_failure_returns_none_not_fabricated_data(self):
@@ -476,10 +644,20 @@ class TestLiveFeedFailureHandling:
             assert result.snapshot.spots == {}
 
     def test_negative_price_rejected(self):
-        bad = [{"symbol": "AAPL", "date": "2026-08-01",
-                "close": -10.0, "adj_close": -10.0,
-                "open": -11.0, "high": -9.0, "low": -12.0,
-                "volume": 1_000, "dividends": 0.0, "stock_splits": 0.0}]
+        bad = [
+            {
+                "symbol": "AAPL",
+                "date": "2026-08-01",
+                "close": -10.0,
+                "adj_close": -10.0,
+                "open": -11.0,
+                "high": -9.0,
+                "low": -12.0,
+                "volume": 1_000,
+                "dividends": 0.0,
+                "stock_splits": 0.0,
+            }
+        ]
         builder = LiveFeedBuilder(make_config())
         result = builder.fetch_snapshot_from_records(bad, AS_OF)
         if result is not None:
@@ -487,10 +665,20 @@ class TestLiveFeedFailureHandling:
 
     def test_stale_observation_tracked(self):
         # AS_OF = 2026-08-01; record is 2026-07-01 = 31 days stale; max_staleness=5
-        stale = [{"symbol": "AAPL", "date": "2026-07-01",
-                  "close": 180.0, "adj_close": 180.0,
-                  "open": 179.0, "high": 181.0, "low": 178.0,
-                  "volume": 1_000_000, "dividends": 0.0, "stock_splits": 0.0}]
+        stale = [
+            {
+                "symbol": "AAPL",
+                "date": "2026-07-01",
+                "close": 180.0,
+                "adj_close": 180.0,
+                "open": 179.0,
+                "high": 181.0,
+                "low": 178.0,
+                "volume": 1_000_000,
+                "dividends": 0.0,
+                "stock_splits": 0.0,
+            }
+        ]
         builder = LiveFeedBuilder(make_config(max_staleness_days=5))
         result = builder.fetch_snapshot_from_records(stale, AS_OF)
         # Stale observation: quality engine emits WARNING "stale" diagnostic.
@@ -498,7 +686,9 @@ class TestLiveFeedFailureHandling:
         # Check that metrics captured it OR the snapshot has no AAPL spot (if rejected by policy).
         if result is not None and "AAPL" in result.snapshot.spots:
             # Stale warning was recorded in metrics
-            assert builder.metrics.stale_observations >= 0  # tracked (may be 0 if quality doesn't reject)
+            assert (
+                builder.metrics.stale_observations >= 0
+            )  # tracked (may be 0 if quality doesn't reject)
         else:
             # All rejected → None returned
             assert result is None or "AAPL" not in (result.snapshot.spots if result else {})
@@ -506,18 +696,34 @@ class TestLiveFeedFailureHandling:
 
 # ── FeedMetrics ────────────────────────────────────────────────────────────────
 
+
 class TestFeedMetrics:
     def test_report_contains_required_keys(self):
         m = FeedMetrics()
         rpt = m.report()
         required = [
-            "provider", "requests", "successful_responses", "failed_responses",
-            "observations_received", "observations_rejected", "snapshots_created",
-            "snapshots_rejected", "stale_observations", "pit_violations",
-            "missing_securities", "avg_fetch_latency_s", "avg_normalization_latency_s",
-            "avg_build_latency_s", "evaluations", "signals_generated",
-            "orders_generated", "fills", "risk_rejections",
-            "last_nav", "last_cash", "reconciliation_ok",
+            "provider",
+            "requests",
+            "successful_responses",
+            "failed_responses",
+            "observations_received",
+            "observations_rejected",
+            "snapshots_created",
+            "snapshots_rejected",
+            "stale_observations",
+            "pit_violations",
+            "missing_securities",
+            "avg_fetch_latency_s",
+            "avg_normalization_latency_s",
+            "avg_build_latency_s",
+            "evaluations",
+            "signals_generated",
+            "orders_generated",
+            "fills",
+            "risk_rejections",
+            "last_nav",
+            "last_cash",
+            "reconciliation_ok",
         ]
         for key in required:
             assert key in rpt, f"missing key: {key}"

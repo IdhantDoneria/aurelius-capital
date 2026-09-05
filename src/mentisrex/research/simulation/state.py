@@ -23,11 +23,18 @@ class CashLedger:
     def __post_init__(self):
         self.cash = self.initial
 
-    def post(self, amount: float, kind: str, when: date | None = None,
-             security_id: str | None = None) -> None:
+    def post(
+        self, amount: float, kind: str, when: date | None = None, security_id: str | None = None
+    ) -> None:
         self.cash += amount
-        self.entries.append({"date": when.isoformat() if when else None, "kind": kind,
-                             "amount": amount, "security_id": security_id})
+        self.entries.append(
+            {
+                "date": when.isoformat() if when else None,
+                "kind": kind,
+                "amount": amount,
+                "security_id": security_id,
+            }
+        )
 
     def reconciles(self, tol: float = 1e-6) -> bool:
         return abs(self.initial + sum(e["amount"] for e in self.entries) - self.cash) < tol
@@ -45,8 +52,9 @@ class PortfolioState:
 
     # ── fills / accounting ────────────────────────────────────────────────────
 
-    def apply_fill(self, security_id: str, qty: float, price: float, cost: float,
-                   when: date | None = None) -> float:
+    def apply_fill(
+        self, security_id: str, qty: float, price: float, cost: float, when: date | None = None
+    ) -> float:
         """Apply an executed fill. Returns realized P&L booked on this fill."""
         # cash: pay for buys, receive for sells, always pay the cost
         self.ledger.post(-(qty * price) - cost, kind="fill", when=when, security_id=security_id)
@@ -81,8 +89,13 @@ class PortfolioState:
             self.holdings.pop(security_id, None)
         else:
             self.holdings[security_id] = Holding(
-                security_id=security_id, shares=new, cost_basis=cost_basis,
-                price=price, realized_pnl=realized_before + realized_delta, opened_at=opened)
+                security_id=security_id,
+                shares=new,
+                cost_basis=cost_basis,
+                price=price,
+                realized_pnl=realized_before + realized_delta,
+                opened_at=opened,
+            )
         return realized_delta
 
     # ── valuation ─────────────────────────────────────────────────────────────
@@ -92,8 +105,13 @@ class PortfolioState:
             p = prices.get(sid)
             if p is not None and p > 0:
                 self.holdings[sid] = Holding(
-                    security_id=sid, shares=h.shares, cost_basis=h.cost_basis, price=float(p),
-                    realized_pnl=h.realized_pnl, opened_at=h.opened_at)
+                    security_id=sid,
+                    shares=h.shares,
+                    cost_basis=h.cost_basis,
+                    price=float(p),
+                    realized_pnl=h.realized_pnl,
+                    opened_at=h.opened_at,
+                )
 
     def positions_value(self) -> float:
         return sum(h.market_value for h in self.holdings.values())
@@ -111,8 +129,13 @@ class PortfolioState:
         shorts = sum(-h.market_value for h in self.holdings.values() if h.shares < 0)
         gross = longs + shorts
         net = longs - shorts
-        return {"gross": gross / v, "net": net / v, "long": longs / v,
-                "short": shorts / v, "cash_weight": self.cash / v}
+        return {
+            "gross": gross / v,
+            "net": net / v,
+            "long": longs / v,
+            "short": shorts / v,
+            "cash_weight": self.cash / v,
+        }
 
     def unrealized_pnl(self) -> float:
         return sum(h.unrealized_pnl for h in self.holdings.values())

@@ -1,6 +1,5 @@
 """Knowledge Synthesis Engine — combines insights across all institutional stores."""
 
-
 from mentisrex.core.logging import get_logger
 from mentisrex.corpus.store import CorpusStore
 from mentisrex.corpus.taxonomy import QuantTaxonomy

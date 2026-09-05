@@ -16,13 +16,32 @@ def build_logs(result) -> dict:
         warnings.append("severe_drawdown")
 
     return {
-        "trade_log": [{"date": t.date.isoformat() if t.date else None, "security_id": t.security_id,
-                       "qty": t.quantity, "price": t.price, "cost": t.cost} for t in result.trades],
-        "rebalance_log": [{"date": r.date.isoformat(), "n_trades": r.n_trades,
-                           "turnover": r.turnover, "cost": r.total_cost} for r in result.rebalance_events],
-        "cost_log": {"total": result.cost_report.total_cost,
-                     "bps_of_traded": result.cost_report.cost_bps_of_traded},
-        "cash_log": {"final_cash": result.diagnostics.get("final_cash"),
-                     "reconciles": result.diagnostics.get("ledger_reconciles")},
+        "trade_log": [
+            {
+                "date": t.date.isoformat() if t.date else None,
+                "security_id": t.security_id,
+                "qty": t.quantity,
+                "price": t.price,
+                "cost": t.cost,
+            }
+            for t in result.trades
+        ],
+        "rebalance_log": [
+            {
+                "date": r.date.isoformat(),
+                "n_trades": r.n_trades,
+                "turnover": r.turnover,
+                "cost": r.total_cost,
+            }
+            for r in result.rebalance_events
+        ],
+        "cost_log": {
+            "total": result.cost_report.total_cost,
+            "bps_of_traded": result.cost_report.cost_bps_of_traded,
+        },
+        "cash_log": {
+            "final_cash": result.diagnostics.get("final_cash"),
+            "reconciles": result.diagnostics.get("ledger_reconciles"),
+        },
         "warnings": warnings,
     }

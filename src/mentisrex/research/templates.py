@@ -17,6 +17,8 @@ from mentisrex.backtesting.strategy.base import Strategy, StrategyContext
 from mentisrex.research.liquidity import (
     DEFAULT_METRIC,
     LIQUIDITY_METRICS,
+)
+from mentisrex.research.liquidity import (
     screen as _screen,
 )
 from mentisrex.research.portfolio_construction import invariant_weight
@@ -177,12 +179,12 @@ class MultiPairStrategy(Strategy):
 
     name = "multi_pairs"
 
-    def __init__(self, pairs: list[tuple], lookback: int = 126,
-                 entry_z: float = 2.0, exit_z: float = 0.5) -> None:
+    def __init__(
+        self, pairs: list[tuple], lookback: int = 126, entry_z: float = 2.0, exit_z: float = 0.5
+    ) -> None:
         # pairs: list of (symbol_x, symbol_y, hedge)
         self._subs = [
-            PairsStrategy(x, y, lookback=lookback, entry_z=entry_z,
-                          exit_z=exit_z, hedge=hedge)
+            PairsStrategy(x, y, lookback=lookback, entry_z=entry_z, exit_z=exit_z, hedge=hedge)
             for x, y, hedge in pairs
         ]
         self._pairs = pairs
@@ -190,9 +192,13 @@ class MultiPairStrategy(Strategy):
 
     @property
     def parameters(self) -> dict:
-        return {"n_pairs": len(self._subs), "lookback": self.lookback,
-                "entry_z": self.entry_z, "exit_z": self.exit_z,
-                "pairs": [f"{x}|{y}" for x, y, _ in self._pairs]}
+        return {
+            "n_pairs": len(self._subs),
+            "lookback": self.lookback,
+            "entry_z": self.entry_z,
+            "exit_z": self.exit_z,
+            "pairs": [f"{x}|{y}" for x, y, _ in self._pairs],
+        }
 
     def on_bar(self, ctx: StrategyContext, bar: MarketEvent) -> list[SignalEvent]:
         out: list[SignalEvent] = []
@@ -249,7 +255,7 @@ class OverlappingFactorStrategy(Strategy):
         self._n_decile: list[int] = [0] * K
         # Global portfolio-level clock (shared across all symbol on_bar calls)
         self._last_seen_ts: object = None
-        self._trading_day: int = 0    # incremented once per unique timestamp
+        self._trading_day: int = 0  # incremented once per unique timestamp
         self._last_period_computed: int = -1  # period_idx of last cohort update
 
     @property
@@ -317,8 +323,9 @@ class OverlappingFactorStrategy(Strategy):
         if not active_cohorts:
             return []
 
-        sym_directions = [self._memberships[k].get(bar.symbol, Direction.FLAT)
-                          for k in active_cohorts]
+        sym_directions = [
+            self._memberships[k].get(bar.symbol, Direction.FLAT) for k in active_cohorts
+        ]
         long_count = sym_directions.count(Direction.LONG)
         short_count = sym_directions.count(Direction.SHORT)
 
@@ -342,8 +349,7 @@ class OverlappingFactorStrategy(Strategy):
         else:
             strength = 1.0
 
-        return [SignalEvent(bar.timestamp, bar.symbol, d, strategy_id=self.name,
-                            strength=strength)]
+        return [SignalEvent(bar.timestamp, bar.symbol, d, strategy_id=self.name, strength=strength)]
 
 
 class FactorStrategy(Strategy):
@@ -461,12 +467,10 @@ class FactorStrategy(Strategy):
                 bars = ctx.history(s, w)
                 if len(bars) < w:
                     continue
-                liq[s] = fn([float(b.close) for b in bars],
-                            [float(b.volume) for b in bars])
+                liq[s] = fn([float(b.close) for b in bars], [float(b.volume) for b in bars])
             if liq:
                 survivors = _screen(liq, self.liquidity_pct, higher_liquid)
-                scores = {s: v for s, v in scores.items()
-                          if s not in liq or s in survivors}
+                scores = {s: v for s, v in scores.items() if s not in liq or s in survivors}
         if bar.symbol not in scores or len(scores) < 3:
             return []
         ranked = sorted(scores.values())
@@ -491,9 +495,9 @@ class FactorStrategy(Strategy):
             # Default OFF and, when ON, byte-identical to baseline while the bounds
             # are slack (full universe) — see portfolio_construction.invariant_weight.
             if self.invariant_construction:
-                strength = invariant_weight(_count, budget,
-                                            self.max_position_weight,
-                                            self.min_constituents)
+                strength = invariant_weight(
+                    _count, budget, self.max_position_weight, self.min_constituents
+                )
             else:
                 strength = budget / _count
         else:
@@ -502,8 +506,7 @@ class FactorStrategy(Strategy):
 
 
 def _daily_returns(closes: list[float]) -> list[float]:
-    return [closes[i] / closes[i - 1] - 1.0
-            for i in range(1, len(closes)) if closes[i - 1] != 0]
+    return [closes[i] / closes[i - 1] - 1.0 for i in range(1, len(closes)) if closes[i - 1] != 0]
 
 
 class LowVolStrategy(Strategy):
@@ -608,19 +611,17 @@ class LowVolStrategy(Strategy):
                 bars = ctx.history(s, w)
                 if len(bars) < w:
                     continue
-                liq[s] = fn([float(b.close) for b in bars],
-                            [float(b.volume) for b in bars])
+                liq[s] = fn([float(b.close) for b in bars], [float(b.volume) for b in bars])
             if liq:
                 survivors = _screen(liq, self.liquidity_pct, higher_liquid)
-                scores = {s: v for s, v in scores.items()
-                          if s not in liq or s in survivors}
+                scores = {s: v for s, v in scores.items() if s not in liq or s in survivors}
         if bar.symbol not in scores or len(scores) < 3:
             return []
         ranked = sorted(scores.values())
         _n = len(ranked)
         _count = max(1, int(self.quantile * _n))
-        lo = ranked[_count - 1]          # low-volatility threshold (long side)
-        hi = ranked[_n - _count]         # high-volatility threshold (short side)
+        lo = ranked[_count - 1]  # low-volatility threshold (long side)
+        hi = ranked[_n - _count]  # high-volatility threshold (short side)
         val = scores[bar.symbol]
         # LOW vol -> LONG, HIGH vol -> SHORT (opposite tail sense to momentum).
         if val <= lo:
@@ -632,9 +633,9 @@ class LowVolStrategy(Strategy):
         if self.equal_weight and d != Direction.FLAT:
             budget = 0.75 if self.allow_short else 1.0
             if self.invariant_construction:
-                strength = invariant_weight(_count, budget,
-                                            self.max_position_weight,
-                                            self.min_constituents)
+                strength = invariant_weight(
+                    _count, budget, self.max_position_weight, self.min_constituents
+                )
             else:
                 strength = budget / _count
         else:

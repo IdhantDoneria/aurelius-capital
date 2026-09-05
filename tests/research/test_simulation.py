@@ -12,6 +12,7 @@ from datetime import date, timedelta
 import numpy as np
 import pytest
 
+from mentisrex.research.experiment_registry import ExperimentRegistry, RegistryStore, lineage
 from mentisrex.research.portfolio.costs import TransactionCostModel
 from mentisrex.research.portfolio.rebalancing import RebalanceRule
 from mentisrex.research.simulation import (
@@ -24,15 +25,15 @@ from mentisrex.research.simulation import (
     attach_simulation,
     calendar_dates,
     generate_orders,
+    performance,
+    serialization,
     to_performance_metrics,
     validate_simulation,
 )
-from mentisrex.research.simulation import performance, serialization
 from mentisrex.research.simulation.diagnostics import build_logs
 from mentisrex.research.simulation.execution import ExecutionModel
 from mentisrex.research.simulation.models import Order
 from mentisrex.research.simulation.state import PortfolioState
-from mentisrex.research.experiment_registry import ExperimentRegistry, RegistryStore, lineage
 
 IDS = [f"S{i:02d}" for i in range(10)]
 
@@ -49,7 +50,7 @@ def _paths(timeline, seed=0, drift=0.0004, vol=0.01):
 def _providers(timeline, seed=0, **kw):
     paths = _paths(timeline, seed, **kw)
     idx = {d: i for i, d in enumerate(timeline)}
-    tw = {s: 0.1 for s in IDS}
+    tw = dict.fromkeys(IDS, 0.1)
 
     def price(sid, d):
         i = idx.get(d)
@@ -65,18 +66,22 @@ def _run(timeline=None, *, seed=0, execution=None, policy=None, cfg=None, adv=1e
     timeline = timeline or _timeline()
     price, target, _ = _providers(timeline, seed)
     eng = PortfolioSimulationEngine(
-        config=cfg or SimulationConfig(initial_capital=1e6, sizing=SizingConfig(min_trade_notional=50)),
+        config=cfg
+        or SimulationConfig(initial_capital=1e6, sizing=SizingConfig(min_trade_notional=50)),
         execution_model=execution or CostExecutionModel(TransactionCostModel()),
-        policy=policy or RebalancePolicy(explicit_dates=calendar_dates(timeline, "monthly")))
+        policy=policy or RebalancePolicy(explicit_dates=calendar_dates(timeline, "monthly")),
+    )
     return eng.run(timeline, target, price, adv_provider=(lambda s, d: adv))
 
 
 # ── accounting / state ────────────────────────────────────────────────────────────
 
+
 def test_buy_decreases_cash_increases_position():
     s = PortfolioState(100000.0)
     s.apply_fill("A", 100, 50.0, 10.0)
-    assert s.holdings["A"].shares == 100 and s.cash == pytest.approx(100000 - 5010)
+    assert s.holdings["A"].shares == 100
+    assert s.cash == pytest.approx(100000 - 5010)
 
 
 def test_average_cost_on_add():
@@ -90,7 +95,8 @@ def test_partial_sell_realizes_pnl():
     s = PortfolioState(1e6)
     s.apply_fill("A", 100, 50.0, 0.0)
     r = s.apply_fill("A", -40, 70.0, 0.0)
-    assert r == pytest.approx(40 * 20) and s.holdings["A"].shares == 60
+    assert r == pytest.approx(40 * 20)
+    assert s.holdings["A"].shares == 60
 
 
 def test_full_exit_removes_holding():
@@ -103,16 +109,18 @@ def test_full_exit_removes_holding():
 def test_long_to_short_flip():
     s = PortfolioState(1e6)
     s.apply_fill("A", 100, 50.0, 0.0)
-    r = s.apply_fill("A", -150, 60.0, 0.0)          # close 100, open short 50
+    r = s.apply_fill("A", -150, 60.0, 0.0)  # close 100, open short 50
     assert r == pytest.approx(100 * 10)
-    assert s.holdings["A"].shares == -50 and s.holdings["A"].cost_basis == 60.0
+    assert s.holdings["A"].shares == -50
+    assert s.holdings["A"].cost_basis == 60.0
 
 
 def test_short_cover_realizes():
     s = PortfolioState(1e6)
-    s.apply_fill("A", -50, 80.0, 0.0)               # short
-    r = s.apply_fill("A", 50, 70.0, 0.0)            # cover at lower → profit
-    assert r == pytest.approx(50 * 10) and "A" not in s.holdings
+    s.apply_fill("A", -50, 80.0, 0.0)  # short
+    r = s.apply_fill("A", 50, 70.0, 0.0)  # cover at lower → profit
+    assert r == pytest.approx(50 * 10)
+    assert "A" not in s.holdings
 
 
 def test_ledger_reconciles():
@@ -135,7 +143,8 @@ def test_exposures_long_short():
     s.apply_fill("B", -100, 50.0, 0.0)
     s.mark({"A": 50.0, "B": 50.0})
     e = s.exposures()
-    assert e["long"] == pytest.approx(0.005) and e["short"] == pytest.approx(0.005)
+    assert e["long"] == pytest.approx(0.005)
+    assert e["short"] == pytest.approx(0.005)
     assert e["net"] == pytest.approx(0.0)
 
 
@@ -148,10 +157,12 @@ def test_unrealized_pnl():
 
 # ── order generation ──────────────────────────────────────────────────────────────
 
+
 def test_generate_orders_delta():
     s = PortfolioState(1e6)
     orders = generate_orders({"A": 0.5}, s, {"A": 100.0}, SizingConfig())
-    assert len(orders) == 1 and orders[0].quantity == pytest.approx(5000)
+    assert len(orders) == 1
+    assert orders[0].quantity == pytest.approx(5000)
 
 
 def test_min_trade_notional_buffer():
@@ -159,18 +170,20 @@ def test_min_trade_notional_buffer():
     s.apply_fill("A", 5000, 100.0, 0.0)
     s.mark({"A": 100.0})
     orders = generate_orders({"A": 0.5001}, s, {"A": 100.0}, SizingConfig(min_trade_notional=1000))
-    assert orders == []                              # tiny drift within buffer
+    assert orders == []  # tiny drift within buffer
 
 
 def test_long_only_clamps_short():
     s = PortfolioState(1e6)
     orders = generate_orders({"A": -0.3}, s, {"A": 100.0}, SizingConfig(allow_short=False))
-    assert orders == []                              # negative target clamped to 0, no position
+    assert orders == []  # negative target clamped to 0, no position
 
 
 def test_integer_lot_rounding():
     s = PortfolioState(1e6)
-    orders = generate_orders({"A": 0.333}, s, {"A": 101.0}, SizingConfig(integer_shares=True, lot_size=100))
+    orders = generate_orders(
+        {"A": 0.333}, s, {"A": 101.0}, SizingConfig(integer_shares=True, lot_size=100)
+    )
     assert orders[0].quantity % 100 == 0
 
 
@@ -182,10 +195,12 @@ def test_unpriced_skipped():
 
 # ── execution ─────────────────────────────────────────────────────────────────────
 
+
 def test_cost_execution_books_cost():
     cm = TransactionCostModel(commission_bps=1, spread_bps=2, slippage_bps=1)
     fill = CostExecutionModel(cm).execute(Order("A", 1000), 100.0, adv=1e8)
-    assert fill.cost > 0 and fill.notional == pytest.approx(100000)
+    assert fill.cost > 0
+    assert fill.notional == pytest.approx(100000)
 
 
 def test_frictionless_zero_cost():
@@ -196,15 +211,19 @@ def test_frictionless_zero_cost():
 def test_execution_di():
     class Custom(ExecutionModel):
         name = "custom"
+
         def execute(self, order, price, adv=None):
             from mentisrex.research.simulation.models import Fill
+
             return Fill(order.security_id, order.quantity, price, 42.0, order.quantity * price)
+
     res = _run(execution=Custom())
     assert res.metadata.execution_model == "custom"
     assert all(t.cost == 42.0 for t in res.trades)
 
 
 # ── rebalancing ────────────────────────────────────────────────────────────────────
+
 
 def test_calendar_dates_monthly():
     tl = _timeline(365)
@@ -219,7 +238,8 @@ def test_calendar_dates_weekly():
 def test_explicit_policy_due():
     tl = _timeline(40)
     pol = RebalancePolicy(explicit_dates={tl[0], tl[20]})
-    assert pol.due(as_of=tl[0], last=None) and not pol.due(as_of=tl[1], last=tl[0])
+    assert pol.due(as_of=tl[0], last=None)
+    assert not pol.due(as_of=tl[1], last=tl[0])
 
 
 def test_threshold_policy():
@@ -230,10 +250,11 @@ def test_threshold_policy():
 
 # ── engine integration ─────────────────────────────────────────────────────────────
 
+
 def test_engine_runs_full_timeline():
     res = _run()
     assert len(res.equity_curve) == len(_timeline())
-    assert res.summary.n_rebalances == 24                # 24 months
+    assert res.summary.n_rebalances == 24  # 24 months
     assert res.metadata.n_periods == len(_timeline())
 
 
@@ -259,14 +280,16 @@ def test_costs_reduce_value():
     with_cost = _run(execution=CostExecutionModel(TransactionCostModel()))
     frictionless = _run(execution=FrictionlessExecutionModel())
     assert with_cost.summary.final_value < frictionless.summary.final_value
-    assert with_cost.summary.total_cost > 0 and frictionless.summary.total_cost == 0
+    assert with_cost.summary.total_cost > 0
+    assert frictionless.summary.total_cost == 0
 
 
 def test_no_rebalance_stays_flat():
     tl = _timeline(200)
     res = _run(tl, policy=RebalancePolicy(explicit_dates=set()))
-    assert res.summary.n_rebalances == 0 and len(res.trades) == 0
-    assert res.summary.final_value == pytest.approx(1e6)   # all cash, never invested
+    assert res.summary.n_rebalances == 0
+    assert len(res.trades) == 0
+    assert res.summary.final_value == pytest.approx(1e6)  # all cash, never invested
 
 
 def test_turnover_positive():
@@ -283,10 +306,13 @@ def test_equity_dates_sorted():
 
 # ── performance analytics ───────────────────────────────────────────────────────────
 
+
 def test_performance_metrics_uptrend():
     vals = list(100 * np.cumprod(1 + np.full(300, 0.001)))
     m = performance.performance_metrics(vals)
-    assert m["cagr"] > 0 and m["sharpe"] > 0 and m["max_drawdown"] == pytest.approx(0.0, abs=1e-9)
+    assert m["cagr"] > 0
+    assert m["sharpe"] > 0
+    assert m["max_drawdown"] == pytest.approx(0.0, abs=1e-9)
 
 
 def test_drawdown_decline():
@@ -303,6 +329,7 @@ def test_sortino_omega_present():
 
 
 # ── reports ─────────────────────────────────────────────────────────────────────────
+
 
 def test_cost_report():
     res = _run()
@@ -330,43 +357,61 @@ def test_risk_timeline():
 
 # ── attribution ─────────────────────────────────────────────────────────────────────
 
+
 def test_attribution_contributions():
     res = _run()
     sec = res.attribution.security_contribution
     assert len(sec) == 10
-    assert abs(sum(sec.values()) - res.summary.total_return) < 0.1   # approx up to costs/cash
+    assert abs(sum(sec.values()) - res.summary.total_return) < 0.1  # approx up to costs/cash
 
 
 # ── validation ──────────────────────────────────────────────────────────────────────
 
+
 def test_validate_clean_run():
     res = _run()
     v = validate_simulation(res)
-    assert v["ledger_consistency"]["ok"] and v["portfolio_accounting"]["ok"]
+    assert v["ledger_consistency"]["ok"]
+    assert v["portfolio_accounting"]["ok"]
     assert v["ok"]
 
 
 def test_validate_detects_short_when_disallowed():
     res = _run()
     # inject a short snapshot → position_accounting should fail under long-only
-    res.snapshots.append(type(res.snapshots[0])(
-        date=date(2099, 1, 1), value=1e6, cash=0, holdings={}, gross_exposure=1.0,
-        net_exposure=0.5, long_exposure=0.75, short_exposure=0.25, n_positions=2))
+    res.snapshots.append(
+        type(res.snapshots[0])(
+            date=date(2099, 1, 1),
+            value=1e6,
+            cash=0,
+            holdings={},
+            gross_exposure=1.0,
+            net_exposure=0.5,
+            long_exposure=0.75,
+            short_exposure=0.25,
+            n_positions=2,
+        )
+    )
     v = validate_simulation(res, allow_short=False)
     assert v["position_accounting"]["ok"] is False
 
 
 def test_phase9_integration():
     from mentisrex.research.validation import ResearchValidator, ValidationConfig
+
     res = _run()
     pm = to_performance_metrics(res)
     assert len(pm.daily_returns) == len(res.equity_curve) - 1
-    rep = ResearchValidator(config=ValidationConfig(bootstrap_samples=100, monte_carlo_samples=50,
-                            permutation_samples=100, n_trials=1)).validate(_stub_exp(), pm)
+    rep = ResearchValidator(
+        config=ValidationConfig(
+            bootstrap_samples=100, monte_carlo_samples=50, permutation_samples=100, n_trials=1
+        )
+    ).validate(_stub_exp(), pm)
     assert rep.overall_verdict in ("PASS", "PASS_WITH_WARNINGS", "REJECT", "REQUIRES_REVIEW")
 
 
 # ── serialization ────────────────────────────────────────────────────────────────────
+
 
 def test_serialization_json():
     res = _run()
@@ -376,29 +421,40 @@ def test_serialization_json():
 
 
 def test_serialization_parquet(tmp_path):
-    pytest.importorskip("pyarrow")               # parquet engine optional in this env
+    pytest.importorskip("pyarrow")  # parquet engine optional in this env
     res = _run()
     paths = serialization.save_parquet(res, str(tmp_path))
-    import pandas as pd
     from pathlib import Path
+
+    import pandas as pd
+
     assert Path(paths["equity_curve"]).exists()
     assert len(pd.read_parquet(paths["trades"])) == len(res.trades)
 
 
 # ── registry integration ─────────────────────────────────────────────────────────────
 
+
 def test_registry_attach(tmp_path):
     reg = ExperimentRegistry(store=RegistryStore(":memory:"))
     try:
-        dv = lineage.dataset_versions(prices=1, fundamentals=1, insiders=1, universe=1,
-                                      securitymaster=1, feature_registry_version="fr1")
-        exp = reg.start_experiment("sim", parameters={"x": 1}, features=["market_cap"],
-                                   dataset_versions=dv, random_seed=1)
+        dv = lineage.dataset_versions(
+            prices=1,
+            fundamentals=1,
+            insiders=1,
+            universe=1,
+            securitymaster=1,
+            feature_registry_version="fr1",
+        )
+        exp = reg.start_experiment(
+            "sim", parameters={"x": 1}, features=["market_cap"], dataset_versions=dv, random_seed=1
+        )
         reg.finish_experiment(exp, metrics={"Sharpe": 1.0})
         res = _run()
         out = attach_simulation(reg, exp, res, artifacts_dir=str(tmp_path))
         reloaded = reg.load(exp.experiment_id)
-        assert "SimCAGR" in reloaded.metrics and out["hash"]
+        assert "SimCAGR" in reloaded.metrics
+        assert out["hash"]
         assert any("simulation_result" in a["artifact_type"] for a in reloaded.artifacts)
     finally:
         reg.close()
@@ -406,17 +462,20 @@ def test_registry_attach(tmp_path):
 
 # ── edge cases / diagnostics ─────────────────────────────────────────────────────────
 
+
 def test_empty_timeline():
     eng = PortfolioSimulationEngine(execution_model=FrictionlessExecutionModel())
     res = eng.run([], lambda d: {}, lambda s, d: None)
-    assert res.summary.n_periods == 0 and res.summary.final_value == 0.0
+    assert res.summary.n_periods == 0
+    assert res.summary.final_value == 0.0
 
 
 def test_single_security():
     tl = _timeline(120)
     price, _, _ = _providers(tl)
-    eng = PortfolioSimulationEngine(execution_model=FrictionlessExecutionModel(),
-                                    policy=RebalancePolicy(explicit_dates={tl[0]}))
+    eng = PortfolioSimulationEngine(
+        execution_model=FrictionlessExecutionModel(), policy=RebalancePolicy(explicit_dates={tl[0]})
+    )
     res = eng.run(tl, lambda d: {"S00": 1.0}, price)
     assert res.snapshots[-1].n_positions == 1
 
@@ -425,13 +484,19 @@ def test_diagnostics_logs():
     res = _run()
     logs = build_logs(res)
     assert len(logs["trade_log"]) == len(res.trades)
-    assert "warnings" in logs and isinstance(logs["rebalance_log"], list)
+    assert "warnings" in logs
+    assert isinstance(logs["rebalance_log"], list)
 
 
 class _Exp:
-    experiment_id = "SIM"; fingerprint = "f"; git_commit = "c"; random_seed = 1
-    dataset_versions = {"feature_registry_version": "fr1"}; features = ["market_cap"]
-    artifacts: list = []; metrics: dict = {}
+    experiment_id = "SIM"
+    fingerprint = "f"
+    git_commit = "c"
+    random_seed = 1
+    dataset_versions = {"feature_registry_version": "fr1"}
+    features = ["market_cap"]
+    artifacts: list = []
+    metrics: dict = {}
 
 
 def _stub_exp():

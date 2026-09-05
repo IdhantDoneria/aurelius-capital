@@ -26,17 +26,24 @@ def attach_risk(registry, experiment, report, *, artifacts_dir: str | None = Non
 
     exp = registry.load(experiment.experiment_id) or experiment
     diag = _diagnostics(report)
-    exp.metrics = {**(exp.metrics or {}),
-                   "RiskDecision": {"approve": 1.0, "approve_with_warning": 0.5, "reject": 0.0}
-                   .get(diag["decision"], 0.0),
-                   "RiskVolatility": diag["volatility"], "RiskGross": diag["gross"],
-                   "RiskHerfindahl": diag["herfindahl"],
-                   "RiskVaR95": diag["var_95"] or 0.0,
-                   "RiskViolations": float(diag["n_violations"])}
-    exp.notes = (f"risk decision={diag['decision']} vol={diag['volatility']:.3f} "
-                 f"gross={diag['gross']:.2f} violations={diag['n_violations']}")
-    exp.artifacts = [*(exp.artifacts or []),
-                     {"artifact_type": "risk_report.json", "artifact_location": str(path),
-                      "artifact_hash": h}]
+    exp.metrics = {
+        **(exp.metrics or {}),
+        "RiskDecision": {"approve": 1.0, "approve_with_warning": 0.5, "reject": 0.0}.get(
+            diag["decision"], 0.0
+        ),
+        "RiskVolatility": diag["volatility"],
+        "RiskGross": diag["gross"],
+        "RiskHerfindahl": diag["herfindahl"],
+        "RiskVaR95": diag["var_95"] or 0.0,
+        "RiskViolations": float(diag["n_violations"]),
+    }
+    exp.notes = (
+        f"risk decision={diag['decision']} vol={diag['volatility']:.3f} "
+        f"gross={diag['gross']:.2f} violations={diag['n_violations']}"
+    )
+    exp.artifacts = [
+        *(exp.artifacts or []),
+        {"artifact_type": "risk_report.json", "artifact_location": str(path), "artifact_hash": h},
+    ]
     registry.store.insert(exp)
     return {"artifact": str(path), "hash": h, "risk_fingerprint": diag["fingerprint"]}

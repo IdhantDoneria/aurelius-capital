@@ -16,12 +16,25 @@ from mentisrex.research.post_trade.models import ReconciliationReport, Settlemen
 
 
 def _diff(category, security_id, internal, external, severity="warning") -> dict:
-    return {"category": category, "security_id": security_id, "internal": internal,
-            "external": external, "delta": internal - external, "severity": severity}
+    return {
+        "category": category,
+        "security_id": security_id,
+        "internal": internal,
+        "external": external,
+        "delta": internal - external,
+        "severity": severity,
+    }
 
 
-def reconcile(engine, *, broker_account=None, execution_fills=None, as_of: date | None = None,
-              cash_tol: float = 1e-6, qty_tol: float = 1e-6) -> ReconciliationReport:
+def reconcile(
+    engine,
+    *,
+    broker_account=None,
+    execution_fills=None,
+    as_of: date | None = None,
+    cash_tol: float = 1e-6,
+    qty_tol: float = 1e-6,
+) -> ReconciliationReport:
     diffs: list = []
 
     # ── cash: post-trade ledger vs M11 economic cash ──
@@ -38,8 +51,13 @@ def reconcile(engine, *, broker_account=None, execution_fills=None, as_of: date 
             iq = holdings[sid].shares if sid in holdings else 0.0
             eq = ext[sid].quantity if sid in ext else 0.0
             if abs(iq - eq) > qty_tol:
-                cat = ("missing_trade" if eq == 0 else "unsettled_position" if iq == 0
-                       else "incorrect_quantity")
+                cat = (
+                    "missing_trade"
+                    if eq == 0
+                    else "unsettled_position"
+                    if iq == 0
+                    else "incorrect_quantity"
+                )
                 diffs.append(_diff(cat, sid, iq, eq, "critical"))
         if abs(broker_account.cash - econ_m11) > max(cash_tol, 1.0):
             diffs.append(_diff("cash_mismatch", None, econ_m11, broker_account.cash, "warning"))
@@ -62,13 +80,22 @@ def reconcile(engine, *, broker_account=None, execution_fills=None, as_of: date 
     # ── settlement failures ──
     for inst in engine.settlement.instructions.values():
         if inst.status == SettlementStatus.FAILED:
-            diffs.append(_diff("failed_settlement", inst.security_id, inst.cash_amount, 0.0, "critical"))
+            diffs.append(
+                _diff("failed_settlement", inst.security_id, inst.cash_amount, 0.0, "critical")
+            )
 
-    n_settled = sum(1 for i in engine.settlement.instructions.values()
-                    if i.status == SettlementStatus.COMPLETED)
+    n_settled = sum(
+        1 for i in engine.settlement.instructions.values() if i.status == SettlementStatus.COMPLETED
+    )
     categories: dict = {}
     for d in diffs:
         categories[d["category"]] = categories.get(d["category"], 0) + 1
     return ReconciliationReport(
-        as_of=as_of, ok=not diffs, differences=diffs, n_trades=engine.trade_ledger.n_trades,
-        n_settled=n_settled, cash_diff=econ_ledger - econ_m11, categories=categories)
+        as_of=as_of,
+        ok=not diffs,
+        differences=diffs,
+        n_trades=engine.trade_ledger.n_trades,
+        n_settled=n_settled,
+        cash_diff=econ_ledger - econ_m11,
+        categories=categories,
+    )

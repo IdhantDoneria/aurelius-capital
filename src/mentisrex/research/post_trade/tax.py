@@ -28,12 +28,13 @@ class RealizedGain:
     cost: float
     gain: float
     holding_days: int | None
-    category: str                         # from the jurisdiction rule
+    category: str  # from the jurisdiction rule
 
 
 class JurisdictionRule:
     """Interface for country/holding-period classification. Default splits at 365 days;
     concrete jurisdictions override `classify` (and, in a real system, rates)."""
+
     long_term_days = 365
 
     def classify(self, holding_days: int | None) -> str:
@@ -48,19 +49,27 @@ class TaxLotBook:
 
     def __init__(self, rule: JurisdictionRule | None = None) -> None:
         self.rule = rule or JurisdictionRule()
-        self.lots: dict = {}              # security_id -> list[TaxLot] (FIFO)
-        self.realized: list = []          # list[RealizedGain]
+        self.lots: dict = {}  # security_id -> list[TaxLot] (FIFO)
+        self.realized: list = []  # list[RealizedGain]
 
-    def apply_trade(self, security_id: str, quantity: float, price: float,
-                    *, when: date | None = None) -> list:
-        return self.buy(security_id, quantity, price, when=when) if quantity > 0 \
+    def apply_trade(
+        self, security_id: str, quantity: float, price: float, *, when: date | None = None
+    ) -> list:
+        return (
+            self.buy(security_id, quantity, price, when=when)
+            if quantity > 0
             else self.sell(security_id, -quantity, price, when=when)
+        )
 
-    def buy(self, security_id: str, shares: float, price: float, *, when: date | None = None) -> list:
+    def buy(
+        self, security_id: str, shares: float, price: float, *, when: date | None = None
+    ) -> list:
         self.lots.setdefault(security_id, []).append(TaxLot(security_id, shares, price, when))
         return []
 
-    def sell(self, security_id: str, shares: float, price: float, *, when: date | None = None) -> list:
+    def sell(
+        self, security_id: str, shares: float, price: float, *, when: date | None = None
+    ) -> list:
         remaining = shares
         gains: list = []
         lots = self.lots.get(security_id, [])
@@ -70,8 +79,9 @@ class TaxLotBook:
             proceeds = take * price
             cost = take * lot.cost_basis
             days = (when - lot.opened).days if (when and lot.opened) else None
-            g = RealizedGain(security_id, take, proceeds, cost, proceeds - cost, days,
-                             self.rule.classify(days))
+            g = RealizedGain(
+                security_id, take, proceeds, cost, proceeds - cost, days, self.rule.classify(days)
+            )
             gains.append(g)
             self.realized.append(g)
             remaining -= take
@@ -97,6 +107,7 @@ def build_from_engine(engine, rule: JurisdictionRule | None = None) -> TaxLotBoo
     """Replay an engine's trade events into a tax-lot book (FIFO)."""
     book = TaxLotBook(rule)
     from mentisrex.research.post_trade.models import TradeEvent
+
     for e in sorted(engine.log.of_type(TradeEvent), key=lambda x: x.seq):
         book.apply_trade(e.security_id, e.quantity, e.price, when=e.trade_date)
     return book

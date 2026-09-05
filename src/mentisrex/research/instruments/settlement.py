@@ -23,11 +23,15 @@ class SettlementResult:
     underlying_fill: dict | None = None
 
 
-def settle_expiry(book, instrument, settle_price: float, *, when: date | None = None) -> SettlementResult:
+def settle_expiry(
+    book, instrument, settle_price: float, *, when: date | None = None
+) -> SettlementResult:
     inst = book._inst(instrument)
     res = _expiry.expire(book, inst, settle_price, when=when)
     if inst.type is InstrumentType.OPTION and res is not None:
-        return SettlementResult(inst.instrument_id, inst.settlement_style, res.cash, res.underlying_fill)
+        return SettlementResult(
+            inst.instrument_id, inst.settlement_style, res.cash, res.underlying_fill
+        )
     return SettlementResult(inst.instrument_id, inst.settlement_style, 0.0)
 
 

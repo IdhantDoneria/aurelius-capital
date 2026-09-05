@@ -21,7 +21,9 @@ def _d(s: str | None) -> date | None:
     return date.fromisoformat(s) if s else None
 
 
-def parse_company_facts(doc: dict[str, Any], security_id: str | None = None) -> tuple[list[dict], list[dict]]:
+def parse_company_facts(
+    doc: dict[str, Any], security_id: str | None = None
+) -> tuple[list[dict], list[dict]]:
     """Split a companyfacts document into (facts, filings).
 
     facts: one row per XBRL data point (never deduped across accessions →
@@ -41,23 +43,37 @@ def parse_company_facts(doc: dict[str, Any], security_id: str | None = None) -> 
                     filed = _d(p.get("filed"))
                     if end is None or accn is None or filed is None or p.get("val") is None:
                         continue  # broken/incomplete XBRL point — skip (quality flags separately)
-                    facts.append({
-                        "cik": cik, "security_id": security_id, "taxonomy": taxonomy,
-                        "concept": concept, "unit": unit,
-                        "period_start": _d(p.get("start")), "period_end": end,
-                        "fiscal_year": p.get("fy"), "fiscal_period": p.get("fp"),
-                        "value": float(p["val"]), "form": p.get("form"),
-                        "accession": accn, "filing_date": filed, "frame": p.get("frame"),
-                        "vendor": "sec_edgar",
-                        "source_document": f"https://www.sec.gov/Archives/edgar/data/{cik}/{accn.replace('-', '')}",
-                        "data_version": 1,
-                    })
+                    facts.append(
+                        {
+                            "cik": cik,
+                            "security_id": security_id,
+                            "taxonomy": taxonomy,
+                            "concept": concept,
+                            "unit": unit,
+                            "period_start": _d(p.get("start")),
+                            "period_end": end,
+                            "fiscal_year": p.get("fy"),
+                            "fiscal_period": p.get("fp"),
+                            "value": float(p["val"]),
+                            "form": p.get("form"),
+                            "accession": accn,
+                            "filing_date": filed,
+                            "frame": p.get("frame"),
+                            "vendor": "sec_edgar",
+                            "source_document": f"https://www.sec.gov/Archives/edgar/data/{cik}/{accn.replace('-', '')}",
+                            "data_version": 1,
+                        }
+                    )
                     f = filings.get(accn)
                     # keep the latest period_end seen for the accession as its report period
                     if f is None or (f["period_end"] and end and end > f["period_end"]):
                         filings[accn] = {
-                            "accession": accn, "cik": cik, "security_id": security_id,
-                            "form": p.get("form"), "filing_date": filed, "period_end": end,
+                            "accession": accn,
+                            "cik": cik,
+                            "security_id": security_id,
+                            "form": p.get("form"),
+                            "filing_date": filed,
+                            "period_end": end,
                             "report_type": p.get("form"),
                             "source_document": facts[-1]["source_document"],
                         }

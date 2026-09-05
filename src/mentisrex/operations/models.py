@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class JobStatus(str, Enum):
+class JobStatus(StrEnum):
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -35,7 +35,7 @@ class StageResult(BaseModel):
     stage: str
     status: str  # success | failed | skipped
     message: str = ""
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
 
 
 class PipelineJob(BaseModel):
@@ -50,8 +50,8 @@ class PipelineJob(BaseModel):
     priority_score: float = 0.0
     experiment_spec: dict[str, Any] | None = None
     error: str = ""
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
     retry_count: int = 0
     processing_seconds: float = 0.0
 
@@ -97,7 +97,7 @@ class DailyReport(BaseModel):
     avg_processing_seconds: float = 0.0
     top_papers: list[dict] = Field(default_factory=list)
     failures: list[dict] = Field(default_factory=list)
-    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
 
 
 class HealthStatus(BaseModel):

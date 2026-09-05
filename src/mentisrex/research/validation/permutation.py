@@ -16,8 +16,9 @@ import numpy as np
 KINDS = ("return", "sign", "signal")
 
 
-def permutation_test(returns, stat_fn, *, kind: str = "return", n_samples: int = 1000,
-                     signal=None, seed: int = 0) -> dict:
+def permutation_test(
+    returns, stat_fn, *, kind: str = "return", n_samples: int = 1000, signal=None, seed: int = 0
+) -> dict:
     r = np.asarray(returns, dtype=float)
     if r.size < 3:
         return {"kind": kind, "observed": float("nan"), "p_value": float("nan"), "n_samples": 0}
@@ -31,10 +32,18 @@ def permutation_test(returns, stat_fn, *, kind: str = "return", n_samples: int =
         base = r / np.where(s == 0, 1, np.sign(s))  # underlying magnitude
         null = np.array([stat_fn(base * np.sign(rng.permutation(s))) for _ in range(n_samples)])
     elif kind == "sign":
-        null = np.array([stat_fn(r * rng.choice([-1.0, 1.0], size=r.size)) for _ in range(n_samples)])
+        null = np.array(
+            [stat_fn(r * rng.choice([-1.0, 1.0], size=r.size)) for _ in range(n_samples)]
+        )
     else:  # return
         null = np.array([stat_fn(rng.permutation(r)) for _ in range(n_samples)])
 
     p = float((np.sum(null >= observed) + 1) / (n_samples + 1))  # add-one (never 0)
-    return {"kind": kind, "observed": observed, "p_value": p,
-            "null_mean": float(null.mean()), "n_samples": int(null.size), "distribution": null}
+    return {
+        "kind": kind,
+        "observed": observed,
+        "p_value": p,
+        "null_mean": float(null.mean()),
+        "n_samples": int(null.size),
+        "distribution": null,
+    }

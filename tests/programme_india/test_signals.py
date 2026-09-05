@@ -48,7 +48,7 @@ class TestMomentumScore:
         cfg = IndiaConfig()
         idx = pd.bdate_range("2020-01-01", periods=280)
         winner = pd.Series(np.linspace(100, 300, 280), index=idx)  # steady uptrend
-        loser = pd.Series(np.linspace(100, 30, 280), index=idx)    # steady downtrend
+        loser = pd.Series(np.linspace(100, 30, 280), index=idx)  # steady downtrend
         panel = pd.DataFrame({"WINNER.NS": winner, "LOSER.NS": loser})
         mom = momentum_score(panel, cfg)
         assert mom["WINNER.NS"] > mom["LOSER.NS"]
@@ -66,7 +66,8 @@ class TestCompositeScore:
         mom_z = pd.Series({"A": 1.0, "B": 1.0})
         quality_z = pd.Series({"A": 2.0})  # B has no quality data
         result = composite_score(mom_z, quality_z, cfg)
-        assert "B" in result.index and not pd.isna(result["B"])
+        assert "B" in result.index
+        assert not pd.isna(result["B"])
         # A gets its real quality boost, B gets momentum-weight only
         assert result["A"] > result["B"]
 
@@ -83,7 +84,7 @@ class TestSectorCap:
     def test_caps_single_sector_exposure(self):
         cfg = IndiaConfig()  # sector_cap = 0.28
         ranked = [f"S{i}" for i in range(10)]  # all same sector, best-ranked first
-        sector_map = {name: "Financials" for name in ranked}
+        sector_map = dict.fromkeys(ranked, "Financials")
         picks = select_with_sector_cap(ranked, sector_map, cfg, n_pick=10)
         # With a single sector and n_pick=10, sector cap forces a fallback
         # (can't diversify a single-sector universe) -- verify it doesn't
@@ -98,6 +99,7 @@ class TestSectorCap:
         sector_map = {f"S{i}": f"Sector{i % 4}" for i in range(20)}
         picks = select_with_sector_cap(ranked, sector_map, cfg, n_pick=10)
         from collections import Counter
+
         counts = Counter(sector_map[p] for p in picks)
         assert max(counts.values()) <= 4  # well under a single sector dominating
 
@@ -137,9 +139,9 @@ class TestInverseVolWeights:
         # weight starts BELOW the cap already in this case, so this
         # specifically checks the "already near cap" regime doesn't get
         # pushed over it by any rounding/redistribution error.
-        returns = pd.DataFrame({
-            f"N{i}.NS": rng.normal(0, 0.014 + 0.0002 * i, 63) for i in range(20)
-        }, index=idx)
+        returns = pd.DataFrame(
+            {f"N{i}.NS": rng.normal(0, 0.014 + 0.0002 * i, 63) for i in range(20)}, index=idx
+        )
         picks = list(returns.columns)
         w = inverse_vol_weights(returns, picks, cfg)
         assert (w <= cfg.per_name_cap + 1e-9).all(), w.max()

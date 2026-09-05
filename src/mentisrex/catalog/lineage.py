@@ -38,16 +38,28 @@ class LineageTracker:
 
     # ── Convenience helpers for common edge types ──────────────────────────────
 
-    def dataset_feeds_feature(self, dataset_id: str, feature_id: str, **meta: object) -> LineageEdge:
+    def dataset_feeds_feature(
+        self, dataset_id: str, feature_id: str, **meta: object
+    ) -> LineageEdge:
         return self.record(dataset_id, "dataset", feature_id, "feature", "feeds", dict(meta))
 
-    def feature_used_by_experiment(self, feature_id: str, experiment_id: str, **meta: object) -> LineageEdge:
-        return self.record(feature_id, "feature", experiment_id, "experiment", "used_by", dict(meta))
+    def feature_used_by_experiment(
+        self, feature_id: str, experiment_id: str, **meta: object
+    ) -> LineageEdge:
+        return self.record(
+            feature_id, "feature", experiment_id, "experiment", "used_by", dict(meta)
+        )
 
-    def experiment_produces_strategy(self, experiment_id: str, strategy_id: str, **meta: object) -> LineageEdge:
-        return self.record(experiment_id, "experiment", strategy_id, "strategy", "produces", dict(meta))
+    def experiment_produces_strategy(
+        self, experiment_id: str, strategy_id: str, **meta: object
+    ) -> LineageEdge:
+        return self.record(
+            experiment_id, "experiment", strategy_id, "strategy", "produces", dict(meta)
+        )
 
-    def paper_references_dataset(self, paper_id: str, dataset_id: str, **meta: object) -> LineageEdge:
+    def paper_references_dataset(
+        self, paper_id: str, dataset_id: str, **meta: object
+    ) -> LineageEdge:
         return self.record(paper_id, "paper", dataset_id, "dataset", "referenced_by", dict(meta))
 
     # ── Graph queries ──────────────────────────────────────────────────────────
@@ -67,12 +79,10 @@ class LineageTracker:
         return {
             "dataset_id": dataset_id,
             "upstream": [
-                {"id": e.source_id, "type": e.source_type, "rel": e.rel_type}
-                for e in upstream
+                {"id": e.source_id, "type": e.source_type, "rel": e.rel_type} for e in upstream
             ],
             "downstream": [
-                {"id": e.target_id, "type": e.target_type, "rel": e.rel_type}
-                for e in downstream
+                {"id": e.target_id, "type": e.target_type, "rel": e.rel_type} for e in downstream
             ],
             "directly_affected_count": len(downstream),
         }

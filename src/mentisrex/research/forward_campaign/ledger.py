@@ -16,17 +16,15 @@ from __future__ import annotations
 
 import json
 import statistics
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import Optional
 
-from mentisrex.research.forward_campaign.record import ForwardCycleRecord, CycleStatus
+from mentisrex.research.forward_campaign.record import CycleStatus, ForwardCycleRecord
 
-
-_MIN_SHARPE_OBS = 24       # fewer than this: label as INSUFFICIENT_SAMPLE
-_MIN_ANNUAL_OBS = 12       # fewer than this: label annualized return as N/A
-_MIN_VOL_OBS = 2           # fewer than this: label volatility as N/A
+_MIN_SHARPE_OBS = 24  # fewer than this: label as INSUFFICIENT_SAMPLE
+_MIN_ANNUAL_OBS = 12  # fewer than this: label annualized return as N/A
+_MIN_VOL_OBS = 2  # fewer than this: label volatility as N/A
 
 
 @dataclass(frozen=True)
@@ -36,6 +34,7 @@ class ForwardPerformanceSummary:
     Fields labelled INSUFFICIENT_SAMPLE where sample is too small.
     Never fabricates statistics from too-few observations.
     """
+
     n_forward_cycles: int
     n_successful_cycles: int
     n_skipped_cycles: int
@@ -43,14 +42,14 @@ class ForwardPerformanceSummary:
 
     # returns
     cumulative_return: float
-    monthly_returns: list            # list[float], one per successful cycle
-    annualized_return: Optional[float]  # None when < _MIN_ANNUAL_OBS cycles
-    annualized_return_label: str         # "ESTIMATED" | "INSUFFICIENT_SAMPLE"
+    monthly_returns: list  # list[float], one per successful cycle
+    annualized_return: float | None  # None when < _MIN_ANNUAL_OBS cycles
+    annualized_return_label: str  # "ESTIMATED" | "INSUFFICIENT_SAMPLE"
 
     # risk / volatility
-    volatility: Optional[float]          # None when < _MIN_VOL_OBS
+    volatility: float | None  # None when < _MIN_VOL_OBS
     volatility_label: str
-    sharpe: Optional[float]              # None when < _MIN_SHARPE_OBS
+    sharpe: float | None  # None when < _MIN_SHARPE_OBS
     sharpe_label: str
 
     # drawdown
@@ -73,8 +72,8 @@ class ForwardPerformanceSummary:
     total_observations_rejected: int
     total_pit_violations: int
 
-    first_evaluation_date: Optional[date]
-    last_evaluation_date: Optional[date]
+    first_evaluation_date: date | None
+    last_evaluation_date: date | None
 
 
 class ForwardLedger:
@@ -99,7 +98,7 @@ class ForwardLedger:
                 recs.append(ForwardCycleRecord.from_dict(json.loads(p.read_text())))
             except Exception:
                 continue
-        recs.sort(key=lambda r: (r.evaluation_date or date.min))
+        recs.sort(key=lambda r: r.evaluation_date or date.min)
         return recs
 
     def get_cycle(self, cycle_id: str) -> ForwardCycleRecord | None:
@@ -132,7 +131,7 @@ class ForwardLedger:
         all_cycles = self.list_cycles()
         success = [c for c in all_cycles if c.status == CycleStatus.SUCCESS]
         skipped = [c for c in all_cycles if c.status == CycleStatus.SKIPPED]
-        failed  = [c for c in all_cycles if c.status == CycleStatus.FAILED]
+        failed = [c for c in all_cycles if c.status == CycleStatus.FAILED]
 
         nav_series = [c.ending_nav for c in success]
         monthly_returns: list[float] = []
@@ -145,7 +144,8 @@ class ForwardLedger:
 
         cumulative = (
             (nav_series[-1] / nav_series[0] - 1.0)
-            if len(nav_series) >= 2 and nav_series[0] > 0 else 0.0
+            if len(nav_series) >= 2 and nav_series[0] > 0
+            else 0.0
         )
 
         # annualized return
@@ -158,7 +158,7 @@ class ForwardLedger:
 
         # volatility (monthly)
         if len(monthly_returns) >= _MIN_VOL_OBS:
-            vol = statistics.stdev(monthly_returns) * (12 ** 0.5)
+            vol = statistics.stdev(monthly_returns) * (12**0.5)
             vol_label = "ESTIMATED"
         else:
             vol = None
@@ -168,7 +168,7 @@ class ForwardLedger:
         if len(monthly_returns) >= _MIN_SHARPE_OBS:
             mu = statistics.mean(monthly_returns)
             sd = statistics.stdev(monthly_returns)
-            sharpe: float | None = (mu / sd * (12 ** 0.5)) if sd > 0 else 0.0
+            sharpe: float | None = (mu / sd * (12**0.5)) if sd > 0 else 0.0
             sharpe_label = "ESTIMATED"
         else:
             sharpe = None

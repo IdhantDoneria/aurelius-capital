@@ -38,15 +38,23 @@ class Scheduler:
         return self.batch(sweep_configs(base, grid), **kw)
 
     def walk_forward(self, base: RunConfiguration, as_of_dates: list[date], **kw):
-        configs = [replace(base, as_of=d, name=f"{base.name}@wf:{d.isoformat()}")
-                   for d in as_of_dates]
+        configs = [
+            replace(base, as_of=d, name=f"{base.name}@wf:{d.isoformat()}") for d in as_of_dates
+        ]
         return self.batch(configs, **kw)
 
-    def rolling_window(self, base: RunConfiguration, as_of_dates: list[date],
-                       lookback_days: int, **kw):
-        configs = [replace(base, as_of=d, name=f"{base.name}@roll:{d.isoformat()}",
-                           parameters={**base.parameters, "lookback_days": lookback_days})
-                   for d in as_of_dates]
+    def rolling_window(
+        self, base: RunConfiguration, as_of_dates: list[date], lookback_days: int, **kw
+    ):
+        configs = [
+            replace(
+                base,
+                as_of=d,
+                name=f"{base.name}@roll:{d.isoformat()}",
+                parameters={**base.parameters, "lookback_days": lookback_days},
+            )
+            for d in as_of_dates
+        ]
         return self.batch(configs, **kw)
 
 
@@ -57,6 +65,7 @@ def sweep_configs(base: RunConfiguration, grid: dict[str, list]) -> list[RunConf
     for combo in itertools.product(*(grid[k] for k in keys)):
         overrides = dict(zip(keys, combo, strict=True))
         tag = ",".join(f"{k}={v}" for k, v in overrides.items())
-        out.append(replace(base, parameters={**base.parameters, **overrides},
-                           name=f"{base.name}[{tag}]"))
+        out.append(
+            replace(base, parameters={**base.parameters, **overrides}, name=f"{base.name}[{tag}]")
+        )
     return out

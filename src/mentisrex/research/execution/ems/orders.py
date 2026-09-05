@@ -23,17 +23,18 @@ class MarketInfo:
     slices against; default is a U-shape. `interval_volume` is expected share volume
     per slice, used by POV. `adv` is average daily $ volume for the M10 impact term.
     """
+
     prices: dict = field(default_factory=dict)
-    adv: dict = field(default_factory=dict)                 # security_id -> $ ADV
-    volume_profile: list = field(default_factory=list)      # fractions, len == n_slices
-    interval_volume: dict = field(default_factory=dict)     # security_id -> shares/slice
+    adv: dict = field(default_factory=dict)  # security_id -> $ ADV
+    volume_profile: list = field(default_factory=list)  # fractions, len == n_slices
+    interval_volume: dict = field(default_factory=dict)  # security_id -> shares/slice
 
     def price(self, sid: str) -> float | None:
         p = self.prices.get(sid)
         return float(p) if p and p > 0 else None
 
 
-DEFAULT_VWAP_PROFILE = [0.20, 0.12, 0.10, 0.08, 0.10, 0.12, 0.28]   # U-shape, sums to 1.0
+DEFAULT_VWAP_PROFILE = [0.20, 0.12, 0.10, 0.08, 0.10, 0.12, 0.28]  # U-shape, sums to 1.0
 
 
 def intents_from_target(target_shares: dict, current_shares: dict | None = None) -> list:
@@ -49,47 +50,88 @@ def intents_from_target(target_shares: dict, current_shares: dict | None = None)
     return out
 
 
-def build_request(intent: OrderIntent, *, order_id: str, market: MarketInfo,
-                  order_type: OrderType = OrderType.MARKET, limit_price: float | None = None,
-                  algo: str | None = None, urgency: str = "normal") -> OrderRequest:
+def build_request(
+    intent: OrderIntent,
+    *,
+    order_id: str,
+    market: MarketInfo,
+    order_type: OrderType = OrderType.MARKET,
+    limit_price: float | None = None,
+    algo: str | None = None,
+    urgency: str = "normal",
+) -> OrderRequest:
     """Wrap an intent into an executable parent order, stamping the arrival price."""
     arrival = market.price(intent.security_id) or 0.0
     return OrderRequest(
-        order_id=order_id, security_id=intent.security_id, quantity=intent.delta_shares,
-        order_type=order_type, limit_price=limit_price, algo=algo,
-        arrival_price=arrival, urgency=urgency)
+        order_id=order_id,
+        security_id=intent.security_id,
+        quantity=intent.delta_shares,
+        order_type=order_type,
+        limit_price=limit_price,
+        algo=algo,
+        arrival_price=arrival,
+        urgency=urgency,
+    )
 
 
-def build_requests(intents, *, market: MarketInfo, id_prefix: str = "ord",
-                   order_type: OrderType = OrderType.MARKET, algo: str | None = None) -> list:
-    return [build_request(it, order_id=f"{id_prefix}-{i:06d}", market=market,
-                          order_type=order_type, algo=algo)
-            for i, it in enumerate(intents, start=1)]
+def build_requests(
+    intents,
+    *,
+    market: MarketInfo,
+    id_prefix: str = "ord",
+    order_type: OrderType = OrderType.MARKET,
+    algo: str | None = None,
+) -> list:
+    return [
+        build_request(
+            it, order_id=f"{id_prefix}-{i:06d}", market=market, order_type=order_type, algo=algo
+        )
+        for i, it in enumerate(intents, start=1)
+    ]
 
 
 # ── order-type factories (deterministic sim-first) ───────────────────────────────
 
+
 def market_order(order_id, security_id, quantity, *, arrival_price=0.0) -> OrderRequest:
-    return OrderRequest(order_id, security_id, quantity, OrderType.MARKET, arrival_price=arrival_price)
+    return OrderRequest(
+        order_id, security_id, quantity, OrderType.MARKET, arrival_price=arrival_price
+    )
 
 
 def limit_order(order_id, security_id, quantity, limit_price, *, arrival_price=0.0) -> OrderRequest:
-    return OrderRequest(order_id, security_id, quantity, OrderType.LIMIT, limit_price=limit_price,
-                        arrival_price=arrival_price)
+    return OrderRequest(
+        order_id,
+        security_id,
+        quantity,
+        OrderType.LIMIT,
+        limit_price=limit_price,
+        arrival_price=arrival_price,
+    )
 
 
 def stop_order(order_id, security_id, quantity, stop_price, *, arrival_price=0.0) -> OrderRequest:
     # stop = interface only; carried as limit_price=stop for the sim broker.
-    return OrderRequest(order_id, security_id, quantity, OrderType.STOP, limit_price=stop_price,
-                        arrival_price=arrival_price)
+    return OrderRequest(
+        order_id,
+        security_id,
+        quantity,
+        OrderType.STOP,
+        limit_price=stop_price,
+        arrival_price=arrival_price,
+    )
 
 
 def twap_order(order_id, security_id, quantity, *, arrival_price=0.0) -> OrderRequest:
-    return OrderRequest(order_id, security_id, quantity, OrderType.TWAP, arrival_price=arrival_price)
+    return OrderRequest(
+        order_id, security_id, quantity, OrderType.TWAP, arrival_price=arrival_price
+    )
 
 
 def vwap_order(order_id, security_id, quantity, *, arrival_price=0.0) -> OrderRequest:
-    return OrderRequest(order_id, security_id, quantity, OrderType.VWAP, arrival_price=arrival_price)
+    return OrderRequest(
+        order_id, security_id, quantity, OrderType.VWAP, arrival_price=arrival_price
+    )
 
 
 def pov_order(order_id, security_id, quantity, *, arrival_price=0.0) -> OrderRequest:

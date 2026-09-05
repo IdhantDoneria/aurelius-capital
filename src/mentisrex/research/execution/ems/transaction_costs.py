@@ -18,8 +18,9 @@ from mentisrex.research.portfolio.costs import TransactionCostModel
 DEFAULT_COST_MODEL = TransactionCostModel()
 
 
-def attribute(report, *, cost_model: TransactionCostModel | None = None,
-              adv: float | None = None) -> CostAnalysis:
+def attribute(
+    report, *, cost_model: TransactionCostModel | None = None, adv: float | None = None
+) -> CostAnalysis:
     """Break a filled order's cost into components + shortfall. `report` is an
     `ExecutionReport`; `report.total_cost` is the realised broker cost."""
     cm = cost_model or DEFAULT_COST_MODEL
@@ -42,11 +43,15 @@ def attribute(report, *, cost_model: TransactionCostModel | None = None,
 
     return CostAnalysis(
         order_id=report.order_id,
-        commission=commission, spread=spread, slippage=slippage, impact=impact,
+        commission=commission,
+        spread=spread,
+        slippage=slippage,
+        impact=impact,
         total_cost=report.total_cost,
         total_cost_bps=_bps(report.total_cost, notional),
         implementation_shortfall_bps=is_total_bps,
-        arrival_slippage_bps=arr_slip_bps)
+        arrival_slippage_bps=arr_slip_bps,
+    )
 
 
 def _bps(amount: float, notional: float) -> float:

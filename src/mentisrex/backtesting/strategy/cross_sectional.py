@@ -14,8 +14,8 @@ Short rules:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date
-from typing import Callable
 
 from mentisrex.backtesting.events.types import Direction, SignalEvent
 from mentisrex.backtesting.strategy.base import Strategy, StrategyContext
@@ -25,8 +25,8 @@ logger = get_logger(__name__)
 
 # How to decide "first bar of a new period" by freq
 _PERIOD_KEY: dict[str, Callable[[date], tuple]] = {
-    "daily":   lambda d: (d.year, d.month, d.day),
-    "weekly":  lambda d: (d.isocalendar().year, d.isocalendar().week),
+    "daily": lambda d: (d.year, d.month, d.day),
+    "weekly": lambda d: (d.isocalendar().year, d.isocalendar().week),
     "monthly": lambda d: (d.year, d.month),
 }
 
@@ -142,8 +142,11 @@ class CrossSectionalFactorStrategy(Strategy):
     def _rebalance(self, as_of: date) -> None:
         scores = self._signal_fn(as_of)
         if not scores:
-            logger.warning("rebalance_skipped_empty_signal", as_of=as_of.isoformat(),
-                           held=len(self._current_longs | self._current_shorts))
+            logger.warning(
+                "rebalance_skipped_empty_signal",
+                as_of=as_of.isoformat(),
+                held=len(self._current_longs | self._current_shorts),
+            )
             return
 
         self._prev_held = self._current_longs | self._current_shorts
@@ -162,8 +165,11 @@ class CrossSectionalFactorStrategy(Strategy):
         if not regime_ok:
             # High-vol regime: close all shorts, open no new ones
             if self._current_shorts:
-                logger.warning("shorts_closed_regime_hostile", as_of=as_of.isoformat(),
-                               count=len(self._current_shorts))
+                logger.warning(
+                    "shorts_closed_regime_hostile",
+                    as_of=as_of.isoformat(),
+                    count=len(self._current_shorts),
+                )
             self._current_shorts = set()
             self._short_entry_price.clear()
             return

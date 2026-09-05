@@ -61,7 +61,7 @@ class BlackScholesPricer:
             return float(market.get("mark", market.get("spot", 0.0)))
         dd = self._d1_d2(inst, market)
         s, k = float(market["spot"]), float(inst.strike)
-        if dd is None:                                   # expired / degenerate → intrinsic
+        if dd is None:  # expired / degenerate → intrinsic
             iv = s - k if inst.right is OptionRight.CALL else k - s
             return max(0.0, iv)
         d1, d2 = dd
@@ -73,7 +73,7 @@ class BlackScholesPricer:
 
     def greeks(self, inst: Instrument, market: dict) -> Greeks:
         if inst.type is not InstrumentType.OPTION:
-            return Greeks(delta=1.0)                      # linear instrument
+            return Greeks(delta=1.0)  # linear instrument
         dd = self._d1_d2(inst, market)
         if dd is None:
             return Greeks()
@@ -110,8 +110,9 @@ class DeterministicMockPricer:
         if inst.type is InstrumentType.OPTION:
             s = float(market.get("spot", 0.0))
             itm = (s > inst.strike) if inst.right is OptionRight.CALL else (s < inst.strike)
-            return Greeks(delta=1.0 if (itm and inst.right is OptionRight.CALL)
-                          else (-1.0 if itm else 0.0))
+            return Greeks(
+                delta=1.0 if (itm and inst.right is OptionRight.CALL) else (-1.0 if itm else 0.0)
+            )
         return Greeks(delta=1.0)
 
 

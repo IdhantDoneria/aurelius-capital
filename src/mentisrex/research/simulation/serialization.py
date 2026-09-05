@@ -17,7 +17,9 @@ def to_dict(result) -> dict:
         "summary": asdict(result.summary),
         "metadata": _meta(result.metadata),
         "equity_curve": [asdict(e) | {"date": e.date.isoformat()} for e in result.equity_curve],
-        "rebalance_events": [asdict(r) | {"date": r.date.isoformat()} for r in result.rebalance_events],
+        "rebalance_events": [
+            asdict(r) | {"date": r.date.isoformat()} for r in result.rebalance_events
+        ],
         "cost_report": asdict(result.cost_report),
         "turnover_report": asdict(result.turnover_report),
         "exposure_report": asdict(result.exposure_report),
@@ -45,12 +47,31 @@ def save_parquet(result, directory: str) -> dict:
 
     d = Path(directory)
     d.mkdir(parents=True, exist_ok=True)
-    eq = pd.DataFrame([{"date": e.date.isoformat(), "value": e.value, "cash": e.cash,
-                        "gross": e.gross_exposure, "net": e.net_exposure}
-                       for e in result.equity_curve])
-    tr = pd.DataFrame([{"date": t.date.isoformat() if t.date else None, "security_id": t.security_id,
-                        "quantity": t.quantity, "price": t.price, "cost": t.cost,
-                        "notional": t.notional} for t in result.trades])
+    eq = pd.DataFrame(
+        [
+            {
+                "date": e.date.isoformat(),
+                "value": e.value,
+                "cash": e.cash,
+                "gross": e.gross_exposure,
+                "net": e.net_exposure,
+            }
+            for e in result.equity_curve
+        ]
+    )
+    tr = pd.DataFrame(
+        [
+            {
+                "date": t.date.isoformat() if t.date else None,
+                "security_id": t.security_id,
+                "quantity": t.quantity,
+                "price": t.price,
+                "cost": t.cost,
+                "notional": t.notional,
+            }
+            for t in result.trades
+        ]
+    )
     eq_path, tr_path = d / "equity_curve.parquet", d / "trades.parquet"
     eq.to_parquet(eq_path)
     tr.to_parquet(tr_path)

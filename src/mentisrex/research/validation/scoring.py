@@ -15,7 +15,7 @@ DEFAULT_WEIGHTS = {
     "robustness": 0.20,
     "economic_significance": 0.15,
     "capacity": 0.10,
-    "overfitting_risk": 0.15,     # higher score = LOWER overfitting risk
+    "overfitting_risk": 0.15,  # higher score = LOWER overfitting risk
     "reproducibility": 0.10,
     "transparency": 0.05,
 }
@@ -118,5 +118,5 @@ def score(summaries: dict, experiment=None, *, weights: dict | None = None) -> d
         "research_score": _clip(research_score),
         "components": components,
         "weights": {k: w[k] for k in components},
-        "contributions": contributions,   # confidence decomposition
+        "contributions": contributions,  # confidence decomposition
     }

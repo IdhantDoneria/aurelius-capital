@@ -46,11 +46,19 @@ def default_registry() -> ModelRegistry:
     for info in (
         ModelInfo("equity.spot", "1.0.0", "Spot mark", ()),
         ModelInfo("futures.cost_of_carry", "1.0.0", "F = S·e^{(r-q)T}", ("continuous carry",)),
-        ModelInfo("option.black_scholes", "1.0.0", "European BS w/ dividend yield",
-                  ("European exercise", "flat vol per strike/maturity node")),
+        ModelInfo(
+            "option.black_scholes",
+            "1.0.0",
+            "European BS w/ dividend yield",
+            ("European exercise", "flat vol per strike/maturity node"),
+        ),
         ModelInfo("option.black_76", "1.0.0", "Option on forward/future", ("European exercise",)),
-        ModelInfo("option.binomial_crr", "1.0.0", "American CRR tree",
-                  ("discrete Bermudan approx", "steps-limited")),
+        ModelInfo(
+            "option.binomial_crr",
+            "1.0.0",
+            "American CRR tree",
+            ("discrete Bermudan approx", "steps-limited"),
+        ),
         ModelInfo("bond.dcf", "1.0.0", "Discounted cash-flow / YTM", ("no credit spread",)),
         ModelInfo("swap.discount_curve", "1.0.0", "Single/dual-curve IRS NPV", ()),
         ModelInfo("xccy_swap.dual_curve", "1.0.0", "Cross-currency swap via M16 FX", ()),
@@ -61,6 +69,7 @@ def default_registry() -> ModelRegistry:
 
 
 # ── curve calibration reporting (deterministic bootstrap interface) ──────────
+
 
 @dataclass(frozen=True)
 class CalibrationDiagnostics:
@@ -89,18 +98,33 @@ class CurveBuilder:
     Conventions are NOT assumed universal — they are passed in.
     """
 
-    def build_zero(self, curve_id: str, ref_date, nodes: list, *, compounding=None,
-                   day_count=None, currency: str = "USD"):
+    def build_zero(
+        self,
+        curve_id: str,
+        ref_date,
+        nodes: list,
+        *,
+        compounding=None,
+        day_count=None,
+        currency: str = "USD",
+    ):
         from mentisrex.research.valuation.curves import ZeroCurve
         from mentisrex.research.valuation.daycount import Compounding, DayCount
+
         nodes = sorted(nodes)
         tenors = tuple(t for t, _ in nodes)
         zeros = tuple(z for _, z in nodes)
-        curve = ZeroCurve(curve_id, ref_date, tenors, zeros,
-                          compounding or Compounding.CONTINUOUS,
-                          day_count or DayCount.ACT_365, currency=currency)
+        curve = ZeroCurve(
+            curve_id,
+            ref_date,
+            tenors,
+            zeros,
+            compounding or Compounding.CONTINUOUS,
+            day_count or DayCount.ACT_365,
+            currency=currency,
+        )
         problems = tuple(curve.validate())
         report = CurveCalibrationReport(
-            curve_id, CalibrationDiagnostics(0.0, len(nodes), not problems),
-            tuple(nodes), problems)
+            curve_id, CalibrationDiagnostics(0.0, len(nodes), not problems), tuple(nodes), problems
+        )
         return curve, report

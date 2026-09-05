@@ -11,7 +11,9 @@ from mentisrex.catalog.store import CatalogStore
 def catalog() -> CatalogStore:
     store = CatalogStore(":memory:")
     store.register(DatasetRecord(id="ds_a", name="Dataset A", source="yahoo", status="active"))
-    store.register(DatasetRecord(id="ds_b", name="Dataset B", source="internal", status="deprecated"))
+    store.register(
+        DatasetRecord(id="ds_b", name="Dataset B", source="internal", status="deprecated")
+    )
     return store
 
 

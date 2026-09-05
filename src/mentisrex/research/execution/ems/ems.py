@@ -43,14 +43,16 @@ class ExecutionSession:
     per-order reports. Everything surfaced (reports/metrics) is frozen; the session
     itself is the run's accumulator, like the M12 PaperTradingSession."""
 
-    def __init__(self, *, config: ExecutionConfig | None = None, book=None, session_id: str = "exec") -> None:
+    def __init__(
+        self, *, config: ExecutionConfig | None = None, book=None, session_id: str = "exec"
+    ) -> None:
         self.session_id = session_id
         self.config = config or ExecutionConfig()
         self.oms = OMS()
-        self.book = book                       # optional M12 PaperPortfolio
+        self.book = book  # optional M12 PaperPortfolio
         self.fills_processor = FillProcessor()
         self.routing_decisions: list = []
-        self.rejections: list = []             # (order_id, security_id, quantity, reason)
+        self.rejections: list = []  # (order_id, security_id, quantity, reason)
         self.plans: list = []
 
     @property
@@ -62,13 +64,23 @@ class ExecutionSession:
 
 
 class EMS:
-    def __init__(self, router: ExecutionRouter, *, risk_gate=None, config: ExecutionConfig | None = None) -> None:
+    def __init__(
+        self, router: ExecutionRouter, *, risk_gate=None, config: ExecutionConfig | None = None
+    ) -> None:
         self.router = router
-        self.risk_gate = risk_gate             # M13 RiskGate / M12 PreTradeRiskGate (.check)
+        self.risk_gate = risk_gate  # M13 RiskGate / M12 PreTradeRiskGate (.check)
         self.config = config or ExecutionConfig()
 
-    def execute(self, requests, market, *, book=None, adv_provider=None,
-                session: ExecutionSession | None = None, session_id: str = "exec") -> ExecutionSession:
+    def execute(
+        self,
+        requests,
+        market,
+        *,
+        book=None,
+        adv_provider=None,
+        session: ExecutionSession | None = None,
+        session_id: str = "exec",
+    ) -> ExecutionSession:
         sess = session or ExecutionSession(config=self.config, book=book, session_id=session_id)
         prices = {k: float(v) for k, v in market.prices.items() if v and v > 0}
 
@@ -107,7 +119,7 @@ class EMS:
 
         decision = self.router.route(req)
         sess.routing_decisions.append(decision)
-        broker = self.router.broker_for(decision)   # prices already published for the batch
+        broker = self.router.broker_for(decision)  # prices already published for the batch
 
         algo = self._make_algo(decision.algo)
         plan = algo.plan(req, market)
@@ -117,17 +129,22 @@ class EMS:
         for child in plan.child_orders:
             if abs(child.quantity) < 1e-12:
                 continue
-            adv = adv_provider(child.security_id) if adv_provider else market.adv.get(child.security_id)
+            adv = (
+                adv_provider(child.security_id)
+                if adv_provider
+                else market.adv.get(child.security_id)
+            )
             broker.submit_order(child, adv=adv)
             for bf in broker.get_fills():
-                sess.fills_processor.process(bf, parent_id=req.order_id,
-                                             child_id=child.order_id, oms=oms, book=sess.book)
+                sess.fills_processor.process(
+                    bf, parent_id=req.order_id, child_id=child.order_id, oms=oms, book=sess.book
+                )
         self._resolve(oms, req)
 
     def _resolve(self, oms, req):
         status = oms.status(req.order_id)
         if status in (OrderStatus.SUBMITTED, OrderStatus.ACKNOWLEDGED):
-            oms.reject(req.order_id, "broker_no_fill")     # nothing filled at all
+            oms.reject(req.order_id, "broker_no_fill")  # nothing filled at all
         elif status == OrderStatus.PARTIALLY_FILLED and self.config.cancel_unfilled_remainder:
             oms.confirm_cancel(req.order_id, reason="remainder_cancelled")
 

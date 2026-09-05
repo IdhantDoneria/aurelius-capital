@@ -14,8 +14,8 @@ def _panels(T, N, edge, seed=0):
         names = [f"s{i}" for i in range(N)]
         sig = rng.standard_normal(N)
         ret = edge * sig + rng.standard_normal(N) * 1.0
-        signals.append(dict(zip(names, sig)))
-        fwd.append(dict(zip(names, ret)))
+        signals.append(dict(zip(names, sig, strict=False)))
+        fwd.append(dict(zip(names, ret, strict=False)))
     return signals, fwd
 
 
@@ -24,7 +24,7 @@ def test_positive_factor_has_positive_ic_and_spread():
     rep = evaluate_factor(signals, fwd, q=5, periods_per_year=12)
     assert rep.ic_mean > 0.1
     assert rep.ls_sharpe > 0
-    assert rep.ic_t_stat > 2.0                 # HAC-robust significance
+    assert rep.ic_t_stat > 2.0  # HAC-robust significance
     assert rep.monotonic_fraction > 0.5
     assert 0.0 <= rep.turnover <= 1.0
 
@@ -33,13 +33,14 @@ def test_noise_factor_insignificant():
     signals, fwd = _panels(60, 50, edge=0.0, seed=7)
     rep = evaluate_factor(signals, fwd)
     assert abs(rep.ic_mean) < 0.1
-    assert abs(rep.ic_t_stat) < 2.5            # no real edge => not significant
+    assert abs(rep.ic_t_stat) < 2.5  # no real edge => not significant
 
 
 def test_ic_ir_and_hit_rate_bounds():
     signals, fwd = _panels(40, 40, edge=0.5, seed=1)
     rep = evaluate_factor(signals, fwd)
-    assert rep.ic_std > 0 and np.isfinite(rep.ic_ir)
+    assert rep.ic_std > 0
+    assert np.isfinite(rep.ic_ir)
     assert 0.0 <= rep.ic_hit_rate <= 1.0
 
 
@@ -52,21 +53,21 @@ def test_neutralization_removes_group_edge():
         grp = ["A" if i < 20 else "B" for i in range(40)]
         base = np.array([1.0 if g == "A" else -1.0 for g in grp])
         sig = base + rng.standard_normal(40) * 0.01
-        ret = base + rng.standard_normal(40) * 0.01      # return also sector-driven
-        signals.append(dict(zip(names, sig)))
-        fwd.append(dict(zip(names, ret)))
-        groups.append(dict(zip(names, grp)))
+        ret = base + rng.standard_normal(40) * 0.01  # return also sector-driven
+        signals.append(dict(zip(names, sig, strict=False)))
+        fwd.append(dict(zip(names, ret, strict=False)))
+        groups.append(dict(zip(names, grp, strict=False)))
     raw = evaluate_factor(signals, fwd)
     neu = evaluate_factor(signals, fwd, groups=groups, neutralize_signal=True)
     assert raw.ic_mean > 0.5
-    assert abs(neu.ic_mean) < abs(raw.ic_mean)           # edge was disguised sector bet
+    assert abs(neu.ic_mean) < abs(raw.ic_mean)  # edge was disguised sector bet
 
 
 def test_misaligned_names_dropped():
     signals = [{"a": 1.0, "b": 2.0, "c": 3.0}, {"a": 1.0, "b": 2.0, "c": 3.0}]
-    fwd = [{"a": 0.1, "b": 0.2}, {"b": 0.2, "c": 0.3}]   # date2 common={b,c}
+    fwd = [{"a": 0.1, "b": 0.2}, {"b": 0.2, "c": 0.3}]  # date2 common={b,c}
     rep = evaluate_factor(signals, fwd, q=2)
-    assert rep.n_periods == 2                            # both dates have >=2 common names
+    assert rep.n_periods == 2  # both dates have >=2 common names
     # a single-name-overlap date is dropped, not counted
     rep2 = evaluate_factor([{"a": 1.0, "b": 2.0}], [{"b": 0.2, "c": 0.3}], q=2)
     assert rep2.n_periods == 0
@@ -85,26 +86,28 @@ def test_ic_decay_curve():
     for sig in signals:
         names = list(sig)
         s = np.array([sig[n] for n in names])
-        fwd2.append(dict(zip(names, 0.2 * s + rng.standard_normal(len(names)))))
+        fwd2.append(dict(zip(names, 0.2 * s + rng.standard_normal(len(names)), strict=False)))
     decay = ic_decay(signals, [fwd1, fwd2])
-    assert decay[1] > decay[2]                           # IC decays with horizon
+    assert decay[1] > decay[2]  # IC decays with horizon
 
 
 def test_net_of_cost_reduces_sharpe():
     from mentisrex.research.factor_research import evaluate_factor
     from mentisrex.research.portfolio.costs import TransactionCostModel
+
     signals, fwd = _panels(60, 50, edge=0.8, seed=0)
     cm = TransactionCostModel(commission_bps=1.0, spread_bps=2.0, slippage_bps=1.0)
     rep = evaluate_factor(signals, fwd, q=5, periods_per_year=12, cost_model=cm)
-    assert rep.net_ls_return_series                       # populated
+    assert rep.net_ls_return_series  # populated
     assert rep.cost_bps_per_period > 0
-    assert rep.net_ls_sharpe <= rep.ls_sharpe             # costs only hurt
+    assert rep.net_ls_sharpe <= rep.ls_sharpe  # costs only hurt
     assert len(rep.ls_turnover_series) == len(rep.ls_return_series)
 
 
 def test_no_cost_model_leaves_net_empty():
     from mentisrex.research.factor_research import evaluate_factor
+
     signals, fwd = _panels(30, 40, edge=0.5, seed=1)
     rep = evaluate_factor(signals, fwd)
     assert rep.net_ls_return_series == []
-    assert rep.net_ls_sharpe != rep.net_ls_sharpe         # NaN
+    assert rep.net_ls_sharpe != rep.net_ls_sharpe  # NaN

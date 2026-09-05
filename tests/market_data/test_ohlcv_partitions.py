@@ -75,8 +75,7 @@ async def test_out_of_window_date_inserts_without_error():
                 "VALUES ('pt_test_src', 'csv') RETURNING id"
             )
             symbol_id = await conn.fetchval(
-                "INSERT INTO symbols (ticker, asset_class) "
-                "VALUES ('PTEST', 'equity') RETURNING id"
+                "INSERT INTO symbols (ticker, asset_class) VALUES ('PTEST', 'equity') RETURNING id"
             )
             # 1990 is far outside the declared 2020-2026 partitions.
             await conn.execute(
@@ -91,8 +90,7 @@ async def test_out_of_window_date_inserts_without_error():
                 source_id,
             )
             landed = await conn.fetchval(
-                "SELECT tableoid::regclass::text FROM market_data_ohlcv "
-                "WHERE symbol_id = $1",
+                "SELECT tableoid::regclass::text FROM market_data_ohlcv WHERE symbol_id = $1",
                 symbol_id,
             )
             assert landed == "market_data_ohlcv_default"

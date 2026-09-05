@@ -38,7 +38,7 @@ class InvalidFXRateError(FXError, ValueError):
 def _check_positive(rate: float, pair: str) -> float:
     if rate is None:
         raise MissingFXRateError(f"no rate for {pair}")
-    if rate <= 0 or rate != rate:            # non-positive or NaN
+    if rate <= 0 or rate != rate:  # non-positive or NaN
         raise InvalidFXRateError(f"non-positive/NaN FX rate {rate!r} for {pair}")
     return rate
 
@@ -46,6 +46,7 @@ def _check_positive(rate: float, pair: str) -> float:
 class FXRateProvider(ABC):
     """Base provider. Subclasses implement `_canonical`; direction/inversion/cross are
     resolved here so every provider shares the same, tested conventions."""
+
     source = "provider"
     pivot: str | None = None
 
@@ -63,7 +64,11 @@ class FXRateProvider(ABC):
             return _check_positive(r, f"{base}/{quote}"), ConversionDirection.DIRECT, self.source
         r = self._canonical(quote, base, as_of)
         if r is not None:
-            return 1.0 / _check_positive(r, f"{quote}/{base}"), ConversionDirection.INVERSE, self.source
+            return (
+                1.0 / _check_positive(r, f"{quote}/{base}"),
+                ConversionDirection.INVERSE,
+                self.source,
+            )
         p = self.pivot
         if p and p not in (base, quote):
             r1, _, _ = self.resolve(base, p, as_of=as_of)
@@ -75,8 +80,12 @@ class FXRateProvider(ABC):
         return self.resolve(base, quote, as_of=as_of)[0]
 
     def spot(self, base, quote, *, as_of: date | None = None) -> FXRate:
-        return FXRate(CurrencyPair(validate_code(base), validate_code(quote)),
-                      self.rate(base, quote, as_of=as_of), as_of, self.source)
+        return FXRate(
+            CurrencyPair(validate_code(base), validate_code(quote)),
+            self.rate(base, quote, as_of=as_of),
+            as_of,
+            self.source,
+        )
 
     def snapshot(self, currencies, base, *, as_of: date | None = None) -> FXRateSnapshot:
         base = validate_code(base)
@@ -86,6 +95,7 @@ class FXRateProvider(ABC):
 
 class StaticFXRateProvider(FXRateProvider):
     """Constant rates regardless of date. `rates` keyed 'EUR/USD' -> 1.10."""
+
     source = "static"
 
     def __init__(self, rates: dict, *, pivot: str | None = None) -> None:
@@ -103,15 +113,18 @@ class HistoricalFXRateProvider(FXRateProvider):
     """As-of rates from a per-pair time series. `series` keyed 'EUR/USD' -> {date: rate}.
     `as_of` returns the last observation on/before the date; `max_staleness_days` raises
     `StaleFXRateError` when the nearest observation is older than allowed."""
+
     source = "historical"
 
-    def __init__(self, series: dict, *, pivot: str | None = None,
-                 max_staleness_days: int | None = None) -> None:
+    def __init__(
+        self, series: dict, *, pivot: str | None = None, max_staleness_days: int | None = None
+    ) -> None:
         self._series: dict = {}
         for k, dr in series.items():
             b, q = k.split("/")
             self._series[(validate_code(b), validate_code(q))] = dict(
-                sorted((d, float(r)) for d, r in dr.items()))
+                sorted((d, float(r)) for d, r in dr.items())
+            )
         self.pivot = validate_code(pivot) if pivot else None
         self.max_staleness_days = max_staleness_days
 
@@ -132,7 +145,8 @@ class HistoricalFXRateProvider(FXRateProvider):
         if self.max_staleness_days is not None and (as_of - best[0]).days > self.max_staleness_days:
             raise StaleFXRateError(
                 f"{base}/{quote} rate as_of {as_of} is stale (last {best[0]}, "
-                f"limit {self.max_staleness_days}d)")
+                f"limit {self.max_staleness_days}d)"
+            )
         return best[1]
 
 
@@ -140,6 +154,7 @@ class DeterministicMockFXProvider(FXRateProvider):
     """Deterministic, pure-function rates for tests and benchmarks — no randomness, no
     network. Canonical direction is always CCY/pivot; a reproducible date drift keeps
     inversion and cross exact because everything derives from one canonical number."""
+
     source = "mock"
 
     def __init__(self, base: str = "USD", *, seeds: dict | None = None, drift: float = 0.0) -> None:
@@ -162,8 +177,11 @@ class DeterministicMockFXProvider(FXRateProvider):
 class ProductionFXRateAdapter(FXRateProvider):
     """DI extension point for a live rate feed (ECB/Bloomberg/Reuters). Interface only —
     this platform is offline. Unblock: implement `_canonical` against a real feed."""
+
     source = "production"
     pivot = None
 
     def _canonical(self, base, quote, as_of):
-        raise NotImplementedError("wire a production FX feed into ProductionFXRateAdapter._canonical")
+        raise NotImplementedError(
+            "wire a production FX feed into ProductionFXRateAdapter._canonical"
+        )

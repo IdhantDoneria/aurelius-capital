@@ -22,7 +22,7 @@ backtest_results format (all optional):
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from mentisrex.research.forward_validation.models import (
     DiagnosticRecord,
@@ -32,8 +32,8 @@ from mentisrex.research.forward_validation.models import (
     make_diagnostic,
 )
 
-
 # ── comparison table entry ────────────────────────────────────────────────────
+
 
 @dataclass(frozen=True)
 class ComparisonEntry:
@@ -46,8 +46,14 @@ class ComparisonEntry:
     status: str
 
 
-def _entry(metric: str, backtest: float | None, paper: float | None,
-           category: str = "", *, pct_threshold: float = 0.20) -> ComparisonEntry:
+def _entry(
+    metric: str,
+    backtest: float | None,
+    paper: float | None,
+    category: str = "",
+    *,
+    pct_threshold: float = 0.20,
+) -> ComparisonEntry:
     diff = (paper - backtest) if (paper is not None and backtest is not None) else None
     diff_pct: float | None = None
     if diff is not None and backtest is not None and backtest != 0:
@@ -69,6 +75,7 @@ def _entry(metric: str, backtest: float | None, paper: float | None,
 
 
 # ── main comparison builder ───────────────────────────────────────────────────
+
 
 def build_comparison(
     backtest_results: dict,
@@ -113,46 +120,54 @@ def build_comparison(
             continue
 
         e = _entry(b_key, b_val, f_val, str(category), pct_threshold=pct_thr)
-        entries.append({
-            "metric": e.metric,
-            "backtest": e.backtest,
-            "paper": e.paper,
-            "difference": e.difference,
-            "difference_pct": e.difference_pct,
-            "category": e.category,
-            "status": e.status,
-        })
+        entries.append(
+            {
+                "metric": e.metric,
+                "backtest": e.backtest,
+                "paper": e.paper,
+                "difference": e.difference,
+                "difference_pct": e.difference_pct,
+                "category": e.category,
+                "status": e.status,
+            }
+        )
 
         if e.difference_pct is not None and abs(e.difference_pct) > pct_thr:
-            records.append(make_diagnostic(
-                f"comparison.{b_key}",
-                category,
-                DiagnosticSeverity.WARNING,
-                b_key,
-                baseline=b_val,
-                observed=f_val,
-                threshold=pct_thr,
-                sample_size=n,
-                method="pct_threshold",
-                evidence=(f"backtest={b_val:.4f} paper={f_val:.4f} "
-                          f"diff={e.difference:.4f} ({e.difference_pct:.1%})"),
-                status=ValidationStatus.WARNING,
-            ))
+            records.append(
+                make_diagnostic(
+                    f"comparison.{b_key}",
+                    category,
+                    DiagnosticSeverity.WARNING,
+                    b_key,
+                    baseline=b_val,
+                    observed=f_val,
+                    threshold=pct_thr,
+                    sample_size=n,
+                    method="pct_threshold",
+                    evidence=(
+                        f"backtest={b_val:.4f} paper={f_val:.4f} "
+                        f"diff={e.difference:.4f} ({e.difference_pct:.1%})"
+                    ),
+                    status=ValidationStatus.WARNING,
+                )
+            )
 
     # universe-level comparison
     b_universe = backtest_results.get("universe_size")
     note = ""
     if b_universe and backtest_results.get("data_source"):
-        note = (f"research used {backtest_results['data_source']} universe "
-                f"({b_universe} securities). "
-                "Forward paper may use different data source (M21 open/free vs institutional).")
+        note = (
+            f"research used {backtest_results['data_source']} universe "
+            f"({b_universe} securities). "
+            "Forward paper may use different data source (M21 open/free vs institutional)."
+        )
 
     # explicit sample-size caveat
     adequacy_notes = {
         "INSUFFICIENT": "sample size insufficient for any statistical comparison",
         "PRELIMINARY": "preliminary sample only — treat comparisons as directional",
-        "MEANINGFUL":  "meaningful sample — comparisons carry moderate weight",
-        "EXTENDED":    "extended sample — comparisons are statistically informative",
+        "MEANINGFUL": "meaningful sample — comparisons carry moderate weight",
+        "EXTENDED": "extended sample — comparisons are statistically informative",
     }
 
     return {

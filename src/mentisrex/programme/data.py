@@ -448,18 +448,22 @@ class YahooSource:
     def _write_parquet(self, symbol: str, bars: list[RawBar]) -> None:
         if not bars:
             return
-        df = pd.DataFrame(
-            {
-                "timestamp": _to_utc_naive_date(
-                    pd.Series([pd.Timestamp(b.timestamp) for b in bars])
-                ),
-                "open": [float(b.open) for b in bars],
-                "high": [float(b.high) for b in bars],
-                "low": [float(b.low) for b in bars],
-                "close": [float(b.close) for b in bars],
-                "volume": [float(b.volume) for b in bars],
-            }
-        ).set_index("timestamp").sort_index()
+        df = (
+            pd.DataFrame(
+                {
+                    "timestamp": _to_utc_naive_date(
+                        pd.Series([pd.Timestamp(b.timestamp) for b in bars])
+                    ),
+                    "open": [float(b.open) for b in bars],
+                    "high": [float(b.high) for b in bars],
+                    "low": [float(b.low) for b in bars],
+                    "close": [float(b.close) for b in bars],
+                    "volume": [float(b.volume) for b in bars],
+                }
+            )
+            .set_index("timestamp")
+            .sort_index()
+        )
 
         path = self._parquet._path(symbol)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -701,7 +705,9 @@ def quality_gate(
 
     Warnings: any single-name gap > 5 business days; any |daily return| > 50%.
     """
-    as_of_ts = pd.Timestamp(as_of).normalize() if as_of is not None else pd.Timestamp.now().normalize()
+    as_of_ts = (
+        pd.Timestamp(as_of).normalize() if as_of is not None else pd.Timestamp.now().normalize()
+    )
 
     covered = panel.index[panel.index <= as_of_ts]
     if len(covered) == 0:

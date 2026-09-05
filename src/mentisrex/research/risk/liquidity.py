@@ -13,9 +13,14 @@ import numpy as np
 from mentisrex.research.risk.models import LiquidityReport
 
 
-def liquidity_report(weights: dict, adv: dict, *, portfolio_value: float,
-                     participation_limit: float = 0.10,
-                     liquidation_days_threshold: float = 5.0) -> LiquidityReport:
+def liquidity_report(
+    weights: dict,
+    adv: dict,
+    *,
+    portfolio_value: float,
+    participation_limit: float = 0.10,
+    liquidation_days_threshold: float = 5.0,
+) -> LiquidityReport:
     """`adv`: security_id -> average daily $ volume. Days-to-liquidate assumes you
     can trade `participation_limit` of ADV per day."""
     ids = [s for s in weights if weights[s] != 0]
@@ -36,9 +41,18 @@ def liquidity_report(weights: dict, adv: dict, *, portfolio_value: float,
             illiquid_w += abs(weights[sid])
     parts = np.array(parts, dtype=float)
     max_days = max(days.values())
-    signal = ("ok" if max_days <= liquidation_days_threshold
-              else "warning" if max_days <= 3 * liquidation_days_threshold else "critical")
+    signal = (
+        "ok"
+        if max_days <= liquidation_days_threshold
+        else "warning"
+        if max_days <= 3 * liquidation_days_threshold
+        else "critical"
+    )
     return LiquidityReport(
-        avg_participation=float(np.mean(parts)), max_participation=float(np.max(parts)),
-        days_to_liquidate=days, max_days_to_liquidate=float(max_days),
-        illiquid_weight=float(illiquid_w), liquidity_signal=signal)
+        avg_participation=float(np.mean(parts)),
+        max_participation=float(np.max(parts)),
+        days_to_liquidate=days,
+        max_days_to_liquidate=float(max_days),
+        illiquid_weight=float(illiquid_w),
+        liquidity_signal=signal,
+    )

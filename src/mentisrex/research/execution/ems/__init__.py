@@ -31,7 +31,12 @@ from mentisrex.research.execution.ems.broker import (
 )
 from mentisrex.research.execution.ems.diagnostics import diagnostics, fingerprint
 from mentisrex.research.execution.ems.ems import EMS, ExecutionConfig, ExecutionSession
-from mentisrex.research.execution.ems.execution_algorithms import POV, TWAP, VWAP, ImmediateExecution
+from mentisrex.research.execution.ems.execution_algorithms import (
+    POV,
+    TWAP,
+    VWAP,
+    ImmediateExecution,
+)
 from mentisrex.research.execution.ems.fills import FillProcessor
 from mentisrex.research.execution.ems.models import (
     BrokerAccount,

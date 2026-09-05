@@ -11,10 +11,9 @@ import math
 import random
 import statistics
 from dataclasses import dataclass
-from typing import Sequence
-
 
 # ── sample adequacy ────────────────────────────────────────────────────────────
+
 
 def sample_adequacy(n_cycles: int) -> str:
     """Classify sample size per M24 §21.
@@ -26,6 +25,7 @@ def sample_adequacy(n_cycles: int) -> str:
       ≥ 252  — ≥ 1 year daily equivalent; extended evidence.
     """
     from mentisrex.research.forward_validation.models import SampleAdequacy
+
     if n_cycles < 20:
         return SampleAdequacy.INSUFFICIENT
     if n_cycles < 63:
@@ -38,19 +38,19 @@ def sample_adequacy(n_cycles: int) -> str:
 def is_statistically_reliable(n_cycles: int) -> bool:
     """True only if sample is MEANINGFUL or EXTENDED."""
     from mentisrex.research.forward_validation.models import SampleAdequacy
+
     return sample_adequacy(n_cycles) in (SampleAdequacy.MEANINGFUL, SampleAdequacy.EXTENDED)
 
 
 # ── return series helpers ──────────────────────────────────────────────────────
+
 
 def daily_returns_from_nav(nav_series: list[tuple]) -> list[float]:
     """Compute period-over-period returns from (date, nav) pairs."""
     navs = [n for _, n in nav_series]
     if len(navs) < 2:
         return []
-    return [(navs[i] - navs[i - 1]) / navs[i - 1]
-            for i in range(1, len(navs))
-            if navs[i - 1] > 0]
+    return [(navs[i] - navs[i - 1]) / navs[i - 1] for i in range(1, len(navs)) if navs[i - 1] > 0]
 
 
 def rolling_returns(nav_series: list[tuple], window: int) -> list[float]:
@@ -67,27 +67,29 @@ def rolling_returns(nav_series: list[tuple], window: int) -> list[float]:
     return out
 
 
-def rolling_volatility(daily_rets: list[float], window: int,
-                       periods_per_year: int = 252) -> list[float]:
+def rolling_volatility(
+    daily_rets: list[float], window: int, periods_per_year: int = 252
+) -> list[float]:
     """Annualized rolling volatility."""
     if len(daily_rets) < window:
         return []
     out = []
     for i in range(window, len(daily_rets) + 1):
-        chunk = daily_rets[i - window:i]
+        chunk = daily_rets[i - window : i]
         sd = statistics.stdev(chunk) if len(chunk) >= 2 else 0.0
         out.append(sd * math.sqrt(periods_per_year))
     return out
 
 
-def rolling_sharpe(daily_rets: list[float], window: int,
-                   periods_per_year: int = 252) -> list[float]:
+def rolling_sharpe(
+    daily_rets: list[float], window: int, periods_per_year: int = 252
+) -> list[float]:
     """Rolling annualized Sharpe (excess return / vol, rf=0)."""
     if len(daily_rets) < window:
         return []
     out = []
     for i in range(window, len(daily_rets) + 1):
-        chunk = daily_rets[i - window:i]
+        chunk = daily_rets[i - window : i]
         mu = statistics.mean(chunk)
         sd = statistics.stdev(chunk) if len(chunk) >= 2 else 0.0
         out.append((mu / sd * math.sqrt(periods_per_year)) if sd > 0 else 0.0)
@@ -101,7 +103,7 @@ def rolling_drawdown(nav_series: list[tuple], window: int) -> list[float]:
         return []
     out = []
     for i in range(window, len(navs) + 1):
-        chunk = navs[i - window:i]
+        chunk = navs[i - window : i]
         peak = chunk[0]
         mdd = 0.0
         for v in chunk:
@@ -114,12 +116,22 @@ def rolling_drawdown(nav_series: list[tuple], window: int) -> list[float]:
 
 # ── distribution summary ───────────────────────────────────────────────────────
 
+
 def return_distribution_summary(daily_rets: list[float]) -> dict:
     """Descriptive statistics for a return series."""
     if not daily_rets:
-        return {"n": 0, "mean": 0.0, "stdev": 0.0, "min": 0.0, "max": 0.0,
-                "p25": 0.0, "p50": 0.0, "p75": 0.0,
-                "skewness": 0.0, "kurtosis": 0.0}
+        return {
+            "n": 0,
+            "mean": 0.0,
+            "stdev": 0.0,
+            "min": 0.0,
+            "max": 0.0,
+            "p25": 0.0,
+            "p50": 0.0,
+            "p75": 0.0,
+            "skewness": 0.0,
+            "kurtosis": 0.0,
+        }
     n = len(daily_rets)
     sorted_r = sorted(daily_rets)
     mu = statistics.mean(daily_rets)
@@ -127,13 +139,13 @@ def return_distribution_summary(daily_rets: list[float]) -> dict:
 
     # skewness
     if sd > 0 and n >= 3:
-        skew = sum((r - mu) ** 3 for r in daily_rets) / (n * sd ** 3)
+        skew = sum((r - mu) ** 3 for r in daily_rets) / (n * sd**3)
     else:
         skew = 0.0
 
     # excess kurtosis
     if sd > 0 and n >= 4:
-        kurt = sum((r - mu) ** 4 for r in daily_rets) / (n * sd ** 4) - 3.0
+        kurt = sum((r - mu) ** 4 for r in daily_rets) / (n * sd**4) - 3.0
     else:
         kurt = 0.0
 
@@ -153,10 +165,10 @@ def return_distribution_summary(daily_rets: list[float]) -> dict:
 
 # ── confidence intervals ───────────────────────────────────────────────────────
 
-def bootstrap_mean_ci(values: list[float], *,
-                      n_samples: int = 500,
-                      alpha: float = 0.05,
-                      seed: int = 0) -> tuple[float, float]:
+
+def bootstrap_mean_ci(
+    values: list[float], *, n_samples: int = 500, alpha: float = 0.05, seed: int = 0
+) -> tuple[float, float]:
     """Non-parametric bootstrap CI for the mean.
 
     Uses stdlib random (not numpy) for zero-dependency compatibility.
@@ -167,8 +179,7 @@ def bootstrap_mean_ci(values: list[float], *,
     rng = random.Random(seed)
     n = len(values)
     means = sorted(
-        statistics.mean(values[rng.randint(0, n - 1)] for _ in range(n))
-        for _ in range(n_samples)
+        statistics.mean(values[rng.randint(0, n - 1)] for _ in range(n)) for _ in range(n_samples)
     )
     lo_idx = max(0, int(alpha / 2 * n_samples))
     hi_idx = min(len(means) - 1, int((1 - alpha / 2) * n_samples))
@@ -176,6 +187,7 @@ def bootstrap_mean_ci(values: list[float], *,
 
 
 # ── annualized metrics (with sample-size guard) ────────────────────────────────
+
 
 @dataclass(frozen=True)
 class AnnualizedMetrics:
@@ -186,11 +198,10 @@ class AnnualizedMetrics:
     max_drawdown: float
     n_periods: int
     periods_per_year: int
-    reliable: bool   # True if MEANINGFUL or EXTENDED sample
+    reliable: bool  # True if MEANINGFUL or EXTENDED sample
 
 
-def compute_annualized(nav_series: list[tuple],
-                       periods_per_year: int = 252) -> AnnualizedMetrics:
+def compute_annualized(nav_series: list[tuple], periods_per_year: int = 252) -> AnnualizedMetrics:
     """Compute annualized metrics from a NAV series.
 
     Unreliable metrics are still computed but reliable=False flags them.
@@ -198,7 +209,7 @@ def compute_annualized(nav_series: list[tuple],
     """
     navs = [n for _, n in nav_series]
     n = len(navs)
-    adequate = sample_adequacy(n)
+    sample_adequacy(n)
     reliable = is_statistically_reliable(n)
 
     if n < 2:
@@ -215,7 +226,9 @@ def compute_annualized(nav_series: list[tuple],
     sharpe = (mu / sd * math.sqrt(periods_per_year)) if sd > 0 else 0.0
 
     downside = [min(r, 0.0) for r in daily_rets]
-    ds_sd = statistics.stdev(downside) if len(downside) >= 2 and any(d < 0 for d in downside) else 0.0
+    ds_sd = (
+        statistics.stdev(downside) if len(downside) >= 2 and any(d < 0 for d in downside) else 0.0
+    )
     sortino = (mu / ds_sd * math.sqrt(periods_per_year)) if ds_sd > 0 else 0.0
 
     # max drawdown

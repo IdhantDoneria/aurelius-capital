@@ -46,12 +46,17 @@ def dataset_fingerprint(dataset_versions: dict) -> str:
     return _digest(_canonical(dataset_versions))
 
 
-def experiment_fingerprint(dataset_versions: dict, features: list[str] | None,
-                           params: dict | None) -> str:
+def experiment_fingerprint(
+    dataset_versions: dict, features: list[str] | None, params: dict | None
+) -> str:
     """Full run identity = data + feature set + parameters. Two runs sharing this
     are reproductions of each other (duplicate detection key)."""
-    return _digest(_canonical({
-        "dataset": dataset_fingerprint(dataset_versions),
-        "features": hash_features(features),
-        "params": hash_params(params),
-    }))
+    return _digest(
+        _canonical(
+            {
+                "dataset": dataset_fingerprint(dataset_versions),
+                "features": hash_features(features),
+                "params": hash_params(params),
+            }
+        )
+    )

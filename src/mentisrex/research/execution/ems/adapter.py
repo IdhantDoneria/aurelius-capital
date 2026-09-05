@@ -30,20 +30,34 @@ class BrokerAdapter(ExecutionBroker):
     def _unavailable(self):
         raise NotImplementedError(
             f"{self.venue} live execution is an interface-only stub; no network/credentials "
-            "in the offline platform. Use MockExecutionBroker / SimulatedExecutionBroker.")
+            "in the offline platform. Use MockExecutionBroker / SimulatedExecutionBroker."
+        )
 
-    def set_prices(self, prices): self._unavailable()
-    def submit_order(self, req, *, adv=None): self._unavailable()
-    def get_fills(self): self._unavailable()
-    def get_order_status(self, broker_order_id): self._unavailable()
-    def get_positions(self): self._unavailable()
-    def get_account(self): self._unavailable()
+    def set_prices(self, prices):
+        self._unavailable()
+
+    def submit_order(self, req, *, adv=None):
+        self._unavailable()
+
+    def get_fills(self):
+        self._unavailable()
+
+    def get_order_status(self, broker_order_id):
+        self._unavailable()
+
+    def get_positions(self):
+        self._unavailable()
+
+    def get_account(self):
+        self._unavailable()
 
 
 class InteractiveBrokersAdapter(BrokerAdapter):
     venue = "interactive_brokers"
-    capabilities = {"native_algos": ("twap", "vwap", "pov"),
-                    "order_types": ("market", "limit", "stop")}
+    capabilities = {
+        "native_algos": ("twap", "vwap", "pov"),
+        "order_types": ("market", "limit", "stop"),
+    }
 
 
 class AlpacaAdapter(BrokerAdapter):
@@ -58,5 +72,4 @@ class ZerodhaAdapter(BrokerAdapter):
 
 class FIXAdapter(BrokerAdapter):
     venue = "fix"
-    capabilities = {"native_algos": ("twap", "vwap"),
-                    "order_types": ("market", "limit", "stop")}
+    capabilities = {"native_algos": ("twap", "vwap"), "order_types": ("market", "limit", "stop")}

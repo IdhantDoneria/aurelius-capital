@@ -40,4 +40,5 @@ def check_determinism(build_fn, *, n: int = 2) -> bool:
     """`build_fn()` builds and returns a fresh MultiCurrencyBook; its fingerprint must be
     identical across runs."""
     from mentisrex.research.fx.diagnostics import fingerprint
+
     return len({fingerprint(build_fn()) for _ in range(n)}) == 1

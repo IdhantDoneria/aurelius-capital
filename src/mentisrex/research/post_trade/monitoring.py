@@ -43,7 +43,12 @@ def operational_health(engine, *, reconciliation_breaks: int = 0) -> Operational
         alerts.append(f"reconciliation_breaks:{reconciliation_breaks}")
 
     return OperationalHealthReport(
-        ok=not alerts, n_trades=len(engine.log.of_type(TradeEvent)),
-        n_failed_settlements=n_failed, n_reconciliation_breaks=reconciliation_breaks,
+        ok=not alerts,
+        n_trades=len(engine.log.of_type(TradeEvent)),
+        n_failed_settlements=n_failed,
+        n_reconciliation_breaks=reconciliation_breaks,
         settlement_completion_rate=n_completed / total,
-        cash_reconciles=cash_ok, ledger_reconciles=ledg_ok, alerts=alerts)
+        cash_reconciles=cash_ok,
+        ledger_reconciles=ledg_ok,
+        alerts=alerts,
+    )

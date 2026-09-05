@@ -81,24 +81,27 @@ def compare_signal_distributions(
     # mean comparison
     r_mean = research_stats.get("signal_mean", 0.0)
     f_mean = forward_stats.get("signal_mean", 0.0)
-    pooled_sd = max(research_stats.get("signal_stdev", 0.0),
-                    forward_stats.get("signal_stdev", 0.0), 1e-8)
+    pooled_sd = max(
+        research_stats.get("signal_stdev", 0.0), forward_stats.get("signal_stdev", 0.0), 1e-8
+    )
     mean_z = abs(f_mean - r_mean) / pooled_sd if pooled_sd > 0 else 0.0
     mean_drifted = mean_z > mean_z_threshold
 
-    records.append(make_diagnostic(
-        "signal.distribution.mean",
-        DiscrepancyCategory.SIGNAL_DRIFT,
-        DiagnosticSeverity.WARNING if mean_drifted else DiagnosticSeverity.INFO,
-        "signal_mean",
-        baseline=r_mean,
-        observed=f_mean,
-        threshold=mean_z_threshold,
-        sample_size=sample_size,
-        method="z_score",
-        evidence=f"z={mean_z:.3f} threshold={mean_z_threshold:.1f}",
-        status=ValidationStatus.WARNING if mean_drifted else ValidationStatus.VALID,
-    ))
+    records.append(
+        make_diagnostic(
+            "signal.distribution.mean",
+            DiscrepancyCategory.SIGNAL_DRIFT,
+            DiagnosticSeverity.WARNING if mean_drifted else DiagnosticSeverity.INFO,
+            "signal_mean",
+            baseline=r_mean,
+            observed=f_mean,
+            threshold=mean_z_threshold,
+            sample_size=sample_size,
+            method="z_score",
+            evidence=f"z={mean_z:.3f} threshold={mean_z_threshold:.1f}",
+            status=ValidationStatus.WARNING if mean_drifted else ValidationStatus.VALID,
+        )
+    )
 
     # signal count comparison
     r_avg_n = research_stats.get("avg_n_signals", 0.0)
@@ -106,19 +109,21 @@ def compare_signal_distributions(
     n_rel_diff = abs(f_avg_n - r_avg_n) / max(r_avg_n, 1.0)
     n_drifted = n_rel_diff > 0.20
 
-    records.append(make_diagnostic(
-        "signal.distribution.count",
-        DiscrepancyCategory.SIGNAL_DRIFT,
-        DiagnosticSeverity.WARNING if n_drifted else DiagnosticSeverity.INFO,
-        "avg_n_signals",
-        baseline=r_avg_n,
-        observed=f_avg_n,
-        threshold=0.20,
-        sample_size=sample_size,
-        method="relative_threshold",
-        evidence=f"rel_diff={n_rel_diff:.3f}",
-        status=ValidationStatus.WARNING if n_drifted else ValidationStatus.VALID,
-    ))
+    records.append(
+        make_diagnostic(
+            "signal.distribution.count",
+            DiscrepancyCategory.SIGNAL_DRIFT,
+            DiagnosticSeverity.WARNING if n_drifted else DiagnosticSeverity.INFO,
+            "avg_n_signals",
+            baseline=r_avg_n,
+            observed=f_avg_n,
+            threshold=0.20,
+            sample_size=sample_size,
+            method="relative_threshold",
+            evidence=f"rel_diff={n_rel_diff:.3f}",
+            status=ValidationStatus.WARNING if n_drifted else ValidationStatus.VALID,
+        )
+    )
 
     return {
         "compared": True,

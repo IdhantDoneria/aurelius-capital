@@ -114,9 +114,7 @@ class TradingEngine:
         self.health.ticks += 1
         self.health.last_tick_ts = tick.timestamp.isoformat()
         if self.health.ticks % self._heartbeat_every == 0:
-            self._journal.record(
-                "heartbeat", ticks=self.health.ticks, equity=equity
-            )
+            self._journal.record("heartbeat", ticks=self.health.ticks, equity=equity)
 
     # ── run: error recovery per tick ──────────────────────────────────────────
 

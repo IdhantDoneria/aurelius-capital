@@ -34,9 +34,8 @@ import numpy as np
 import pandas as pd
 
 if TYPE_CHECKING:
-    from mentisrex.programme.data import PricePanel
-
     from mentisrex.programme.config import SignalConfig
+    from mentisrex.programme.data import PricePanel
 
 # Fixed liquidity-screen window for S10's liquid-half restriction, spec 3.3.
 # Not exposed in SignalConfig -- it is the same 21-day dollar-volume window
@@ -151,7 +150,9 @@ def s2_vol_managed(panel: PricePanel, config: SignalConfig) -> pd.Series:
     ret = panel.benchmark_returns
     rv = ret.rolling(config.vol_window).std() * np.sqrt(252)
     rv_safe = rv.where(rv > 0)
-    exposure = (config.vol_target / rv_safe).clip(config.vol_exposure_floor, config.vol_exposure_cap)
+    exposure = (config.vol_target / rv_safe).clip(
+        config.vol_exposure_floor, config.vol_exposure_cap
+    )
     return exposure
 
 
@@ -277,7 +278,9 @@ def s5_momentum(panel: PricePanel, mask: pd.DataFrame, config: SignalConfig) -> 
     return cross_sectional_zscore(raw, mask)
 
 
-def s6_residual_momentum(panel: PricePanel, mask: pd.DataFrame, config: SignalConfig) -> pd.DataFrame:
+def s6_residual_momentum(
+    panel: PricePanel, mask: pd.DataFrame, config: SignalConfig
+) -> pd.DataFrame:
     """S6 -- residual (beta-adjusted) momentum (Blitz, Huij & Martens 2011).
 
     Mechanism. Same under-reaction as S5, but computed on market-model

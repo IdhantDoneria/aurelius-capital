@@ -1,6 +1,5 @@
 """Alpha Hypothesis Generator — proposes novel quantitative trading hypotheses."""
 
-
 from mentisrex.core.logging import get_logger
 from mentisrex.discovery.models import DiscoveryHypothesis, SynthesisReport
 

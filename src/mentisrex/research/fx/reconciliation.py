@@ -15,8 +15,9 @@ from mentisrex.research.fx.valuation import valuation
 from mentisrex.research.post_trade.reconciliation import reconcile as _m15_reconcile
 
 
-def reconcile(book, *, broker_accounts: dict | None = None, as_of: date | None = None,
-              tol: float = 1e-6) -> FXReconciliationReport:
+def reconcile(
+    book, *, broker_accounts: dict | None = None, as_of: date | None = None, tol: float = 1e-6
+) -> FXReconciliationReport:
     diffs: list = []
     broker_accounts = broker_accounts or {}
 
@@ -28,21 +29,42 @@ def reconcile(book, *, broker_accounts: dict | None = None, as_of: date | None =
     for fxc in book.conversions:
         pair = f"{fxc.from_currency}/{fxc.to_currency}"
         if fxc.rate <= 0 or fxc.rate != fxc.rate:
-            diffs.append({"category": "wrong_fx_rate", "currency": pair,
-                          "internal": fxc.rate, "external": 0.0, "severity": "critical"})
+            diffs.append(
+                {
+                    "category": "wrong_fx_rate",
+                    "currency": pair,
+                    "internal": fxc.rate,
+                    "external": 0.0,
+                    "severity": "critical",
+                }
+            )
         if abs(fxc.to_amount - fxc.from_amount * fxc.rate) > tol:
-            diffs.append({"category": "fx_conversion_mismatch", "currency": pair,
-                          "internal": fxc.to_amount, "external": fxc.from_amount * fxc.rate,
-                          "severity": "critical"})
+            diffs.append(
+                {
+                    "category": "fx_conversion_mismatch",
+                    "currency": pair,
+                    "internal": fxc.to_amount,
+                    "external": fxc.from_amount * fxc.rate,
+                    "severity": "critical",
+                }
+            )
 
     val = valuation(book, as_of=as_of)
     recomputed = sum(cv.total_base for cv in val.by_currency.values())
     if abs(recomputed - val.total_base) > tol:
-        diffs.append({"category": "valuation_mismatch", "currency": book.base_currency,
-                      "internal": recomputed, "external": val.total_base, "severity": "critical"})
+        diffs.append(
+            {
+                "category": "valuation_mismatch",
+                "currency": book.base_currency,
+                "internal": recomputed,
+                "external": val.total_base,
+                "severity": "critical",
+            }
+        )
 
     cats: dict = {}
     for d in diffs:
         cats[d["category"]] = cats.get(d["category"], 0) + 1
-    return FXReconciliationReport(ok=not diffs, differences=diffs, categories=cats,
-                                  conversions_checked=len(book.conversions))
+    return FXReconciliationReport(
+        ok=not diffs, differences=diffs, categories=cats, conversions_checked=len(book.conversions)
+    )

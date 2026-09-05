@@ -26,12 +26,12 @@ def forward_points(spot: float, forward: float) -> float:
 
 def cross_rate(fx_provider, base: str, quote: str, pivot: str, *, as_of=None) -> float:
     """Cross rate via a pivot currency, using M16 resolution."""
-    return (fx_provider.rate(base, pivot, as_of=as_of)
-            * fx_provider.rate(pivot, quote, as_of=as_of))
+    return fx_provider.rate(base, pivot, as_of=as_of) * fx_provider.rate(pivot, quote, as_of=as_of)
 
 
-def fx_forward_value(notional_base: float, contracted_rate: float, market_forward: float,
-                     quote_discount: float) -> float:
+def fx_forward_value(
+    notional_base: float, contracted_rate: float, market_forward: float, quote_discount: float
+) -> float:
     """PV (in quote currency) of a forward to buy `notional_base` of base at `contracted_rate`.
 
     Value = notional_base · (market_forward − contracted_rate) · DF_quote(T).
@@ -39,8 +39,9 @@ def fx_forward_value(notional_base: float, contracted_rate: float, market_forwar
     return notional_base * (market_forward - contracted_rate) * quote_discount
 
 
-def reciprocal_consistent(fx_provider, base: str, quote: str, *, as_of=None,
-                          tol: float = 1e-9) -> bool:
+def reciprocal_consistent(
+    fx_provider, base: str, quote: str, *, as_of=None, tol: float = 1e-9
+) -> bool:
     """rate(A,B)·rate(B,A) == 1 — the M16 no-arbitrage FX invariant."""
     r = fx_provider.rate(base, quote, as_of=as_of) * fx_provider.rate(quote, base, as_of=as_of)
     return abs(r - 1.0) < tol

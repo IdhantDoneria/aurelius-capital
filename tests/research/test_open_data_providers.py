@@ -15,13 +15,16 @@ from datetime import date
 import pytest
 
 from mentisrex.research.market_data.analytics.fundamentals import (
-    FundamentalObservation,
     FundamentalRatioEngine,
 )
 from mentisrex.research.market_data.export.lean import LeanExporter
 from mentisrex.research.market_data.normalization import Normalizer
 from mentisrex.research.market_data.pit import MarketDataSnapshotBuilder
-from mentisrex.research.market_data.providers import ALL_PROVIDERS, ProviderMetadata, default_m21_registry
+from mentisrex.research.market_data.providers import (
+    ALL_PROVIDERS,
+    ProviderMetadata,
+    default_m21_registry,
+)
 from mentisrex.research.market_data.providers.financetoolkit import FinanceToolkitSourceAdapter
 from mentisrex.research.market_data.providers.fincept import FinceptSourceAdapter
 from mentisrex.research.market_data.providers.fred import FREDSourceAdapter
@@ -31,7 +34,7 @@ from mentisrex.research.market_data.providers.qlib import QlibExporter, QlibSour
 from mentisrex.research.market_data.providers.sec import SECSourceAdapter
 from mentisrex.research.market_data.providers.yahoo import YahooFinanceSourceAdapter
 from mentisrex.research.market_data_ops.adapters import MessageLogAdapter
-from mentisrex.research.market_data_ops.messages import MessageType, SourceMessage
+from mentisrex.research.market_data_ops.messages import MessageType
 
 AS_OF = date(2024, 6, 30)
 FUTURE = date(2025, 1, 1)
@@ -39,20 +42,29 @@ FUTURE = date(2025, 1, 1)
 
 # ── Provider metadata & registry ────────────────────────────────────────────
 
+
 class TestProviderRegistry:
     def test_all_providers_have_metadata(self):
         assert len(ALL_PROVIDERS) == 8  # openbb, fincept, yahoo, sec, fred, india, qlib, ftk
 
     def test_provider_fingerprint_stable(self):
         meta = ProviderMetadata(
-            name="test", version="1.0.0", license="MIT",
-            coverage="global", datasets=("ohlcv",), limitations=("none",),
+            name="test",
+            version="1.0.0",
+            license="MIT",
+            coverage="global",
+            datasets=("ohlcv",),
+            limitations=("none",),
         )
         assert len(meta.fingerprint) == 16  # blake2b 8-byte = 16 hex chars
         # same inputs → same fingerprint
         meta2 = ProviderMetadata(
-            name="test", version="1.0.0", license="MIT",
-            coverage="global", datasets=("ohlcv",), limitations=("none",),
+            name="test",
+            version="1.0.0",
+            license="MIT",
+            coverage="global",
+            datasets=("ohlcv",),
+            limitations=("none",),
         )
         assert meta.fingerprint == meta2.fingerprint
 
@@ -69,14 +81,22 @@ class TestProviderRegistry:
 
 # ── OpenBB adapter ────────────────────────────────────────────────────────────
 
+
 class TestOpenBBAdapter:
     def _adapter(self):
         return OpenBBSourceAdapter()
 
     def _equity_record(self, symbol="AAPL", d=None, close=150.0):
-        return {"symbol": symbol, "date": (d or AS_OF).isoformat(),
-                "open": 148.0, "high": 152.0, "low": 147.0,
-                "close": close, "volume": 50_000_000, "currency": "USD"}
+        return {
+            "symbol": symbol,
+            "date": (d or AS_OF).isoformat(),
+            "open": 148.0,
+            "high": 152.0,
+            "low": 147.0,
+            "close": close,
+            "volume": 50_000_000,
+            "currency": "USD",
+        }
 
     def test_equity_conversion(self):
         adapter = self._adapter()
@@ -139,15 +159,25 @@ class TestOpenBBAdapter:
     def test_multiple_fields_in_payload(self):
         msgs = self._adapter().convert([self._equity_record()], AS_OF)
         payload = msgs[0].payload
-        assert "open" in payload and "high" in payload and "low" in payload and "volume" in payload
+        assert "open" in payload
+        assert "high" in payload
+        assert "low" in payload
+        assert "volume" in payload
 
 
 # ── Fincept adapter ───────────────────────────────────────────────────────────
 
+
 class TestFinceptAdapter:
     def test_basic_conversion(self):
-        rec = {"id": "RELIANCE", "date": AS_OF.isoformat(), "field": "close",
-               "value": 2500.0, "source": "fincept", "currency": "INR"}
+        rec = {
+            "id": "RELIANCE",
+            "date": AS_OF.isoformat(),
+            "field": "close",
+            "value": 2500.0,
+            "source": "fincept",
+            "currency": "INR",
+        }
         msgs = FinceptSourceAdapter().convert([rec], AS_OF)
         assert len(msgs) == 1
         assert msgs[0].payload["id"] == "RELIANCE"
@@ -172,12 +202,19 @@ class TestFinceptAdapter:
 
 # ── Yahoo Finance adapter ─────────────────────────────────────────────────────
 
+
 class TestYahooAdapter:
     def _record(self, symbol="MSFT", d=None, close=300.0, adj_close=None, div=0.0, split=0.0):
         r = {
-            "symbol": symbol, "date": (d or AS_OF).isoformat(),
-            "open": 298.0, "high": 302.0, "low": 297.0, "close": close,
-            "volume": 20_000_000, "dividends": div, "stock_splits": split,
+            "symbol": symbol,
+            "date": (d or AS_OF).isoformat(),
+            "open": 298.0,
+            "high": 302.0,
+            "low": 297.0,
+            "close": close,
+            "volume": 20_000_000,
+            "dividends": div,
+            "stock_splits": split,
         }
         if adj_close is not None:
             r["adj_close"] = adj_close
@@ -192,10 +229,13 @@ class TestYahooAdapter:
     def test_adj_close_separate_message(self):
         msgs = YahooFinanceSourceAdapter().convert([self._record(adj_close=298.5)], AS_OF)
         types = {m.payload.get("type") for m in msgs}
-        assert "close" in types and "adjusted_close" in types
+        assert "close" in types
+        assert "adjusted_close" in types
 
     def test_adj_close_equals_close_no_duplicate(self):
-        msgs = YahooFinanceSourceAdapter().convert([self._record(close=300.0, adj_close=300.0)], AS_OF)
+        msgs = YahooFinanceSourceAdapter().convert(
+            [self._record(close=300.0, adj_close=300.0)], AS_OF
+        )
         types = [m.payload.get("type") for m in msgs]
         assert types.count("close") == 1
         assert "adjusted_close" not in types
@@ -222,7 +262,8 @@ class TestYahooAdapter:
         assert len(msgs) == 0
 
     def test_id_map_resolution(self):
-        from mentisrex.research.market_data.identifiers import IdType, IdentifierMap
+        from mentisrex.research.market_data.identifiers import IdentifierMap, IdType
+
         id_map = IdentifierMap()
         id_map.add(IdType.TICKER, "MSFT", "sec_msft_001")
         adapter = YahooFinanceSourceAdapter(id_map=id_map)
@@ -238,6 +279,7 @@ class TestYahooAdapter:
 
 # ── SEC/EDGAR adapter ─────────────────────────────────────────────────────────
 
+
 def _apple_company_facts(filed="2022-10-28", end="2022-09-24", revenue=394328000000):
     return {
         "cik": "0000320193",
@@ -247,20 +289,30 @@ def _apple_company_facts(filed="2022-10-28", end="2022-09-24", revenue=394328000
                 "Revenues": {
                     "units": {
                         "USD": [
-                            {"end": end, "val": revenue,
-                             "accn": "0000320193-22-000108",
-                             "fy": 2022, "fp": "FY", "form": "10-K",
-                             "filed": filed}
+                            {
+                                "end": end,
+                                "val": revenue,
+                                "accn": "0000320193-22-000108",
+                                "fy": 2022,
+                                "fp": "FY",
+                                "form": "10-K",
+                                "filed": filed,
+                            }
                         ]
                     }
                 },
                 "NetIncomeLoss": {
                     "units": {
                         "USD": [
-                            {"end": end, "val": 99803000000,
-                             "accn": "0000320193-22-000108",
-                             "fy": 2022, "fp": "FY", "form": "10-K",
-                             "filed": filed}
+                            {
+                                "end": end,
+                                "val": 99803000000,
+                                "accn": "0000320193-22-000108",
+                                "fy": 2022,
+                                "fp": "FY",
+                                "form": "10-K",
+                                "filed": filed,
+                            }
                         ]
                     }
                 },
@@ -296,21 +348,36 @@ class TestSECAdapter:
 
     def test_revision_numbering(self):
         facts = {
-            "cik": "1", "entityName": "TestCo",
+            "cik": "1",
+            "entityName": "TestCo",
             "facts": {
                 "us-gaap": {
                     "Revenues": {
                         "units": {
                             "USD": [
-                                {"end": "2022-12-31", "val": 1000, "accn": "0001",
-                                 "fy": 2022, "fp": "FY", "form": "10-K", "filed": "2023-03-15"},
-                                {"end": "2022-12-31", "val": 1050, "accn": "0002",
-                                 "fy": 2022, "fp": "FY", "form": "10-K/A", "filed": "2023-05-01"},
+                                {
+                                    "end": "2022-12-31",
+                                    "val": 1000,
+                                    "accn": "0001",
+                                    "fy": 2022,
+                                    "fp": "FY",
+                                    "form": "10-K",
+                                    "filed": "2023-03-15",
+                                },
+                                {
+                                    "end": "2022-12-31",
+                                    "val": 1050,
+                                    "accn": "0002",
+                                    "fy": 2022,
+                                    "fp": "FY",
+                                    "form": "10-K/A",
+                                    "filed": "2023-05-01",
+                                },
                             ]
                         }
                     }
                 }
-            }
+            },
         }
         msgs = SECSourceAdapter().convert(facts, AS_OF, security_id="co1")
         rev_msgs = [m for m in msgs if m.payload.get("field") == "revenue"]
@@ -339,14 +406,23 @@ class TestSECAdapter:
 
 # ── FRED adapter ──────────────────────────────────────────────────────────────
 
+
 def _gdp_observations():
     return [
         # original print — released 2024-04-30, for period 2024-01-01
-        {"realtime_start": "2024-04-30", "realtime_end": "2024-06-14",
-         "date": "2024-01-01", "value": "27357.0"},
+        {
+            "realtime_start": "2024-04-30",
+            "realtime_end": "2024-06-14",
+            "date": "2024-01-01",
+            "value": "27357.0",
+        },
         # revision — released 2024-06-14 (before AS_OF=2024-06-30)
-        {"realtime_start": "2024-06-14", "realtime_end": "9999-12-31",
-         "date": "2024-01-01", "value": "27380.5"},
+        {
+            "realtime_start": "2024-06-14",
+            "realtime_end": "9999-12-31",
+            "date": "2024-01-01",
+            "value": "27380.5",
+        },
     ]
 
 
@@ -401,17 +477,31 @@ class TestFREDAdapter:
 
 # ── India adapter ─────────────────────────────────────────────────────────────
 
+
 class TestIndiaAdapter:
     def _nse_record(self, symbol="RELIANCE", d=None, close=2500.0):
-        return {"SYMBOL": symbol, "TIMESTAMP": (d or AS_OF).isoformat(),
-                "OPEN": 2490.0, "HIGH": 2510.0, "LOW": 2485.0, "CLOSE": close,
-                "TOTTRDQTY": 1_500_000, "ISIN": "INE002A01018"}
+        return {
+            "SYMBOL": symbol,
+            "TIMESTAMP": (d or AS_OF).isoformat(),
+            "OPEN": 2490.0,
+            "HIGH": 2510.0,
+            "LOW": 2485.0,
+            "CLOSE": close,
+            "TOTTRDQTY": 1_500_000,
+            "ISIN": "INE002A01018",
+        }
 
     def _bse_record(self, code="500325", d=None, close=2500.0):
-        return {"Code": code, "Name": "Reliance Industries",
-                "Date": (d or AS_OF).isoformat(),
-                "Open": 2490.0, "High": 2510.0, "Low": 2485.0,
-                "Close": close, "Volume": 1_500_000}
+        return {
+            "Code": code,
+            "Name": "Reliance Industries",
+            "Date": (d or AS_OF).isoformat(),
+            "Open": 2490.0,
+            "High": 2510.0,
+            "Low": 2485.0,
+            "Close": close,
+            "Volume": 1_500_000,
+        }
 
     def test_nse_conversion(self):
         msgs = IndiaSourceAdapter().convert_nse([self._nse_record()], AS_OF)
@@ -440,7 +530,8 @@ class TestIndiaAdapter:
         assert msgs[0].payload.get("isin") == "INE002A01018"
 
     def test_id_map_isin_resolution(self):
-        from mentisrex.research.market_data.identifiers import IdType, IdentifierMap
+        from mentisrex.research.market_data.identifiers import IdentifierMap, IdType
+
         id_map = IdentifierMap()
         id_map.add(IdType.ISIN, "INE002A01018", "reliance_internal")
         adapter = IndiaSourceAdapter(id_map=id_map)
@@ -492,18 +583,33 @@ class TestQlibAdapter:
 
 class TestQlibExporter:
     def _observations(self):
-        from mentisrex.research.market_data.models import CanonicalObservation, ObservationType, Unit
+        from mentisrex.research.market_data.models import (
+            CanonicalObservation,
+            ObservationType,
+            Unit,
+        )
+
         obs = []
         for i in range(3):
             d = date(2024, 1, 2 + i)
-            for field, val in [("close", 150.0 + i), ("open", 149.0 + i),
-                                ("high", 152.0 + i), ("low", 148.0 + i), ("volume", 5e7)]:
-                obs.append(CanonicalObservation(
-                    security_id="AAPL", obs_type=ObservationType.CLOSE,
-                    field=field, value=val,
-                    observation_date=d, effective_date=d,
-                    unit=Unit.PRICE if field != "volume" else Unit.SHARES,
-                ))
+            for field, val in [
+                ("close", 150.0 + i),
+                ("open", 149.0 + i),
+                ("high", 152.0 + i),
+                ("low", 148.0 + i),
+                ("volume", 5e7),
+            ]:
+                obs.append(
+                    CanonicalObservation(
+                        security_id="AAPL",
+                        obs_type=ObservationType.CLOSE,
+                        field=field,
+                        value=val,
+                        observation_date=d,
+                        effective_date=d,
+                        unit=Unit.PRICE if field != "volume" else Unit.SHARES,
+                    )
+                )
         return obs
 
     def test_export_creates_csv(self, tmp_path):
@@ -512,7 +618,8 @@ class TestQlibExporter:
         assert "AAPL" in written
         assert written["AAPL"].exists()
         content = written["AAPL"].read_text()
-        assert "date" in content and "close" in content
+        assert "date" in content
+        assert "close" in content
 
     def test_export_deterministic(self, tmp_path):
         obs = self._observations()
@@ -525,20 +632,27 @@ class TestQlibExporter:
 
 # ── FinanceToolkit adapter ────────────────────────────────────────────────────
 
+
 class TestFinanceToolkitAdapter:
     def _record(self, symbol="AAPL", close_date="2022-09-24", filed="2022-10-28"):
         return {
-            "symbol": symbol, "date": close_date, "filed": filed,
-            "revenue": 394328000000, "gross_profit": 170782000000,
-            "operating_income": 119437000000, "net_income": 99803000000,
-            "total_assets": 352755000000, "stockholders_equity": 50672000000,
+            "symbol": symbol,
+            "date": close_date,
+            "filed": filed,
+            "revenue": 394328000000,
+            "gross_profit": 170782000000,
+            "operating_income": 119437000000,
+            "net_income": 99803000000,
+            "total_assets": 352755000000,
+            "stockholders_equity": 50672000000,
             "currency": "USD",
         }
 
     def test_emits_multiple_fields(self):
         msgs = FinanceToolkitSourceAdapter().convert([self._record()], AS_OF)
         fields = {m.payload["field"] for m in msgs}
-        assert "revenue" in fields and "net_income" in fields
+        assert "revenue" in fields
+        assert "net_income" in fields
 
     def test_pit_filed_is_observation_date(self):
         msgs = FinanceToolkitSourceAdapter().convert([self._record()], AS_OF)
@@ -557,16 +671,25 @@ class TestFinanceToolkitAdapter:
 
 # ── Fundamental ratio engine ──────────────────────────────────────────────────
 
+
 class TestFundamentalRatioEngine:
     def _fields(self):
         return {
-            "revenue": 394328e6, "gross_profit": 170782e6,
-            "operating_income": 119437e6, "net_income": 99803e6,
-            "ebitda": 130541e6, "total_assets": 352755e6,
-            "stockholders_equity": 50672e6, "long_term_debt": 98959e6,
-            "current_assets": 135405e6, "current_liabilities": 153982e6,
-            "cash": 23646e6, "shares_outstanding": 16_325_819_000,
-            "eps_diluted": 6.11, "cash_flow_operations": 122151e6, "capex": 10708e6,
+            "revenue": 394328e6,
+            "gross_profit": 170782e6,
+            "operating_income": 119437e6,
+            "net_income": 99803e6,
+            "ebitda": 130541e6,
+            "total_assets": 352755e6,
+            "stockholders_equity": 50672e6,
+            "long_term_debt": 98959e6,
+            "current_assets": 135405e6,
+            "current_liabilities": 153982e6,
+            "cash": 23646e6,
+            "shares_outstanding": 16_325_819_000,
+            "eps_diluted": 6.11,
+            "cash_flow_operations": 122151e6,
+            "capex": 10708e6,
         }
 
     def test_gross_margin(self):
@@ -577,13 +700,15 @@ class TestFundamentalRatioEngine:
 
     def test_net_margin(self):
         ratios = FundamentalRatioEngine().compute(
-            "aapl", self._fields(), date(2022, 10, 28), date(2022, 9, 24))
+            "aapl", self._fields(), date(2022, 10, 28), date(2022, 9, 24)
+        )
         nm = next(r for r in ratios if r.ratio_name == "net_margin")
         assert abs(nm.value - 99803e6 / 394328e6) < 1e-6
 
     def test_pe_ratio_with_price(self):
         ratios = FundamentalRatioEngine().compute(
-            "aapl", self._fields(), date(2022, 10, 28), date(2022, 9, 24), price=150.0)
+            "aapl", self._fields(), date(2022, 10, 28), date(2022, 9, 24), price=150.0
+        )
         pe = next(r for r in ratios if r.ratio_name == "pe_ratio")
         assert abs(pe.value - 150.0 / 6.11) < 0.01
 
@@ -596,26 +721,29 @@ class TestFundamentalRatioEngine:
 
     def test_fundamental_observation_valid(self):
         ratios = FundamentalRatioEngine().compute(
-            "aapl", self._fields(), date(2022, 10, 28), date(2022, 9, 24))
+            "aapl", self._fields(), date(2022, 10, 28), date(2022, 9, 24)
+        )
         assert all(r.valid for r in ratios)
 
     def test_growth_ratios(self):
         current = {"revenue": 400e9, "net_income": 100e9}
         prior = {"revenue": 360e9, "net_income": 90e9}
-        ratios = FundamentalRatioEngine().compute_growth(
-            "aapl", current, prior, AS_OF, AS_OF)
+        ratios = FundamentalRatioEngine().compute_growth("aapl", current, prior, AS_OF, AS_OF)
         rev_growth = next(r for r in ratios if r.ratio_name == "revenue_growth")
         assert abs(rev_growth.value - (400e9 - 360e9) / 360e9) < 1e-9
 
     def test_inputs_preserved_in_observation(self):
         ratios = FundamentalRatioEngine().compute(
-            "aapl", self._fields(), date(2022, 10, 28), date(2022, 9, 24))
+            "aapl", self._fields(), date(2022, 10, 28), date(2022, 9, 24)
+        )
         gm = next(r for r in ratios if r.ratio_name == "gross_margin")
-        assert "gross_profit" in gm.inputs and "revenue" in gm.inputs
+        assert "gross_profit" in gm.inputs
+        assert "revenue" in gm.inputs
 
     def test_provenance_fields(self):
         ratios = FundamentalRatioEngine().compute(
-            "aapl", self._fields(), date(2022, 10, 28), date(2022, 9, 24))
+            "aapl", self._fields(), date(2022, 10, 28), date(2022, 9, 24)
+        )
         r = ratios[0]
         assert r.security_id == "aapl"
         assert r.observation_date == date(2022, 10, 28)
@@ -624,19 +752,36 @@ class TestFundamentalRatioEngine:
 
 # ── Lean exporter ─────────────────────────────────────────────────────────────
 
+
 class TestLeanExporter:
     def _observations(self):
-        from mentisrex.research.market_data.models import CanonicalObservation, ObservationType, Unit
+        from mentisrex.research.market_data.models import (
+            CanonicalObservation,
+            ObservationType,
+            Unit,
+        )
+
         obs = []
         for i in range(5):
             d = date(2024, 1, 2 + i)
-            for field, val in [("close", 150.0 + i), ("open", 149.0 + i),
-                                ("high", 152.0 + i), ("low", 148.0 + i), ("volume", 5e7)]:
-                obs.append(CanonicalObservation(
-                    security_id="AAPL", obs_type=ObservationType.CLOSE,
-                    field=field, value=val, observation_date=d, effective_date=d,
-                    unit=Unit.PRICE,
-                ))
+            for field, val in [
+                ("close", 150.0 + i),
+                ("open", 149.0 + i),
+                ("high", 152.0 + i),
+                ("low", 148.0 + i),
+                ("volume", 5e7),
+            ]:
+                obs.append(
+                    CanonicalObservation(
+                        security_id="AAPL",
+                        obs_type=ObservationType.CLOSE,
+                        field=field,
+                        value=val,
+                        observation_date=d,
+                        effective_date=d,
+                        unit=Unit.PRICE,
+                    )
+                )
         return obs
 
     def test_ohlcv_export_creates_zip(self, tmp_path):
@@ -647,6 +792,7 @@ class TestLeanExporter:
 
     def test_ohlcv_values_scaled_to_10000ths(self, tmp_path):
         import zipfile
+
         written = LeanExporter().export_ohlcv(self._observations(), tmp_path)
         with zipfile.ZipFile(written["AAPL"]) as zf:
             content = zf.read(zf.namelist()[0]).decode()
@@ -657,7 +803,8 @@ class TestLeanExporter:
         universe = {date(2024, 1, 2): ["AAPL", "MSFT"], date(2024, 1, 3): ["AAPL"]}
         path = LeanExporter().export_universe(universe, tmp_path / "universe.csv")
         content = path.read_text()
-        assert "AAPL" in content and "MSFT" in content
+        assert "AAPL" in content
+        assert "MSFT" in content
 
     def test_signals_export(self, tmp_path):
         signals = [
@@ -675,18 +822,21 @@ class TestLeanExporter:
         ]
         path = LeanExporter().export_targets(targets, tmp_path / "targets.csv")
         content = path.read_text()
-        assert "0.6" in content and "0.4" in content
+        assert "0.6" in content
+        assert "0.4" in content
 
     def test_export_deterministic(self, tmp_path):
         obs = self._observations()
         w1 = LeanExporter().export_ohlcv(obs, tmp_path / "r1")
         w2 = LeanExporter().export_ohlcv(obs, tmp_path / "r2")
         import zipfile
+
         with zipfile.ZipFile(w1["AAPL"]) as z1, zipfile.ZipFile(w2["AAPL"]) as z2:
             assert z1.read(z1.namelist()[0]) == z2.read(z2.namelist()[0])
 
 
 # ── Integration: Provider → M20 → M19 → M18 snapshot ─────────────────────────
+
 
 class TestFullPipeline:
     """Exercise the full pipeline: provider adapter → M20 MessageLogAdapter → M19 normalizer
@@ -695,10 +845,24 @@ class TestFullPipeline:
     def test_yahoo_to_snapshot(self):
         yahoo = YahooFinanceSourceAdapter()
         records = [
-            {"symbol": "S1", "date": "2024-06-28", "close": 100.0, "open": 99.0,
-             "high": 101.0, "low": 98.0, "volume": 1e6},
-            {"symbol": "S2", "date": "2024-06-28", "close": 200.0, "open": 198.0,
-             "high": 202.0, "low": 197.0, "volume": 5e5},
+            {
+                "symbol": "S1",
+                "date": "2024-06-28",
+                "close": 100.0,
+                "open": 99.0,
+                "high": 101.0,
+                "low": 98.0,
+                "volume": 1e6,
+            },
+            {
+                "symbol": "S2",
+                "date": "2024-06-28",
+                "close": 200.0,
+                "open": 198.0,
+                "high": 202.0,
+                "low": 197.0,
+                "volume": 5e5,
+            },
         ]
         msgs = yahoo.convert(records, AS_OF)
         assert len(msgs) >= 2
@@ -730,6 +894,7 @@ class TestFullPipeline:
 
     def test_fred_pit_reconstruction_via_revision_store(self):
         from mentisrex.research.market_data.revisions import RevisionStore
+
         fred = FREDSourceAdapter()
         obs = [
             {"realtime_start": "2024-04-30", "date": "2024-01-01", "value": "27357.0"},
@@ -740,8 +905,10 @@ class TestFullPipeline:
         store = RevisionStore()
         for m in msgs:
             store.record(
-                m.payload["id"], m.payload["field"],
-                m.effective_date, m.payload["value"],
+                m.payload["id"],
+                m.payload["field"],
+                m.effective_date,
+                m.payload["value"],
                 knowledge_date=m.observation_date,
                 source=m.source,
             )
@@ -759,15 +926,19 @@ class TestFullPipeline:
     def test_no_provider_leakage_through_source_message(self):
         """SourceMessage payload must not contain non-serialisable provider objects."""
         import json
+
         msgs = OpenBBSourceAdapter().convert(
-            [{"symbol": "X", "date": AS_OF.isoformat(), "close": 10.0}], AS_OF)
+            [{"symbol": "X", "date": AS_OF.isoformat(), "close": 10.0}], AS_OF
+        )
         for m in msgs:
             json.dumps(m.payload, default=str)  # must not raise
 
     def test_identical_input_identical_fingerprint(self):
         """Idempotency: same input records → same SourceMessage fingerprints."""
-        records = [{"symbol": f"S{i}", "date": AS_OF.isoformat(), "close": float(100 + i)}
-                   for i in range(5)]
+        records = [
+            {"symbol": f"S{i}", "date": AS_OF.isoformat(), "close": float(100 + i)}
+            for i in range(5)
+        ]
         fps1 = [m.raw_fingerprint() for m in OpenBBSourceAdapter().convert(records, AS_OF)]
         fps2 = [m.raw_fingerprint() for m in OpenBBSourceAdapter().convert(records, AS_OF)]
         assert fps1 == fps2
@@ -775,19 +946,26 @@ class TestFullPipeline:
 
 # ── Benchmarks ────────────────────────────────────────────────────────────────
 
+
 def _make_equity_records(n: int, adapter_name: str = "openbb") -> list[dict]:
     base = date(2020, 1, 1)
     from datetime import timedelta
+
     records = []
     for i in range(n):
         d = base + timedelta(days=i % 1000)
         symbol = f"S{i % 500:04d}"
-        records.append({
-            "symbol": symbol, "date": d.isoformat(),
-            "open": 100.0 + (i % 50), "high": 105.0 + (i % 50),
-            "low": 98.0 + (i % 50), "close": 101.0 + (i % 50),
-            "volume": float(1_000_000 + i),
-        })
+        records.append(
+            {
+                "symbol": symbol,
+                "date": d.isoformat(),
+                "open": 100.0 + (i % 50),
+                "high": 105.0 + (i % 50),
+                "low": 98.0 + (i % 50),
+                "close": 101.0 + (i % 50),
+                "volume": float(1_000_000 + i),
+            }
+        )
     return records
 
 

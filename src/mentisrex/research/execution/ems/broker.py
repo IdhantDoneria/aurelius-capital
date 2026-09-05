@@ -61,7 +61,7 @@ class _WrappingBroker(ExecutionBroker):
 
     def __init__(self, inner) -> None:
         self._inner = inner
-        self._orders: dict = {}           # broker_order_id -> BrokerOrder
+        self._orders: dict = {}  # broker_order_id -> BrokerOrder
 
     def set_prices(self, prices):
         self._inner.set_prices(prices)
@@ -71,8 +71,11 @@ class _WrappingBroker(ExecutionBroker):
             client_order_id=req.order_id,
             security_id=req.security_id,
             quantity=req.quantity,
-            order_type=req.order_type.value if hasattr(req.order_type, "value") else str(req.order_type),
-            limit_price=req.limit_price)
+            order_type=req.order_type.value
+            if hasattr(req.order_type, "value")
+            else str(req.order_type),
+            limit_price=req.limit_price,
+        )
         ack = self._inner.place_order(m12, adv=adv)
         self._orders[ack.broker_order_id] = ack
         return ack
@@ -83,7 +86,7 @@ class _WrappingBroker(ExecutionBroker):
 
     @staticmethod
     def _as_ems_fill(f) -> BrokerFill:
-        return f                          # M12 BrokerFill is M14's BrokerFill (re-exported)
+        return f  # M12 BrokerFill is M14's BrokerFill (re-exported)
 
     def get_order_status(self, broker_order_id):
         return self._orders.get(broker_order_id)
@@ -122,14 +125,29 @@ class MockExecutionBroker(_WrappingBroker):
 class SimulatedExecutionBroker(_WrappingBroker):
     name = "simulated"
 
-    def __init__(self, *, initial_cash: float, fill_ratio: float = 1.0,
-                 slippage_bps: float = 0.0, reject_every: int = 0,
-                 account_id: str = "EMS", **kw) -> None:
-        super().__init__(SimulatedBroker(
-            initial_cash=initial_cash, fill_ratio=fill_ratio, slippage_bps=slippage_bps,
-            reject_every=reject_every, account_id=account_id, **kw))
+    def __init__(
+        self,
+        *,
+        initial_cash: float,
+        fill_ratio: float = 1.0,
+        slippage_bps: float = 0.0,
+        reject_every: int = 0,
+        account_id: str = "EMS",
+        **kw,
+    ) -> None:
+        super().__init__(
+            SimulatedBroker(
+                initial_cash=initial_cash,
+                fill_ratio=fill_ratio,
+                slippage_bps=slippage_bps,
+                reject_every=reject_every,
+                account_id=account_id,
+                **kw,
+            )
+        )
 
 
 def _with_status(ack: BrokerOrder, status: str) -> BrokerOrder:
     from dataclasses import replace
+
     return replace(ack, status=status)

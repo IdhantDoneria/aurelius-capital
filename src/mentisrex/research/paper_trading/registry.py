@@ -28,16 +28,21 @@ def attach_session(registry, experiment, session, *, artifacts_dir: str | None =
     exp = registry.load(experiment.experiment_id) or experiment
     mon = _monitoring_report(session)
     diag = _diagnostics(session)
-    exp.metrics = {**(exp.metrics or {}),
-                   "PaperReconciliationRate": mon.reconciliation_rate,
-                   "PaperMaxWeightDrift": mon.max_weight_drift,
-                   "PaperTotalCost": mon.total_cost,
-                   "PaperFinalValue": diag["final_value"],
-                   "PaperNSyncs": float(mon.n_syncs)}
-    exp.notes = (f"paper_trading syncs={mon.n_syncs} reconciled={mon.reconciliation_rate:.2f} "
-                 f"maxDrift={mon.max_weight_drift:.3f} finalValue={diag['final_value']:.0f}")
-    exp.artifacts = [*(exp.artifacts or []),
-                     {"artifact_type": "paper_session.json", "artifact_location": str(path),
-                      "artifact_hash": h}]
+    exp.metrics = {
+        **(exp.metrics or {}),
+        "PaperReconciliationRate": mon.reconciliation_rate,
+        "PaperMaxWeightDrift": mon.max_weight_drift,
+        "PaperTotalCost": mon.total_cost,
+        "PaperFinalValue": diag["final_value"],
+        "PaperNSyncs": float(mon.n_syncs),
+    }
+    exp.notes = (
+        f"paper_trading syncs={mon.n_syncs} reconciled={mon.reconciliation_rate:.2f} "
+        f"maxDrift={mon.max_weight_drift:.3f} finalValue={diag['final_value']:.0f}"
+    )
+    exp.artifacts = [
+        *(exp.artifacts or []),
+        {"artifact_type": "paper_session.json", "artifact_location": str(path), "artifact_hash": h},
+    ]
     registry.store.insert(exp)
     return {"artifact": str(path), "hash": h, "session_fingerprint": session.fingerprint()}

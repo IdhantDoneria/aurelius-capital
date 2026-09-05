@@ -23,13 +23,12 @@ import hashlib
 import json
 import time
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import Optional
-
 
 # ── execution quality dataclass ───────────────────────────────────────────────
+
 
 @dataclass(frozen=True)
 class AlpacaOrderExecution:
@@ -41,38 +40,38 @@ class AlpacaOrderExecution:
     """
 
     # identity
-    mentisrex_order_id: str       # = client_order_id
-    alpaca_order_id: str          # Alpaca-assigned UUID
-    client_order_id: str          # deterministic idempotency key
+    mentisrex_order_id: str  # = client_order_id
+    alpaca_order_id: str  # Alpaca-assigned UUID
+    client_order_id: str  # deterministic idempotency key
     cycle_id: str
 
     # order specification
     symbol: str
-    side: str                     # "buy" | "sell"
-    intended_quantity: str        # from strategy signal (Decimal as str)
-    submitted_quantity: str       # actually sent to Alpaca
-    filled_quantity: str          # Alpaca-reported filled_qty
-    order_type: str               # "market" | "limit"
-    time_in_force: str            # "day" | "gtc"
+    side: str  # "buy" | "sell"
+    intended_quantity: str  # from strategy signal (Decimal as str)
+    submitted_quantity: str  # actually sent to Alpaca
+    filled_quantity: str  # Alpaca-reported filled_qty
+    order_type: str  # "market" | "limit"
+    time_in_force: str  # "day" | "gtc"
 
     # prices
-    reference_price: str          # strategy reference (Decimal as str; "UNAVAILABLE" if unknown)
-    avg_fill_price: str           # Alpaca filled_avg_price ("UNAVAILABLE" if not filled)
+    reference_price: str  # strategy reference (Decimal as str; "UNAVAILABLE" if unknown)
+    avg_fill_price: str  # Alpaca filled_avg_price ("UNAVAILABLE" if not filled)
 
     # timing
-    submission_timestamp: str     # ISO when submitted to Alpaca
-    first_ack_timestamp: str      # Alpaca submitted_at (ISO; "UNAVAILABLE" if absent)
-    fill_timestamp: str           # Alpaca filled_at (ISO; "UNAVAILABLE" if not filled)
+    submission_timestamp: str  # ISO when submitted to Alpaca
+    first_ack_timestamp: str  # Alpaca submitted_at (ISO; "UNAVAILABLE" if absent)
+    fill_timestamp: str  # Alpaca filled_at (ISO; "UNAVAILABLE" if not filled)
 
     # status
-    order_status: str             # "filled" | "canceled" | "rejected" | "accepted" | ...
-    rejection_reason: str         # non-empty if rejected; "N/A" otherwise
+    order_status: str  # "filled" | "canceled" | "rejected" | "accepted" | ...
+    rejection_reason: str  # non-empty if rejected; "N/A" otherwise
 
     # quality metrics (UNAVAILABLE as sentinel when not computable)
-    slippage_bps: str             # (fill - reference) / reference * 10000 as str, or "UNAVAILABLE"
-    slippage_dollars: str         # as str, or "UNAVAILABLE"
+    slippage_bps: str  # (fill - reference) / reference * 10000 as str, or "UNAVAILABLE"
+    slippage_dollars: str  # as str, or "UNAVAILABLE"
     estimated_transaction_cost: str  # as str, or "UNAVAILABLE"
-    execution_latency_ms: str     # submission→fill latency in ms, or "UNAVAILABLE"
+    execution_latency_ms: str  # submission→fill latency in ms, or "UNAVAILABLE"
 
     # governance (immutable)
     broker: str = "ALPACA"
@@ -95,10 +94,10 @@ class CycleExecutionSummary:
     orders_canceled: int = 0
 
     # rates
-    fill_rate: float = 0.0           # orders_filled / orders_submitted (or UNAVAILABLE if 0)
+    fill_rate: float = 0.0  # orders_filled / orders_submitted (or UNAVAILABLE if 0)
 
     # slippage
-    avg_slippage_bps: float = 0.0    # mean slippage across filled orders
+    avg_slippage_bps: float = 0.0  # mean slippage across filled orders
     total_slippage_bps: float = 0.0  # sum
     total_slippage_dollars: float = 0.0
 
@@ -107,7 +106,7 @@ class CycleExecutionSummary:
 
     # turnover
     total_notional_traded: float = 0.0
-    turnover_vs_nav: float = 0.0     # total_notional / strategy_nav
+    turnover_vs_nav: float = 0.0  # total_notional / strategy_nav
 
     # bookkeeping
     unavailable_fields: list = field(default_factory=list)  # list of field names not available
@@ -207,6 +206,7 @@ def _compute_execution_summary(
 
 # ── sealed per-cycle execution record ────────────────────────────────────────
 
+
 @dataclass
 class AlpacaCycleExecutionRecord:
     """Sealed, immutable Alpaca execution record for one forward cycle.
@@ -220,8 +220,8 @@ class AlpacaCycleExecutionRecord:
     campaign_id: str = ""
     strategy_id: str = ""
     strategy_fingerprint: str = ""
-    evaluation_date: Optional[date] = None
-    knowledge_as_of: Optional[date] = None
+    evaluation_date: date | None = None
+    knowledge_as_of: date | None = None
 
     # orders and fills
     orders: list = field(default_factory=list)  # list[dict] — AlpacaOrderExecution.to_dict()
@@ -230,7 +230,7 @@ class AlpacaCycleExecutionRecord:
     # reconciliation
     positions_reconciled: bool = False
     nav_reconciled: bool = False
-    reconciliation_status: str = ""     # "PASS" | "FAIL" | "NOT_VERIFIED"
+    reconciliation_status: str = ""  # "PASS" | "FAIL" | "NOT_VERIFIED"
     position_mismatches: list = field(default_factory=list)
     nav_delta_bps: float = 0.0
     alpaca_equity: float = 0.0
@@ -253,19 +253,22 @@ class AlpacaCycleExecutionRecord:
     def seal(self, status: str = "SUCCESS") -> None:
         if not self.sealed_at:
             self.status = status
-            self.sealed_at = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+            self.sealed_at = datetime.now(UTC).replace(tzinfo=None).isoformat()
 
     @property
     def is_sealed(self) -> bool:
         return bool(self.sealed_at)
 
     def record_fingerprint(self) -> str:
-        body = json.dumps({
-            "cycle_id": self.cycle_id,
-            "orders_submitted": len(self.orders),
-            "reconciliation_status": self.reconciliation_status,
-            "status": self.status,
-        }, sort_keys=True)
+        body = json.dumps(
+            {
+                "cycle_id": self.cycle_id,
+                "orders_submitted": len(self.orders),
+                "reconciliation_status": self.reconciliation_status,
+                "status": self.status,
+            },
+            sort_keys=True,
+        )
         return hashlib.blake2b(body.encode(), digest_size=16).hexdigest()
 
     def to_dict(self) -> dict:
@@ -279,9 +282,8 @@ class AlpacaCycleExecutionRecord:
         return d
 
     @classmethod
-    def from_dict(cls, d: dict) -> "AlpacaCycleExecutionRecord":
-        kw = {k: v for k, v in d.items()
-              if k in {f.name for f in dataclasses.fields(cls)}}
+    def from_dict(cls, d: dict) -> AlpacaCycleExecutionRecord:
+        kw = {k: v for k, v in d.items() if k in {f.name for f in dataclasses.fields(cls)}}
         for dk in ("evaluation_date", "knowledge_as_of"):
             raw = kw.get(dk)
             if isinstance(raw, str) and raw:
@@ -290,6 +292,7 @@ class AlpacaCycleExecutionRecord:
 
 
 # ── execution ledger (read-only) ──────────────────────────────────────────────
+
 
 class AlpacaExecutionLedger:
     """Read-only view of sealed Alpaca execution records.
@@ -309,14 +312,13 @@ class AlpacaExecutionLedger:
             return recs
         for p in sorted(self._edir.glob("*.json")):
             try:
-                recs.append(AlpacaCycleExecutionRecord.from_dict(
-                    json.loads(p.read_text())))
+                recs.append(AlpacaCycleExecutionRecord.from_dict(json.loads(p.read_text())))
             except Exception:
                 continue
-        recs.sort(key=lambda r: (r.evaluation_date or date.min))
+        recs.sort(key=lambda r: r.evaluation_date or date.min)
         return recs
 
-    def get_cycle(self, cycle_id: str) -> Optional[AlpacaCycleExecutionRecord]:
+    def get_cycle(self, cycle_id: str) -> AlpacaCycleExecutionRecord | None:
         p = self._edir / f"{cycle_id}.json"
         if not p.exists():
             return None
@@ -325,7 +327,7 @@ class AlpacaExecutionLedger:
         except Exception:
             return None
 
-    def latest_cycle(self) -> Optional[AlpacaCycleExecutionRecord]:
+    def latest_cycle(self) -> AlpacaCycleExecutionRecord | None:
         success = [c for c in self.list_cycles() if c.status == "SUCCESS"]
         return success[-1] if success else None
 
@@ -368,24 +370,20 @@ class AlpacaExecutionLedger:
             "total_orders_submitted": total_submitted,
             "total_orders_filled": total_filled,
             "overall_fill_rate": (
-                total_filled / total_submitted if total_submitted > 0
-                else "UNAVAILABLE"
+                total_filled / total_submitted if total_submitted > 0 else "UNAVAILABLE"
             ),
             "avg_slippage_bps": (
-                sum(slippage_vals) / len(slippage_vals) if slippage_vals
-                else "UNAVAILABLE"
+                sum(slippage_vals) / len(slippage_vals) if slippage_vals else "UNAVAILABLE"
             ),
             "avg_latency_ms": (
-                sum(latency_vals) / len(latency_vals) if latency_vals
-                else "UNAVAILABLE"
+                sum(latency_vals) / len(latency_vals) if latency_vals else "UNAVAILABLE"
             ),
-            "reconciliation_pass_rate": (
-                recon_pass / len(cycles) if cycles else "UNAVAILABLE"
-            ),
+            "reconciliation_pass_rate": (recon_pass / len(cycles) if cycles else "UNAVAILABLE"),
         }
 
 
 # ── executor ──────────────────────────────────────────────────────────────────
+
 
 class AlpacaCycleExecutor:
     """Translate a ForwardCycleRecord's portfolio weights into Alpaca paper orders.
@@ -449,7 +447,7 @@ class AlpacaCycleExecutor:
         if existing is not None:
             return existing
 
-        start_time = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+        start_time = datetime.now(UTC).replace(tzinfo=None).isoformat()
         rec = AlpacaCycleExecutionRecord(
             cycle_id=cycle_id,
             campaign_id=cycle_record.campaign_id,
@@ -461,8 +459,7 @@ class AlpacaCycleExecutor:
         )
 
         try:
-            order_executions = self._submit_portfolio(
-                cycle_record, spot_prices or {})
+            order_executions = self._submit_portfolio(cycle_record, spot_prices or {})
             rec.orders = [dataclasses.asdict(o) for o in order_executions]
 
             summary = _compute_execution_summary(
@@ -470,13 +467,12 @@ class AlpacaCycleExecutor:
                 cycle_id=cycle_id,
                 strategy_nav=float(cycle_record.ending_nav),
                 start=start_time,
-                end=datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
+                end=datetime.now(UTC).replace(tzinfo=None).isoformat(),
             )
             rec.summary = dataclasses.asdict(summary)
 
             # reconcile positions
-            expected = {s: float(q) for s, q in cycle_record.positions.items()
-                        if float(q) != 0}
+            expected = {s: float(q) for s, q in cycle_record.positions.items() if float(q) != 0}
             pos_result = self._broker.reconcile_positions(expected)
             rec.positions_reconciled = pos_result.ok
             rec.position_mismatches = [
@@ -504,13 +500,13 @@ class AlpacaCycleExecutor:
             else:
                 rec.reconciliation_status = "FAIL"
 
-            rec.end_time = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+            rec.end_time = datetime.now(UTC).replace(tzinfo=None).isoformat()
             rec.seal("SUCCESS")
 
         except Exception as exc:
             rec.error_message = str(exc)
             rec.reconciliation_status = "FAIL"
-            rec.end_time = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+            rec.end_time = datetime.now(UTC).replace(tzinfo=None).isoformat()
             rec.seal("FAILED")
 
         self._persist(rec)
@@ -579,7 +575,7 @@ class AlpacaCycleExecutor:
         seq: int,
     ) -> AlpacaOrderExecution:
         """Submit one order and return an execution quality record."""
-        submission_ts = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+        submission_ts = datetime.now(UTC).replace(tzinfo=None).isoformat()
         try:
             order_rec = self._broker.submit_order(
                 symbol=symbol,
@@ -692,7 +688,7 @@ class AlpacaCycleExecutor:
             execution_latency_ms=latency_ms,
         )
 
-    def _load_sealed(self, cycle_id: str) -> Optional[AlpacaCycleExecutionRecord]:
+    def _load_sealed(self, cycle_id: str) -> AlpacaCycleExecutionRecord | None:
         p = self._exec_dir / f"{cycle_id}.json"
         if not p.exists():
             return None
@@ -713,6 +709,7 @@ class AlpacaCycleExecutor:
 
 # ── structured forward vs backtest comparison ─────────────────────────────────
 
+
 @dataclass(frozen=True)
 class ForwardVsBacktestComparison:
     """Structured BACKTEST / FORWARD / DIFFERENCE comparison table.
@@ -723,30 +720,30 @@ class ForwardVsBacktestComparison:
 
     n_forward_observations: int
     n_backtest_observations: int
-    comparison_validity: str          # "INSUFFICIENT_SAMPLE" | "PRELIMINARY"
+    comparison_validity: str  # "INSUFFICIENT_SAMPLE" | "PRELIMINARY"
 
     # returns
-    backtest_annualized_return: Optional[float]
-    forward_annualized_return: Optional[float]
-    annualized_return_diff: Optional[float]
+    backtest_annualized_return: float | None
+    forward_annualized_return: float | None
+    annualized_return_diff: float | None
     annualized_return_label: str
 
     # Sharpe
-    backtest_sharpe: Optional[float]
-    forward_sharpe: Optional[float]
-    sharpe_diff: Optional[float]
+    backtest_sharpe: float | None
+    forward_sharpe: float | None
+    sharpe_diff: float | None
     sharpe_label: str
 
     # volatility
-    backtest_volatility: Optional[float]
-    forward_volatility: Optional[float]
-    volatility_diff: Optional[float]
+    backtest_volatility: float | None
+    forward_volatility: float | None
+    volatility_diff: float | None
     volatility_label: str
 
     # drawdown
-    backtest_max_drawdown: Optional[float]
-    forward_max_drawdown: Optional[float]
-    drawdown_diff: Optional[float]
+    backtest_max_drawdown: float | None
+    forward_max_drawdown: float | None
+    drawdown_diff: float | None
 
     # governance
     note: str = (
@@ -764,7 +761,7 @@ class ForwardVsBacktestComparison:
         print(f"  validity      : {self.comparison_validity}")
         print()
         print(f"  {'Metric':<28} {'Backtest':>12} {'Forward':>12} {'Diff':>12}  Label")
-        print(f"  {'-'*70}")
+        print(f"  {'-' * 70}")
 
         def _fmt(v):
             if v is None:
@@ -774,15 +771,34 @@ class ForwardVsBacktestComparison:
             return str(v)
 
         rows = [
-            ("annualized_return", self.backtest_annualized_return,
-             self.forward_annualized_return, self.annualized_return_diff,
-             self.annualized_return_label),
-            ("sharpe", self.backtest_sharpe,
-             self.forward_sharpe, self.sharpe_diff, self.sharpe_label),
-            ("volatility", self.backtest_volatility,
-             self.forward_volatility, self.volatility_diff, self.volatility_label),
-            ("max_drawdown", self.backtest_max_drawdown,
-             self.forward_max_drawdown, self.drawdown_diff, ""),
+            (
+                "annualized_return",
+                self.backtest_annualized_return,
+                self.forward_annualized_return,
+                self.annualized_return_diff,
+                self.annualized_return_label,
+            ),
+            (
+                "sharpe",
+                self.backtest_sharpe,
+                self.forward_sharpe,
+                self.sharpe_diff,
+                self.sharpe_label,
+            ),
+            (
+                "volatility",
+                self.backtest_volatility,
+                self.forward_volatility,
+                self.volatility_diff,
+                self.volatility_label,
+            ),
+            (
+                "max_drawdown",
+                self.backtest_max_drawdown,
+                self.forward_max_drawdown,
+                self.drawdown_diff,
+                "",
+            ),
         ]
         for label, bt, fwd, diff, lbl in rows:
             print(f"  {label:<28} {_fmt(bt):>12} {_fmt(fwd):>12} {_fmt(diff):>12}  {lbl}")
@@ -791,7 +807,7 @@ class ForwardVsBacktestComparison:
 
 
 def build_forward_vs_backtest_comparison(
-    backtest,   # BacktestSnapshot
+    backtest,  # BacktestSnapshot
     fwd_summary,  # ForwardPerformanceSummary
 ) -> ForwardVsBacktestComparison:
     """Build a structured comparison from existing summaries.

@@ -1,7 +1,7 @@
 """Tests for QualityEngine — checks, scoring, report persistence."""
 
-import pytest
 import duckdb
+import pytest
 
 from mentisrex.catalog.models import DatasetRecord
 from mentisrex.catalog.quality import QualityEngine, _score
@@ -48,7 +48,9 @@ def clean_db(tmp_path) -> str:
     return db_path
 
 
-def test_quality_run_clean_data(catalog: CatalogStore, dataset: DatasetRecord, clean_db: str) -> None:
+def test_quality_run_clean_data(
+    catalog: CatalogStore, dataset: DatasetRecord, clean_db: str
+) -> None:
     engine = QualityEngine(catalog)
     report = engine.run(dataset, clean_db, "ohlcv", date_col="timestamp")
     assert report.dataset_id == dataset.id
@@ -57,21 +59,27 @@ def test_quality_run_clean_data(catalog: CatalogStore, dataset: DatasetRecord, c
     assert report.duplicate_count == 0
 
 
-def test_quality_report_persisted(catalog: CatalogStore, dataset: DatasetRecord, clean_db: str) -> None:
+def test_quality_report_persisted(
+    catalog: CatalogStore, dataset: DatasetRecord, clean_db: str
+) -> None:
     QualityEngine(catalog).run(dataset, clean_db, "ohlcv", date_col="timestamp")
     saved = catalog.latest_quality_report(dataset.id)
     assert saved is not None
     assert saved.dataset_id == dataset.id
 
 
-def test_quality_score_updated_on_dataset(catalog: CatalogStore, dataset: DatasetRecord, clean_db: str) -> None:
+def test_quality_score_updated_on_dataset(
+    catalog: CatalogStore, dataset: DatasetRecord, clean_db: str
+) -> None:
     engine = QualityEngine(catalog)
     report = engine.run(dataset, clean_db, "ohlcv", date_col="timestamp")
     refreshed = catalog.get(dataset.id)
     assert refreshed.quality_score == report.overall_score
 
 
-def test_quality_run_bad_db_returns_zero_score(catalog: CatalogStore, dataset: DatasetRecord) -> None:
+def test_quality_run_bad_db_returns_zero_score(
+    catalog: CatalogStore, dataset: DatasetRecord
+) -> None:
     engine = QualityEngine(catalog)
     report = engine.run(dataset, "/nonexistent/path.duckdb", "ohlcv")
     assert report.overall_score == 0.0

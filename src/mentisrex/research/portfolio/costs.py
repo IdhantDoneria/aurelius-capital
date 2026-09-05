@@ -17,9 +17,9 @@ import numpy as np
 @dataclass(frozen=True)
 class TransactionCostModel:
     commission_bps: float = 1.0
-    spread_bps: float = 2.0            # full spread; half is paid
+    spread_bps: float = 2.0  # full spread; half is paid
     slippage_bps: float = 1.0
-    impact_coef: float = 0.1           # k in k·√(participation)
+    impact_coef: float = 0.1  # k in k·√(participation)
 
     def linear_bps(self) -> float:
         return self.commission_bps + self.spread_bps / 2.0 + self.slippage_bps
@@ -31,8 +31,7 @@ class TransactionCostModel:
         linear = self.linear_bps() / 1e4 * q
         if adv is not None:
             adv_arr = np.asarray(adv, dtype=float)
-            participation = np.divide(q, adv_arr, out=np.zeros_like(q),
-                                      where=adv_arr > 0)
+            participation = np.divide(q, adv_arr, out=np.zeros_like(q), where=adv_arr > 0)
             impact = self.impact_coef * np.sqrt(np.clip(participation, 0, None)) * q
         else:
             participation = np.zeros_like(q)

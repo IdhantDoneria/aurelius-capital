@@ -18,6 +18,7 @@ from mentisrex.research.execution.exceptions import CancelledError
 from mentisrex.research.execution.metrics import compute_metrics
 from mentisrex.research.execution.state_machine import State
 
+
 # (state, stage fn, before-hook, after-hook)
 def _stages():
     return [
@@ -37,7 +38,7 @@ def run_pipeline(session, *, start_state: State | None = None, stop_after: State
     stages = _stages()
     if start_state is not None:  # resume: skip already-completed stages
         order = [s[0] for s in stages]
-        stages = stages[order.index(start_state):]
+        stages = stages[order.index(start_state) :]
 
     for state, fn, before, after in stages:
         if session.cancel_requested:
@@ -46,14 +47,14 @@ def run_pipeline(session, *, start_state: State | None = None, stop_after: State
             session.transition(state)
             if before:
                 session.hooks.fire(before, session)
-            if session.cancel_requested:            # a before-hook may cancel
+            if session.cancel_requested:  # a before-hook may cancel
                 return _cancel(session)
             _timed(session, state, fn)
             if after:
                 session.hooks.fire(after, session)
         except CancelledError:
             return _cancel(session)
-        except Exception as exc:  # noqa: BLE001 — convert any stage error into recovery
+        except Exception as exc:
             return _fail(session, exc)
         if stop_after is not None and state == stop_after:
             session.events.emit("run_paused", stage=session.state)
@@ -72,6 +73,7 @@ def _timed(session, state, fn) -> None:
 
 # ── stages ────────────────────────────────────────────────────────────────────
 
+
 def _validate(session) -> None:
     session.events.emit("validation_started", stage=session.state)
     validator.validate(session)
@@ -85,11 +87,13 @@ def _build_matrix(session) -> None:
         return
     session.events.emit("matrix_build_started", stage=session.state)
     session.matrix = session.matrix_engine.feature_matrix_as_of(
-        cfg.as_of, universe=cfg.universe, features=cfg.features or None)
+        cfg.as_of, universe=cfg.universe, features=cfg.features or None
+    )
     for w in validator.consistency_check(session):
         session.events.emit("consistency_warning", stage=session.state, warning=w)
-    session.events.emit("matrix_build_finished", stage=session.state,
-                        rows=session.matrix.universe_size)
+    session.events.emit(
+        "matrix_build_finished", stage=session.state, rows=session.matrix.universe_size
+    )
 
 
 def _execute(session) -> None:
@@ -121,12 +125,16 @@ def _finalize(session) -> None:
         # stays in the metrics.json artifact but is not written to the perf table.
         numeric = {k: v for k, v in session.metrics.items() if v is not None}
         session.registry.finish_experiment(
-            exp, metrics=numeric, artifacts=_manifest_list(session.artifacts))
-        session.events.emit("registry_updated", stage=session.state, experiment_id=exp.experiment_id)
+            exp, metrics=numeric, artifacts=_manifest_list(session.artifacts)
+        )
+        session.events.emit(
+            "registry_updated", stage=session.state, experiment_id=exp.experiment_id
+        )
     session.final_report = _final_report(session)
 
 
 # ── recovery / cancellation ─────────────────────────────────────────────────────
+
 
 def _fail(session, exc: BaseException):
     session.error = f"{type(exc).__name__}: {exc}"
@@ -147,7 +155,7 @@ def _persist_failure(session) -> None:
         (d / "execution_log.json").write_text(_json(session.events.to_list()))
         if session.metrics:
             (d / "metrics.json").write_text(_json(session.metrics))
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass
     try:
         exp = session.experiment
@@ -155,7 +163,7 @@ def _persist_failure(session) -> None:
             exp.metrics = {k: v for k, v in session.metrics.items() if v is not None}
             exp.artifacts = _manifest_list(session.artifacts)
             session.registry.fail_experiment(exp, session.error or "unknown", notes="recovered")
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass
 
 
@@ -169,15 +177,17 @@ def _cancel(session):
             exp.status = "cancelled"
             exp.error = "CANCELLED"
             from datetime import UTC, datetime
+
             exp.finished_at = datetime.now(UTC)
             exp.duration_seconds = 0.0
             session.registry.store.update_run(exp)
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass
     return session
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 def _artifact_dir(session) -> str:
     if session.config.artifacts_dir:
@@ -187,8 +197,10 @@ def _artifact_dir(session) -> str:
 
 
 def _manifest_list(manifest: dict) -> list[dict]:
-    return [{"artifact_type": name, "artifact_location": m["location"], "artifact_hash": m["hash"]}
-            for name, m in (manifest or {}).items()]
+    return [
+        {"artifact_type": name, "artifact_location": m["location"], "artifact_hash": m["hash"]}
+        for name, m in (manifest or {}).items()
+    ]
 
 
 def _final_report(session) -> dict:
@@ -205,4 +217,5 @@ def _final_report(session) -> dict:
 
 def _json(obj) -> str:
     import json
+
     return json.dumps(obj, indent=2, sort_keys=True, default=str)

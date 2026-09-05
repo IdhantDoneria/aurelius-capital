@@ -20,24 +20,20 @@ EXPERIMENTAL PAPER TRADING — NOT PRODUCTION APPROVED.
 from __future__ import annotations
 
 import hashlib
-import json
 import tempfile
 from dataclasses import dataclass, field
 from datetime import date
-from pathlib import Path
 
 import pytest
 
 from mentisrex.research.forward_validation.engine import ForwardValidationEngine
 from mentisrex.research.paper_trading.broker import MockBroker, SimulatedBroker
 from mentisrex.research.paper_trading.checkpoint import (
-    _checkpoint_dict,
     _restore_checkpoint,
     load_checkpoint,
     save_checkpoint,
 )
-from mentisrex.research.paper_trading.loop import LoopConfig, LoopError, PaperTradingLoop
-from mentisrex.research.paper_trading.scheduler import FixedClock
+from mentisrex.research.paper_trading.loop import LoopConfig, PaperTradingLoop
 from mentisrex.research.strategy_deployment.models import (
     StrategyState,
     StrategyType,
@@ -48,8 +44,8 @@ from mentisrex.research.strategy_deployment.readiness import ReadinessValidator
 from mentisrex.research.strategy_deployment.registry import StrategyRegistry
 from mentisrex.research.strategy_deployment.runtime import StrategyLogic, StrategyRuntime
 
-
 # ── shared fixtures (offline; deterministic) ──────────────────────────────────
+
 
 @dataclass(frozen=True)
 class FakeSnapshot:
@@ -58,9 +54,10 @@ class FakeSnapshot:
 
     def fingerprint(self) -> str:
         import json as _j
+
         body = _j.dumps(
-            {"as_of": str(self.as_of), "spots": dict(sorted(self.spots.items()))},
-            sort_keys=True)
+            {"as_of": str(self.as_of), "spots": dict(sorted(self.spots.items()))}, sort_keys=True
+        )
         return hashlib.blake2b(body.encode(), digest_size=16).hexdigest()
 
 
@@ -68,22 +65,35 @@ UNIVERSE = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]
 BASE_PRICES = {"AAPL": 185.0, "MSFT": 415.0, "GOOGL": 172.0, "AMZN": 188.0, "META": 520.0}
 
 DATES = [
-    date(2026, 1, 1), date(2026, 2, 1), date(2026, 3, 1), date(2026, 4, 1),
-    date(2026, 5, 1), date(2026, 6, 1), date(2026, 7, 1), date(2026, 8, 1),
+    date(2026, 1, 1),
+    date(2026, 2, 1),
+    date(2026, 3, 1),
+    date(2026, 4, 1),
+    date(2026, 5, 1),
+    date(2026, 6, 1),
+    date(2026, 7, 1),
+    date(2026, 8, 1),
 ]
 
-def _snap(d: date, factor: float = 1.0) -> FakeSnapshot:
-    return FakeSnapshot(as_of=d, spots={sid: round(p * factor, 4)
-                                        for sid, p in BASE_PRICES.items()})
 
-SNAPSHOTS = [_snap(d, 1.005 ** i) for i, d in enumerate(DATES)]
+def _snap(d: date, factor: float = 1.0) -> FakeSnapshot:
+    return FakeSnapshot(
+        as_of=d, spots={sid: round(p * factor, 4) for sid, p in BASE_PRICES.items()}
+    )
+
+
+SNAPSHOTS = [_snap(d, 1.005**i) for i, d in enumerate(DATES)]
 
 
 # ── strategy logic (local test double; same pattern as EqualWeightMomentumLogic) ─
 
 from mentisrex.research.strategy_deployment.models import (
-    FeatureSet, SignalRecord, SignalSet, StrategySpecification,
+    FeatureSet,
+    SignalRecord,
+    SignalSet,
+    StrategySpecification,
 )
+
 
 class _EWLogic(StrategyLogic):
     def __init__(self, universe):
@@ -101,51 +111,72 @@ class _EWLogic(StrategyLogic):
                     pass
         fp = snapshot.fingerprint() if hasattr(snapshot, "fingerprint") else ""
         spec_fp = spec.configuration_fingerprint or spec.fingerprint()
-        return FeatureSet(strategy_id=spec.strategy_id, strategy_version=spec.version,
-                          as_of=snapshot.as_of, features=features,
-                          input_fingerprint=fp, strategy_fingerprint=spec_fp)
+        return FeatureSet(
+            strategy_id=spec.strategy_id,
+            strategy_version=spec.version,
+            as_of=snapshot.as_of,
+            features=features,
+            input_fingerprint=fp,
+            strategy_fingerprint=spec_fp,
+        )
 
     def generate_signal(self, features, spec) -> SignalSet:
         spec_fp = spec.configuration_fingerprint or spec.fingerprint()
         feat_fp = features.fingerprint()
-        signals = {sid: 1.0 for sid, fv in features.features.items()
-                   if fv.get("price", 0.0) > 0.0}
-        records = [SignalRecord(strategy_id=spec.strategy_id, strategy_version=spec.version,
-                                security_id=sid, as_of=features.as_of, signal_value=1.0,
-                                input_fingerprint=feat_fp, strategy_fingerprint=spec_fp)
-                   for sid in signals]
-        return SignalSet(strategy_id=spec.strategy_id, strategy_version=spec.version,
-                        as_of=features.as_of, signals=signals, signal_records=records,
-                        features_fingerprint=feat_fp, strategy_fingerprint=spec_fp)
+        signals = {sid: 1.0 for sid, fv in features.features.items() if fv.get("price", 0.0) > 0.0}
+        records = [
+            SignalRecord(
+                strategy_id=spec.strategy_id,
+                strategy_version=spec.version,
+                security_id=sid,
+                as_of=features.as_of,
+                signal_value=1.0,
+                input_fingerprint=feat_fp,
+                strategy_fingerprint=spec_fp,
+            )
+            for sid in signals
+        ]
+        return SignalSet(
+            strategy_id=spec.strategy_id,
+            strategy_version=spec.version,
+            as_of=features.as_of,
+            signals=signals,
+            signal_records=records,
+            features_fingerprint=feat_fp,
+            strategy_fingerprint=spec_fp,
+        )
 
 
 def _make_exp_spec(**overrides) -> StrategySpecification:
-    defaults = dict(
-        strategy_id="ew-momentum-exp",
-        strategy_name="Equal-Weight Momentum (Experimental Paper)",
-        version="1.0.0",
-        strategy_type=StrategyType.EXPERIMENTAL_PAPER,
-        research_artifact_id="SIM",
-        validation_artifact_id="696a411bed6731a997c399584bfa9c4f",
-        validation_status="REQUIRES_REVIEW",
-        universe_definition={"type": "equity", "securities": UNIVERSE, "source": "fixed"},
-        required_data=["close", "price"],
-        feature_definition={"type": "price_level", "lookback_days": 0},
-        signal_definition={"type": "equal_weight", "universe": UNIVERSE},
-        rebalance_frequency="monthly",
-        portfolio_construction_config={"objective": "equal_weight", "long_only": True,
-                                       "max_position_weight": 0.20},
-        risk_config={"max_position": 0.20, "max_gross_leverage": 1.0, "long_only": True},
-        execution_config={"algo": "market", "direct_provider_access": False},
-        transaction_cost_assumption={"slippage_bps": 5.0, "commission_per_share": 0.005},
-        slippage_assumption={"model": "linear", "bps": 5.0},
-        benchmark="SPY",
-        base_currency="USD",
-        allowed_instruments=["equity"],
-        capital_assumption=1_000_000.0,
-        model_version="1.0.0",
-        dependency_versions={"mentisrex_milestone": "M24"},
-    )
+    defaults = {
+        "strategy_id": "ew-momentum-exp",
+        "strategy_name": "Equal-Weight Momentum (Experimental Paper)",
+        "version": "1.0.0",
+        "strategy_type": StrategyType.EXPERIMENTAL_PAPER,
+        "research_artifact_id": "SIM",
+        "validation_artifact_id": "696a411bed6731a997c399584bfa9c4f",
+        "validation_status": "REQUIRES_REVIEW",
+        "universe_definition": {"type": "equity", "securities": UNIVERSE, "source": "fixed"},
+        "required_data": ["close", "price"],
+        "feature_definition": {"type": "price_level", "lookback_days": 0},
+        "signal_definition": {"type": "equal_weight", "universe": UNIVERSE},
+        "rebalance_frequency": "monthly",
+        "portfolio_construction_config": {
+            "objective": "equal_weight",
+            "long_only": True,
+            "max_position_weight": 0.20,
+        },
+        "risk_config": {"max_position": 0.20, "max_gross_leverage": 1.0, "long_only": True},
+        "execution_config": {"algo": "market", "direct_provider_access": False},
+        "transaction_cost_assumption": {"slippage_bps": 5.0, "commission_per_share": 0.005},
+        "slippage_assumption": {"model": "linear", "bps": 5.0},
+        "benchmark": "SPY",
+        "base_currency": "USD",
+        "allowed_instruments": ["equity"],
+        "capital_assumption": 1_000_000.0,
+        "model_version": "1.0.0",
+        "dependency_versions": {"mentisrex_milestone": "M24"},
+    }
     defaults.update(overrides)
     return make_spec(**defaults)
 
@@ -161,14 +192,20 @@ def _make_registry(spec) -> StrategyRegistry:
 def _make_loop(spec, *, initial_capital: float = 1_000_000.0) -> PaperTradingLoop:
     registry = _make_registry(spec)
     runtime = StrategyRuntime()
-    config = LoopConfig(initial_capital=initial_capital, permit_experimental=True,
-                        fail_closed=True, validate_readiness=True, mode="SIMULATION")
+    config = LoopConfig(
+        initial_capital=initial_capital,
+        permit_experimental=True,
+        fail_closed=True,
+        validate_readiness=True,
+        mode="SIMULATION",
+    )
     loop = PaperTradingLoop(runtime=runtime, registry=registry, config=config)
     loop.add_strategy(spec.strategy_id, _EWLogic(UNIVERSE))
     return loop
 
 
 # ── 1. M23 → M24 compatibility smoke test ─────────────────────────────────────
+
 
 class TestM23ToM24SmokeTest:
     """Verify M23 ForwardPerformanceRecord is consumable by M24 ForwardValidationEngine."""
@@ -242,6 +279,7 @@ class TestM23ToM24SmokeTest:
 
 # ── 2. Run initialization ──────────────────────────────────────────────────────
 
+
 class TestRunInitialization:
     def test_loop_creates_correctly(self):
         spec = _make_exp_spec()
@@ -282,6 +320,7 @@ class TestRunInitialization:
 
 # ── 3. Strategy fingerprint preservation ──────────────────────────────────────
 
+
 class TestStrategyFingerprintPreservation:
     def test_fingerprint_constant_before_during_after(self):
         spec = _make_exp_spec()
@@ -310,13 +349,14 @@ class TestStrategyFingerprintPreservation:
 
 # ── 4. Checkpoint / restart integrity ─────────────────────────────────────────
 
+
 class TestCheckpointRestartIntegrity:
     def test_checkpoint_and_restart_same_nav(self):
         spec = _make_exp_spec()
         loop = _make_loop(spec)
         for snap in SNAPSHOTS[:4]:
             loop.process_snapshot(snap)
-        nav_before = loop.strategy_records(spec.strategy_id)[-1].nav
+        loop.strategy_records(spec.strategy_id)[-1].nav
 
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             path = f.name
@@ -353,7 +393,7 @@ class TestCheckpointRestartIntegrity:
         # Replay same snapshots after restart — should be idempotent
         loop2 = _make_loop(spec)
         _restore_checkpoint(loop2, load_checkpoint(path))
-        for snap in SNAPSHOTS[:4]:   # same 4 snapshots again
+        for snap in SNAPSHOTS[:4]:  # same 4 snapshots again
             loop2.process_snapshot(snap)
         # Idempotency: duplicate snapshots are skipped
         fills_after = sum(r.n_fills for r in loop2.strategy_records(spec.strategy_id))
@@ -388,6 +428,7 @@ class TestCheckpointRestartIntegrity:
 
 
 # ── 5. Forward-record persistence ─────────────────────────────────────────────
+
 
 class TestForwardRecordPersistence:
     def test_forward_record_accumulates_all_cycles(self):
@@ -433,6 +474,7 @@ class TestForwardRecordPersistence:
 
 # ── 6. Reconciliation ─────────────────────────────────────────────────────────
 
+
 class TestReconciliation:
     def test_each_cycle_reconciles(self):
         spec = _make_exp_spec()
@@ -443,9 +485,7 @@ class TestReconciliation:
             if sr and not sr.skipped and not sr.error:
                 # sync_event.reconciled must be True for each cycle
                 if sr.sync_event is not None:
-                    assert sr.sync_event.reconciled, (
-                        f"reconciliation failed on {result.as_of}"
-                    )
+                    assert sr.sync_event.reconciled, f"reconciliation failed on {result.as_of}"
 
     def test_no_reconciliation_error_after_restart(self):
         spec = _make_exp_spec()
@@ -470,6 +510,7 @@ class TestReconciliation:
 
 # ── 7. Deterministic fault rehearsal ──────────────────────────────────────────
 
+
 class TestFaultRehearsal:
     """Inject faults and verify M23 state/records remain consistent."""
 
@@ -479,9 +520,10 @@ class TestFaultRehearsal:
         loop = _make_loop(spec)
         snap = SNAPSHOTS[0]
         r1 = loop.process_snapshot(snap)
-        r2 = loop.process_snapshot(snap)   # duplicate
+        r2 = loop.process_snapshot(snap)  # duplicate
         assert not r1.skipped
-        assert r2.skipped and r2.skip_reason == "duplicate_snapshot"
+        assert r2.skipped
+        assert r2.skip_reason == "duplicate_snapshot"
         # Only one cycle record
         assert len(loop.strategy_records(spec.strategy_id)) == 1
 
@@ -491,9 +533,10 @@ class TestFaultRehearsal:
         loop = _make_loop(spec)
         loop.process_snapshot(SNAPSHOTS[2])  # 2026-03-01
         # A 'delayed' snapshot with an earlier date: not idempotent duplicate (different fp)
-        delayed = FakeSnapshot(as_of=date(2026, 1, 15),
-                               spots={"AAPL": 183.0, "MSFT": 413.0, "GOOGL": 170.0,
-                                      "AMZN": 186.0, "META": 518.0})
+        delayed = FakeSnapshot(
+            as_of=date(2026, 1, 15),
+            spots={"AAPL": 183.0, "MSFT": 413.0, "GOOGL": 170.0, "AMZN": 186.0, "META": 518.0},
+        )
         r = loop.process_snapshot(delayed)
         # Loop accepts it; not due because last_eval_date was 2026-03-01 and this is monthly
         sr = r.result_for(spec.strategy_id)
@@ -513,16 +556,21 @@ class TestFaultRehearsal:
     def test_rejected_order_does_not_corrupt_state(self):
         """Fault 4: risk rejection → no orders → portfolio unchanged."""
         from mentisrex.research.paper_trading.risk import PreTradeRiskGate, RiskLimits
+
         spec = _make_exp_spec()
         registry = _make_registry(spec)
         runtime = StrategyRuntime()
-        config = LoopConfig(initial_capital=1_000_000.0, permit_experimental=True,
-                            fail_closed=True, validate_readiness=True, mode="SIMULATION")
+        config = LoopConfig(
+            initial_capital=1_000_000.0,
+            permit_experimental=True,
+            fail_closed=True,
+            validate_readiness=True,
+            mode="SIMULATION",
+        )
         # Inject a risk gate that kills all orders (max_name_weight=0.0 → reject everything)
         gate = PreTradeRiskGate(RiskLimits(max_name_weight=0.0, kill=True))
         loop = PaperTradingLoop(runtime=runtime, registry=registry, config=config)
-        loop.add_strategy(spec.strategy_id, _EWLogic(UNIVERSE),
-                          risk_gate=gate)
+        loop.add_strategy(spec.strategy_id, _EWLogic(UNIVERSE), risk_gate=gate)
         result = loop.process_snapshot(SNAPSHOTS[0])
         sr = result.result_for(spec.strategy_id)
         # Evaluation runs but fills = 0 due to rejected orders
@@ -535,8 +583,7 @@ class TestFaultRehearsal:
         loop = _make_loop(spec)
         for snap in SNAPSHOTS[:3]:
             loop.process_snapshot(snap)
-        fps_before = [r.strategy_fingerprint
-                      for r in loop.strategy_records(spec.strategy_id)]
+        [r.strategy_fingerprint for r in loop.strategy_records(spec.strategy_id)]
 
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             path = f.name
@@ -547,13 +594,13 @@ class TestFaultRehearsal:
         for snap in SNAPSHOTS[3:6]:
             loop2.process_snapshot(snap)
 
-        fps_after = [r.strategy_fingerprint
-                     for r in loop2.strategy_records(spec.strategy_id)]
+        fps_after = [r.strategy_fingerprint for r in loop2.strategy_records(spec.strategy_id)]
         for fp in fps_after:
             assert fp == spec.configuration_fingerprint
 
 
 # ── 8. Evidence immutability ───────────────────────────────────────────────────
+
 
 class TestEvidenceImmutability:
     def test_cycle_records_are_frozen(self):
@@ -589,6 +636,7 @@ class TestEvidenceImmutability:
 
 # ── 9. No strategy mutation ────────────────────────────────────────────────────
 
+
 class TestNoStrategyMutation:
     def test_m24_analysis_does_not_change_spec(self):
         spec = _make_exp_spec()
@@ -622,6 +670,7 @@ class TestNoStrategyMutation:
 
 # ── 10. No real execution path ─────────────────────────────────────────────────
 
+
 class TestNoRealExecutionPath:
     def test_broker_is_paper_only(self):
         spec = _make_exp_spec()
@@ -654,8 +703,9 @@ class TestNoRealExecutionPath:
         spec = _make_exp_spec()
         registry = _make_registry(spec)
         runtime = StrategyRuntime()
-        config = LoopConfig(initial_capital=1_000_000.0, permit_experimental=True,
-                            mode="SIMULATION")
+        config = LoopConfig(
+            initial_capital=1_000_000.0, permit_experimental=True, mode="SIMULATION"
+        )
         loop = PaperTradingLoop(runtime=runtime, registry=registry, config=config)
         assert loop._config.mode == "SIMULATION"
 
@@ -669,6 +719,7 @@ class TestNoRealExecutionPath:
 
 
 # ── activation gate integration ───────────────────────────────────────────────
+
 
 class TestActivationGate:
     """Single end-to-end test verifying all activation gate checklist items."""

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
-from enum import Enum
+from enum import StrEnum
 
 # Reuse M12's broker vocabulary verbatim — no duplicate broker objects.
 from mentisrex.research.paper_trading.models import (  # noqa: F401  (re-exported)
@@ -27,10 +27,11 @@ from mentisrex.research.paper_trading.models import (  # noqa: F401  (re-exporte
 )
 
 
-class OrderStatus(str, Enum):
+class OrderStatus(StrEnum):
     """Full OMS lifecycle. Superset of M12's 6-state broker status: M12 tracks what
     the *broker* reports; the OMS additionally tracks pre-submission (NEW/VALIDATED/
     APPROVED) and cancel/expiry states it owns itself."""
+
     NEW = "new"
     VALIDATED = "validated"
     APPROVED = "approved"
@@ -48,10 +49,10 @@ class OrderStatus(str, Enum):
 TERMINAL = {OrderStatus.FILLED, OrderStatus.CANCELLED, OrderStatus.REJECTED, OrderStatus.EXPIRED}
 
 
-class OrderType(str, Enum):
+class OrderType(StrEnum):
     MARKET = "market"
     LIMIT = "limit"
-    STOP = "stop"          # interface only (deterministic sim fills at mark)
+    STOP = "stop"  # interface only (deterministic sim fills at mark)
     TWAP = "twap"
     VWAP = "vwap"
     POV = "pov"
@@ -59,12 +60,14 @@ class OrderType(str, Enum):
 
 # ── intent / request ──────────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class OrderIntent:
     """Portfolio-level desire, straight off a target: trade `delta_shares` of a name.
     The bridge from M10/M11 portfolio decisions into the execution layer."""
+
     security_id: str
-    delta_shares: float                   # signed target change in shares
+    delta_shares: float  # signed target change in shares
 
     @property
     def side(self) -> str:
@@ -75,26 +78,29 @@ class OrderIntent:
 class OrderRequest:
     """A concrete parent order to execute. `arrival_price` is the decision-time mark,
     captured once so implementation shortfall has a fixed benchmark."""
+
     order_id: str
     security_id: str
-    quantity: float                       # signed
+    quantity: float  # signed
     order_type: OrderType = OrderType.MARKET
     limit_price: float | None = None
-    algo: str | None = None               # override router's algo choice
+    algo: str | None = None  # override router's algo choice
     arrival_price: float = 0.0
-    urgency: str = "normal"               # low | normal | high (routing hint)
+    urgency: str = "normal"  # low | normal | high (routing hint)
 
 
 # ── audit trail ────────────────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class OrderEvent:
     """One immutable entry in an order's append-only audit trail."""
+
     seq: int
     order_id: str
-    kind: str                             # created|validated|approved|submitted|ack|
-                                          # partial_fill|fill|cancel_requested|cancelled|
-                                          # rejected|expired|replace
+    kind: str  # created|validated|approved|submitted|ack|
+    # partial_fill|fill|cancel_requested|cancelled|
+    # rejected|expired|replace
     status: OrderStatus
     detail: str = ""
     filled_quantity: float = 0.0
@@ -104,11 +110,12 @@ class OrderEvent:
 @dataclass(frozen=True)
 class Fill:
     """An executed (child) fill, mapped back to its parent order."""
+
     fill_id: str
-    order_id: str                         # parent order id
+    order_id: str  # parent order id
     child_order_id: str
     security_id: str
-    quantity: float                       # signed
+    quantity: float  # signed
     price: float
     cost: float
     when: date | None = None
@@ -126,18 +133,19 @@ class FillEvent:
 
 # ── scheduling / planning ───────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class ScheduleSlice:
     index: int
-    fraction: float                       # fraction of parent qty for this slice
-    quantity: float                       # signed shares this slice
+    fraction: float  # fraction of parent qty for this slice
+    quantity: float  # signed shares this slice
 
 
 @dataclass(frozen=True)
 class ExecutionSchedule:
     order_id: str
     algo: str
-    slices: list                          # list[ScheduleSlice]
+    slices: list  # list[ScheduleSlice]
 
     @property
     def n_slices(self) -> int:
@@ -149,7 +157,7 @@ class ExecutionPlan:
     order_id: str
     algo: str
     schedule: ExecutionSchedule
-    child_orders: list                    # list[OrderRequest] (one per slice)
+    child_orders: list  # list[OrderRequest] (one per slice)
 
 
 @dataclass(frozen=True)
@@ -163,9 +171,11 @@ class RoutingDecision:
 
 # ── post-trade ──────────────────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class ExecutionReport:
     """Final per-parent-order outcome + its audit trail and fills."""
+
     order_id: str
     security_id: str
     requested_quantity: float
@@ -178,12 +188,16 @@ class ExecutionReport:
     implementation_shortfall_bps: float
     n_child_orders: int
     n_fills: int
-    events: list = field(default_factory=list)     # list[OrderEvent]
-    fills: list = field(default_factory=list)       # list[Fill]
+    events: list = field(default_factory=list)  # list[OrderEvent]
+    fills: list = field(default_factory=list)  # list[Fill]
 
     @property
     def fill_rate(self) -> float:
-        return abs(self.filled_quantity) / abs(self.requested_quantity) if self.requested_quantity else 0.0
+        return (
+            abs(self.filled_quantity) / abs(self.requested_quantity)
+            if self.requested_quantity
+            else 0.0
+        )
 
 
 @dataclass(frozen=True)
@@ -202,6 +216,7 @@ class CostAnalysis:
 @dataclass(frozen=True)
 class ExecutionMetrics:
     """Session-level aggregate quality metrics."""
+
     n_orders: int
     n_filled: int
     n_partial: int

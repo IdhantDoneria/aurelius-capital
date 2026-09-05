@@ -199,9 +199,14 @@ def test_state_roundtrip_is_atomic():
     with tempfile.TemporaryDirectory() as tmp:
         store = StateStore(tmp)
         state = ProgrammeState(
-            high_water_mark=1_250_000.0, nav=1_000_000.0, quarters_live=2,
-            first_trade_date="2026-01-05", halted=False, halt_reason=None,
-            sleeve_health={"S5": 0.5}, last_run_date="2026-08-21",
+            high_water_mark=1_250_000.0,
+            nav=1_000_000.0,
+            quarters_live=2,
+            first_trade_date="2026-01-05",
+            halted=False,
+            halt_reason=None,
+            sleeve_health={"S5": 0.5},
+            last_run_date="2026-08-21",
             config_fingerprint="abc123",
         )
         store.save(state)

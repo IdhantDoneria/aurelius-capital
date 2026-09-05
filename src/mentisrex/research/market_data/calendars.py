@@ -12,12 +12,12 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import date
-from enum import Enum
+from enum import StrEnum
 
 import numpy as np
 
 
-class RollConvention(str, Enum):
+class RollConvention(StrEnum):
     NONE = "none"
     FOLLOWING = "following"
     MODIFIED_FOLLOWING = "modified_following"
@@ -37,19 +37,21 @@ _ROLL = {
 class BusinessCalendar(ABC):
     """Weekend + holiday aware calendar. Concrete subclasses expose a numpy weekmask + holiday
     array; all date arithmetic routes through numpy busday functions for determinism."""
+
     name: str = "calendar"
 
     @property
     @abstractmethod
-    def weekmask(self) -> str: ...        # "1111100" == Mon-Fri business days
+    def weekmask(self) -> str: ...  # "1111100" == Mon-Fri business days
 
     @property
     @abstractmethod
     def holidays(self) -> np.ndarray: ...  # datetime64[D] array
 
     def is_business_day(self, d: date) -> bool:
-        return bool(np.is_busday(np.datetime64(d, "D"),
-                                 weekmask=self.weekmask, holidays=self.holidays))
+        return bool(
+            np.is_busday(np.datetime64(d, "D"), weekmask=self.weekmask, holidays=self.holidays)
+        )
 
     def is_holiday(self, d: date) -> bool:
         # a weekday that is not a business day == a holiday
@@ -60,19 +62,31 @@ class BusinessCalendar(ABC):
         roll = RollConvention(roll)
         if roll is RollConvention.NONE and not self.is_business_day(d):
             raise ValueError(f"{d} is not a business day on {self.name} (roll=none)")
-        out = np.busday_offset(np.datetime64(d, "D"), 0, roll=_ROLL[roll],
-                               weekmask=self.weekmask, holidays=self.holidays)
+        out = np.busday_offset(
+            np.datetime64(d, "D"),
+            0,
+            roll=_ROLL[roll],
+            weekmask=self.weekmask,
+            holidays=self.holidays,
+        )
         return out.astype("O")
 
     def add_business_days(self, d: date, n: int) -> date:
         roll = "forward" if n >= 0 else "backward"
-        out = np.busday_offset(np.datetime64(d, "D"), n, roll=roll,
-                               weekmask=self.weekmask, holidays=self.holidays)
+        out = np.busday_offset(
+            np.datetime64(d, "D"), n, roll=roll, weekmask=self.weekmask, holidays=self.holidays
+        )
         return out.astype("O")
 
     def business_days_between(self, start: date, end: date) -> int:
-        return int(np.busday_count(np.datetime64(start, "D"), np.datetime64(end, "D"),
-                                   weekmask=self.weekmask, holidays=self.holidays))
+        return int(
+            np.busday_count(
+                np.datetime64(start, "D"),
+                np.datetime64(end, "D"),
+                weekmask=self.weekmask,
+                holidays=self.holidays,
+            )
+        )
 
 
 class WeekendCalendar(BusinessCalendar):
@@ -140,25 +154,79 @@ def _as_iso(h) -> str:
 # Representative fixed + observed holidays 2024-2026 for the three requested centers.
 
 _US = [
-    "2024-01-01", "2024-01-15", "2024-02-19", "2024-05-27", "2024-06-19", "2024-07-04",
-    "2024-09-02", "2024-11-28", "2024-12-25",
-    "2025-01-01", "2025-01-20", "2025-02-17", "2025-05-26", "2025-06-19", "2025-07-04",
-    "2025-09-01", "2025-11-27", "2025-12-25",
-    "2026-01-01", "2026-01-19", "2026-02-16", "2026-05-25", "2026-06-19", "2026-07-03",
-    "2026-09-07", "2026-11-26", "2026-12-25",
+    "2024-01-01",
+    "2024-01-15",
+    "2024-02-19",
+    "2024-05-27",
+    "2024-06-19",
+    "2024-07-04",
+    "2024-09-02",
+    "2024-11-28",
+    "2024-12-25",
+    "2025-01-01",
+    "2025-01-20",
+    "2025-02-17",
+    "2025-05-26",
+    "2025-06-19",
+    "2025-07-04",
+    "2025-09-01",
+    "2025-11-27",
+    "2025-12-25",
+    "2026-01-01",
+    "2026-01-19",
+    "2026-02-16",
+    "2026-05-25",
+    "2026-06-19",
+    "2026-07-03",
+    "2026-09-07",
+    "2026-11-26",
+    "2026-12-25",
 ]
 _UK = [
-    "2024-01-01", "2024-03-29", "2024-04-01", "2024-05-06", "2024-05-27", "2024-08-26",
-    "2024-12-25", "2024-12-26",
-    "2025-01-01", "2025-04-18", "2025-04-21", "2025-05-05", "2025-05-26", "2025-08-25",
-    "2025-12-25", "2025-12-26",
-    "2026-01-01", "2026-04-03", "2026-04-06", "2026-05-04", "2026-05-25", "2026-08-31",
-    "2026-12-25", "2026-12-28",
+    "2024-01-01",
+    "2024-03-29",
+    "2024-04-01",
+    "2024-05-06",
+    "2024-05-27",
+    "2024-08-26",
+    "2024-12-25",
+    "2024-12-26",
+    "2025-01-01",
+    "2025-04-18",
+    "2025-04-21",
+    "2025-05-05",
+    "2025-05-26",
+    "2025-08-25",
+    "2025-12-25",
+    "2025-12-26",
+    "2026-01-01",
+    "2026-04-03",
+    "2026-04-06",
+    "2026-05-04",
+    "2026-05-25",
+    "2026-08-31",
+    "2026-12-25",
+    "2026-12-28",
 ]
 _IN = [
-    "2024-01-26", "2024-03-25", "2024-08-15", "2024-10-02", "2024-11-01", "2024-12-25",
-    "2025-01-26", "2025-03-14", "2025-08-15", "2025-10-02", "2025-10-21", "2025-12-25",
-    "2026-01-26", "2026-03-04", "2026-08-15", "2026-10-02", "2026-11-08", "2026-12-25",
+    "2024-01-26",
+    "2024-03-25",
+    "2024-08-15",
+    "2024-10-02",
+    "2024-11-01",
+    "2024-12-25",
+    "2025-01-26",
+    "2025-03-14",
+    "2025-08-15",
+    "2025-10-02",
+    "2025-10-21",
+    "2025-12-25",
+    "2026-01-26",
+    "2026-03-04",
+    "2026-08-15",
+    "2026-10-02",
+    "2026-11-08",
+    "2026-12-25",
 ]
 
 
@@ -174,8 +242,13 @@ def india_calendar() -> HolidayCalendar:
     return HolidayCalendar(_IN, name="IN")
 
 
-_NAMED = {"US": us_calendar, "UK": uk_calendar, "IN": india_calendar,
-          "INDIA": india_calendar, "WEEKEND": WeekendCalendar}
+_NAMED = {
+    "US": us_calendar,
+    "UK": uk_calendar,
+    "IN": india_calendar,
+    "INDIA": india_calendar,
+    "WEEKEND": WeekendCalendar,
+}
 
 
 def calendar(name: str) -> BusinessCalendar:

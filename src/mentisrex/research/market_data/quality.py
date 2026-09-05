@@ -12,7 +12,7 @@ anything that would corrupt a valuation (non-positive price, look-ahead, crossed
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from mentisrex.research.market_data import diagnostics as diag
 from mentisrex.research.market_data.models import (
@@ -29,7 +29,7 @@ class QualityConfig:
     max_staleness_days: int | None = None
     max_spread_frac: float = 0.10
     max_jump_frac: float = 0.5
-    reject_severities: tuple = (Severity.REJECT,)   # severities that pull an obs into `rejected`
+    reject_severities: tuple = (Severity.REJECT,)  # severities that pull an obs into `rejected`
 
 
 _PRICE_UNITS = {Unit.PRICE, Unit.FACTOR}
@@ -76,10 +76,15 @@ class MarketDataQualityEngine:
                 add("stale", Severity.WARNING, m)
 
             # value integrity
-            if obs.value is None or obs.value != obs.value:      # None or NaN
+            if obs.value is None or obs.value != obs.value:  # None or NaN
                 add("missing_value", Severity.REJECT, f"missing/NaN value for {obs.field}")
-            elif obs.unit in _PRICE_UNITS and obs.obs_type.value in ("close", "adjusted_close",
-                                                                     "trade", "quote", "forward"):
+            elif obs.unit in _PRICE_UNITS and obs.obs_type.value in (
+                "close",
+                "adjusted_close",
+                "trade",
+                "quote",
+                "forward",
+            ):
                 m = diag.non_positive_price(obs.value)
                 if m:
                     add("non_positive_price", Severity.REJECT, m)

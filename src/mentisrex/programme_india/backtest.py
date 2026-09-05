@@ -33,7 +33,6 @@ from mentisrex.programme_india.signals import (
     inverse_vol_weights,
     momentum_score,
     select_with_sector_cap,
-    zscore,
 )
 
 
@@ -43,6 +42,7 @@ class QualityLookup:
     quality z-scores indexed by symbol, using only fundamentals published
     on or before `as_of` -- point-in-time correctness is this class's
     contract, not the caller's."""
+
     frame: pd.DataFrame  # columns: symbol, available_from, quality_score
 
     def get(self, as_of: pd.Timestamp) -> pd.Series:
@@ -79,7 +79,7 @@ def run_stock_sleeve(
         if loc < cfg.momentum_lookback_days + 5:
             continue
         hist_close = close.iloc[: loc + 1]
-        hist_dv = dollar_volume.iloc[max(0, loc - 70): loc + 1]
+        hist_dv = dollar_volume.iloc[max(0, loc - 70) : loc + 1]
         avg_dv = hist_dv.mean()
         n_hist = hist_close.notna().sum()
         eligible = avg_dv[n_hist >= cfg.min_history_days].sort_values(ascending=False)
@@ -114,7 +114,7 @@ def run_stock_sleeve(
         end_loc = all_days.get_loc(period_end)
         if start_loc > end_loc:
             continue
-        window = all_days[start_loc: end_loc + 1]
+        window = all_days[start_loc : end_loc + 1]
         sub_ret = daily_ret.reindex(columns=weights.index).loc[window]
         port_ret = (sub_ret * weights.values).sum(axis=1, min_count=1).fillna(0.0)
         cost = rebalance_cost(to, cfg)
@@ -141,7 +141,9 @@ def run_backtest(
     dollar_volume = close * volume
     rebal_dates = monthly_rebalance_dates(close.index)
 
-    stock_ret, avg_names = run_stock_sleeve(close, dollar_volume, rebal_dates, sector_map, quality, cfg)
+    stock_ret, avg_names = run_stock_sleeve(
+        close, dollar_volume, rebal_dates, sector_map, quality, cfg
+    )
 
     exposure = exposure_overlay(bench_close, close, close.index, cfg)
     exposure = exposure.reindex(close.index).ffill().fillna(0.0)
@@ -150,6 +152,11 @@ def run_backtest(
     lev_drag = leverage_carry_drag(exposure, cfg)
     op_drag = operational_error_drag(cfg)
 
-    strategy_ret = (exposure * stock_ret + (1 - exposure).clip(lower=0.0) * rf_daily
-                     - exp_cost - lev_drag - op_drag)
+    strategy_ret = (
+        exposure * stock_ret
+        + (1 - exposure).clip(lower=0.0) * rf_daily
+        - exp_cost
+        - lev_drag
+        - op_drag
+    )
     return strategy_ret, exposure, avg_names

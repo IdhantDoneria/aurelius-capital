@@ -26,15 +26,20 @@ class ExecutionAlgorithm(ABC):
     def plan(self, order: OrderRequest, market) -> ExecutionPlan:
         sched = self.schedule(order, market)
         children = [self._child(order, s) for s in sched.slices]
-        return ExecutionPlan(order_id=order.order_id, algo=self.name, schedule=sched,
-                             child_orders=children)
+        return ExecutionPlan(
+            order_id=order.order_id, algo=self.name, schedule=sched, child_orders=children
+        )
 
     def _child(self, order: OrderRequest, sl) -> OrderRequest:
         # child orders execute immediately at the broker (marketable) regardless of the
         # parent algo; the parent algo controls *timing/size*, not the child order type.
-        return replace(order, order_id=f"{order.order_id}.{sl.index}", quantity=sl.quantity,
-                       order_type=OrderType.MARKET if order.order_type in _ALGO_TYPES else order.order_type,
-                       algo=self.name)
+        return replace(
+            order,
+            order_id=f"{order.order_id}.{sl.index}",
+            quantity=sl.quantity,
+            order_type=OrderType.MARKET if order.order_type in _ALGO_TYPES else order.order_type,
+            algo=self.name,
+        )
 
 
 _ALGO_TYPES = {OrderType.TWAP, OrderType.VWAP, OrderType.POV}

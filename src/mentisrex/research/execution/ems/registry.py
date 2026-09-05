@@ -26,17 +26,26 @@ def attach_execution(registry, experiment, session, *, artifacts_dir: str | None
 
     exp = registry.load(experiment.experiment_id) or experiment
     m = monitoring.metrics(session)
-    exp.metrics = {**(exp.metrics or {}),
-                   "ExecFillRate": m.fill_rate,
-                   "ExecTotalCost": m.total_cost,
-                   "ExecTotalCostBps": m.total_cost_bps,
-                   "ExecAvgSlippageBps": m.avg_slippage_bps,
-                   "ExecImplementationShortfallBps": m.avg_implementation_shortfall_bps,
-                   "ExecNOrders": float(m.n_orders)}
-    exp.notes = (f"execution orders={m.n_orders} filled={m.n_filled} fillRate={m.fill_rate:.2f} "
-                 f"costBps={m.total_cost_bps:.1f} slipBps={m.avg_slippage_bps:.1f}")
-    exp.artifacts = [*(exp.artifacts or []),
-                     {"artifact_type": "execution_session.json", "artifact_location": str(path),
-                      "artifact_hash": h}]
+    exp.metrics = {
+        **(exp.metrics or {}),
+        "ExecFillRate": m.fill_rate,
+        "ExecTotalCost": m.total_cost,
+        "ExecTotalCostBps": m.total_cost_bps,
+        "ExecAvgSlippageBps": m.avg_slippage_bps,
+        "ExecImplementationShortfallBps": m.avg_implementation_shortfall_bps,
+        "ExecNOrders": float(m.n_orders),
+    }
+    exp.notes = (
+        f"execution orders={m.n_orders} filled={m.n_filled} fillRate={m.fill_rate:.2f} "
+        f"costBps={m.total_cost_bps:.1f} slipBps={m.avg_slippage_bps:.1f}"
+    )
+    exp.artifacts = [
+        *(exp.artifacts or []),
+        {
+            "artifact_type": "execution_session.json",
+            "artifact_location": str(path),
+            "artifact_hash": h,
+        },
+    ]
     registry.store.insert(exp)
     return {"artifact": str(path), "hash": h, "session_fingerprint": _fingerprint(session)}

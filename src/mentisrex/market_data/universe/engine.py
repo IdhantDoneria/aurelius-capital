@@ -47,7 +47,11 @@ class UniverseEngine:
                     continue
                 # Distinguish future IPO from prior delisting by whether it ever
                 # had an interval starting on/before as_of.
-                reason = "delisted" if self._existed_before(s["security_id"], as_of) else "not_yet_listed"
+                reason = (
+                    "delisted"
+                    if self._existed_before(s["security_id"], as_of)
+                    else "not_yet_listed"
+                )
                 exclusions.append({**s, "exclusion_reason": reason})
 
         return UniverseSnapshot(
@@ -68,7 +72,7 @@ class UniverseEngine:
             return True
         # historical_identifier returns None both for future IPOs and post-delist;
         # check whether any interval began on/before as_of.
-        with self._sm._conn() as conn:  # noqa: SLF001 — read-only sibling access
+        with self._sm._conn() as conn:
             row = conn.execute(
                 "SELECT 1 FROM security_identity_history WHERE security_id=? AND valid_from <= ? LIMIT 1",
                 [security_id, as_of.isoformat()],

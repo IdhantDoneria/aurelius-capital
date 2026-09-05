@@ -21,20 +21,39 @@ from mentisrex.research import valuation as val
 from mentisrex.research.valuation import (
     american,
     bonds,
-    cross_currency as xccy,
-    curves,
-    daycount as dc,
-    diagnostics as diag,
-    fx as vfx,
-    futures as vfut,
-    greeks as gk,
-    interpolation as interp,
     pricing,
+)
+from mentisrex.research.valuation import (
+    cross_currency as xccy,
+)
+from mentisrex.research.valuation import (
+    daycount as dc,
+)
+from mentisrex.research.valuation import (
+    diagnostics as diag,
+)
+from mentisrex.research.valuation import (
+    futures as vfut,
+)
+from mentisrex.research.valuation import (
+    fx as vfx,
+)
+from mentisrex.research.valuation import (
+    greeks as gk,
+)
+from mentisrex.research.valuation import (
+    interpolation as interp,
+)
+from mentisrex.research.valuation import (
     reconciliation as recon,
+)
+from mentisrex.research.valuation import (
     serialization as ser,
-    snapshot as snap_mod,
+)
+from mentisrex.research.valuation import (
     swaps as vsw,
-    validation as vld,
+)
+from mentisrex.research.valuation import (
     volatility as vol,
 )
 
@@ -42,7 +61,9 @@ AS_OF = date(2026, 1, 5)
 
 
 def flat_zc(rate=0.03, cid="USD", currency="USD"):
-    return val.ZeroCurve(cid, AS_OF, (0.25, 1.0, 2.0, 5.0, 10.0, 30.0), (rate,) * 6, currency=currency)
+    return val.ZeroCurve(
+        cid, AS_OF, (0.25, 1.0, 2.0, 5.0, 10.0, 30.0), (rate,) * 6, currency=currency
+    )
 
 
 def make_snap(**kw):
@@ -59,16 +80,23 @@ def call_opt(strike=150.0, expiry=date(2027, 1, 5)):
 
 # ─────────────────────────── day count / compounding ───────────────────────
 
+
 def test_act365():
-    assert dc.year_fraction(date(2026, 1, 1), date(2027, 1, 1), dc.DayCount.ACT_365) == pytest.approx(365 / 365)
+    assert dc.year_fraction(
+        date(2026, 1, 1), date(2027, 1, 1), dc.DayCount.ACT_365
+    ) == pytest.approx(365 / 365)
 
 
 def test_act360():
-    assert dc.year_fraction(date(2026, 1, 1), date(2026, 1, 31), dc.DayCount.ACT_360) == pytest.approx(30 / 360)
+    assert dc.year_fraction(
+        date(2026, 1, 1), date(2026, 1, 31), dc.DayCount.ACT_360
+    ) == pytest.approx(30 / 360)
 
 
 def test_thirty360():
-    assert dc.year_fraction(date(2026, 1, 15), date(2026, 7, 15), dc.DayCount.THIRTY_360) == pytest.approx(0.5)
+    assert dc.year_fraction(
+        date(2026, 1, 15), date(2026, 7, 15), dc.DayCount.THIRTY_360
+    ) == pytest.approx(0.5)
 
 
 def test_year_fraction_reversed_raises():
@@ -107,6 +135,7 @@ def test_zero_from_df_bad_df():
 
 # ─────────────────────────── interpolation ─────────────────────────────────
 
+
 def test_linear_midpoint():
     assert interp.linear([0, 1], [0, 10], 0.5) == pytest.approx(5.0)
 
@@ -120,7 +149,9 @@ def test_linear_flat_extrap():
 
 
 def test_linear_linear_extrap():
-    assert interp.linear([1, 2], [10, 20], 3.0, extrap=interp.Extrapolation.LINEAR) == pytest.approx(30.0)
+    assert interp.linear(
+        [1, 2], [10, 20], 3.0, extrap=interp.Extrapolation.LINEAR
+    ) == pytest.approx(30.0)
 
 
 def test_linear_error_extrap():
@@ -147,6 +178,7 @@ def test_bilinear():
 
 
 # ─────────────────────────── curves ────────────────────────────────────────
+
 
 def test_zero_curve_flat_rate():
     assert flat_zc(0.03).zero_rate(3.0) == pytest.approx(0.03)
@@ -190,7 +222,7 @@ def test_discount_curve_rejects_negative_df():
 
 
 def test_discount_curve_monotone_validate():
-    dcv = val.DiscountCurve("X", AS_OF, (1.0, 2.0), (0.9, 0.95))   # rising DF => neg fwd
+    dcv = val.DiscountCurve("X", AS_OF, (1.0, 2.0), (0.9, 0.95))  # rising DF => neg fwd
     assert dcv.validate()
 
 
@@ -210,6 +242,7 @@ def test_discount_to_date():
 
 # ─────────────────────────── curve builder ─────────────────────────────────
 
+
 def test_curve_builder_zero():
     cb = val.CurveBuilder()
     curve, report = cb.build_zero("USD", AS_OF, [(1.0, 0.03), (5.0, 0.035)])
@@ -225,26 +258,24 @@ def test_curve_builder_report_diagnostics():
 
 # ─────────────────────────── volatility ────────────────────────────────────
 
+
 def test_flat_surface_constant():
     s = val.flat_surface("X", AS_OF, 0.2)
     assert s.vol(100.0, 1.0) == pytest.approx(0.2)
 
 
 def test_surface_grid_interp():
-    s = val.VolatilitySurface("X", AS_OF, (90.0, 110.0), (0.5, 1.0),
-                              ((0.2, 0.22), (0.24, 0.26)))
+    s = val.VolatilitySurface("X", AS_OF, (90.0, 110.0), (0.5, 1.0), ((0.2, 0.22), (0.24, 0.26)))
     assert s.vol(100.0, 0.75) == pytest.approx(0.23, abs=1e-9)
 
 
 def test_surface_rejects_nonpositive_interp():
-    s = val.VolatilitySurface("X", AS_OF, (90.0, 110.0), (0.5, 1.0),
-                              ((0.2, 0.2), (0.2, 0.2)))
+    s = val.VolatilitySurface("X", AS_OF, (90.0, 110.0), (0.5, 1.0), ((0.2, 0.2), (0.2, 0.2)))
     assert s.vol(100, 0.75) > 0
 
 
 def test_surface_validate_negative():
-    s = val.VolatilitySurface("X", AS_OF, (90.0, 110.0), (0.5, 1.0),
-                              ((0.2, -0.1), (0.2, 0.2)))
+    s = val.VolatilitySurface("X", AS_OF, (90.0, 110.0), (0.5, 1.0), ((0.2, -0.1), (0.2, 0.2)))
     assert s.validate()
 
 
@@ -269,6 +300,7 @@ def test_surface_vol_provider_missing():
 
 
 # ─────────────────────────── Black-Scholes ─────────────────────────────────
+
 
 def test_bs_call_positive():
     assert pricing.black_scholes_price(True, 100, 100, 0.05, 0.0, 0.2, 1.0) > 0
@@ -325,6 +357,7 @@ def test_bs_within_bounds():
 
 # ─────────────────────────── Black-76 ──────────────────────────────────────
 
+
 def test_black76_parity():
     c = pricing.black76_price(True, 100, 95, 0.03, 0.2, 1.0)
     p = pricing.black76_price(False, 100, 95, 0.03, 0.2, 1.0)
@@ -333,7 +366,7 @@ def test_black76_parity():
 
 
 def test_black76_equals_bs_when_q_equals_r():
-    f = 100 * math.exp((0.05 - 0.05) * 1.0)     # q=r => F=S
+    f = 100 * math.exp((0.05 - 0.05) * 1.0)  # q=r => F=S
     b76 = pricing.black76_price(True, f, 100, 0.05, 0.2, 1.0)
     bs = pricing.black_scholes_price(True, 100, 100, 0.05, 0.05, 0.2, 1.0)
     assert b76 == pytest.approx(bs, abs=1e-9)
@@ -344,6 +377,7 @@ def test_black76_expiry_intrinsic():
 
 
 # ─────────────────────────── Greeks ────────────────────────────────────────
+
 
 def test_greek_delta_matches_fd():
     g = pricing.black_scholes_greeks(True, 100, 100, 0.05, 0.01, 0.2, 1.0)
@@ -393,7 +427,8 @@ def test_call_put_vega_equal():
 
 def test_vanna_volga_present():
     g = pricing.black_scholes_greeks(True, 100, 110, 0.05, 0.0, 0.2, 1.0)
-    assert "vanna" in g and "volga" in g
+    assert "vanna" in g
+    assert "volga" in g
 
 
 def test_greeks_dataclass_add_scale():
@@ -404,6 +439,7 @@ def test_greeks_dataclass_add_scale():
 
 # ─────────────────────────── implied vol ───────────────────────────────────
 
+
 def test_implied_vol_roundtrip():
     px = pricing.black_scholes_price(True, 100, 100, 0.05, 0.0, 0.3, 1.0)
     assert pricing.implied_vol(True, px, 100, 100, 0.05, 0.0, 1.0) == pytest.approx(0.3, abs=1e-4)
@@ -411,7 +447,9 @@ def test_implied_vol_roundtrip():
 
 def test_implied_vol_put_roundtrip():
     px = pricing.black_scholes_price(False, 100, 110, 0.05, 0.01, 0.25, 2.0)
-    assert pricing.implied_vol(False, px, 100, 110, 0.05, 0.01, 2.0) == pytest.approx(0.25, abs=1e-4)
+    assert pricing.implied_vol(False, px, 100, 110, 0.05, 0.01, 2.0) == pytest.approx(
+        0.25, abs=1e-4
+    )
 
 
 def test_implied_vol_intrinsic_zero():
@@ -419,6 +457,7 @@ def test_implied_vol_intrinsic_zero():
 
 
 # ─────────────────────────── American ──────────────────────────────────────
+
 
 def test_american_call_no_div_equals_european():
     a = american.crr_price(True, 100, 100, 0.05, 0.0, 0.2, 1.0, steps=400)
@@ -449,6 +488,7 @@ def test_american_expiry_intrinsic():
 
 # ─────────────────────────── futures ───────────────────────────────────────
 
+
 def test_futures_fair_value_carry():
     assert vfut.fair_value(100, 0.05, 0.0, 1.0) == pytest.approx(100 * math.exp(0.05))
 
@@ -475,6 +515,7 @@ def test_futures_dividend_reduces_fair_value():
 
 
 # ─────────────────────────── bonds ─────────────────────────────────────────
+
 
 def bspec(**kw):
     kw.setdefault("coupon", 0.05)
@@ -552,6 +593,7 @@ def test_bond_frequency_quarterly():
 
 # ─────────────────────────── swaps ─────────────────────────────────────────
 
+
 def swap_spec(rate=0.03):
     return vsw.SwapSpec(1e7, rate, tuple(date(2026 + i, 1, 5) for i in range(1, 6)), AS_OF)
 
@@ -566,7 +608,7 @@ def test_swap_par_rate_zeroes_npv():
 def test_swap_payer_gains_when_rates_rise():
     par = vsw.par_rate(swap_spec(), flat_zc(0.03))
     at_par = vsw.SwapSpec(1e7, par, swap_spec().pay_dates, AS_OF)
-    npv_hi = vsw.npv(at_par, flat_zc(0.05))       # rates up => payer receives more float
+    npv_hi = vsw.npv(at_par, flat_zc(0.05))  # rates up => payer receives more float
     assert npv_hi > 0
 
 
@@ -591,6 +633,7 @@ def test_swap_receive_fixed_sign_flips():
 
 
 # ─────────────────────────── FX valuation ──────────────────────────────────
+
 
 def fxp():
     return m16fx.StaticFXRateProvider({"EUR/USD": 1.10, "GBP/USD": 1.25}, pivot="USD")
@@ -624,16 +667,19 @@ def test_fx_forward_value_sign():
 
 # ─────────────────────────── cross-currency swap ───────────────────────────
 
+
 def test_xccy_base_npv_and_exposure():
     recv = xccy.CrossCurrencyLeg(1e7, 0.03, "USD", swap_spec().pay_dates, AS_OF)
     pay = xccy.CrossCurrencyLeg(9e6, 0.02, "EUR", swap_spec().pay_dates, AS_OF)
-    res = xccy.value(recv, pay, flat_zc(0.03, "USD"), flat_zc(0.02, "EUR", "EUR"),
-                     fxp(), "USD", as_of=AS_OF)
+    res = xccy.value(
+        recv, pay, flat_zc(0.03, "USD"), flat_zc(0.02, "EUR", "EUR"), fxp(), "USD", as_of=AS_OF
+    )
     assert "base_npv" in res
     assert set(res["fx_exposure"]) == {"USD", "EUR"}
 
 
 # ─────────────────────────── market-data snapshot / PIT ─────────────────────
+
 
 def test_snapshot_spot_accessor():
     assert make_snap().spot("AAPL") == 150.0
@@ -664,6 +710,7 @@ def test_pit_clean():
 
 def test_pit_rejects_lookahead_quote():
     from mentisrex.research.valuation.models import MarketQuote, Provenance
+
     q = MarketQuote("AAPL", 150, provenance=Provenance(observation_date=date(2026, 2, 1)))
     s = val.build_snapshot(AS_OF, spots={"AAPL": 150}, quotes={"AAPL": q})
     probs = val.validate_pit(s)
@@ -672,6 +719,7 @@ def test_pit_rejects_lookahead_quote():
 
 def test_pit_rejects_stale():
     from mentisrex.research.valuation.models import MarketQuote, Provenance
+
     q = MarketQuote("AAPL", 150, provenance=Provenance(observation_date=date(2025, 1, 1)))
     s = val.build_snapshot(AS_OF, spots={"AAPL": 150}, quotes={"AAPL": q})
     assert val.validate_pit(s, max_staleness_days=30)
@@ -685,8 +733,12 @@ def test_pit_rejects_curve_future_refdate():
 
 def test_pit_timestamp_inconsistent():
     from mentisrex.research.valuation.models import MarketQuote, Provenance
-    q = MarketQuote("AAPL", 150, provenance=Provenance(
-        observation_date=AS_OF, timestamp=datetime(2026, 1, 3, 12, 0)))
+
+    q = MarketQuote(
+        "AAPL",
+        150,
+        provenance=Provenance(observation_date=AS_OF, timestamp=datetime(2026, 1, 3, 12, 0)),
+    )
     s = val.build_snapshot(AS_OF, spots={"AAPL": 150}, quotes={"AAPL": q})
     assert any("timestamp" in p for p in val.validate_pit(s))
 
@@ -700,6 +752,7 @@ def test_snapshot_fingerprint_changes_with_spot():
 
 
 # ─────────────────────────── providers ─────────────────────────────────────
+
 
 def test_static_provider_returns_snapshot():
     p = val.StaticMarketDataProvider(make_snap())
@@ -738,6 +791,7 @@ def test_mock_provider_accessor():
 
 # ─────────────────────────── engine (multi-asset valuation) ────────────────
 
+
 def test_engine_equity():
     r = val.ValuationEngine().value(ins.equity("AAPL"), make_snap(), quantity=100)
     assert r.market_value == 15000.0
@@ -748,12 +802,13 @@ def test_engine_future_fair_value():
     snap = make_snap()
     fut = ins.future("ESZ", underlying="AAPL", contract_size=1, expiry=date(2027, 1, 5))
     r = val.ValuationEngine().value(fut, snap)
-    assert r.price > snap.spot("AAPL")             # contango (r>q)
+    assert r.price > snap.spot("AAPL")  # contango (r>q)
 
 
 def test_engine_option_greeks():
     r = val.ValuationEngine().value(call_opt(), make_snap())
-    assert r.greeks is not None and 0 < r.greeks.delta < 1
+    assert r.greeks is not None
+    assert 0 < r.greeks.delta < 1
 
 
 def test_engine_option_binomial_config():
@@ -771,14 +826,16 @@ def test_engine_option_black76_config():
 def test_engine_bond_from_curve():
     b = ins.bond("UST", face=100.0, coupon=0.05, maturity=date(2029, 1, 5))
     r = val.ValuationEngine().value(b, make_snap(), quantity=10)
-    assert r.price > 0 and r.model_name == "bond.dcf"
+    assert r.price > 0
+    assert r.model_name == "bond.dcf"
 
 
 def test_engine_base_currency_conversion():
-    snap = make_snap(fx_provider=fxp())
+    make_snap(fx_provider=fxp())
     e = ins.equity("SAP", currency="EUR")
-    snap2 = val.build_snapshot(AS_OF, spots={"SAP": 100.0}, rates={"EUR": flat_zc(0.02, "EUR", "EUR")},
-                               fx_provider=fxp())
+    snap2 = val.build_snapshot(
+        AS_OF, spots={"SAP": 100.0}, rates={"EUR": flat_zc(0.02, "EUR", "EUR")}, fx_provider=fxp()
+    )
     cfg = val.ValuationConfiguration(base_currency="USD")
     r = val.ValuationEngine().value(e, snap2, cfg, quantity=10)
     assert r.base_value == pytest.approx(100 * 10 * 1.10)
@@ -786,10 +843,15 @@ def test_engine_base_currency_conversion():
 
 def test_engine_rejects_lookahead():
     from mentisrex.research.valuation.models import MarketQuote, Provenance
+
     q = MarketQuote("AAPL", 150, provenance=Provenance(observation_date=date(2026, 2, 1)))
-    bad = val.build_snapshot(AS_OF, spots={"AAPL": 150}, quotes={"AAPL": q},
-                             vol_surfaces={"AAPL": val.flat_surface("AAPL", AS_OF, 0.25)},
-                             rates={"USD": flat_zc()})
+    bad = val.build_snapshot(
+        AS_OF,
+        spots={"AAPL": 150},
+        quotes={"AAPL": q},
+        vol_surfaces={"AAPL": val.flat_surface("AAPL", AS_OF, 0.25)},
+        rates={"USD": flat_zc()},
+    )
     with pytest.raises(val.ValuationError):
         val.ValuationEngine().value(ins.equity("AAPL"), bad)
 
@@ -817,11 +879,13 @@ def test_engine_xccy_valuation():
     pay = xccy.CrossCurrencyLeg(9e6, 0.02, "EUR", swap_spec().pay_dates, AS_OF)
     snap = make_snap(fx_provider=fxp())
     res = val.ValuationEngine().value_cross_currency(
-        "XS", recv, pay, flat_zc(0.03, "USD"), flat_zc(0.02, "EUR", "EUR"), snap=snap)
+        "XS", recv, pay, flat_zc(0.03, "USD"), flat_zc(0.02, "EUR", "EUR"), snap=snap
+    )
     assert res.model_name == "xccy_swap.dual_curve"
 
 
 # ─────────────────────────── portfolio valuation ───────────────────────────
+
 
 def test_portfolio_sum_of_parts():
     snap = make_snap()
@@ -850,9 +914,13 @@ def test_portfolio_gross_ge_net():
 
 # ─────────────────────────── model governance ──────────────────────────────
 
+
 def test_result_has_governance_fields():
     r = val.ValuationEngine().value(ins.equity("AAPL"), make_snap())
-    assert r.model_name and r.model_version and r.input_fingerprint and r.market_data_fingerprint
+    assert r.model_name
+    assert r.model_version
+    assert r.input_fingerprint
+    assert r.market_data_fingerprint
 
 
 def test_reproducible_key_stable():
@@ -880,11 +948,13 @@ def test_registry_unknown_model():
 
 # ─────────────────────────── determinism / property ────────────────────────
 
+
 def test_same_snapshot_same_result():
     snap = make_snap()
     a = val.ValuationEngine().value(call_opt(), snap)
     b = val.ValuationEngine().value(call_opt(), snap)
-    assert a.price == b.price and a.input_fingerprint == b.input_fingerprint
+    assert a.price == b.price
+    assert a.input_fingerprint == b.input_fingerprint
 
 
 def test_same_inputs_same_fingerprint():
@@ -901,7 +971,8 @@ def test_serialization_deterministic():
 def test_portfolio_serialization():
     pv = val.PortfolioValuationEngine().value([(ins.equity("AAPL"), 100, None)], make_snap())
     js = ser.to_json(pv)
-    assert "results" in js and "market_data_fingerprint" in js
+    assert "results" in js
+    assert "market_data_fingerprint" in js
 
 
 def test_config_fingerprint_changes():
@@ -911,6 +982,7 @@ def test_config_fingerprint_changes():
 
 
 # ─────────────────────────── arbitrage diagnostics ─────────────────────────
+
 
 def test_diag_negative_df_clean():
     assert diag.negative_discount_factors(flat_zc()) == []
@@ -940,11 +1012,13 @@ def test_diag_curve_discontinuity_clean():
 def test_diag_negative_prices():
     r = val.ValuationEngine().value(ins.equity("AAPL"), make_snap())
     from dataclasses import replace
+
     bad = replace(r, price=-1.0)
     assert diag.negative_prices([bad])
 
 
 # ─────────────────────────── validation ────────────────────────────────────
+
 
 def test_validator_snapshot_clean():
     assert val.ValuationValidator().validate_snapshot(make_snap()) == []
@@ -970,6 +1044,7 @@ def test_validator_reconcile_agree():
 
 # ─────────────────────────── reconciliation ────────────────────────────────
 
+
 def test_recon_clean():
     r = val.ValuationEngine().value(ins.equity("AAPL"), make_snap())
     rep = recon.reconcile([r], {"AAPL": {"price": r.price}})
@@ -990,12 +1065,19 @@ def test_recon_missing_external():
 
 # ─────────────────────────── M16 / M17 integration ─────────────────────────
 
+
 def test_m17_adapter_price_matches_engine_option():
     snap = make_snap()
     r = val.ValuationEngine().value(call_opt(), snap)
     t = (date(2027, 1, 5) - AS_OF).days / 365.0
-    market = {"spot": 150.0, "strike": 150.0, "vol": 0.25,
-              "rate": snap.rates["USD"].zero_rate(t), "div_yield": 0.0, "t": t}
+    market = {
+        "spot": 150.0,
+        "strike": 150.0,
+        "vol": 0.25,
+        "rate": snap.rates["USD"].zero_rate(t),
+        "div_yield": 0.0,
+        "t": t,
+    }
     px = val.M18Pricer().price(call_opt(), market)
     assert px == pytest.approx(r.price, abs=0.2)
 
@@ -1006,13 +1088,17 @@ def test_m17_adapter_equity_price():
 
 def test_m17_adapter_greeks_return_m17_type():
     from mentisrex.research.instruments.models import Greeks as M17G
+
     g = val.M18Pricer().greeks(call_opt(), {"spot": 150, "vol": 0.25, "rate": 0.03, "t": 1.0})
-    assert isinstance(g, M17G) and 0 < g.delta < 1
+    assert isinstance(g, M17G)
+    assert 0 < g.delta < 1
 
 
 def test_m17_adapter_american_price():
-    px = val.M18Pricer().price(call_opt(), {"spot": 150, "vol": 0.25, "rate": 0.03,
-                                            "t": 1.0, "american": True, "steps": 100})
+    px = val.M18Pricer().price(
+        call_opt(),
+        {"spot": 150, "vol": 0.25, "rate": 0.03, "t": 1.0, "american": True, "steps": 100},
+    )
     assert px > 0
 
 
@@ -1020,7 +1106,8 @@ def test_m17_yield_adapter_ytm():
     b = ins.bond("UST", face=100.0, coupon=0.05, maturity=date(2029, 1, 5))
     prov = val.M18YieldProvider(settle=AS_OF)
     px = bonds.clean_price_from_yield(
-        bonds.BondSpec(coupon=0.05, frequency=2, maturity=date(2029, 1, 5)), 0.05, AS_OF)
+        bonds.BondSpec(coupon=0.05, frequency=2, maturity=date(2029, 1, 5)), 0.05, AS_OF
+    )
     assert prov.ytm(b, px) == pytest.approx(0.05, abs=1e-4)
 
 
@@ -1032,11 +1119,16 @@ def test_m17_yield_adapter_duration():
 def test_m18_pricer_drops_into_m17_book_greeks():
     # M17 InstrumentBook risk consuming M18 greeks provider
     from mentisrex.research.instruments import risk as m17risk
+
     b = ins.InstrumentBook(1_000_000.0)
     opt = ins.call("AAPL-C", underlying="AAPL", strike=150, expiry=date(2027, 1, 5))
     b.book_trade(opt, 10, 5.0)
-    rep = m17risk.exposures(b, {"AAPL-C": 5.0}, greeks_provider=val.M18Pricer(),
-                            market={"AAPL-C": {"spot": 150, "vol": 0.25, "rate": 0.03, "t": 1.0}})
+    rep = m17risk.exposures(
+        b,
+        {"AAPL-C": 5.0},
+        greeks_provider=val.M18Pricer(),
+        market={"AAPL-C": {"spot": 150, "vol": 0.25, "rate": 0.03, "t": 1.0}},
+    )
     assert rep.gamma > 0
 
 

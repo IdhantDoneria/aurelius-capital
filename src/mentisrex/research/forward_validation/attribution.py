@@ -54,7 +54,7 @@ def forward_attribution(
             "total_return": report.total_return,
             "metadata": report.metadata,
         }
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return {
             "analyzed": False,
             "reason": f"attribution failed: {exc}",

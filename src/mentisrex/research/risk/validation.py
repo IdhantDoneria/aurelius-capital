@@ -35,8 +35,12 @@ def portfolio_health(report) -> PortfolioHealthReport:
     reasons = [v.message for v in report.violations] + (["drawdown halt"] if halted else [])
     healthy = not hard and not halted
     return PortfolioHealthReport(
-        healthy=healthy, decision=report.decision, score=score,
-        reasons=reasons or ["within all risk limits"], checks=checks)
+        healthy=healthy,
+        decision=report.decision,
+        score=score,
+        reasons=reasons or ["within all risk limits"],
+        checks=checks,
+    )
 
 
 def deployment_risk_decision(report, *, m9_verdict: str = "SKIPPED") -> DeploymentRiskDecision:
@@ -48,14 +52,22 @@ def deployment_risk_decision(report, *, m9_verdict: str = "SKIPPED") -> Deployme
     if not m9_ok:
         reasons.append(f"M9 verdict {m9_verdict}")
     return DeploymentRiskDecision(
-        deployable=risk_ok and m9_ok, risk_decision=report.decision,
-        m9_verdict=m9_verdict, reasons=reasons or ["risk + statistical checks passed"])
+        deployable=risk_ok and m9_ok,
+        risk_decision=report.decision,
+        m9_verdict=m9_verdict,
+        reasons=reasons or ["risk + statistical checks passed"],
+    )
 
 
 def validate_risk(report, *, m9_verdict: str = "SKIPPED") -> RiskValidationResult:
     from mentisrex.research.risk import serialization
+
     health = portfolio_health(report)
     deployment = deployment_risk_decision(report, m9_verdict=m9_verdict)
     return RiskValidationResult(
-        ok=health.healthy and deployment.deployable, health=health, deployment=deployment,
-        risk_report=serialization.report_to_dict(report), generated_at=datetime.now(UTC))
+        ok=health.healthy and deployment.deployable,
+        health=health,
+        deployment=deployment,
+        risk_report=serialization.report_to_dict(report),
+        generated_at=datetime.now(UTC),
+    )

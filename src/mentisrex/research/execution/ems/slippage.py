@@ -13,7 +13,7 @@ def arrival_slippage_bps(avg_fill_price: float, arrival_price: float, quantity: 
     if arrival_price <= 0 or quantity == 0:
         return 0.0
     raw = (avg_fill_price - arrival_price) / arrival_price * 1e4
-    return raw if quantity > 0 else -raw          # sells: filling low is adverse
+    return raw if quantity > 0 else -raw  # sells: filling low is adverse
 
 
 def report_slippage(report) -> float:

@@ -55,10 +55,26 @@ CREATE INDEX IF NOT EXISTS ix_ins_cik ON insider_transactions(cik, acceptance_da
 """
 
 _COLS = (
-    "transaction_id", "security_id", "cik", "insider_name", "insider_role", "insider_type",
-    "transaction_date", "filing_date", "acceptance_datetime", "transaction_code", "shares",
-    "price", "value", "ownership_after", "ownership_type", "accession", "form_type",
-    "source", "vendor", "data_version",
+    "transaction_id",
+    "security_id",
+    "cik",
+    "insider_name",
+    "insider_role",
+    "insider_type",
+    "transaction_date",
+    "filing_date",
+    "acceptance_datetime",
+    "transaction_code",
+    "shares",
+    "price",
+    "value",
+    "ownership_after",
+    "ownership_type",
+    "accession",
+    "form_type",
+    "source",
+    "vendor",
+    "data_version",
 )
 
 # logical identity of a transaction (an amendment shares this key, differs by accession)
@@ -110,9 +126,14 @@ class InsiderStore:
 
         now = datetime.now(UTC)
         df = pd.DataFrame(
-            [{**{c: t.get(c) for c in _COLS},
-              "vendor": t.get("vendor", "sec_edgar"),
-              "data_version": t.get("data_version", 1)} for t in txns],
+            [
+                {
+                    **{c: t.get(c) for c in _COLS},
+                    "vendor": t.get("vendor", "sec_edgar"),
+                    "data_version": t.get("data_version", 1),
+                }
+                for t in txns
+            ],
             columns=list(_COLS),
         )
         df["created_at"] = now
@@ -132,9 +153,23 @@ class InsiderStore:
         """Transactions for a security that were PUBLICLY KNOWN by `query_time`
         (acceptance_datetime <= cutoff), collapsed to the latest accepted
         amendment per logical transaction. Never gated on transaction_date."""
-        cols = ("transaction_id", "insider_name", "insider_role", "insider_type",
-                "transaction_date", "filing_date", "acceptance_datetime", "transaction_code",
-                "shares", "price", "value", "ownership_after", "ownership_type", "accession", "form_type")
+        cols = (
+            "transaction_id",
+            "insider_name",
+            "insider_role",
+            "insider_type",
+            "transaction_date",
+            "filing_date",
+            "acceptance_datetime",
+            "transaction_code",
+            "shares",
+            "price",
+            "value",
+            "ownership_after",
+            "ownership_type",
+            "accession",
+            "form_type",
+        )
         sel = ", ".join(cols)
         with self._conn() as conn:
             rows = conn.execute(
@@ -150,7 +185,9 @@ class InsiderStore:
             ).fetchall()
         return [dict(zip(cols, r, strict=True)) for r in rows]
 
-    def signals_as_of(self, security_ids: list[str], query_time: date | datetime) -> dict[str, dict]:
+    def signals_as_of(
+        self, security_ids: list[str], query_time: date | datetime
+    ) -> dict[str, dict]:
         """Batch PIT insider aggregates for many securities in ONE query — the
         research/factor path. Same acceptance gate and amendment collapse as
         transactions_as_of, widened by security_id, then aggregated to P/S counts,
@@ -181,8 +218,9 @@ class InsiderStore:
         keys = ("purchases", "sales", "buy_value", "sell_value", "buyers", "ownership_change")
         return {r[0]: dict(zip(keys, r[1:], strict=True)) for r in rows}
 
-    def insider_position_as_of(self, security_id: str, insider_name: str,
-                               query_time: date | datetime) -> float | None:
+    def insider_position_as_of(
+        self, security_id: str, insider_name: str, query_time: date | datetime
+    ) -> float | None:
         """Reported shares-owned-after for an insider's latest transaction known
         by `query_time`."""
         with self._conn() as conn:
@@ -196,12 +234,22 @@ class InsiderStore:
 
     def latest_transactions(self, security_id: str, limit: int = 50) -> list[dict]:
         """Most recent transactions by acceptance time (no PIT gate — operational view)."""
-        cols = ("transaction_id", "insider_name", "transaction_date", "acceptance_datetime",
-                "transaction_code", "shares", "price", "value", "form_type")
+        cols = (
+            "transaction_id",
+            "insider_name",
+            "transaction_date",
+            "acceptance_datetime",
+            "transaction_code",
+            "shares",
+            "price",
+            "value",
+            "form_type",
+        )
         sel = ", ".join(cols)
         with self._conn() as conn:
             rows = conn.execute(
                 f"SELECT {sel} FROM insider_transactions WHERE security_id = ? "
-                f"ORDER BY acceptance_datetime DESC LIMIT ?", [security_id, limit],
+                f"ORDER BY acceptance_datetime DESC LIMIT ?",
+                [security_id, limit],
             ).fetchall()
         return [dict(zip(cols, r, strict=True)) for r in rows]

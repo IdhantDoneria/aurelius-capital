@@ -17,9 +17,15 @@ def _consistency(seg_stats: list[float]) -> dict:
     a = np.asarray(seg_stats, dtype=float)
     if a.size == 0:
         return {"folds": 0, "mean": 0.0, "std": 0.0, "min": 0.0, "share_positive": 0.0}
-    return {"folds": int(a.size), "mean": float(a.mean()), "std": float(a.std(ddof=0)),
-            "min": float(a.min()), "max": float(a.max()),
-            "share_positive": float((a > 0).mean()), "per_fold": [float(x) for x in a]}
+    return {
+        "folds": int(a.size),
+        "mean": float(a.mean()),
+        "std": float(a.std(ddof=0)),
+        "min": float(a.min()),
+        "max": float(a.max()),
+        "share_positive": float((a > 0).mean()),
+        "per_fold": [float(x) for x in a],
+    }
 
 
 def rolling_windows(returns, *, n_folds: int = 5, stat_fn=sharpe) -> dict:
@@ -27,7 +33,9 @@ def rolling_windows(returns, *, n_folds: int = 5, stat_fn=sharpe) -> dict:
     if r.size < n_folds * 3:
         return {"type": "rolling", **_consistency([])}
     bounds = np.linspace(0, r.size, n_folds + 1, dtype=int)
-    segs = [stat_fn(r[bounds[i]:bounds[i + 1]]) for i in range(n_folds) if bounds[i + 1] > bounds[i]]
+    segs = [
+        stat_fn(r[bounds[i] : bounds[i + 1]]) for i in range(n_folds) if bounds[i + 1] > bounds[i]
+    ]
     return {"type": "rolling", **_consistency(segs)}
 
 

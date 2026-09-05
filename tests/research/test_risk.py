@@ -30,17 +30,24 @@ def _eng(**lim):
 
 # ── exposure ─────────────────────────────────────────────────────────────────
 
+
 def test_exposure_long_only():
     e = risk.exposure_report({"A": 0.6, "B": 0.4})
-    assert e.gross == pytest.approx(1.0) and e.net == pytest.approx(1.0)
-    assert e.long == pytest.approx(1.0) and e.short == 0.0 and e.cash == pytest.approx(0.0)
-    assert e.n_long == 2 and e.n_short == 0
+    assert e.gross == pytest.approx(1.0)
+    assert e.net == pytest.approx(1.0)
+    assert e.long == pytest.approx(1.0)
+    assert e.short == 0.0
+    assert e.cash == pytest.approx(0.0)
+    assert e.n_long == 2
+    assert e.n_short == 0
 
 
 def test_exposure_long_short():
     e = risk.exposure_report({"A": 0.6, "B": -0.4})
-    assert e.gross == pytest.approx(1.0) and e.net == pytest.approx(0.2)
-    assert e.short == pytest.approx(0.4) and e.n_short == 1
+    assert e.gross == pytest.approx(1.0)
+    assert e.net == pytest.approx(0.2)
+    assert e.short == pytest.approx(0.4)
+    assert e.n_short == 1
 
 
 def test_exposure_cash_when_underinvested():
@@ -55,10 +62,12 @@ def test_exposure_sector_grouping():
 
 def test_exposure_empty():
     e = risk.exposure_report({})
-    assert e.gross == 0.0 and e.n_long == 0
+    assert e.gross == 0.0
+    assert e.n_long == 0
 
 
 # ── concentration ────────────────────────────────────────────────────────────
+
 
 def test_concentration_equal_weight():
     c = risk.concentration_report({"A": 0.25, "B": 0.25, "C": 0.25, "D": 0.25})
@@ -86,6 +95,7 @@ def test_concentration_largest_contribution():
 
 # ── covariance estimators ────────────────────────────────────────────────────
 
+
 @pytest.mark.parametrize("kind", ["sample", "diagonal", "shrinkage", "ewma", "factor"])
 def test_covariance_shape_and_symmetry(kind):
     X = RNG.normal(0, 0.02, (200, 6))
@@ -101,7 +111,7 @@ def test_covariance_diagonal_is_diagonal():
 
 
 def test_covariance_shrinkage_well_conditioned():
-    X = RNG.normal(0, 0.02, (30, 20))          # T < N → sample is singular
+    X = RNG.normal(0, 0.02, (30, 20))  # T < N → sample is singular
     C = risk.make_covariance("shrinkage").estimate(X)
     assert np.linalg.cond(C) < np.linalg.cond(np.cov(X, rowvar=False) + 1e-12 * np.eye(20))
 
@@ -113,7 +123,7 @@ def test_covariance_ewma_weights_recent():
 
 def test_covariance_factor_fallback_without_factors():
     X = RNG.normal(0, 0.02, (100, 4))
-    C = risk.make_covariance("factor").estimate(X)     # no factor_returns → diagonal base
+    C = risk.make_covariance("factor").estimate(X)  # no factor_returns → diagonal base
     assert C.shape == (4, 4)
 
 
@@ -121,7 +131,8 @@ def test_covariance_factor_with_factors():
     X = RNG.normal(0, 0.02, (150, 5))
     F = RNG.normal(0, 0.01, (150, 2))
     C = risk.make_covariance("factor", factor_returns=F).estimate(X)
-    assert C.shape == (5, 5) and np.all(np.diag(C) > 0)
+    assert C.shape == (5, 5)
+    assert np.all(np.diag(C) > 0)
 
 
 def test_covariance_unknown_raises():
@@ -130,6 +141,7 @@ def test_covariance_unknown_raises():
 
 
 # ── VaR / ES ─────────────────────────────────────────────────────────────────
+
 
 def test_historical_var_monotone_in_confidence():
     r = RNG.normal(0.0003, 0.015, 500)
@@ -164,6 +176,7 @@ def test_var_empty_returns():
 
 # ── stress testing ───────────────────────────────────────────────────────────
 
+
 def test_stress_historical_scenarios_present():
     assert {"gfc_2008", "covid_2020", "inflation_2022"} <= set(risk.HISTORICAL_SCENARIOS)
 
@@ -181,13 +194,16 @@ def test_stress_short_book_gains_in_crash():
 
 def test_stress_custom_scenario_breach_flag():
     from mentisrex.research.risk.models import StressScenario
-    r = risk.apply_scenario({"A": 1.0}, StressScenario("big", market_shock=-0.5),
-                            betas={"A": 1.0}, halt_threshold=-0.2)
+
+    r = risk.apply_scenario(
+        {"A": 1.0}, StressScenario("big", market_shock=-0.5), betas={"A": 1.0}, halt_threshold=-0.2
+    )
     assert r.breached
 
 
 def test_stress_sector_shock():
     from mentisrex.research.risk.models import StressScenario
+
     s = StressScenario("tech_selloff", sector_shocks={"tech": -0.3})
     r = risk.apply_scenario({"A": 1.0}, s, sectors={"A": "tech"})
     assert r.pnl_fraction == pytest.approx(-0.3)
@@ -195,15 +211,16 @@ def test_stress_sector_shock():
 
 # ── drawdown ─────────────────────────────────────────────────────────────────
 
+
 def test_drawdown_basic():
     vals = [100, 110, 90, 95, 80, 120]
     d = risk.drawdown_report(vals)
     assert d.max_drawdown < 0
-    assert d.current_drawdown == pytest.approx(0.0)     # ends at new high
+    assert d.current_drawdown == pytest.approx(0.0)  # ends at new high
 
 
 def test_drawdown_halt_triggers():
-    vals = [100, 100, 50]        # -50% current drawdown
+    vals = [100, 100, 50]  # -50% current drawdown
     d = risk.drawdown_report(vals, halt_threshold=-0.25)
     assert d.halt_triggered
 
@@ -215,20 +232,23 @@ def test_should_halt_helper():
 
 def test_drawdown_empty():
     d = risk.drawdown_report([])
-    assert d.max_drawdown == 0.0 and not d.halt_triggered
+    assert d.max_drawdown == 0.0
+    assert not d.halt_triggered
 
 
 # ── liquidity / capacity ─────────────────────────────────────────────────────
 
+
 def test_liquidity_participation_and_days():
     r = risk.liquidity_report({"A": 1.0}, {"A": 1e6}, portfolio_value=1e5)
-    assert r.max_participation == pytest.approx(0.1)      # 100k / 1M
+    assert r.max_participation == pytest.approx(0.1)  # 100k / 1M
     assert r.max_days_to_liquidate == pytest.approx(1.0)  # 0.1 / 0.10 limit
 
 
 def test_liquidity_illiquid_name_flagged():
-    r = risk.liquidity_report({"A": 1.0}, {"A": 1e4}, portfolio_value=1e6,
-                              liquidation_days_threshold=5.0)
+    r = risk.liquidity_report(
+        {"A": 1.0}, {"A": 1e4}, portfolio_value=1e6, liquidation_days_threshold=5.0
+    )
     assert r.illiquid_weight == pytest.approx(1.0)
     assert r.liquidity_signal in ("warning", "critical")
 
@@ -251,13 +271,17 @@ def test_capacity_signal_critical_when_over():
 
 # ── factor framework ─────────────────────────────────────────────────────────
 
+
 def test_capm_factor_decomposition():
     ids = ["A", "B", "C"]
     R = np.column_stack([RNG.normal(0, 0.02, 250) for _ in ids])
-    fe = risk.CAPMModel().analyze({"A": 0.4, "B": 0.3, "C": 0.3}, R,
-                                  {"market_returns": RNG.normal(0, 0.015, 250)})
-    assert fe.model == "capm" and "market" in fe.betas
-    assert fe.factor_risk >= 0 and fe.specific_risk >= 0
+    fe = risk.CAPMModel().analyze(
+        {"A": 0.4, "B": 0.3, "C": 0.3}, R, {"market_returns": RNG.normal(0, 0.015, 250)}
+    )
+    assert fe.model == "capm"
+    assert "market" in fe.betas
+    assert fe.factor_risk >= 0
+    assert fe.specific_risk >= 0
     assert 0.0 <= fe.r_squared <= 1.0
 
 
@@ -269,8 +293,9 @@ def test_capm_requires_market_returns():
 def test_custom_factor_model():
     R = RNG.normal(0, 0.02, (200, 3))
     F = RNG.normal(0, 0.01, (200, 2))
-    fe = risk.CustomFactorModel().analyze({"A": 0.5, "B": 0.3, "C": 0.2}, R,
-                                          {"factor_returns": F, "factor_names": ["mom", "val"]})
+    fe = risk.CustomFactorModel().analyze(
+        {"A": 0.5, "B": 0.3, "C": 0.2}, R, {"factor_returns": F, "factor_names": ["mom", "val"]}
+    )
     assert set(fe.betas) == {"mom", "val"}
 
 
@@ -280,9 +305,11 @@ def test_fama_french_is_custom():
 
 # ── limits ───────────────────────────────────────────────────────────────────
 
+
 def test_limits_hard_breach():
     v = RiskLimits(max_position=0.1).evaluate({"max_position": 0.3})
-    assert len(v) == 1 and v[0].severity == "hard"
+    assert len(v) == 1
+    assert v[0].severity == "hard"
 
 
 def test_limits_soft_breach():
@@ -300,85 +327,107 @@ def test_limits_none_metric_skipped():
 
 # ── engine assess / decision ─────────────────────────────────────────────────
 
+
 def test_assess_clean_approves():
     ids = ["A", "B", "C", "D"]
-    rep = _eng(max_position=0.5).assess({"A": 0.4, "B": 0.3, "C": 0.2, "D": 0.1},
-                                        returns=_returns(ids), portfolio_value=1e6)
+    rep = _eng(max_position=0.5).assess(
+        {"A": 0.4, "B": 0.3, "C": 0.2, "D": 0.1}, returns=_returns(ids), portfolio_value=1e6
+    )
     assert rep.decision == RiskDecision.APPROVE
-    assert rep.volatility > 0 and rep.var is not None
+    assert rep.volatility > 0
+    assert rep.var is not None
 
 
 def test_assess_hard_violation_rejects():
-    rep = _eng(max_position=0.5).assess({"A": 0.9, "B": 0.1},
-                                        returns=_returns(["A", "B"]), portfolio_value=1e6)
+    rep = _eng(max_position=0.5).assess(
+        {"A": 0.9, "B": 0.1}, returns=_returns(["A", "B"]), portfolio_value=1e6
+    )
     assert rep.decision == RiskDecision.REJECT
 
 
 def test_assess_soft_violation_warns():
     rep = _eng(max_position=1.0, max_concentration=0.3).assess(
-        {"A": 0.6, "B": 0.4}, returns=_returns(["A", "B"]), portfolio_value=1e6)
+        {"A": 0.6, "B": 0.4}, returns=_returns(["A", "B"]), portfolio_value=1e6
+    )
     assert rep.decision == RiskDecision.APPROVE_WITH_WARNING
 
 
 def test_assess_risk_contribution_sums_to_one():
     ids = ["A", "B", "C"]
-    rep = _eng(max_position=1.0).assess({"A": 0.5, "B": 0.3, "C": 0.2},
-                                        returns=_returns(ids), portfolio_value=1e6)
+    rep = _eng(max_position=1.0).assess(
+        {"A": 0.5, "B": 0.3, "C": 0.2}, returns=_returns(ids), portfolio_value=1e6
+    )
     assert sum(rep.risk_contribution.values()) == pytest.approx(1.0, abs=1e-6)
 
 
 def test_assess_drawdown_halt_rejects():
-    rep = _eng(max_position=1.0).assess({"A": 1.0}, returns=_returns(["A"]),
-                                        values=[100, 100, 50], portfolio_value=1e6)
+    rep = _eng(max_position=1.0).assess(
+        {"A": 1.0}, returns=_returns(["A"]), values=[100, 100, 50], portfolio_value=1e6
+    )
     assert rep.decision == RiskDecision.REJECT
 
 
 def test_assess_without_returns_skips_var():
     rep = _eng(max_position=1.0).assess({"A": 0.5, "B": 0.5}, portfolio_value=1e6)
-    assert rep.var is None and rep.volatility == 0.0
+    assert rep.var is None
+    assert rep.volatility == 0.0
     assert rep.decision in (RiskDecision.APPROVE, RiskDecision.APPROVE_WITH_WARNING)
 
 
 def test_assess_factor_when_model_injected():
     ids = ["A", "B"]
-    eng = RiskEngine(RiskEngineConfig(limits=RiskLimits(max_position=1.0)),
-                     factor_model=risk.CAPMModel())
-    rep = eng.assess({"A": 0.5, "B": 0.5}, returns=_returns(ids), portfolio_value=1e6,
-                     factor_ctx={"market_returns": RNG.normal(0, 0.015, 300)})
-    assert rep.factor is not None and rep.factor.model == "capm"
+    eng = RiskEngine(
+        RiskEngineConfig(limits=RiskLimits(max_position=1.0)), factor_model=risk.CAPMModel()
+    )
+    rep = eng.assess(
+        {"A": 0.5, "B": 0.5},
+        returns=_returns(ids),
+        portfolio_value=1e6,
+        factor_ctx={"market_returns": RNG.normal(0, 0.015, 300)},
+    )
+    assert rep.factor is not None
+    assert rep.factor.model == "capm"
 
 
 # ── pre-trade gate (M12 integration) ─────────────────────────────────────────
 
+
 def test_gate_approves_within_limits():
     gate = _eng(max_position=0.5).as_gate()
-    from mentisrex.research.simulation.state import PortfolioState
     from mentisrex.research.simulation.models import Order
+    from mentisrex.research.simulation.state import PortfolioState
+
     st = PortfolioState(1e6)
-    orders = [Order("A", 4000.0)]      # 40% of 1M at $100
+    orders = [Order("A", 4000.0)]  # 40% of 1M at $100
     approved, rejected = gate.check(orders, st, {"A": 100.0})
-    assert len(approved) == 1 and not rejected
+    assert len(approved) == 1
+    assert not rejected
 
 
 def test_gate_rejects_over_position():
     gate = _eng(max_position=0.1).as_gate()
-    from mentisrex.research.simulation.state import PortfolioState
     from mentisrex.research.simulation.models import Order
+    from mentisrex.research.simulation.state import PortfolioState
+
     st = PortfolioState(1e6)
     approved, rejected = gate.check([Order("A", 9000.0)], st, {"A": 100.0})
-    assert not approved and rejected[0][1] == "max_position"
+    assert not approved
+    assert rejected[0][1] == "max_position"
 
 
 def test_gate_rejects_unpriced():
     gate = _eng().as_gate()
-    from mentisrex.research.simulation.state import PortfolioState
     from mentisrex.research.simulation.models import Order
+    from mentisrex.research.simulation.state import PortfolioState
+
     approved, rejected = gate.check([Order("A", 1.0)], PortfolioState(1e6), {})
-    assert not approved and rejected[0][1] == "unpriced"
+    assert not approved
+    assert rejected[0][1] == "unpriced"
 
 
 def test_gate_drops_into_m12_session():
     import mentisrex.research.paper_trading as pt
+
     gate = _eng(max_position=0.5).as_gate(adv_provider=lambda sid: 5e7)
     prices = {"A": 100.0, "B": 50.0, "C": 25.0}
     sess = pt.PaperTradingSession(broker=pt.MockBroker(initial_cash=1_000_000.0), risk_gate=gate)
@@ -390,6 +439,7 @@ def test_gate_drops_into_m12_session():
 
 def test_gate_blocks_concentration_in_m12():
     import mentisrex.research.paper_trading as pt
+
     gate = _eng(max_position=0.1).as_gate()
     sess = pt.PaperTradingSession(broker=pt.MockBroker(initial_cash=1_000_000.0), risk_gate=gate)
     sess.step(date(2024, 1, 1), {"A": 0.9}, {"A": 100.0})
@@ -398,18 +448,30 @@ def test_gate_blocks_concentration_in_m12():
 
 # ── monitoring ───────────────────────────────────────────────────────────────
 
+
 def test_monitor_timeline_length():
     eng = _eng(max_position=1.0)
-    reps = [eng.assess({"A": 0.5, "B": 0.5}, returns=_returns(["A", "B"]), portfolio_value=1e6,
-                       when=date(2024, 1, 1) + timedelta(days=i)) for i in range(4)]
+    reps = [
+        eng.assess(
+            {"A": 0.5, "B": 0.5},
+            returns=_returns(["A", "B"]),
+            portfolio_value=1e6,
+            when=date(2024, 1, 1) + timedelta(days=i),
+        )
+        for i in range(4)
+    ]
     m = risk.monitor(reps)
     assert len(m["timeline"]) == 4
 
 
 def test_monitor_detects_limit_breach():
     eng = _eng(max_position=0.4)
-    rep = eng.assess({"A": 0.9, "B": 0.1}, returns=_returns(["A", "B"]), portfolio_value=1e6,
-                     when=date(2024, 1, 1))
+    rep = eng.assess(
+        {"A": 0.9, "B": 0.1},
+        returns=_returns(["A", "B"]),
+        portfolio_value=1e6,
+        when=date(2024, 1, 1),
+    )
     m = risk.monitor([rep])
     assert any(a.kind == "limit_breach" for a in m["alerts"])
 
@@ -424,47 +486,64 @@ def test_monitor_detects_exposure_drift():
 
 # ── validation integration ───────────────────────────────────────────────────
 
+
 def test_portfolio_health_clean():
-    rep = _eng(max_position=1.0).assess({"A": 0.5, "B": 0.5}, returns=_returns(["A", "B"]),
-                                        portfolio_value=1e6)
+    rep = _eng(max_position=1.0).assess(
+        {"A": 0.5, "B": 0.5}, returns=_returns(["A", "B"]), portfolio_value=1e6
+    )
     h = risk.portfolio_health(rep)
-    assert h.healthy and h.score == 100.0
+    assert h.healthy
+    assert h.score == 100.0
 
 
 def test_portfolio_health_penalizes_violation():
-    rep = _eng(max_position=0.1).assess({"A": 0.9, "B": 0.1}, returns=_returns(["A", "B"]),
-                                        portfolio_value=1e6)
+    rep = _eng(max_position=0.1).assess(
+        {"A": 0.9, "B": 0.1}, returns=_returns(["A", "B"]), portfolio_value=1e6
+    )
     h = risk.portfolio_health(rep)
-    assert not h.healthy and h.score < 100.0
+    assert not h.healthy
+    assert h.score < 100.0
 
 
 def test_deployment_requires_risk_and_m9():
-    rep = _eng(max_position=1.0).assess({"A": 0.5, "B": 0.5}, returns=_returns(["A", "B"]),
-                                        portfolio_value=1e6)
+    rep = _eng(max_position=1.0).assess(
+        {"A": 0.5, "B": 0.5}, returns=_returns(["A", "B"]), portfolio_value=1e6
+    )
     assert risk.deployment_risk_decision(rep, m9_verdict="PASS").deployable
     assert not risk.deployment_risk_decision(rep, m9_verdict="REJECT").deployable
 
 
 def test_deployment_blocked_by_risk_reject():
-    rep = _eng(max_position=0.1).assess({"A": 0.9, "B": 0.1}, returns=_returns(["A", "B"]),
-                                        portfolio_value=1e6)
+    rep = _eng(max_position=0.1).assess(
+        {"A": 0.9, "B": 0.1}, returns=_returns(["A", "B"]), portfolio_value=1e6
+    )
     assert not risk.deployment_risk_decision(rep, m9_verdict="PASS").deployable
 
 
 def test_validate_risk_bundle():
-    rep = _eng(max_position=1.0).assess({"A": 0.5, "B": 0.5}, returns=_returns(["A", "B"]),
-                                        portfolio_value=1e6)
+    rep = _eng(max_position=1.0).assess(
+        {"A": 0.5, "B": 0.5}, returns=_returns(["A", "B"]), portfolio_value=1e6
+    )
     res = risk.validate_risk(rep, m9_verdict="PASS")
-    assert res.ok and res.health.healthy and res.deployment.deployable
+    assert res.ok
+    assert res.health.healthy
+    assert res.deployment.deployable
 
 
 # ── serialization / determinism ──────────────────────────────────────────────
 
+
 def test_serialization_roundtrip_stable():
     import json
+
     from mentisrex.research.risk import serialization
-    rep = _eng(max_position=1.0).assess({"A": 0.5, "B": 0.5}, returns=_returns(["A", "B"]),
-                                        portfolio_value=1e6, when=date(2024, 1, 1))
+
+    rep = _eng(max_position=1.0).assess(
+        {"A": 0.5, "B": 0.5},
+        returns=_returns(["A", "B"]),
+        portfolio_value=1e6,
+        when=date(2024, 1, 1),
+    )
     a = serialization.to_json(rep)
     assert json.loads(a)["decision"] == "approve"
 
@@ -472,16 +551,19 @@ def test_serialization_roundtrip_stable():
 def test_fingerprint_deterministic():
     eng = _eng(max_position=1.0)
     ret = _returns(["A", "B"])
-    kw = dict(returns=ret, portfolio_value=1e6, when=date(2024, 1, 1))
-    assert risk.fingerprint(eng.assess({"A": 0.5, "B": 0.5}, **kw)) == \
-        risk.fingerprint(eng.assess({"A": 0.5, "B": 0.5}, **kw))
+    kw = {"returns": ret, "portfolio_value": 1e6, "when": date(2024, 1, 1)}
+    assert risk.fingerprint(eng.assess({"A": 0.5, "B": 0.5}, **kw)) == risk.fingerprint(
+        eng.assess({"A": 0.5, "B": 0.5}, **kw)
+    )
 
 
 # ── registry ─────────────────────────────────────────────────────────────────
 
+
 def test_registry_attach(tmp_path):
-    rep = _eng(max_position=1.0).assess({"A": 0.5, "B": 0.5}, returns=_returns(["A", "B"]),
-                                        portfolio_value=1e6)
+    rep = _eng(max_position=1.0).assess(
+        {"A": 0.5, "B": 0.5}, returns=_returns(["A", "B"]), portfolio_value=1e6
+    )
 
     class _Store:
         inserted = None
@@ -503,7 +585,8 @@ def test_registry_attach(tmp_path):
 
     exp = _Exp()
     out = risk.attach_risk(_Reg(), exp, rep, artifacts_dir=str(tmp_path))
-    assert "hash" in out and "RiskDecision" in exp.metrics
+    assert "hash" in out
+    assert "RiskDecision" in exp.metrics
 
 
 def test_registry_noop_without_registry():
@@ -513,6 +596,7 @@ def test_registry_noop_without_registry():
 
 # ── edge cases ───────────────────────────────────────────────────────────────
 
+
 def test_empty_portfolio():
     rep = _eng().assess({}, portfolio_value=1e6)
     assert rep.exposure.gross == 0.0
@@ -521,7 +605,7 @@ def test_empty_portfolio():
 
 def test_short_returns_series_no_var():
     rep = _eng(max_position=1.0).assess({"A": 1.0}, returns={"A": [0.01]}, portfolio_value=1e6)
-    assert rep.var is None       # <2 obs
+    assert rep.var is None  # <2 obs
 
 
 def test_returns_as_matrix():

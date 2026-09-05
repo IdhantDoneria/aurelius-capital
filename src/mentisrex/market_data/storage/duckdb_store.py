@@ -117,8 +117,19 @@ class DuckDBStore:
             self._persistent_conn = None
 
     _COLS = (
-        "symbol", "timestamp", "frequency", "open", "high", "low", "close",
-        "volume", "vwap", "trade_count", "quality_score", "source", "adjustment_factor",
+        "symbol",
+        "timestamp",
+        "frequency",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "vwap",
+        "trade_count",
+        "quality_score",
+        "source",
+        "adjustment_factor",
     )
 
     def write_bars(self, bars: list[dict]) -> int:

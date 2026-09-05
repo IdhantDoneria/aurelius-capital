@@ -81,8 +81,9 @@ class Security:
     status: str = "active"
 
 
-def make_security_id(*, isin: str | None, figi: str | None, ticker: str, exchange: str,
-                     first_date: date) -> str:
+def make_security_id(
+    *, isin: str | None, figi: str | None, ticker: str, exchange: str, first_date: date
+) -> str:
     """Deterministic, idempotent per-listing surrogate id (≈ CRSP PERMNO).
 
     security_id identifies a *listing*, not an instrument: a dual listing has one
@@ -133,8 +134,9 @@ class SecurityMaster:
 
     # ── Registration / mutation ────────────────────────────────────────────────
 
-    def register(self, sec: Security, *, valid_from: date, reason: str = "initial",
-                 source: str = "backfill") -> str:
+    def register(
+        self, sec: Security, *, valid_from: date, reason: str = "initial", source: str = "backfill"
+    ) -> str:
         """Create (or upsert) a security and open its first identity interval.
 
         Idempotent on security_id: re-registering the same instrument is a no-op
@@ -148,9 +150,23 @@ class SecurityMaster:
                  currency, asset_type, primary_listing, status, created_at, updated_at)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,
                     COALESCE((SELECT created_at FROM security_master WHERE security_id = ?), ?), ?)""",
-                [sec.security_id, sec.isin, sec.cusip, sec.figi, sec.sedol, sec.ticker,
-                 sec.exchange, sec.country, sec.currency, sec.asset_type,
-                 sec.primary_listing, sec.status, sec.security_id, now, now],
+                [
+                    sec.security_id,
+                    sec.isin,
+                    sec.cusip,
+                    sec.figi,
+                    sec.sedol,
+                    sec.ticker,
+                    sec.exchange,
+                    sec.country,
+                    sec.currency,
+                    sec.asset_type,
+                    sec.primary_listing,
+                    sec.status,
+                    sec.security_id,
+                    now,
+                    now,
+                ],
             )
             exists = conn.execute(
                 "SELECT 1 FROM security_identity_history WHERE security_id=? AND ticker=? AND valid_from=?",
@@ -161,27 +177,54 @@ class SecurityMaster:
                     """INSERT INTO security_identity_history
                     (security_id, ticker, exchange, valid_from, valid_to, reason, source)
                     VALUES (?,?,?,?,?,?,?)""",
-                    [sec.security_id, sec.ticker, sec.exchange, valid_from.isoformat(),
-                     _FAR_FUTURE.isoformat(), reason, source],
+                    [
+                        sec.security_id,
+                        sec.ticker,
+                        sec.exchange,
+                        valid_from.isoformat(),
+                        _FAR_FUTURE.isoformat(),
+                        reason,
+                        source,
+                    ],
                 )
         return sec.security_id
 
-    def add_identity_change(self, security_id: str, *, new_ticker: str, exchange: str | None,
-                            valid_from: date, reason: str, source: str = "manual") -> None:
+    def add_identity_change(
+        self,
+        security_id: str,
+        *,
+        new_ticker: str,
+        exchange: str | None,
+        valid_from: date,
+        reason: str,
+        source: str = "manual",
+    ) -> None:
         """Record a ticker/exchange change: close the open interval at `valid_from`
         and open a new one. Updates the master's current ticker/exchange."""
         with self._conn() as conn:
             conn.execute(
                 """UPDATE security_identity_history SET valid_to = ?
                    WHERE security_id = ? AND valid_to = ? AND valid_from <= ?""",
-                [valid_from.isoformat(), security_id, _FAR_FUTURE.isoformat(), valid_from.isoformat()],
+                [
+                    valid_from.isoformat(),
+                    security_id,
+                    _FAR_FUTURE.isoformat(),
+                    valid_from.isoformat(),
+                ],
             )
             conn.execute(
                 """INSERT OR REPLACE INTO security_identity_history
                 (security_id, ticker, exchange, valid_from, valid_to, reason, source)
                 VALUES (?,?,?,?,?,?,?)""",
-                [security_id, new_ticker, exchange, valid_from.isoformat(),
-                 _FAR_FUTURE.isoformat(), reason, source],
+                [
+                    security_id,
+                    new_ticker,
+                    exchange,
+                    valid_from.isoformat(),
+                    _FAR_FUTURE.isoformat(),
+                    reason,
+                    source,
+                ],
             )
             conn.execute(
                 "UPDATE security_master SET ticker=?, exchange=COALESCE(?, exchange), updated_at=? WHERE security_id=?",
@@ -229,7 +272,7 @@ class SecurityMaster:
                     WHERE ticker IN ({placeholders}) AND valid_from <= ? AND ? < valid_to""",
                 [*ups, as_of.isoformat(), as_of.isoformat()],
             ).fetchall()
-        return {t: sid for t, sid in rows}
+        return dict(rows)
 
     def live_as_of(self, as_of: date) -> list[dict]:
         """All listings live on `as_of` (valid_from ≤ as_of < valid_to). The
@@ -252,7 +295,9 @@ class SecurityMaster:
             rows = conn.execute(
                 "SELECT security_id, ticker, exchange, status FROM security_master ORDER BY security_id"
             ).fetchall()
-        return [{"security_id": r[0], "ticker": r[1], "exchange": r[2], "status": r[3]} for r in rows]
+        return [
+            {"security_id": r[0], "ticker": r[1], "exchange": r[2], "status": r[3]} for r in rows
+        ]
 
     def lookup_by_ticker(self, ticker: str) -> list[str]:
         """All security_ids that have *ever* used this ticker (reuse → multiple)."""

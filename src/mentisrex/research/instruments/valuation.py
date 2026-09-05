@@ -38,8 +38,16 @@ def mark_of(inst: Instrument, market: dict, provider) -> float:
     return float(provider.price(inst, market))
 
 
-def value_position(inst: Instrument, quantity: float, avg_price: float, market: dict,
-                   provider, *, base_currency: str | None = None, fx_provider=None) -> ValuationResult:
+def value_position(
+    inst: Instrument,
+    quantity: float,
+    avg_price: float,
+    market: dict,
+    provider,
+    *,
+    base_currency: str | None = None,
+    fx_provider=None,
+) -> ValuationResult:
     mark = mark_of(inst, market, provider)
     mv = _econ.position_value(inst, quantity, mark)
     upnl = _econ.unrealized_pnl(inst, quantity, avg_price, mark)
@@ -49,5 +57,6 @@ def value_position(inst: Instrument, quantity: float, avg_price: float, market: 
         if fx_provider is None:
             raise ValueError(f"need fx_provider to value {inst.currency} in {base}")
         rate = fx_provider.rate(inst.currency, base)
-    return ValuationResult(inst.instrument_id, quantity, mark, mv, upnl, inst.currency,
-                           mv * rate, base)
+    return ValuationResult(
+        inst.instrument_id, quantity, mark, mv, upnl, inst.currency, mv * rate, base
+    )

@@ -49,7 +49,7 @@ class Broker(ABC):
     @abstractmethod
     def get_account(self) -> BrokerAccount: ...
 
-    def cancel_order(self, broker_order_id: str) -> bool:      # default: nothing open
+    def cancel_order(self, broker_order_id: str) -> bool:  # default: nothing open
         return False
 
 
@@ -60,8 +60,13 @@ class MockBroker(Broker):
 
     name = "mock"
 
-    def __init__(self, *, initial_cash: float, account_id: str = "PAPER",
-                 execution_model: ExecutionModel | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        initial_cash: float,
+        account_id: str = "PAPER",
+        execution_model: ExecutionModel | None = None,
+    ) -> None:
         self._book = PortfolioState(initial_cash)
         self._exec = execution_model or FrictionlessExecutionModel()
         self._account_id = account_id
@@ -75,29 +80,59 @@ class MockBroker(Broker):
 
     def _make_fill(self, order_id, sid, qty, price, cost, when=None) -> BrokerFill:
         fid = hashlib.blake2b(f"{order_id}:{sid}:{self._seq}".encode(), digest_size=8).hexdigest()
-        return BrokerFill(fill_id=fid, broker_order_id=order_id, security_id=sid,
-                          quantity=float(qty), price=float(price), cost=float(cost), when=when)
+        return BrokerFill(
+            fill_id=fid,
+            broker_order_id=order_id,
+            security_id=sid,
+            quantity=float(qty),
+            price=float(price),
+            cost=float(cost),
+            when=when,
+        )
 
     def place_order(self, req, *, adv=None):
         self._seq += 1
         oid = f"{self.name}-{self._seq:06d}"
         price = self._prices.get(req.security_id)
-        if price is None:                       # cannot fill an unpriced name → reject
-            return BrokerOrder(oid, req.client_order_id, req.security_id, req.quantity,
-                               OrderStatus.REJECTED, submitted_at=datetime.now(UTC))
+        if price is None:  # cannot fill an unpriced name → reject
+            return BrokerOrder(
+                oid,
+                req.client_order_id,
+                req.security_id,
+                req.quantity,
+                OrderStatus.REJECTED,
+                submitted_at=datetime.now(UTC),
+            )
         filled_qty, fill_price = self._fill_terms(req, price)
-        cost = self._exec.execute(Order(req.security_id, filled_qty), fill_price, adv).cost \
-            if filled_qty else 0.0
+        cost = (
+            self._exec.execute(Order(req.security_id, filled_qty), fill_price, adv).cost
+            if filled_qty
+            else 0.0
+        )
         if filled_qty:
             self._book.apply_fill(req.security_id, filled_qty, fill_price, cost)
-            self._fill_queue.append(self._make_fill(oid, req.security_id, filled_qty, fill_price, cost))
-        status = (OrderStatus.FILLED if abs(filled_qty - req.quantity) < 1e-9
-                  else OrderStatus.PARTIALLY_FILLED if filled_qty else OrderStatus.REJECTED)
-        return BrokerOrder(oid, req.client_order_id, req.security_id, req.quantity, status,
-                           filled_quantity=filled_qty, avg_fill_price=fill_price if filled_qty else 0.0,
-                           submitted_at=datetime.now(UTC))
+            self._fill_queue.append(
+                self._make_fill(oid, req.security_id, filled_qty, fill_price, cost)
+            )
+        status = (
+            OrderStatus.FILLED
+            if abs(filled_qty - req.quantity) < 1e-9
+            else OrderStatus.PARTIALLY_FILLED
+            if filled_qty
+            else OrderStatus.REJECTED
+        )
+        return BrokerOrder(
+            oid,
+            req.client_order_id,
+            req.security_id,
+            req.quantity,
+            status,
+            filled_quantity=filled_qty,
+            avg_fill_price=fill_price if filled_qty else 0.0,
+            submitted_at=datetime.now(UTC),
+        )
 
-    def _fill_terms(self, req, price):          # perfect broker: full fill at mark
+    def _fill_terms(self, req, price):  # perfect broker: full fill at mark
         return req.quantity, price
 
     def poll_fills(self):
@@ -105,8 +140,10 @@ class MockBroker(Broker):
         return fills
 
     def get_account(self):
-        pos = {sid: BrokerPosition(sid, h.shares, h.cost_basis, h.price)
-               for sid, h in self._book.holdings.items()}
+        pos = {
+            sid: BrokerPosition(sid, h.shares, h.cost_basis, h.price)
+            for sid, h in self._book.holdings.items()
+        }
         return BrokerAccount(self._account_id, self._book.cash, pos)
 
 
@@ -117,8 +154,15 @@ class SimulatedBroker(MockBroker):
 
     name = "simulated"
 
-    def __init__(self, *, initial_cash: float, fill_ratio: float = 1.0,
-                 slippage_bps: float = 0.0, reject_every: int = 0, **kw) -> None:
+    def __init__(
+        self,
+        *,
+        initial_cash: float,
+        fill_ratio: float = 1.0,
+        slippage_bps: float = 0.0,
+        reject_every: int = 0,
+        **kw,
+    ) -> None:
         super().__init__(initial_cash=initial_cash, **kw)
         self.fill_ratio = fill_ratio
         self.slippage_bps = slippage_bps

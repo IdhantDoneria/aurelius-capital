@@ -9,9 +9,6 @@ computed from CycleRecords and strategy specifications.
 
 from __future__ import annotations
 
-import math
-import statistics
-
 from mentisrex.research.forward_validation.models import (
     DiagnosticRecord,
     DiagnosticSeverity,
@@ -20,8 +17,8 @@ from mentisrex.research.forward_validation.models import (
     make_diagnostic,
 )
 
-
 # ── drift result ───────────────────────────────────────────────────────────────
+
 
 class DriftResult:
     """Collection of drift diagnostics for one category."""
@@ -37,8 +34,10 @@ class DriftResult:
         return any(r.severity == DiagnosticSeverity.CRITICAL for r in self.records)
 
     def has_error(self) -> bool:
-        return any(r.severity in (DiagnosticSeverity.ERROR,
-                                  DiagnosticSeverity.CRITICAL) for r in self.records)
+        return any(
+            r.severity in (DiagnosticSeverity.ERROR, DiagnosticSeverity.CRITICAL)
+            for r in self.records
+        )
 
     def to_dict(self) -> dict:
         return {
@@ -52,13 +51,14 @@ class DriftResult:
 
 # ── generic metric drift ───────────────────────────────────────────────────────
 
+
 def detect_metric_drift(
     metric: str,
     category: DiscrepancyCategory | str,
     baseline: float,
     observed: float,
     *,
-    relative_threshold: float = 0.20,   # 20% relative change
+    relative_threshold: float = 0.20,  # 20% relative change
     absolute_threshold: float | None = None,
     sample_size: int = 0,
     method: str = "threshold",
@@ -78,10 +78,8 @@ def detect_metric_drift(
         threshold = relative_threshold
         drifted = rel_diff > threshold
 
-    severity = (DiagnosticSeverity.WARNING if drifted
-                else DiagnosticSeverity.INFO)
-    status = (ValidationStatus.WARNING if drifted
-              else ValidationStatus.VALID)
+    severity = DiagnosticSeverity.WARNING if drifted else DiagnosticSeverity.INFO
+    status = ValidationStatus.WARNING if drifted else ValidationStatus.VALID
 
     return make_diagnostic(
         diagnostic_id=f"drift.{category}.{metric}".replace(" ", "_").lower(),
@@ -93,20 +91,20 @@ def detect_metric_drift(
         threshold=threshold,
         sample_size=sample_size,
         method=method,
-        evidence=(f"baseline={baseline:.4f} observed={observed:.4f} "
-                  f"threshold={threshold:.2%}"),
+        evidence=(f"baseline={baseline:.4f} observed={observed:.4f} threshold={threshold:.2%}"),
         status=status,
     )
 
 
 # ── execution drift ────────────────────────────────────────────────────────────
 
+
 def execution_drift(
     expected_fill_rate: float,
     observed_fill_rate: float,
     *,
     sample_size: int = 0,
-    threshold: float = 0.10,   # 10% absolute fill-rate gap
+    threshold: float = 0.10,  # 10% absolute fill-rate gap
 ) -> DiagnosticRecord:
     diff = abs(observed_fill_rate - expected_fill_rate)
     drifted = diff > threshold
@@ -120,13 +118,16 @@ def execution_drift(
         threshold=threshold,
         sample_size=sample_size,
         method="absolute_threshold",
-        evidence=(f"expected_fill_rate={expected_fill_rate:.3f} "
-                  f"observed={observed_fill_rate:.3f} diff={diff:.3f}"),
+        evidence=(
+            f"expected_fill_rate={expected_fill_rate:.3f} "
+            f"observed={observed_fill_rate:.3f} diff={diff:.3f}"
+        ),
         status=ValidationStatus.WARNING if drifted else ValidationStatus.VALID,
     )
 
 
 # ── cost drift ────────────────────────────────────────────────────────────────
+
 
 def cost_drift(
     planned_slippage_bps: float,
@@ -147,13 +148,15 @@ def cost_drift(
         threshold=threshold_bps,
         sample_size=sample_size,
         method="absolute_bps",
-        evidence=(f"planned={planned_slippage_bps:.1f}bps "
-                  f"observed_proxy={observed_slippage_proxy:.1f}bps"),
+        evidence=(
+            f"planned={planned_slippage_bps:.1f}bps observed_proxy={observed_slippage_proxy:.1f}bps"
+        ),
         status=ValidationStatus.WARNING if drifted else ValidationStatus.VALID,
     )
 
 
 # ── risk drift ────────────────────────────────────────────────────────────────
+
 
 def risk_drift(
     expected_approval_rate: float,
@@ -174,13 +177,13 @@ def risk_drift(
         threshold=threshold,
         sample_size=sample_size,
         method="absolute_threshold",
-        evidence=(f"expected={expected_approval_rate:.3f} "
-                  f"observed={observed_approval_rate:.3f}"),
+        evidence=(f"expected={expected_approval_rate:.3f} observed={observed_approval_rate:.3f}"),
         status=ValidationStatus.WARNING if drifted else ValidationStatus.VALID,
     )
 
 
 # ── signal drift ──────────────────────────────────────────────────────────────
+
 
 def signal_drift(
     baseline_mean: float,
@@ -204,42 +207,47 @@ def signal_drift(
     mean_z = abs(forward_mean - baseline_mean) / pooled_sd if pooled_sd > 0 else 0.0
     mean_drifted = mean_z > z_threshold
 
-    result.add(make_diagnostic(
-        diagnostic_id="drift.signal.mean",
-        category=DiscrepancyCategory.SIGNAL_DRIFT,
-        severity=DiagnosticSeverity.WARNING if mean_drifted else DiagnosticSeverity.INFO,
-        metric="signal_mean",
-        baseline=baseline_mean,
-        observed=forward_mean,
-        threshold=z_threshold,
-        sample_size=sample_size,
-        method="z_score",
-        evidence=f"z={mean_z:.2f} threshold={z_threshold:.1f}",
-        status=ValidationStatus.WARNING if mean_drifted else ValidationStatus.VALID,
-    ))
+    result.add(
+        make_diagnostic(
+            diagnostic_id="drift.signal.mean",
+            category=DiscrepancyCategory.SIGNAL_DRIFT,
+            severity=DiagnosticSeverity.WARNING if mean_drifted else DiagnosticSeverity.INFO,
+            metric="signal_mean",
+            baseline=baseline_mean,
+            observed=forward_mean,
+            threshold=z_threshold,
+            sample_size=sample_size,
+            method="z_score",
+            evidence=f"z={mean_z:.2f} threshold={z_threshold:.1f}",
+            status=ValidationStatus.WARNING if mean_drifted else ValidationStatus.VALID,
+        )
+    )
 
     # volatility ratio
     vol_ratio = (forward_stdev / baseline_stdev) if baseline_stdev > 0 else 1.0
     vol_drifted = vol_ratio > 2.0 or vol_ratio < 0.5
 
-    result.add(make_diagnostic(
-        diagnostic_id="drift.signal.volatility",
-        category=DiscrepancyCategory.SIGNAL_DRIFT,
-        severity=DiagnosticSeverity.WARNING if vol_drifted else DiagnosticSeverity.INFO,
-        metric="signal_volatility_ratio",
-        baseline=baseline_stdev,
-        observed=forward_stdev,
-        threshold=2.0,
-        sample_size=sample_size,
-        method="vol_ratio",
-        evidence=f"vol_ratio={vol_ratio:.3f}",
-        status=ValidationStatus.WARNING if vol_drifted else ValidationStatus.VALID,
-    ))
+    result.add(
+        make_diagnostic(
+            diagnostic_id="drift.signal.volatility",
+            category=DiscrepancyCategory.SIGNAL_DRIFT,
+            severity=DiagnosticSeverity.WARNING if vol_drifted else DiagnosticSeverity.INFO,
+            metric="signal_volatility_ratio",
+            baseline=baseline_stdev,
+            observed=forward_stdev,
+            threshold=2.0,
+            sample_size=sample_size,
+            method="vol_ratio",
+            evidence=f"vol_ratio={vol_ratio:.3f}",
+            status=ValidationStatus.WARNING if vol_drifted else ValidationStatus.VALID,
+        )
+    )
 
     return result
 
 
 # ── timing drift / PIT violation ─────────────────────────────────────────────
+
 
 def detect_pit_violation(
     signal_date: object,
@@ -260,8 +268,10 @@ def detect_pit_violation(
                 threshold=None,
                 sample_size=sample_size,
                 method="date_comparison",
-                evidence=(f"signal_date={signal_date} > snapshot_date={snapshot_date} "
-                          "— potential look-ahead bias"),
+                evidence=(
+                    f"signal_date={signal_date} > snapshot_date={snapshot_date} "
+                    "— potential look-ahead bias"
+                ),
                 status=ValidationStatus.INVALID,
             )
     except TypeError:
@@ -283,8 +293,9 @@ def detect_snapshot_ordering(dates: list) -> DiagnosticRecord | None:
                 threshold=None,
                 sample_size=len(dates),
                 method="ordering_check",
-                evidence=(f"out-of-order snapshot at index {i}: "
-                          f"{dates[i - 1]} followed by {dates[i]}"),
+                evidence=(
+                    f"out-of-order snapshot at index {i}: {dates[i - 1]} followed by {dates[i]}"
+                ),
                 status=ValidationStatus.INVALID,
             )
     return None

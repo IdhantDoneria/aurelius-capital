@@ -25,7 +25,7 @@ M23 is a PAPER-TRADING runtime. No real-money trading or broker connectivity.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from mentisrex.research.paper_trading.broker import Broker, MockBroker, SimulatedBroker
 from mentisrex.research.paper_trading.cycle import CycleRecord, ForwardPerformanceRecord
@@ -41,10 +41,12 @@ class LoopError(Exception):
 def _active_states():
     # ponytail: deferred to avoid circular import through paper_trading.__init__
     from mentisrex.research.strategy_deployment.models import StrategyState
+
     return frozenset({StrategyState.DEPLOYABLE, StrategyState.PAPER})
 
 
 # ── configuration ─────────────────────────────────────────────────────────────
+
 
 @dataclass
 class LoopConfig:
@@ -58,6 +60,7 @@ class LoopConfig:
 
 # ── result objects (immutable) ────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class StrategyCycleResult:
     strategy_id: str
@@ -65,9 +68,9 @@ class StrategyCycleResult:
     skipped: bool = False
     skip_reason: str = ""
     error: str = ""
-    evaluation: object = None           # M22 StrategyEvaluation
-    sync_event: object = None           # M12 SyncEvent
-    cycle_record: object = None         # CycleRecord
+    evaluation: object = None  # M22 StrategyEvaluation
+    sync_event: object = None  # M12 SyncEvent
+    cycle_record: object = None  # CycleRecord
     portfolio_value: float = 0.0
     cash: float = 0.0
     realized_pnl: float = 0.0
@@ -80,10 +83,10 @@ class LoopCycleResult:
     cycle_id: str
     as_of: date
     snapshot_fingerprint: str
-    strategy_results: list              # list[StrategyCycleResult]
+    strategy_results: list  # list[StrategyCycleResult]
     skipped: bool = False
     skip_reason: str = ""
-    processed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    processed_at: datetime = field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
 
     def result_for(self, strategy_id: str) -> StrategyCycleResult | None:
         for r in self.strategy_results:
@@ -115,6 +118,7 @@ def check_cost_compatibility(spec) -> CostCompatibilityResult:
     and the cost check fails for VALIDATED_DEPLOYABLE strategies).
     """
     from mentisrex.research.strategy_deployment.models import _fp
+
     tca = spec.transaction_cost_assumption
     unmapped = [k for k in tca if k not in _SUPPORTED_COST_KEYS]
     mapped = {k: tca[k] for k in _SUPPORTED_COST_KEYS if k in tca}
@@ -133,6 +137,7 @@ def check_cost_compatibility(spec) -> CostCompatibilityResult:
 
 # ── main loop ─────────────────────────────────────────────────────────────────
 
+
 class PaperTradingLoop:
     """Continuous paper-trading runtime orchestrator (AIDP M23).
 
@@ -146,40 +151,46 @@ class PaperTradingLoop:
       6. (restart) load_checkpoint(path)    →  loop.restore_from_checkpoint(data)
     """
 
-    def __init__(self, *,
-                 runtime,                            # M22 StrategyRuntime
-                 registry,                           # M22 StrategyRegistry
-                 scheduler: RebalanceScheduler | None = None,
-                 config: LoopConfig | None = None,
-                 clock: Clock | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        runtime,  # M22 StrategyRuntime
+        registry,  # M22 StrategyRegistry
+        scheduler: RebalanceScheduler | None = None,
+        config: LoopConfig | None = None,
+        clock: Clock | None = None,
+    ) -> None:
         self._runtime = runtime
         self._registry = registry
         self._scheduler = scheduler or RebalanceScheduler()
         self._config = config or LoopConfig()
         self._clock = clock or Clock()
         from mentisrex.research.strategy_deployment.readiness import ReadinessValidator
+
         self._validator = ReadinessValidator()
 
         # per-strategy state
         self._sessions: dict[str, PaperTradingSession] = {}
-        self._logics: dict = {}                      # strategy_id -> M22 StrategyLogic
+        self._logics: dict = {}  # strategy_id -> M22 StrategyLogic
         self._runtime_states: dict[str, StrategyRuntimeState] = {}
 
         # loop state
-        self._seen: set[str] = set()                 # processed snapshot fingerprints
+        self._seen: set[str] = set()  # processed snapshot fingerprints
         self._cycle_records: list[CycleRecord] = []
         self._cycle_seq: int = 0
 
     # ── strategy management ───────────────────────────────────────────────────
 
-    def add_strategy(self,
-                     strategy_id: str,
-                     logic,                          # M22 StrategyLogic
-                     *,
-                     initial_capital: float | None = None,
-                     broker: Broker | None = None,
-                     session_config: SessionConfig | None = None,
-                     risk_gate=None) -> None:         # M12 PreTradeRiskGate override
+    def add_strategy(
+        self,
+        strategy_id: str,
+        logic,  # M22 StrategyLogic
+        *,
+        initial_capital: float | None = None,
+        broker: Broker | None = None,
+        session_config: SessionConfig | None = None,
+        risk_gate=None,
+    ) -> None:  # M12 PreTradeRiskGate override
         """Register a strategy for continuous paper trading.
 
         Validates M22 readiness gate before accepting. Each strategy gets its
@@ -195,11 +206,12 @@ class PaperTradingLoop:
         # Lifecycle gate
         active = _active_states()
         from mentisrex.research.strategy_deployment.models import StrategyState, StrategyType
+
         if state not in active:
             is_experimental_ok = (
                 self._config.permit_experimental
-                and spec.strategy_type in (StrategyType.EXPERIMENTAL_PAPER,
-                                            StrategyType.EXPERIMENTAL_PAPER.value)
+                and spec.strategy_type
+                in (StrategyType.EXPERIMENTAL_PAPER, StrategyType.EXPERIMENTAL_PAPER.value)
                 and state == StrategyState.VALIDATED
             )
             if not is_experimental_ok:
@@ -211,18 +223,17 @@ class PaperTradingLoop:
         # Readiness gate
         if self._config.validate_readiness:
             report = self._validator.validate(
-                spec, permit_experimental=self._config.permit_experimental)
+                spec, permit_experimental=self._config.permit_experimental
+            )
             if not report.ready:
-                raise LoopError(
-                    f"strategy {strategy_id!r} failed readiness gate: {report.issues}")
+                raise LoopError(f"strategy {strategy_id!r} failed readiness gate: {report.issues}")
 
         capital = initial_capital or spec.capital_assumption or self._config.initial_capital
         if broker is None:
             broker = _build_broker(spec, capital)
 
         cfg = session_config or SessionConfig(initial_capital=capital)
-        session = PaperTradingSession(broker=broker, config=cfg,
-                                      risk_gate=risk_gate)
+        session = PaperTradingSession(broker=broker, config=cfg, risk_gate=risk_gate)
 
         self._sessions[strategy_id] = session
         self._logics[strategy_id] = logic
@@ -249,8 +260,7 @@ class PaperTradingLoop:
         rs = self._get_rs(strategy_id)
         reg_state = self._registry.state(strategy_id)
         if reg_state not in _active_states():
-            raise LoopError(
-                f"cannot resume {strategy_id!r}: M22 state is {reg_state.value!r}")
+            raise LoopError(f"cannot resume {strategy_id!r}: M22 state is {reg_state.value!r}")
         rs.status = "active"
 
     def trigger_evaluation(self, strategy_id: str, snapshot) -> StrategyCycleResult:
@@ -260,8 +270,7 @@ class PaperTradingLoop:
             raise LoopError("snapshot.as_of is None")
         snap_fp = _snapshot_fp(snapshot)
         prices = _extract_prices(snapshot)
-        return self._process_one(strategy_id, snapshot, as_of, snap_fp, prices,
-                                 force=True)
+        return self._process_one(strategy_id, snapshot, as_of, snap_fp, prices, force=True)
 
     # ── main entry point ──────────────────────────────────────────────────────
 
@@ -283,8 +292,13 @@ class PaperTradingLoop:
 
         if snap_fp in self._seen:
             return LoopCycleResult(
-                cycle_id=cycle_id, as_of=as_of, snapshot_fingerprint=snap_fp,
-                strategy_results=[], skipped=True, skip_reason="duplicate_snapshot")
+                cycle_id=cycle_id,
+                as_of=as_of,
+                snapshot_fingerprint=snap_fp,
+                strategy_results=[],
+                skipped=True,
+                skip_reason="duplicate_snapshot",
+            )
 
         self._seen.add(snap_fp)
         prices = _extract_prices(snapshot)
@@ -295,12 +309,19 @@ class PaperTradingLoop:
         ]
 
         return LoopCycleResult(
-            cycle_id=cycle_id, as_of=as_of,
-            snapshot_fingerprint=snap_fp, strategy_results=results)
+            cycle_id=cycle_id, as_of=as_of, snapshot_fingerprint=snap_fp, strategy_results=results
+        )
 
-    def _process_one(self, strategy_id: str, snapshot, as_of: date,
-                     snap_fp: str, prices: dict, *,
-                     force: bool = False) -> StrategyCycleResult:
+    def _process_one(
+        self,
+        strategy_id: str,
+        snapshot,
+        as_of: date,
+        snap_fp: str,
+        prices: dict,
+        *,
+        force: bool = False,
+    ) -> StrategyCycleResult:
         rs = self._runtime_states[strategy_id]
 
         # M22 lifecycle check (authoritative)
@@ -311,11 +332,12 @@ class PaperTradingLoop:
 
         if reg_state not in _active_states():
             from mentisrex.research.strategy_deployment.models import StrategyState, StrategyType
+
             spec_check = self._registry.spec(strategy_id)
             is_experimental_ok = (
                 self._config.permit_experimental
-                and spec_check.strategy_type in (StrategyType.EXPERIMENTAL_PAPER,
-                                                  StrategyType.EXPERIMENTAL_PAPER.value)
+                and spec_check.strategy_type
+                in (StrategyType.EXPERIMENTAL_PAPER, StrategyType.EXPERIMENTAL_PAPER.value)
                 and reg_state == StrategyState.VALIDATED
             )
             if not is_experimental_ok:
@@ -337,7 +359,10 @@ class PaperTradingLoop:
 
         try:
             evaluation = self._runtime.evaluate(
-                spec, logic, snapshot, portfolio_state,
+                spec,
+                logic,
+                snapshot,
+                portfolio_state,
                 evaluation_id=f"{strategy_id}-eval-{rs.evaluation_count + 1:06d}",
                 order_id_prefix=f"m23-{strategy_id[:8]}",
             )
@@ -345,8 +370,7 @@ class PaperTradingLoop:
             rs.error_count += 1
             rs.last_error = str(exc)
             if self._config.fail_closed:
-                return StrategyCycleResult(
-                    strategy_id=strategy_id, as_of=as_of, error=str(exc))
+                return StrategyCycleResult(strategy_id=strategy_id, as_of=as_of, error=str(exc))
             raise
 
         # Risk-rejected → empty target (fail-closed on bad risk: no trade)
@@ -359,8 +383,7 @@ class PaperTradingLoop:
             rs.error_count += 1
             rs.last_error = str(exc)
             if self._config.fail_closed:
-                return StrategyCycleResult(
-                    strategy_id=strategy_id, as_of=as_of, error=str(exc))
+                return StrategyCycleResult(strategy_id=strategy_id, as_of=as_of, error=str(exc))
             raise
 
         # ── update runtime state ──────────────────────────────────────────────
@@ -453,11 +476,13 @@ class PaperTradingLoop:
     def checkpoint_state(self) -> dict:
         """Serialize all loop state to a plain dict (JSON-serializable)."""
         from mentisrex.research.paper_trading.checkpoint import _checkpoint_dict
+
         return _checkpoint_dict(self)
 
     def restore_from_checkpoint(self, data: dict) -> None:
         """Restore loop state from a checkpoint dict in-place."""
         from mentisrex.research.paper_trading.checkpoint import _restore_checkpoint
+
         _restore_checkpoint(self, data)
 
     # ── internal helpers ──────────────────────────────────────────────────────
@@ -471,20 +496,27 @@ class PaperTradingLoop:
 
 # ── module helpers ────────────────────────────────────────────────────────────
 
+
 def _skip(strategy_id: str, as_of: date, reason: str) -> StrategyCycleResult:
-    return StrategyCycleResult(strategy_id=strategy_id, as_of=as_of,
-                               skipped=True, skip_reason=reason)
+    return StrategyCycleResult(
+        strategy_id=strategy_id, as_of=as_of, skipped=True, skip_reason=reason
+    )
 
 
 def _snapshot_fp(snapshot) -> str:
     try:
         return snapshot.fingerprint()
     except AttributeError:
-        import hashlib, json
+        import hashlib
+        import json
+
         body = json.dumps(
-            {"as_of": str(getattr(snapshot, "as_of", None)),
-             "n_spots": len(getattr(snapshot, "spots", {}))},
-            sort_keys=True)
+            {
+                "as_of": str(getattr(snapshot, "as_of", None)),
+                "n_spots": len(getattr(snapshot, "spots", {})),
+            },
+            sort_keys=True,
+        )
         return hashlib.blake2b(body.encode(), digest_size=16).hexdigest()
 
 

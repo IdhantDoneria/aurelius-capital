@@ -32,7 +32,7 @@ class IntegrityError(SnapshotStoreError):
 class SnapshotStore:
     def __init__(self, *, directory: str | None = None) -> None:
         self._by_id: dict[str, SealedSnapshot] = {}
-        self._meta: dict[str, dict] = {}          # id -> envelope dict (also what's persisted)
+        self._meta: dict[str, dict] = {}  # id -> envelope dict (also what's persisted)
         self.directory = directory
         if directory:
             os.makedirs(directory, exist_ok=True)
@@ -41,11 +41,15 @@ class SnapshotStore:
     # ── write ────────────────────────────────────────────────────────────────────
     def put(self, sealed: SealedSnapshot) -> str:
         if not sealed.verify():
-            raise IntegrityError(f"refusing to store snapshot {sealed.snapshot_id}: failed self-verify")
+            raise IntegrityError(
+                f"refusing to store snapshot {sealed.snapshot_id}: failed self-verify"
+            )
         sid = sealed.snapshot_id
         existing = self._by_id.get(sid)
         if existing is not None and existing.snapshot_fingerprint != sealed.snapshot_fingerprint:
-            raise SnapshotStoreError(f"id collision: {sid} already stored with a different fingerprint")
+            raise SnapshotStoreError(
+                f"id collision: {sid} already stored with a different fingerprint"
+            )
         self._by_id[sid] = sealed
         self._meta[sid] = _envelope(sealed)
         if self.directory:
@@ -59,7 +63,8 @@ class SnapshotStore:
             if snapshot_id in self._meta:
                 raise SnapshotStoreError(
                     f"{snapshot_id}: only the metadata envelope is loaded (persisted across a "
-                    f"restart). Reconstruct the snapshot from the message log to rehydrate it.")
+                    f"restart). Reconstruct the snapshot from the message log to rehydrate it."
+                )
             raise KeyError(f"no snapshot {snapshot_id!r}")
         return s
 
@@ -76,8 +81,11 @@ class SnapshotStore:
         return dict(m)
 
     def by_fingerprint(self, snapshot_fingerprint: str) -> list[str]:
-        return sorted(sid for sid, m in self._meta.items()
-                      if m["snapshot_fingerprint"] == snapshot_fingerprint)
+        return sorted(
+            sid
+            for sid, m in self._meta.items()
+            if m["snapshot_fingerprint"] == snapshot_fingerprint
+        )
 
     def by_as_of(self, as_of: date) -> list[str]:
         iso = as_of.isoformat()
@@ -85,8 +93,7 @@ class SnapshotStore:
 
     def latest(self, *, as_of: date | None = None) -> SealedSnapshot | None:
         """Most recent (by knowledge_date) in-memory sealed snapshot, optionally for one as-of."""
-        cands = [s for s in self._by_id.values()
-                 if as_of is None or s.as_of == as_of]
+        cands = [s for s in self._by_id.values() if as_of is None or s.as_of == as_of]
         if not cands:
             return None
         return max(cands, key=lambda s: (s.knowledge_date, s.snapshot_id))
@@ -117,11 +124,18 @@ class SnapshotStore:
 
 def _envelope(s: SealedSnapshot) -> dict:
     return {
-        "snapshot_id": s.snapshot_id, "state": s.state.value, "as_of": s.as_of.isoformat(),
-        "knowledge_date": s.knowledge_date.isoformat(), "source_set": list(s.source_set),
-        "input_fingerprint": s.input_fingerprint, "accepted_fingerprint": s.accepted_fingerprint,
-        "rejected_fingerprint": s.rejected_fingerprint, "snapshot_fingerprint": s.snapshot_fingerprint,
-        "reconstruction_fingerprint": s.reconstruction_fingerprint, "pit_status": s.pit_status,
-        "quality_summary": dict(s.quality_summary), "versions": dict(s.versions),
+        "snapshot_id": s.snapshot_id,
+        "state": s.state.value,
+        "as_of": s.as_of.isoformat(),
+        "knowledge_date": s.knowledge_date.isoformat(),
+        "source_set": list(s.source_set),
+        "input_fingerprint": s.input_fingerprint,
+        "accepted_fingerprint": s.accepted_fingerprint,
+        "rejected_fingerprint": s.rejected_fingerprint,
+        "snapshot_fingerprint": s.snapshot_fingerprint,
+        "reconstruction_fingerprint": s.reconstruction_fingerprint,
+        "pit_status": s.pit_status,
+        "quality_summary": dict(s.quality_summary),
+        "versions": dict(s.versions),
         "n_observations": s.n_observations,
     }

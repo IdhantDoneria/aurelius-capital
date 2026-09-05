@@ -15,9 +15,7 @@ Does NOT:
 
 from __future__ import annotations
 
-import hashlib
-import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date
 
 from mentisrex.research.forward_validation.comparison import (
@@ -27,22 +25,15 @@ from mentisrex.research.forward_validation.comparison import (
 from mentisrex.research.forward_validation.data_diagnostics import build_data_diagnostics
 from mentisrex.research.forward_validation.drift import (
     detect_metric_drift,
-    detect_pit_violation,
     detect_snapshot_ordering,
 )
 from mentisrex.research.forward_validation.execution_diagnostics import build_execution_diagnostics
 from mentisrex.research.forward_validation.lineage import build_lineage
 from mentisrex.research.forward_validation.models import (
     DiagnosticRecord,
-    DiagnosticSeverity,
     DiscrepancyCategory,
-    EconomicStatus,
     ForwardValidationArtifact,
-    OperationalStatus,
-    SampleAdequacy,
-    ValidationStatus,
     _fp,
-    make_diagnostic,
     stamp_artifact,
 )
 from mentisrex.research.forward_validation.portfolio_diagnostics import build_portfolio_diagnostics
@@ -53,7 +44,6 @@ from mentisrex.research.forward_validation.signal_diagnostics import (
     compare_signal_distributions,
 )
 from mentisrex.research.forward_validation.statistics import (
-    AnnualizedMetrics,
     bootstrap_mean_ci,
     compute_annualized,
     return_distribution_summary,
@@ -94,11 +84,11 @@ class ForwardValidationEngine:
 
     def analyze(
         self,
-        forward_record,              # M23 ForwardPerformanceRecord
-        spec,                        # M22 StrategySpecification
+        forward_record,  # M23 ForwardPerformanceRecord
+        spec,  # M22 StrategySpecification
         *,
-        validation_report: dict | None = None,    # M9 ValidationReport.to_dict()
-        backtest_results: dict | None = None,      # caller-supplied backtest metrics
+        validation_report: dict | None = None,  # M9 ValidationReport.to_dict()
+        backtest_results: dict | None = None,  # caller-supplied backtest metrics
         snapshot_metadata: list[dict] | None = None,
         weight_history: list[dict] | None = None,
         signal_history: list[dict] | None = None,
@@ -116,13 +106,15 @@ class ForwardValidationEngine:
 
         # ── 1. lineage ─────────────────────────────────────────────────────
         lineage_chain, lineage_records = build_lineage(
-            spec, forward_record, validation_report,
+            spec,
+            forward_record,
+            validation_report,
             deployment_manifest_fingerprint=deployment_manifest_fingerprint,
         )
 
         # ── 2. cycle dates and data diagnostics ───────────────────────────
         cycle_dates = [
-            (getattr(c, "as_of") if not isinstance(c, dict) else date.fromisoformat(str(c["as_of"])))
+            (c.as_of if not isinstance(c, dict) else date.fromisoformat(str(c["as_of"])))
             for c in cycles
         ]
         rebalance_freq = getattr(spec, "rebalance_frequency", "daily") or "daily"
@@ -167,7 +159,8 @@ class ForwardValidationEngine:
 
         # ── 6. portfolio diagnostics ──────────────────────────────────────
         portfolio_diag, portfolio_records = build_portfolio_diagnostics(
-            weight_history, cycles,
+            weight_history,
+            cycles,
             drift_threshold=cfg.drift_threshold,
         )
 
@@ -203,7 +196,7 @@ class ForwardValidationEngine:
         fwd_metrics = getattr(forward_record, "metrics", lambda: None)()
         perf_diag = {
             "n_cycles": n,
-            "total_return": ann.annualized_return,   # annualized
+            "total_return": ann.annualized_return,  # annualized
             "paper_total_return": fwd_metrics.total_return if fwd_metrics else 0.0,
             "volatility": ann.volatility,
             "sharpe": ann.sharpe,
@@ -244,21 +237,22 @@ class ForwardValidationEngine:
                 b_val = backtest_results.get(metric)
                 f_val = forward_metric_dict.get(metric)
                 if b_val is not None and f_val is not None:
-                    drift_records.append(detect_metric_drift(
-                        metric,
-                        DiscrepancyCategory.SIGNAL_DRIFT if metric == "sharpe"
-                        else DiscrepancyCategory.PORTFOLIO_DRIFT,
-                        b_val, f_val,
-                        relative_threshold=0.30,
-                        sample_size=n,
-                    ))
+                    drift_records.append(
+                        detect_metric_drift(
+                            metric,
+                            DiscrepancyCategory.SIGNAL_DRIFT
+                            if metric == "sharpe"
+                            else DiscrepancyCategory.PORTFOLIO_DRIFT,
+                            b_val,
+                            f_val,
+                            relative_threshold=0.30,
+                            sample_size=n,
+                        )
+                    )
 
         drift_diag = {
             "n_drift_records": len(drift_records),
-            "has_drift": any(
-                r.severity in ("WARNING", "ERROR", "CRITICAL")
-                for r in drift_records
-            ),
+            "has_drift": any(r.severity in ("WARNING", "ERROR", "CRITICAL") for r in drift_records),
         }
 
         # ── 11. aggregate all records ─────────────────────────────────────
@@ -312,8 +306,13 @@ class ForwardValidationEngine:
 
         # ── 13. discrepancy classification ────────────────────────────────
         discrepancies = classify_discrepancies(
-            data_diag, fwd_signal_stats, exec_diag,
-            portfolio_diag, risk_diag, comparison_diag, all_records,
+            data_diag,
+            fwd_signal_stats,
+            exec_diag,
+            portfolio_diag,
+            risk_diag,
+            comparison_diag,
+            all_records,
         )
 
         # ── 14. analysis period ───────────────────────────────────────────
@@ -324,13 +323,15 @@ class ForwardValidationEngine:
         }
 
         # ── 15. artifact fingerprint payload ─────────────────────────────
-        artifact_id = _fp({
-            "strategy_id": lineage_chain.strategy_id,
-            "strategy_version": lineage_chain.strategy_version,
-            "strategy_fingerprint": lineage_chain.strategy_fingerprint,
-            "forward_record_fingerprint": lineage_chain.forward_record_fingerprint,
-            "n_cycles": n,
-        })
+        artifact_id = _fp(
+            {
+                "strategy_id": lineage_chain.strategy_id,
+                "strategy_version": lineage_chain.strategy_version,
+                "strategy_fingerprint": lineage_chain.strategy_fingerprint,
+                "forward_record_fingerprint": lineage_chain.forward_record_fingerprint,
+                "n_cycles": n,
+            }
+        )
 
         metric_results = {
             "performance": perf_diag,
@@ -361,7 +362,7 @@ class ForwardValidationEngine:
             research_artifact_id=lineage_chain.research_artifact_id,
             validation_artifact_id=lineage_chain.validation_artifact_id,
             analysis_period=analysis_period,
-            data_sources=[cfg_mode for cfg_mode in ["SIMULATION"]],  # informational
+            data_sources=["SIMULATION"],  # informational
             data_fingerprints={"cycle_records": lineage_chain.forward_record_fingerprint},
             comparison_configuration={"backtest_provided": bool(backtest_results)},
             diagnostic_configuration={

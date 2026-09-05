@@ -25,7 +25,7 @@ def _rank(mapping: dict[str, float]) -> dict[str, float]:
     keys = list(mapping.keys())
     vals = np.array([mapping[k] for k in keys], dtype=float)
     ranked = percentile_rank(vals)
-    return {k: float(v) for k, v in zip(keys, ranked) if math.isfinite(v)}
+    return {k: float(v) for k, v in zip(keys, ranked, strict=False) if math.isfinite(v)}
 
 
 class NSEFactorEngine(FactorEngine):

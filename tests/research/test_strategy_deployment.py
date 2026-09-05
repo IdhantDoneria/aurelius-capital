@@ -55,27 +55,20 @@ Covers:
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
-from datetime import date, datetime
-from typing import Any
+from datetime import date
 
 import pytest
 
-from mentisrex.research.portfolio.engine import PortfolioEngine
+from mentisrex.research.execution.ems.models import OrderIntent as EmsOrderIntent
 from mentisrex.research.risk.engine import RiskEngine, RiskEngineConfig
-from mentisrex.research.risk.models import RiskDecision
 from mentisrex.research.strategy_deployment import (
     ConsistencyChecker,
     EvaluationError,
     FeatureSet,
-    OrderIntentRecord,
-    ReadinessReport,
     ReadinessValidator,
     SignalRecord,
     SignalSet,
-    StrategyEntry,
-    StrategyEvaluation,
     StrategyLogic,
     StrategyRegistry,
     StrategyRuntime,
@@ -86,8 +79,6 @@ from mentisrex.research.strategy_deployment import (
     make_manifest,
     make_spec,
 )
-from mentisrex.research.execution.ems.models import OrderIntent as EmsOrderIntent
-
 
 # ── shared fixtures ───────────────────────────────────────────────────────────
 
@@ -99,53 +90,60 @@ SPOTS = {"AAPL": 190.0, "MSFT": 420.0, "GOOG": 170.0, "AMZN": 180.0, "META": 500
 @dataclass(frozen=True)
 class FakeSnapshot:
     """Minimal stand-in for M18 MarketDataSnapshot — no network access."""
+
     as_of: date
     spots: dict = field(default_factory=dict)
 
     def fingerprint(self) -> str:
-        import hashlib, json
-        payload = json.dumps({"as_of": str(self.as_of), "spots": {k: v for k, v in sorted(self.spots.items())}},
-                             sort_keys=True)
+        import hashlib
+        import json
+
+        payload = json.dumps(
+            {"as_of": str(self.as_of), "spots": dict(sorted(self.spots.items()))}, sort_keys=True
+        )
         return hashlib.blake2b(payload.encode(), digest_size=16).hexdigest()
 
 
 @dataclass
 class FakePortfolioState:
     """Minimal M11-compatible portfolio state for tests."""
+
     holdings: dict = field(default_factory=dict)
     _cash: float = 1_000_000.0
 
     def total_value(self) -> float:
-        return self._cash + sum(h.get("shares", 0) * h.get("price", 0) for h in self.holdings.values())
+        return self._cash + sum(
+            h.get("shares", 0) * h.get("price", 0) for h in self.holdings.values()
+        )
 
 
 def _base_spec(**overrides) -> StrategySpecification:
     """Build a minimal valid spec. Overrides are applied before fingerprinting."""
-    defaults = dict(
-        strategy_id="test-strategy",
-        strategy_name="Test Strategy",
-        version="1.0.0",
-        description="Unit test strategy",
-        strategy_type=StrategyType.VALIDATED_DEPLOYABLE,
-        research_artifact_id="exp-abc123",
-        validation_artifact_id="val-xyz789",
-        validation_status="PASS",
-        universe_definition={"type": "equity", "region": "US"},
-        required_data=["close", "volume"],
-        feature_definition={"lookback": 12},
-        signal_definition={"type": "momentum", "top_n": 50},
-        rebalance_frequency="monthly",
-        portfolio_construction_config={"objective": "equal_weight", "long_only": True},
-        risk_config={"max_position": 0.10, "max_volatility": 0.25},
-        execution_config={"algo": "market"},
-        transaction_cost_assumption={"commission": 0.001, "spread": 0.0005},
-        slippage_assumption={"model": "linear", "factor": 0.1},
-        benchmark="SPY",
-        base_currency="USD",
-        allowed_instruments=["equity"],
-        capital_assumption=1_000_000.0,
-        model_version="1.0.0",
-    )
+    defaults = {
+        "strategy_id": "test-strategy",
+        "strategy_name": "Test Strategy",
+        "version": "1.0.0",
+        "description": "Unit test strategy",
+        "strategy_type": StrategyType.VALIDATED_DEPLOYABLE,
+        "research_artifact_id": "exp-abc123",
+        "validation_artifact_id": "val-xyz789",
+        "validation_status": "PASS",
+        "universe_definition": {"type": "equity", "region": "US"},
+        "required_data": ["close", "volume"],
+        "feature_definition": {"lookback": 12},
+        "signal_definition": {"type": "momentum", "top_n": 50},
+        "rebalance_frequency": "monthly",
+        "portfolio_construction_config": {"objective": "equal_weight", "long_only": True},
+        "risk_config": {"max_position": 0.10, "max_volatility": 0.25},
+        "execution_config": {"algo": "market"},
+        "transaction_cost_assumption": {"commission": 0.001, "spread": 0.0005},
+        "slippage_assumption": {"model": "linear", "factor": 0.1},
+        "benchmark": "SPY",
+        "base_currency": "USD",
+        "allowed_instruments": ["equity"],
+        "capital_assumption": 1_000_000.0,
+        "model_version": "1.0.0",
+    }
     defaults.update(overrides)
     return make_spec(**defaults)
 
@@ -248,6 +246,7 @@ class MomentumLogic(StrategyLogic):
 
 # ── 1. StrategySpecification construction ────────────────────────────────────
 
+
 def test_spec_construction():
     spec = _base_spec()
     assert spec.strategy_id == "test-strategy"
@@ -257,11 +256,12 @@ def test_spec_construction():
 
 def test_spec_is_frozen():
     spec = _base_spec()
-    with pytest.raises(Exception):   # frozen dataclass → FrozenInstanceError
+    with pytest.raises(Exception):  # frozen dataclass → FrozenInstanceError
         spec.strategy_id = "mutated"  # type: ignore[misc]
 
 
 # ── 2. configuration_fingerprint determinism ─────────────────────────────────
+
 
 def test_fingerprint_deterministic():
     spec_a = _base_spec()
@@ -277,14 +277,25 @@ def test_fingerprint_changes_on_material_change():
 
 def test_fingerprint_ignores_timestamp():
     # Two specs with different creation_timestamp but identical material fields
-    spec_a = make_spec(**{k: getattr(_base_spec(), k) for k in StrategySpecification.__dataclass_fields__
-                          if k not in ("configuration_fingerprint", "creation_timestamp")})
-    spec_b = make_spec(**{k: getattr(_base_spec(), k) for k in StrategySpecification.__dataclass_fields__
-                          if k not in ("configuration_fingerprint", "creation_timestamp")})
+    spec_a = make_spec(
+        **{
+            k: getattr(_base_spec(), k)
+            for k in StrategySpecification.__dataclass_fields__
+            if k not in ("configuration_fingerprint", "creation_timestamp")
+        }
+    )
+    spec_b = make_spec(
+        **{
+            k: getattr(_base_spec(), k)
+            for k in StrategySpecification.__dataclass_fields__
+            if k not in ("configuration_fingerprint", "creation_timestamp")
+        }
+    )
     assert spec_a.configuration_fingerprint == spec_b.configuration_fingerprint
 
 
 # ── 3. strategy versioning ────────────────────────────────────────────────────
+
 
 def test_new_version_has_different_fingerprint():
     spec_v1 = _base_spec(version="1.0.0")
@@ -298,6 +309,7 @@ def test_version_in_spec():
 
 
 # ── 4. lifecycle transitions ──────────────────────────────────────────────────
+
 
 def test_valid_transitions():
     registry = StrategyRegistry()
@@ -344,6 +356,7 @@ def test_draft_can_be_rejected():
 
 # ── 5. registry operations ────────────────────────────────────────────────────
 
+
 def test_registry_register_and_get():
     registry = StrategyRegistry()
     spec = _base_spec()
@@ -380,6 +393,7 @@ def test_registry_list_all():
 
 # ── 6. research artifact binding ─────────────────────────────────────────────
 
+
 def test_research_artifact_binding():
     spec = _base_spec(research_artifact_id="exp-abc123", validation_artifact_id="val-xyz789")
     assert spec.research_artifact_id == "exp-abc123"
@@ -392,6 +406,7 @@ def test_spec_without_research_artifact():
 
 
 # ── 7. readiness validator ────────────────────────────────────────────────────
+
 
 def test_readiness_valid_spec_passes():
     spec = _base_spec()
@@ -452,31 +467,41 @@ def test_readiness_provider_access_flag_fails():
 
 # ── 8. experimental paper strategy ───────────────────────────────────────────
 
+
 def test_experimental_strategy_type():
-    spec = _base_spec(strategy_type=StrategyType.EXPERIMENTAL_PAPER, validation_status="REQUIRES_REVIEW")
+    spec = _base_spec(
+        strategy_type=StrategyType.EXPERIMENTAL_PAPER, validation_status="REQUIRES_REVIEW"
+    )
     assert spec.strategy_type == StrategyType.EXPERIMENTAL_PAPER
 
 
 def test_experimental_strategy_readiness_with_requires_review():
-    spec = _base_spec(strategy_type=StrategyType.EXPERIMENTAL_PAPER, validation_status="REQUIRES_REVIEW")
+    spec = _base_spec(
+        strategy_type=StrategyType.EXPERIMENTAL_PAPER, validation_status="REQUIRES_REVIEW"
+    )
     report = ReadinessValidator().validate(spec, permit_experimental=True)
     assert report.ready  # REQUIRES_REVIEW is allowed for experimental
     assert any("EXPERIMENTAL" in w for w in report.warnings)
 
 
 def test_experimental_strategy_cannot_pass_as_validated():
-    spec_exp = _base_spec(strategy_type=StrategyType.EXPERIMENTAL_PAPER, validation_status="REQUIRES_REVIEW")
+    spec_exp = _base_spec(
+        strategy_type=StrategyType.EXPERIMENTAL_PAPER, validation_status="REQUIRES_REVIEW"
+    )
     spec_val = _base_spec(strategy_type=StrategyType.VALIDATED_DEPLOYABLE, validation_status="PASS")
     assert spec_exp.strategy_type != spec_val.strategy_type
 
 
 def test_experimental_strategy_has_warning_in_readiness():
-    spec = _base_spec(strategy_type=StrategyType.EXPERIMENTAL_PAPER, validation_status="REQUIRES_REVIEW")
+    spec = _base_spec(
+        strategy_type=StrategyType.EXPERIMENTAL_PAPER, validation_status="REQUIRES_REVIEW"
+    )
     report = ReadinessValidator().validate(spec, permit_experimental=True)
     assert any("EXPERIMENTAL" in w.upper() for w in report.warnings)
 
 
 # ── 9. FeatureSet contract ────────────────────────────────────────────────────
+
 
 def test_feature_set_pit_as_of():
     spec = _base_spec()
@@ -504,6 +529,7 @@ def test_feature_set_fingerprint_deterministic():
 
 
 # ── 10. SignalSet contract + PIT enforcement ──────────────────────────────────
+
 
 def test_signal_set_as_of_matches_snapshot():
     spec = _base_spec()
@@ -541,18 +567,23 @@ def test_signal_pit_violation_raises():
     class WrongDateLogic(StrategyLogic):
         def compute_features(self, snapshot, spec):
             return FeatureSet(
-                strategy_id=spec.strategy_id, strategy_version=spec.version,
-                as_of=date(2099, 1, 1),   # future date!
+                strategy_id=spec.strategy_id,
+                strategy_version=spec.version,
+                as_of=date(2099, 1, 1),  # future date!
                 features={"AAPL": {"spot": 190.0}},
-                input_fingerprint="x", strategy_fingerprint="y",
+                input_fingerprint="x",
+                strategy_fingerprint="y",
             )
 
         def generate_signal(self, features, spec):
             return SignalSet(
-                strategy_id=spec.strategy_id, strategy_version=spec.version,
+                strategy_id=spec.strategy_id,
+                strategy_version=spec.version,
                 as_of=features.as_of,
-                signals={"AAPL": 0.5}, signal_records=[],
-                features_fingerprint="x", strategy_fingerprint="y",
+                signals={"AAPL": 0.5},
+                signal_records=[],
+                features_fingerprint="x",
+                strategy_fingerprint="y",
             )
 
     runtime = StrategyRuntime()
@@ -561,6 +592,7 @@ def test_signal_pit_violation_raises():
 
 
 # ── 11. market data integration ──────────────────────────────────────────────
+
 
 def test_runtime_consumes_snapshot_spots():
     spec = _base_spec()
@@ -595,6 +627,7 @@ def test_runtime_no_provider_access(monkeypatch):
 
 # ── 12. NaN / Inf signal rejection ───────────────────────────────────────────
 
+
 def test_nan_signal_raises():
     class NanLogic(StrategyLogic):
         def compute_features(self, snapshot, spec):
@@ -624,6 +657,7 @@ def test_inf_signal_raises():
 
 
 # ── 13. deterministic runtime evaluation ─────────────────────────────────────
+
 
 def test_same_inputs_produce_same_fingerprint():
     spec = _base_spec()
@@ -659,18 +693,22 @@ def test_different_spec_version_different_fingerprint():
 
 # ── 14. portfolio construction integration (M10) ──────────────────────────────
 
+
 def test_portfolio_positions_non_empty():
     spec = _base_spec()
     snap = FakeSnapshot(as_of=AS_OF, spots=SPOTS)
-    logic = ConstantLogic({sid: 0.5 for sid in SPOTS})
+    logic = ConstantLogic(dict.fromkeys(SPOTS, 0.5))
     ev = StrategyRuntime().evaluate(spec, logic, snap, None)
     assert len(ev.portfolio.positions) > 0
 
 
 def test_long_only_constraint_respected():
-    spec = _base_spec(portfolio_construction_config={
-        "objective": "equal_weight", "long_only": True,
-    })
+    spec = _base_spec(
+        portfolio_construction_config={
+            "objective": "equal_weight",
+            "long_only": True,
+        }
+    )
     snap = FakeSnapshot(as_of=AS_OF, spots=SPOTS)
     logic = ConstantLogic({sid: (0.5 if i % 2 == 0 else -0.5) for i, sid in enumerate(SPOTS)})
     ev = StrategyRuntime().evaluate(spec, logic, snap, None)
@@ -681,7 +719,7 @@ def test_long_only_constraint_respected():
 def test_portfolio_weights_sum_to_one_approx():
     spec = _base_spec()
     snap = FakeSnapshot(as_of=AS_OF, spots=SPOTS)
-    logic = ConstantLogic({sid: 1.0 for sid in SPOTS})
+    logic = ConstantLogic(dict.fromkeys(SPOTS, 1.0))
     ev = StrategyRuntime().evaluate(spec, logic, snap, None)
     total_weight = sum(p.weight for p in ev.portfolio.positions)
     assert abs(total_weight - 1.0) < 0.01
@@ -697,10 +735,11 @@ def test_empty_signals_produce_empty_portfolio():
 
 # ── 15. risk integration (M13) ────────────────────────────────────────────────
 
+
 def test_risk_report_attached():
     spec = _base_spec()
     snap = FakeSnapshot(as_of=AS_OF, spots=SPOTS)
-    logic = ConstantLogic({sid: 0.5 for sid in SPOTS})
+    logic = ConstantLogic(dict.fromkeys(SPOTS, 0.5))
     ev = StrategyRuntime().evaluate(spec, logic, snap, None)
     assert ev.risk_report is not None
     assert ev.risk_decision in ("approve", "approve_with_warning", "reject")
@@ -709,7 +748,7 @@ def test_risk_report_attached():
 def test_risk_approved_flag():
     spec = _base_spec()
     snap = FakeSnapshot(as_of=AS_OF, spots=SPOTS)
-    logic = ConstantLogic({sid: 0.5 for sid in SPOTS})
+    logic = ConstantLogic(dict.fromkeys(SPOTS, 0.5))
     ev = StrategyRuntime().evaluate(spec, logic, snap, None)
     # Default M13 config is permissive for small portfolios → should approve
     assert isinstance(ev.risk_approved, bool)
@@ -717,7 +756,6 @@ def test_risk_approved_flag():
 
 def test_risk_rejection_produces_no_ems_requests():
     from mentisrex.research.risk.limits import RiskLimits
-    from mentisrex.research.risk.engine import RiskEngineConfig
 
     # Set an absurdly tight position limit to force rejection
     tight_config = RiskEngineConfig(limits=RiskLimits(max_position=0.001))
@@ -725,7 +763,7 @@ def test_risk_rejection_produces_no_ems_requests():
 
     spec = _base_spec()
     snap = FakeSnapshot(as_of=AS_OF, spots=SPOTS)
-    logic = ConstantLogic({sid: 1.0 for sid in SPOTS})  # concentrated → violates 0.1%
+    logic = ConstantLogic(dict.fromkeys(SPOTS, 1.0))  # concentrated → violates 0.1%
 
     rt = StrategyRuntime(risk_engine=tight_risk)
     ev = rt.evaluate(spec, logic, snap, None)
@@ -735,6 +773,7 @@ def test_risk_rejection_produces_no_ems_requests():
 
 
 # ── 16. OrderIntentRecord lineage ─────────────────────────────────────────────
+
 
 def test_intent_record_has_strategy_lineage():
     spec = _base_spec()
@@ -761,11 +800,13 @@ def test_intent_record_side_correct():
 
 # ── 17. M14 OrderRequest generation ──────────────────────────────────────────
 
+
 def test_ems_requests_are_m14_order_requests():
     from mentisrex.research.execution.ems.models import OrderRequest
+
     spec = _base_spec()
     snap = FakeSnapshot(as_of=AS_OF, spots=SPOTS)
-    logic = ConstantLogic({sid: 0.5 for sid in SPOTS})
+    logic = ConstantLogic(dict.fromkeys(SPOTS, 0.5))
     ev = StrategyRuntime().evaluate(spec, logic, snap, None)
     for req in ev.ems_requests:
         assert isinstance(req, OrderRequest)
@@ -785,6 +826,7 @@ def test_to_ems_intent_produces_m14_intent():
 
 
 # ── 18. consistency checker ───────────────────────────────────────────────────
+
 
 def test_identical_specs_consistent():
     spec = _base_spec()
@@ -828,6 +870,7 @@ def test_consistency_report_has_differences_detail():
 
 # ── 19. cost assumptions must be explicit ─────────────────────────────────────
 
+
 def test_cost_assumptions_in_spec():
     spec = _base_spec(transaction_cost_assumption={"commission": 0.0010, "spread": 0.0005})
     assert spec.transaction_cost_assumption["commission"] == 0.0010
@@ -841,6 +884,7 @@ def test_zero_cost_assumption_acknowledged():
 
 
 # ── 20. DeploymentManifest ────────────────────────────────────────────────────
+
 
 def test_manifest_from_spec():
     spec = _base_spec()
@@ -868,6 +912,7 @@ def test_manifest_captures_all_config():
 
 # ── 21. manifest to_dict round-trip ──────────────────────────────────────────
 
+
 def test_manifest_to_dict():
     spec = _base_spec()
     manifest = make_manifest("man-001", spec)
@@ -886,6 +931,7 @@ def test_spec_to_dict():
 
 
 # ── 22. replay determinism ────────────────────────────────────────────────────
+
 
 def test_replay_same_fingerprint():
     """Replaying same snapshot + spec must produce identical evaluation fingerprint."""
@@ -922,6 +968,7 @@ def test_replay_feature_fingerprints_match():
 
 # ── 23-29. failure modes ──────────────────────────────────────────────────────
 
+
 def test_none_snapshot_raises():
     spec = _base_spec()
     with pytest.raises(EvaluationError, match="snapshot is None"):
@@ -934,7 +981,9 @@ def test_snapshot_missing_as_of_raises():
     class NoDateSnapshot:
         as_of = None
         spots = {"AAPL": 190.0}
-        def fingerprint(self): return "x"
+
+        def fingerprint(self):
+            return "x"
 
     with pytest.raises(EvaluationError, match="as_of is None"):
         StrategyRuntime().evaluate(spec, ConstantLogic({"AAPL": 0.5}), NoDateSnapshot(), None)
@@ -945,8 +994,11 @@ def test_none_features_returned_raises():
     snap = FakeSnapshot(as_of=AS_OF, spots=SPOTS)
 
     class NullFeaturesLogic(StrategyLogic):
-        def compute_features(self, snapshot, spec): return None  # type: ignore
-        def generate_signal(self, features, spec): return None  # type: ignore
+        def compute_features(self, snapshot, spec):
+            return None  # type: ignore
+
+        def generate_signal(self, features, spec):
+            return None  # type: ignore
 
     with pytest.raises(EvaluationError, match="None"):
         StrategyRuntime().evaluate(spec, NullFeaturesLogic(), snap, None)
@@ -959,7 +1011,9 @@ def test_none_signal_returned_raises():
     class NullSignalLogic(StrategyLogic):
         def compute_features(self, snapshot, spec):
             return ConstantLogic({}).compute_features(snapshot, spec)
-        def generate_signal(self, features, spec): return None  # type: ignore
+
+        def generate_signal(self, features, spec):
+            return None  # type: ignore
 
     with pytest.raises(EvaluationError, match="None"):
         StrategyRuntime().evaluate(spec, NullSignalLogic(), snap, None)
@@ -970,13 +1024,17 @@ def test_none_signal_returned_raises():
 
 # ── 31. configuration drift detection ────────────────────────────────────────
 
-@pytest.mark.parametrize("field,research_val,deployed_val", [
-    ("rebalance_frequency", "monthly", "weekly"),
-    ("benchmark", "SPY", "QQQ"),
-    ("base_currency", "USD", "EUR"),
-    ("capital_assumption", 1_000_000.0, 5_000_000.0),
-    ("model_version", "1.0.0", "2.0.0"),
-])
+
+@pytest.mark.parametrize(
+    ("field", "research_val", "deployed_val"),
+    [
+        ("rebalance_frequency", "monthly", "weekly"),
+        ("benchmark", "SPY", "QQQ"),
+        ("base_currency", "USD", "EUR"),
+        ("capital_assumption", 1_000_000.0, 5_000_000.0),
+        ("model_version", "1.0.0", "2.0.0"),
+    ],
+)
 def test_material_drift_detected(field, research_val, deployed_val):
     research = _base_spec(**{field: research_val})
     deployed = _base_spec(**{field: deployed_val})
@@ -987,7 +1045,7 @@ def test_material_drift_detected(field, research_val, deployed_val):
 
 # ── 33–35. JT integration fixture ────────────────────────────────────────────
 
-_JT_PRIOR_SPOTS = {sid: price * 0.85 for sid, price in SPOTS.items()}   # 15% lower 12m ago
+_JT_PRIOR_SPOTS = {sid: price * 0.85 for sid, price in SPOTS.items()}  # 15% lower 12m ago
 
 
 def _jt_spec(validation_status: str = "REJECT", **overrides) -> StrategySpecification:
@@ -1028,13 +1086,15 @@ def test_jt_rejected_validation_blocks_deployable():
 
 def test_jt_experimental_paper_allowed_despite_reject():
     """Experimental paper may run with REQUIRES_REVIEW; REJECT still blocked."""
-    spec_review = _jt_spec(validation_status="REQUIRES_REVIEW",
-                           strategy_type=StrategyType.EXPERIMENTAL_PAPER)
+    spec_review = _jt_spec(
+        validation_status="REQUIRES_REVIEW", strategy_type=StrategyType.EXPERIMENTAL_PAPER
+    )
     report = ReadinessValidator().validate(spec_review, permit_experimental=True)
     assert report.ready
 
-    spec_reject = _jt_spec(validation_status="REJECT",
-                           strategy_type=StrategyType.EXPERIMENTAL_PAPER)
+    spec_reject = _jt_spec(
+        validation_status="REJECT", strategy_type=StrategyType.EXPERIMENTAL_PAPER
+    )
     report2 = ReadinessValidator().validate(spec_reject, permit_experimental=True)
     assert not report2.ready  # REJECT is never OK even for experimental
 
@@ -1069,6 +1129,7 @@ def test_jt_evaluation_audit_trail():
 
 # ── 40. out-of-order evaluation (older snapshot) ──────────────────────────────
 
+
 def test_older_snapshot_still_deterministic():
     spec = _base_spec()
     older = FakeSnapshot(as_of=date(2024, 1, 31), spots=SPOTS)
@@ -1084,6 +1145,7 @@ def test_older_snapshot_still_deterministic():
 
 # ── 48. missing price handled gracefully ──────────────────────────────────────
 
+
 def test_missing_price_for_security_excluded():
     """Security with no price in snapshot is simply not priced → excluded from targets."""
     spec = _base_spec()
@@ -1098,6 +1160,7 @@ def test_missing_price_for_security_excluded():
 
 # ── 49. spec equality ─────────────────────────────────────────────────────────
 
+
 def test_same_content_same_fingerprint():
     spec_a = _base_spec()
     spec_b = _base_spec()
@@ -1105,6 +1168,7 @@ def test_same_content_same_fingerprint():
 
 
 # ── 50. full integration: Research → Spec → Runtime → EMS boundary ───────────
+
 
 def test_full_integration_pipeline():
     """Integration: research artifact → spec → manifest → runtime → EMS requests."""
@@ -1160,7 +1224,7 @@ def test_full_integration_pipeline():
     snap = FakeSnapshot(as_of=AS_OF, spots=SPOTS)
 
     # 7. strategy evaluation
-    logic = ConstantLogic({sid: 1.0 for sid in SPOTS})
+    logic = ConstantLogic(dict.fromkeys(SPOTS, 1.0))
     rt = StrategyRuntime()
     ev = rt.evaluate(spec, logic, snap, None)
 
@@ -1174,6 +1238,7 @@ def test_full_integration_pipeline():
 
     # 9. M14 boundary: verify EMS requests are valid
     from mentisrex.research.execution.ems.models import OrderRequest
+
     if ev.risk_approved:
         assert len(ev.ems_requests) > 0
         for req in ev.ems_requests:

@@ -109,11 +109,13 @@ def test_equal_weight_parameter_and_run():
     """M1: equal_weight=True is reflected in parameters and the strategy runs
     end-to-end with max_position_pct=1.0 (strength IS the target NAV fraction)."""
     from decimal import Decimal
+
     from mentisrex.backtesting.config import BacktestConfig
 
     # parameters dict carries the flag
-    strat = FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                           allow_short=True, equal_weight=True)
+    strat = FactorStrategy(
+        lookback=30, quantile=0.20, rebalance_days=10, allow_short=True, equal_weight=True
+    )
     assert strat.parameters["equal_weight"] is True
 
     # existing FactorStrategy without flag: equal_weight defaults False, backward-compat
@@ -123,14 +125,24 @@ def test_equal_weight_parameter_and_run():
     # runs without error with max_position_pct=1.0
     bars = synth_bars(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"], days=200, seed=42)
     cfg = BacktestConfig(max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"))
-    m = run_backtest(lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                                            allow_short=True, equal_weight=True), bars, cfg)
+    m = run_backtest(
+        lambda: FactorStrategy(
+            lookback=30, quantile=0.20, rebalance_days=10, allow_short=True, equal_weight=True
+        ),
+        bars,
+        cfg,
+    )
     assert isinstance(m, PerformanceMetrics)
     assert len(m.equity_curve) > 0
 
     # long-only equal_weight runs too
-    m2 = run_backtest(lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                                             allow_short=False, equal_weight=True), bars, cfg)
+    m2 = run_backtest(
+        lambda: FactorStrategy(
+            lookback=30, quantile=0.20, rebalance_days=10, allow_short=False, equal_weight=True
+        ),
+        bars,
+        cfg,
+    )
     assert isinstance(m2, PerformanceMetrics)
 
 
@@ -138,10 +150,12 @@ def test_min_price_parameter_and_run():
     """M2: min_price filter reflected in parameters; backward-compat default 0.0.
     With a high min_price, low-price synth names are excluded from the cross-section."""
     from decimal import Decimal
+
     from mentisrex.backtesting.config import BacktestConfig
 
-    strat = FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                           equal_weight=True, min_price=5.0)
+    strat = FactorStrategy(
+        lookback=30, quantile=0.20, rebalance_days=10, equal_weight=True, min_price=5.0
+    )
     assert strat.parameters["min_price"] == 5.0
 
     strat_old = FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10)
@@ -151,16 +165,29 @@ def test_min_price_parameter_and_run():
     cfg = BacktestConfig(max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"))
 
     # M2 runs end-to-end (synth prices ~$20-50 so filter doesn't starve universe)
-    m = run_backtest(lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                                            allow_short=True, equal_weight=True,
-                                            min_price=5.0), bars, cfg)
+    m = run_backtest(
+        lambda: FactorStrategy(
+            lookback=30,
+            quantile=0.20,
+            rebalance_days=10,
+            allow_short=True,
+            equal_weight=True,
+            min_price=5.0,
+        ),
+        bars,
+        cfg,
+    )
     assert isinstance(m, PerformanceMetrics)
     assert len(m.equity_curve) > 0
 
     # Very high min_price starves cross-section — must not crash, just fewer/no trades
     m_starved = run_backtest(
-        lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                               equal_weight=True, min_price=1_000_000.0), bars, cfg)
+        lambda: FactorStrategy(
+            lookback=30, quantile=0.20, rebalance_days=10, equal_weight=True, min_price=1_000_000.0
+        ),
+        bars,
+        cfg,
+    )
     assert isinstance(m_starved, PerformanceMetrics)
 
 
@@ -168,10 +195,12 @@ def test_skip_parameter_and_run():
     """M4: skip period reflected in parameters; backward-compat default 0.
     skip shifts the formation window back by `skip` bars; skip=0 == M2."""
     from decimal import Decimal
+
     from mentisrex.backtesting.config import BacktestConfig
 
-    strat = FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                           equal_weight=True, min_price=5.0, skip=5)
+    strat = FactorStrategy(
+        lookback=30, quantile=0.20, rebalance_days=10, equal_weight=True, min_price=5.0, skip=5
+    )
     assert strat.parameters["skip"] == 5
 
     strat_old = FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10)
@@ -181,16 +210,30 @@ def test_skip_parameter_and_run():
     cfg = BacktestConfig(max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"))
 
     # M4 runs end-to-end (needs lookback+skip+1 bars of history to rank)
-    m = run_backtest(lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                                            allow_short=True, equal_weight=True,
-                                            min_price=5.0, skip=5), bars, cfg)
+    m = run_backtest(
+        lambda: FactorStrategy(
+            lookback=30,
+            quantile=0.20,
+            rebalance_days=10,
+            allow_short=True,
+            equal_weight=True,
+            min_price=5.0,
+            skip=5,
+        ),
+        bars,
+        cfg,
+    )
     assert isinstance(m, PerformanceMetrics)
     assert len(m.equity_curve) > 0
 
     # Large skip that starves history (needs >200 bars) must not crash
     m_starved = run_backtest(
-        lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                               equal_weight=True, skip=300), bars, cfg)
+        lambda: FactorStrategy(
+            lookback=30, quantile=0.20, rebalance_days=10, equal_weight=True, skip=300
+        ),
+        bars,
+        cfg,
+    )
     assert isinstance(m_starved, PerformanceMetrics)
 
 
@@ -200,18 +243,27 @@ def test_gross_vs_net_reporting():
     on — costs can only subtract, so gross must dominate net. Config-only, no
     engine/strategy change."""
     from decimal import Decimal
+
     from mentisrex.backtesting.config import BacktestConfig
 
     bars = synth_bars(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"], days=200, seed=42)
 
     def _factory():
-        return FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                              allow_short=True, equal_weight=True, min_price=5.0)
+        return FactorStrategy(
+            lookback=30,
+            quantile=0.20,
+            rebalance_days=10,
+            allow_short=True,
+            equal_weight=True,
+            min_price=5.0,
+        )
 
     net_cfg = BacktestConfig(max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"))
     gross_cfg = BacktestConfig(
-        max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"),
-        commission_rate=Decimal("0"), spread_bps=Decimal("0"),
+        max_drawdown_halt=Decimal("0.60"),
+        max_position_pct=Decimal("1.0"),
+        commission_rate=Decimal("0"),
+        spread_bps=Decimal("0"),
         slippage_impact_bps=Decimal("0"),
     )
     net = run_backtest(_factory, bars, net_cfg)
@@ -224,9 +276,12 @@ def test_liquidity_filter_disabled_is_identical_and_enabled_runs():
     off by default. Filter ON → runs end-to-end, drops names, no crash. Locks the
     'baseline unchanged when disabled' certification requirement."""
     from decimal import Decimal
+
     from mentisrex.backtesting.config import BacktestConfig
     from mentisrex.research.liquidity import (
-        DEFAULT_METRIC, LIQUIDITY_METRICS, screen,
+        DEFAULT_METRIC,
+        LIQUIDITY_METRICS,
+        screen,
     )
 
     # default OFF + params surfaced
@@ -239,13 +294,28 @@ def test_liquidity_filter_disabled_is_identical_and_enabled_runs():
     cfg = BacktestConfig(max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"))
 
     def _m4():
-        return FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                              allow_short=True, equal_weight=True, min_price=5.0, skip=5)
+        return FactorStrategy(
+            lookback=30,
+            quantile=0.20,
+            rebalance_days=10,
+            allow_short=True,
+            equal_weight=True,
+            min_price=5.0,
+            skip=5,
+        )
 
     def _m4_filter_off():  # same but explicit filter args, still disabled
-        return FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                              allow_short=True, equal_weight=True, min_price=5.0, skip=5,
-                              liquidity_filter=False, liquidity_pct=0.20)
+        return FactorStrategy(
+            lookback=30,
+            quantile=0.20,
+            rebalance_days=10,
+            allow_short=True,
+            equal_weight=True,
+            min_price=5.0,
+            skip=5,
+            liquidity_filter=False,
+            liquidity_pct=0.20,
+        )
 
     m4 = run_backtest(_m4, bars, cfg)
     off = run_backtest(_m4_filter_off, bars, cfg)
@@ -254,20 +324,31 @@ def test_liquidity_filter_disabled_is_identical_and_enabled_runs():
 
     # enabled runs end-to-end and drops names (pct>0)
     on = run_backtest(
-        lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                               allow_short=True, equal_weight=True, min_price=5.0, skip=5,
-                               liquidity_filter=True, liquidity_pct=0.20,
-                               liquidity_window=15), bars, cfg)
+        lambda: FactorStrategy(
+            lookback=30,
+            quantile=0.20,
+            rebalance_days=10,
+            allow_short=True,
+            equal_weight=True,
+            min_price=5.0,
+            skip=5,
+            liquidity_filter=True,
+            liquidity_pct=0.20,
+            liquidity_window=15,
+        ),
+        bars,
+        cfg,
+    )
     assert isinstance(on, PerformanceMetrics)
 
     # every registered metric is callable + screen respects direction
-    for name, (fn, higher) in LIQUIDITY_METRICS.items():
+    for name, (fn, _higher) in LIQUIDITY_METRICS.items():
         val = fn([10.0] * 5, [100.0, 200, 300, 400, 500])
         assert isinstance(val, float), name
     liq = {"A": 1.0, "B": 2.0, "C": 3.0, "D": 4.0}
-    assert screen(liq, 0.5, True) == {"C", "D"}   # keep most liquid
+    assert screen(liq, 0.5, True) == {"C", "D"}  # keep most liquid
     assert screen(liq, 0.5, False) == {"A", "B"}  # illiquidity: keep least illiquid
-    assert screen(liq, 0.0, True) == set(liq)     # disabled keeps all
+    assert screen(liq, 0.0, True) == set(liq)  # disabled keeps all
 
 
 def test_invariant_construction_preserves_baseline_and_bounds_concentration():
@@ -275,9 +356,12 @@ def test_invariant_construction_preserves_baseline_and_bounds_concentration():
     ON but bounds slack (full universe), and caps single-name weight / HHI under
     universe shrink. Locks the invariance-framework certification requirements."""
     from decimal import Decimal
+
     from mentisrex.backtesting.config import BacktestConfig
     from mentisrex.research.portfolio_construction import (
-        baseline_weight, invariant_weight, exposures,
+        baseline_weight,
+        exposures,
+        invariant_weight,
     )
 
     # default OFF + params surfaced
@@ -289,11 +373,11 @@ def test_invariant_construction_preserves_baseline_and_bounds_concentration():
     # weight function: baseline unbounded, invariant capped + floored, and equal
     # to baseline while slack
     B, WMAX, NMIN = 0.75, 0.10, 10
-    assert invariant_weight(100, B, WMAX, NMIN) == baseline_weight(100, B)   # slack
-    assert baseline_weight(5, B) == 0.15                                     # concentrates
-    assert invariant_weight(5, B, WMAX, NMIN) == B / NMIN                    # floor binds
-    assert invariant_weight(5, 1.0, 0.05, 1) == 0.05                         # cap binds
-    assert invariant_weight(5, B, WMAX, NMIN) < baseline_weight(5, B)        # bounded
+    assert invariant_weight(100, B, WMAX, NMIN) == baseline_weight(100, B)  # slack
+    assert baseline_weight(5, B) == 0.15  # concentrates
+    assert invariant_weight(5, B, WMAX, NMIN) == B / NMIN  # floor binds
+    assert invariant_weight(5, 1.0, 0.05, 1) == 0.05  # cap binds
+    assert invariant_weight(5, B, WMAX, NMIN) < baseline_weight(5, B)  # bounded
     # concentration (HHI) is bounded under shrink for invariant, not for baseline
     hhi_base = exposures([(baseline_weight(5, B), 1)] * 5)["hhi"]
     hhi_inv = exposures([(invariant_weight(5, B, WMAX, NMIN), 1)] * 5)["hhi"]
@@ -303,14 +387,29 @@ def test_invariant_construction_preserves_baseline_and_bounds_concentration():
     cfg = BacktestConfig(max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"))
 
     def _m4():
-        return FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                              allow_short=True, equal_weight=True, min_price=5.0, skip=5)
+        return FactorStrategy(
+            lookback=30,
+            quantile=0.20,
+            rebalance_days=10,
+            allow_short=True,
+            equal_weight=True,
+            min_price=5.0,
+            skip=5,
+        )
 
     def _m4_inv_slack():  # invariant ON but bounds slack on this small synth set
-        return FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                              allow_short=True, equal_weight=True, min_price=5.0, skip=5,
-                              invariant_construction=True,
-                              max_position_weight=1.0, min_constituents=0)
+        return FactorStrategy(
+            lookback=30,
+            quantile=0.20,
+            rebalance_days=10,
+            allow_short=True,
+            equal_weight=True,
+            min_price=5.0,
+            skip=5,
+            invariant_construction=True,
+            max_position_weight=1.0,
+            min_constituents=0,
+        )
 
     m4 = run_backtest(_m4, bars, cfg)
     inv = run_backtest(_m4_inv_slack, bars, cfg)
@@ -319,10 +418,21 @@ def test_invariant_construction_preserves_baseline_and_bounds_concentration():
 
     # binding bounds run end-to-end without crash
     on = run_backtest(
-        lambda: FactorStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                               allow_short=True, equal_weight=True, min_price=5.0, skip=5,
-                               invariant_construction=True,
-                               max_position_weight=0.05, min_constituents=8), bars, cfg)
+        lambda: FactorStrategy(
+            lookback=30,
+            quantile=0.20,
+            rebalance_days=10,
+            allow_short=True,
+            equal_weight=True,
+            min_price=5.0,
+            skip=5,
+            invariant_construction=True,
+            max_position_weight=0.05,
+            min_constituents=8,
+        ),
+        bars,
+        cfg,
+    )
     assert isinstance(on, PerformanceMetrics)
 
 
@@ -330,9 +440,8 @@ def test_lowvol_ranks_low_vol_long_and_is_deterministic():
     """M12: LowVolStrategy ranks the lowest-volatility name LONG and the highest
     SHORT, exposes params, runs deterministically end-to-end, no look-ahead."""
     from decimal import Decimal
+
     from mentisrex.backtesting.config import BacktestConfig
-    from mentisrex.backtesting.strategy.base import StrategyContext
-    from mentisrex.backtesting.events.types import Direction
 
     s = LowVolStrategy(lookback=30, quantile=0.20, rebalance_days=10)
     assert s.parameters["lookback"] == 30
@@ -346,10 +455,20 @@ def test_lowvol_ranks_low_vol_long_and_is_deterministic():
 
     bars = synth_bars(list("ABCDEFGHIJ"), days=200, seed=7)
     cfg = BacktestConfig(max_drawdown_halt=Decimal("0.60"), max_position_pct=Decimal("1.0"))
-    m1 = run_backtest(lambda: LowVolStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                                             allow_short=True, equal_weight=True), bars, cfg)
-    m2 = run_backtest(lambda: LowVolStrategy(lookback=30, quantile=0.20, rebalance_days=10,
-                                             allow_short=True, equal_weight=True), bars, cfg)
+    m1 = run_backtest(
+        lambda: LowVolStrategy(
+            lookback=30, quantile=0.20, rebalance_days=10, allow_short=True, equal_weight=True
+        ),
+        bars,
+        cfg,
+    )
+    m2 = run_backtest(
+        lambda: LowVolStrategy(
+            lookback=30, quantile=0.20, rebalance_days=10, allow_short=True, equal_weight=True
+        ),
+        bars,
+        cfg,
+    )
     assert isinstance(m1, PerformanceMetrics)
     # deterministic: identical equity curve on repeat
     assert [str(p) for p in m1.equity_curve] == [str(p) for p in m2.equity_curve]
@@ -357,8 +476,10 @@ def test_lowvol_ranks_low_vol_long_and_is_deterministic():
     # direction sense: build a context where one symbol is calm, one is wild, and
     # confirm calm -> LONG, wild -> SHORT via the score thresholds.
     lv = LowVolStrategy(lookback=20, quantile=0.34, rebalance_days=1, allow_short=True)
-    vols = {"LO": lv._vol([100.0 + 0.001 * i for i in range(25)]),
-            "HI": lv._vol([100.0 * (1.4 if i % 2 else 0.75) for i in range(25)])}
+    vols = {
+        "LO": lv._vol([100.0 + 0.001 * i for i in range(25)]),
+        "HI": lv._vol([100.0 * (1.4 if i % 2 else 0.75) for i in range(25)]),
+    }
     assert vols["LO"] < vols["HI"]  # low-vol name has the smaller score -> long tail
 
     # downside estimator is a valid alternative measure
@@ -370,10 +491,18 @@ def test_overlapping_factor_parameters_and_run():
     """M3: OverlappingFactorStrategy exposes K/lookback/etc; runs end-to-end.
     K=2 cohorts with short lookback so both cohorts fill within 200 synthetic bars."""
     from decimal import Decimal
+
     from mentisrex.backtesting.config import BacktestConfig
 
-    strat = OverlappingFactorStrategy(K=2, lookback=42, rebalance_days=21, quantile=0.20,
-                                      allow_short=True, equal_weight=True, min_price=0.0)
+    strat = OverlappingFactorStrategy(
+        K=2,
+        lookback=42,
+        rebalance_days=21,
+        quantile=0.20,
+        allow_short=True,
+        equal_weight=True,
+        min_price=0.0,
+    )
     p = strat.parameters
     assert p["K"] == 2
     assert p["lookback"] == 42
@@ -390,19 +519,28 @@ def test_overlapping_factor_parameters_and_run():
 
     # K=2, lookback=42: both cohorts active by trading day ~84; run should produce trades
     m = run_backtest(
-        lambda: OverlappingFactorStrategy(K=2, lookback=42, rebalance_days=21,
-                                          quantile=0.20, allow_short=True,
-                                          equal_weight=True, min_price=0.0),
-        bars, cfg,
+        lambda: OverlappingFactorStrategy(
+            K=2,
+            lookback=42,
+            rebalance_days=21,
+            quantile=0.20,
+            allow_short=True,
+            equal_weight=True,
+            min_price=0.0,
+        ),
+        bars,
+        cfg,
     )
     assert isinstance(m, PerformanceMetrics)
     assert len(m.equity_curve) > 0
 
     # High min_price starves universe — must not crash
     m_starved = run_backtest(
-        lambda: OverlappingFactorStrategy(K=2, lookback=42, rebalance_days=21,
-                                          min_price=1_000_000.0),
-        bars, cfg,
+        lambda: OverlappingFactorStrategy(
+            K=2, lookback=42, rebalance_days=21, min_price=1_000_000.0
+        ),
+        bars,
+        cfg,
     )
     assert isinstance(m_starved, PerformanceMetrics)
 

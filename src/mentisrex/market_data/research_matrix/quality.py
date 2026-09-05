@@ -18,6 +18,6 @@ def check(matrix: ResearchMatrix) -> dict:
         "rows": len(df),
         "columns": list(df.columns),
         "duplicate_ids": dup,
-        "all_null_columns": all_null,   # informational — missing data, not corruption
+        "all_null_columns": all_null,  # informational — missing data, not corruption
         "ok": not dup,
     }

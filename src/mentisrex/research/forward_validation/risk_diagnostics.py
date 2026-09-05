@@ -6,7 +6,6 @@ Does NOT re-implement M13 risk rules — reads decisions already made.
 
 from __future__ import annotations
 
-import statistics
 from collections import Counter
 
 from mentisrex.research.forward_validation.models import (
@@ -49,8 +48,10 @@ def analyze_risk_decisions(cycles: list) -> dict:
 
     issues = []
     if approval_rate < 0.5:
-        issues.append(f"risk rejection rate {1 - approval_rate:.1%} exceeds 50% — "
-                      "check M13 limits vs universe/portfolio config")
+        issues.append(
+            f"risk rejection rate {1 - approval_rate:.1%} exceeds 50% — "
+            "check M13 limits vs universe/portfolio config"
+        )
 
     return {
         "n_cycles": n,
@@ -77,33 +78,36 @@ def build_risk_diagnostics(
     diff = abs(observed_rate - expected_approval_rate)
     drifted = diff > rejection_threshold
 
-    records.append(make_diagnostic(
-        "risk.approval_rate",
-        DiscrepancyCategory.RISK_DRIFT,
-        DiagnosticSeverity.WARNING if drifted else DiagnosticSeverity.INFO,
-        "risk_approval_rate",
-        baseline=expected_approval_rate,
-        observed=observed_rate,
-        threshold=rejection_threshold,
-        sample_size=n,
-        method="absolute_threshold",
-        evidence=(f"approval_rate={observed_rate:.3f} "
-                  f"expected={expected_approval_rate:.3f}"),
-        status=ValidationStatus.WARNING if drifted else ValidationStatus.VALID,
-    ))
+    records.append(
+        make_diagnostic(
+            "risk.approval_rate",
+            DiscrepancyCategory.RISK_DRIFT,
+            DiagnosticSeverity.WARNING if drifted else DiagnosticSeverity.INFO,
+            "risk_approval_rate",
+            baseline=expected_approval_rate,
+            observed=observed_rate,
+            threshold=rejection_threshold,
+            sample_size=n,
+            method="absolute_threshold",
+            evidence=(f"approval_rate={observed_rate:.3f} expected={expected_approval_rate:.3f}"),
+            status=ValidationStatus.WARNING if drifted else ValidationStatus.VALID,
+        )
+    )
 
     # per-reason diagnostics for non-trivial rejection reasons
     for reason, count in risk_summary.get("rejection_reasons", {}).items():
-        records.append(make_diagnostic(
-            f"risk.rejection.{reason.lower()[:30]}",
-            DiscrepancyCategory.RISK_DRIFT,
-            DiagnosticSeverity.INFO,
-            "rejection_reason_count",
-            observed=float(count),
-            sample_size=n,
-            method="count",
-            evidence=f"reason={reason!r} count={count}",
-            status=ValidationStatus.VALID,
-        ))
+        records.append(
+            make_diagnostic(
+                f"risk.rejection.{reason.lower()[:30]}",
+                DiscrepancyCategory.RISK_DRIFT,
+                DiagnosticSeverity.INFO,
+                "rejection_reason_count",
+                observed=float(count),
+                sample_size=n,
+                method="count",
+                evidence=f"reason={reason!r} count={count}",
+                status=ValidationStatus.VALID,
+            )
+        )
 
     return risk_summary, records

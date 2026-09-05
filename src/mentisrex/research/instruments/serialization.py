@@ -17,12 +17,16 @@ from mentisrex.research.post_trade.serialization import _clean
 
 def instrument_to_dict(inst) -> dict:
     return {
-        "instrument_id": inst.instrument_id, "type": inst.type.value, "currency": inst.currency,
-        "exchange": inst.exchange, "contract_size": inst.contract_size,
+        "instrument_id": inst.instrument_id,
+        "type": inst.type.value,
+        "currency": inst.currency,
+        "exchange": inst.exchange,
+        "contract_size": inst.contract_size,
         "expiry": inst.expiry.isoformat() if inst.expiry else None,
         "cash_convention": inst.cash_convention.value,
         "settlement_style": inst.settlement_style.value,
-        "underlying": inst.underlying, "strike": inst.strike,
+        "underlying": inst.underlying,
+        "strike": inst.strike,
         "right": inst.right.value if inst.right else None,
         "initial_margin_rate": inst.initial_margin_rate,
         "maintenance_margin_rate": inst.maintenance_margin_rate,
@@ -52,4 +56,5 @@ def to_json(book, *, indent: int = 2) -> str:
 
 def save_json(book, path: str) -> None:
     from pathlib import Path
+
     Path(path).write_text(to_json(book))

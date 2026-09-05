@@ -35,12 +35,7 @@ Coverage map (26 categories from M25 spec §19):
 from __future__ import annotations
 
 import json
-import shutil
-import tempfile
-from dataclasses import dataclass, field
-from datetime import date, datetime
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from datetime import date
 
 import pytest
 
@@ -51,15 +46,11 @@ from mentisrex.research.forward_campaign import (
     ForwardLedger,
     make_forward_cycle_id,
 )
-from mentisrex.research.forward_campaign.campaign import CampaignConfig
 from mentisrex.research.paper_trading.live_feed import LiveFeedBuilder, LiveFeedConfig
-from mentisrex.research.paper_trading.loop import PaperTradingLoop, LoopConfig
-from mentisrex.research.paper_trading.scheduler import RebalanceScheduler, FixedClock
 from mentisrex.research.paper_trading.runtime_state import StrategyRuntimeState
-from mentisrex.research.strategy_deployment.models import StrategyState, StrategyType, make_spec
-from mentisrex.research.strategy_deployment.registry import StrategyRegistry
-from mentisrex.research.strategy_deployment.runtime import StrategyRuntime, StrategyLogic
-
+from mentisrex.research.paper_trading.scheduler import RebalanceScheduler
+from mentisrex.research.strategy_deployment.models import StrategyType, make_spec
+from mentisrex.research.strategy_deployment.runtime import StrategyLogic
 
 # ── shared fixtures ────────────────────────────────────────────────────────────
 
@@ -68,27 +59,81 @@ AS_OF = date(2026, 8, 1)
 STARTING_CAPITAL = 500_000.0
 
 FIXTURE_RECORDS = [
-    {"symbol": "AAPL",  "date": "2026-08-01", "close": 185.0, "adj_close": 185.0,
-     "open": 183.0, "high": 186.0, "low": 182.0, "volume": 50_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
-    {"symbol": "MSFT",  "date": "2026-08-01", "close": 415.0, "adj_close": 413.0,
-     "open": 412.0, "high": 416.0, "low": 410.0, "volume": 20_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
-    {"symbol": "GOOGL", "date": "2026-08-01", "close": 172.0, "adj_close": 172.0,
-     "open": 170.0, "high": 173.5, "low": 169.0, "volume": 15_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
+    {
+        "symbol": "AAPL",
+        "date": "2026-08-01",
+        "close": 185.0,
+        "adj_close": 185.0,
+        "open": 183.0,
+        "high": 186.0,
+        "low": 182.0,
+        "volume": 50_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
+    {
+        "symbol": "MSFT",
+        "date": "2026-08-01",
+        "close": 415.0,
+        "adj_close": 413.0,
+        "open": 412.0,
+        "high": 416.0,
+        "low": 410.0,
+        "volume": 20_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
+    {
+        "symbol": "GOOGL",
+        "date": "2026-08-01",
+        "close": 172.0,
+        "adj_close": 172.0,
+        "open": 170.0,
+        "high": 173.5,
+        "low": 169.0,
+        "volume": 15_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
 ]
 
 FIXTURE_RECORDS_SEP = [
-    {"symbol": "AAPL",  "date": "2026-09-01", "close": 187.0, "adj_close": 187.0,
-     "open": 185.0, "high": 188.0, "low": 184.0, "volume": 48_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
-    {"symbol": "MSFT",  "date": "2026-09-01", "close": 420.0, "adj_close": 418.0,
-     "open": 415.0, "high": 422.0, "low": 413.0, "volume": 19_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
-    {"symbol": "GOOGL", "date": "2026-09-01", "close": 175.0, "adj_close": 175.0,
-     "open": 172.0, "high": 176.0, "low": 171.0, "volume": 14_000_000,
-     "dividends": 0.0, "stock_splits": 0.0},
+    {
+        "symbol": "AAPL",
+        "date": "2026-09-01",
+        "close": 187.0,
+        "adj_close": 187.0,
+        "open": 185.0,
+        "high": 188.0,
+        "low": 184.0,
+        "volume": 48_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
+    {
+        "symbol": "MSFT",
+        "date": "2026-09-01",
+        "close": 420.0,
+        "adj_close": 418.0,
+        "open": 415.0,
+        "high": 422.0,
+        "low": 413.0,
+        "volume": 19_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
+    {
+        "symbol": "GOOGL",
+        "date": "2026-09-01",
+        "close": 175.0,
+        "adj_close": 175.0,
+        "open": 172.0,
+        "high": 176.0,
+        "low": 171.0,
+        "volume": 14_000_000,
+        "dividends": 0.0,
+        "stock_splits": 0.0,
+    },
 ]
 
 
@@ -107,8 +152,11 @@ def _make_spec(strategy_id: str = "test-fwd-strategy", version: str = "1.0.0"):
         feature_definition={"type": "price_level", "lookback_days": 0},
         signal_definition={"type": "equal_weight"},
         rebalance_frequency="monthly",
-        portfolio_construction_config={"objective": "equal_weight", "long_only": True,
-                                       "max_position_weight": 0.5},
+        portfolio_construction_config={
+            "objective": "equal_weight",
+            "long_only": True,
+            "max_position_weight": 0.5,
+        },
         risk_config={"max_position": 0.5, "max_gross_leverage": 1.0, "long_only": True},
         execution_config={"algo": "market"},
         transaction_cost_assumption={"slippage_bps": 5.0},
@@ -130,6 +178,7 @@ class _EqualWeightLogic(StrategyLogic):
 
     def compute_features(self, snapshot, spec):
         from mentisrex.research.strategy_deployment.models import FeatureSet
+
         spots = getattr(snapshot, "spots", {})
         features = {}
         for sid in self._universe:
@@ -154,13 +203,10 @@ class _EqualWeightLogic(StrategyLogic):
 
     def generate_signal(self, features, spec):
         from mentisrex.research.strategy_deployment.models import SignalRecord, SignalSet
+
         spec_fp = spec.configuration_fingerprint or spec.fingerprint()
         feat_fp = features.fingerprint()
-        signals = {
-            sid: 1.0
-            for sid, fv in features.features.items()
-            if fv.get("price", 0.0) > 0.0
-        }
+        signals = {sid: 1.0 for sid, fv in features.features.items() if fv.get("price", 0.0) > 0.0}
         records = [
             SignalRecord(
                 strategy_id=spec.strategy_id,
@@ -184,25 +230,27 @@ class _EqualWeightLogic(StrategyLogic):
         )
 
 
-@pytest.fixture()
+@pytest.fixture
 def tmp_dir(tmp_path):
     return tmp_path / "forward_campaign"
 
 
-@pytest.fixture()
+@pytest.fixture
 def spec():
     return _make_spec()
 
 
-@pytest.fixture()
+@pytest.fixture
 def logic():
     return _EqualWeightLogic(UNIVERSE)
 
 
-@pytest.fixture()
+@pytest.fixture
 def campaign(tmp_dir, spec, logic):
     return ForwardCampaign.init(
-        spec, logic, tmp_dir,
+        spec,
+        logic,
+        tmp_dir,
         universe=UNIVERSE,
         starting_capital=STARTING_CAPITAL,
         campaign_id="test-campaign-001",
@@ -213,8 +261,8 @@ def campaign(tmp_dir, spec, logic):
 # 1. PAPER_FORWARD mode isolation
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestPaperForwardModeIsolation:
 
+class TestPaperForwardModeIsolation:
     def test_campaign_checkpoint_path_separate_from_simulation(self, campaign, tmp_dir):
         """PAPER_FORWARD checkpoint lives in its own directory."""
         ckpt = tmp_dir / "campaign_checkpoint.json"
@@ -225,39 +273,48 @@ class TestPaperForwardModeIsolation:
     def test_init_does_not_restore_simulation_checkpoint(self, tmp_dir, spec, logic):
         """init() starts with clean state even if a simulation checkpoint exists nearby."""
         sim_ckpt = tmp_dir.parent / "simulation_checkpoint.json"
-        sim_ckpt.write_text(json.dumps({
-            "cycle_seq": 99,
-            "seen_snapshots": [],
-            "strategy_states": {
-                spec.strategy_id: {
-                    "strategy_id": spec.strategy_id,
-                    "strategy_version": spec.version,
-                    "strategy_fingerprint": "fake",
-                    "last_eval_date": "2099-12-01",  # far future
-                    "evaluation_count": 99,
-                    "error_count": 0,
-                    "last_error": "",
-                    "status": "active",
-                    "last_snapshot_fingerprint": "",
-                    "last_evaluation_id": "",
-                    "last_evaluation_fingerprint": "",
+        sim_ckpt.write_text(
+            json.dumps(
+                {
+                    "cycle_seq": 99,
+                    "seen_snapshots": [],
+                    "strategy_states": {
+                        spec.strategy_id: {
+                            "strategy_id": spec.strategy_id,
+                            "strategy_version": spec.version,
+                            "strategy_fingerprint": "fake",
+                            "last_eval_date": "2099-12-01",  # far future
+                            "evaluation_count": 99,
+                            "error_count": 0,
+                            "last_error": "",
+                            "status": "active",
+                            "last_snapshot_fingerprint": "",
+                            "last_evaluation_id": "",
+                            "last_evaluation_fingerprint": "",
+                        }
+                    },
+                    "portfolio_states": {},
+                    "broker_states": {},
+                    "session_seqs": {},
+                    "session_last_dates": {},
+                    "session_total_costs": {},
+                    "session_sync_events": {},
+                    "book_applied_fill_ids": {},
+                    "session_applied_fill_ids": {},
+                    "session_broker_fill_ids": {},
+                    "cycle_records": [],
                 }
-            },
-            "portfolio_states": {},
-            "broker_states": {},
-            "session_seqs": {},
-            "session_last_dates": {},
-            "session_total_costs": {},
-            "session_sync_events": {},
-            "book_applied_fill_ids": {},
-            "session_applied_fill_ids": {},
-            "session_broker_fill_ids": {},
-            "cycle_records": [],
-        }))
+            )
+        )
 
         campaign = ForwardCampaign.init(
-            spec, logic, tmp_dir, universe=UNIVERSE,
-            starting_capital=STARTING_CAPITAL, campaign_id="iso-test")
+            spec,
+            logic,
+            tmp_dir,
+            universe=UNIVERSE,
+            starting_capital=STARTING_CAPITAL,
+            campaign_id="iso-test",
+        )
 
         loop = campaign._get_loop()
         rs = loop.runtime_state(spec.strategy_id)
@@ -280,8 +337,8 @@ class TestPaperForwardModeIsolation:
 # 2. Scheduler semantics
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestSchedulerSemantics:
 
+class TestSchedulerSemantics:
     def test_first_evaluation_always_due(self):
         sched = RebalanceScheduler()
         spec = _make_spec()
@@ -307,7 +364,7 @@ class TestSchedulerSemantics:
         sched = RebalanceScheduler()
         spec = _make_spec()
         rs = StrategyRuntimeState(strategy_id="x", strategy_version="1", strategy_fingerprint="")
-        rs.last_eval_date = date(2026, 12, 1)   # synthetic future
+        rs.last_eval_date = date(2026, 12, 1)  # synthetic future
         # today is 2026-08-13 — would return not_due if contaminated by simulation state
         assert not sched.is_due(spec, rs, date(2026, 8, 13))
         # BUT: PAPER_FORWARD campaign uses a fresh loop → rs.last_eval_date = None → due
@@ -348,8 +405,8 @@ class TestSchedulerSemantics:
 # 3. Due-cycle detection
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestDueCycleDetection:
 
+class TestDueCycleDetection:
     def test_first_cycle_due_on_init(self, campaign, spec, logic):
         loop = campaign._get_loop()
         rs = loop.runtime_state(spec.strategy_id)
@@ -375,8 +432,8 @@ class TestDueCycleDetection:
 # 4. Cycle identity
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestCycleIdentity:
 
+class TestCycleIdentity:
     def test_cycle_id_deterministic(self):
         cid1 = make_forward_cycle_id("strat-x", "1.0.0", date(2026, 8, 1))
         cid2 = make_forward_cycle_id("strat-x", "1.0.0", date(2026, 8, 1))
@@ -413,8 +470,8 @@ class TestCycleIdentity:
 # 5. Duplicate prevention
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestDuplicatePrevention:
 
+class TestDuplicatePrevention:
     def test_second_run_same_cycle_returns_already_sealed(self, campaign, spec, logic):
         campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         result2 = campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
@@ -432,7 +489,7 @@ class TestDuplicatePrevention:
         nav1 = r1.record.ending_nav
         r2 = campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         nav2 = r2.record.ending_nav
-        assert abs(nav1 - nav2) < 1e-6   # identical, not doubled
+        assert abs(nav1 - nav2) < 1e-6  # identical, not doubled
 
     def test_duplicate_across_restart(self, campaign, spec, logic, tmp_dir):
         """After restart, same cycle still returns ALREADY_SEALED."""
@@ -447,8 +504,8 @@ class TestDuplicatePrevention:
 # 6. Forward record creation
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestForwardRecordCreation:
 
+class TestForwardRecordCreation:
     def test_record_file_created(self, campaign, spec, logic, tmp_dir):
         campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         cycle_id = make_forward_cycle_id(spec.strategy_id, spec.version, AS_OF)
@@ -494,8 +551,8 @@ class TestForwardRecordCreation:
 # 7. Immutable sealing
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestImmutableSealing:
 
+class TestImmutableSealing:
     def test_sealed_record_has_sealed_at(self, campaign, spec, logic):
         result = campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         assert result.record.is_sealed
@@ -506,7 +563,7 @@ class TestImmutableSealing:
         rec.seal(CycleStatus.SUCCESS)
         first_sealed = rec.sealed_at
         rec.seal(CycleStatus.SUCCESS)
-        assert rec.sealed_at == first_sealed   # not changed
+        assert rec.sealed_at == first_sealed  # not changed
 
     def test_existing_cycle_file_never_overwritten(self, campaign, spec, logic, tmp_dir):
         result1 = campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
@@ -532,35 +589,53 @@ class TestImmutableSealing:
 # 8. Provider revision handling
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestProviderRevisionHandling:
 
+class TestProviderRevisionHandling:
     def test_revised_data_different_snapshot_fingerprint(self, spec, logic):
         """Original and revised Yahoo data produce different snapshot fingerprints."""
         cfg = LiveFeedConfig(universe=tuple(UNIVERSE), fetch_window_days=5, max_staleness_days=5)
         feed = LiveFeedBuilder(cfg)
         r1 = feed.fetch_snapshot_from_records(FIXTURE_RECORDS, AS_OF)
+
         # modify both close and adj_close so price changes are internally consistent
         # Simulate a retroactive split-adjustment: all OHLC scale together (close
         # stays within [low, high]) — the realistic Yahoo Finance revision scenario.
         def _adjust(r, factor=1.05):
-            return dict(r, close=r["close"] * factor, adj_close=r["adj_close"] * factor,
-                        open=r["open"] * factor, high=r["high"] * factor,
-                        low=r["low"] * factor)
+            return dict(
+                r,
+                close=r["close"] * factor,
+                adj_close=r["adj_close"] * factor,
+                open=r["open"] * factor,
+                high=r["high"] * factor,
+                low=r["low"] * factor,
+            )
+
         revised = [_adjust(r) for r in FIXTURE_RECORDS]
         r2 = feed.fetch_snapshot_from_records(revised, AS_OF)
-        assert r1 is not None and r2 is not None
+        assert r1 is not None
+        assert r2 is not None
         assert r1.snapshot.fingerprint() != r2.snapshot.fingerprint()
 
     def test_revision_does_not_overwrite_sealed_record(self, campaign, spec, logic, tmp_dir):
         r1 = campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         original_fp = r1.record.snapshot_fingerprint
-        revised = [dict(r, close=r["close"] * 1.05, adj_close=r["adj_close"] * 1.05,
-                        open=r["open"] * 1.05, high=r["high"] * 1.05, low=r["low"] * 1.05)
-                   for r in FIXTURE_RECORDS]
+        revised = [
+            dict(
+                r,
+                close=r["close"] * 1.05,
+                adj_close=r["adj_close"] * 1.05,
+                open=r["open"] * 1.05,
+                high=r["high"] * 1.05,
+                low=r["low"] * 1.05,
+            )
+            for r in FIXTURE_RECORDS
+        ]
         r2 = campaign.run(AS_OF, provider_records=revised)  # ALREADY_SEALED
         assert r2.record.snapshot_fingerprint == original_fp
 
-    def test_sealed_record_preserves_original_snapshot_fingerprint(self, campaign, spec, logic, tmp_dir):
+    def test_sealed_record_preserves_original_snapshot_fingerprint(
+        self, campaign, spec, logic, tmp_dir
+    ):
         r1 = campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         original_fp = r1.record.snapshot_fingerprint
         # reload from disk
@@ -573,8 +648,8 @@ class TestProviderRevisionHandling:
 # 10. Strategy fingerprint preservation
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestStrategyFingerprintPreservation:
 
+class TestStrategyFingerprintPreservation:
     def test_strategy_fingerprint_in_record(self, campaign, spec, logic):
         result = campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         r = result.record
@@ -598,8 +673,8 @@ class TestStrategyFingerprintPreservation:
 # 11. Portfolio preservation
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestPortfolioPreservation:
 
+class TestPortfolioPreservation:
     def test_positions_in_record(self, campaign, spec, logic):
         result = campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         assert isinstance(result.record.positions, dict)
@@ -625,13 +700,13 @@ class TestPortfolioPreservation:
 # 12 & 13. Paper execution and accounting
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestPaperExecutionAndAccounting:
 
+class TestPaperExecutionAndAccounting:
     def test_first_cycle_generates_fills(self, campaign, spec, logic):
         """First cycle from cash → positions should generate fills."""
         result = campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         r = result.record
-        assert r.fills >= 0   # fills ≥ 0; 0 acceptable if all risk-rejected
+        assert r.fills >= 0  # fills ≥ 0; 0 acceptable if all risk-rejected
 
     def test_starting_nav_close_to_capital(self, campaign, spec, logic):
         result = campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
@@ -640,7 +715,7 @@ class TestPaperExecutionAndAccounting:
 
     def test_nav_invariant_cash_nonnegative(self, campaign, spec, logic):
         result = campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
-        assert result.record.cash >= -0.01   # allow fp rounding
+        assert result.record.cash >= -0.01  # allow fp rounding
 
     def test_duplicate_fills_not_applied(self, campaign, spec, logic):
         """Running twice must not double the fills count in the sealed record."""
@@ -658,8 +733,8 @@ class TestPaperExecutionAndAccounting:
 # 14. Performance ledger
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestPerformanceLedger:
 
+class TestPerformanceLedger:
     def test_list_cycles_empty_initially(self, tmp_dir):
         ledger = ForwardLedger(tmp_dir)
         assert ledger.list_cycles() == []
@@ -735,16 +810,15 @@ class TestPerformanceLedger:
 # 15. Restart behavior
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestRestartBehavior:
 
+class TestRestartBehavior:
     def test_resume_restores_from_campaign_checkpoint(self, campaign, spec, logic, tmp_dir):
         campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         # restart
         campaign2 = ForwardCampaign.resume(spec, logic, tmp_dir)
         loop = campaign2._get_loop()
         rs = loop.runtime_state(spec.strategy_id)
-        assert rs.last_eval_date == date(AS_OF.year, AS_OF.month, 1) or \
-               rs.last_eval_date == AS_OF
+        assert rs.last_eval_date == date(AS_OF.year, AS_OF.month, 1) or rs.last_eval_date == AS_OF
 
     def test_resume_next_cycle_works(self, campaign, spec, logic, tmp_dir):
         campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
@@ -770,8 +844,8 @@ class TestRestartBehavior:
 # 16. Partial-cycle recovery
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestPartialCycleRecovery:
 
+class TestPartialCycleRecovery:
     def test_tmp_file_not_left_on_success(self, campaign, spec, logic, tmp_dir):
         campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         cycle_id = make_forward_cycle_id(spec.strategy_id, spec.version, AS_OF)
@@ -795,8 +869,8 @@ class TestPartialCycleRecovery:
 # 17. Checkpoint behavior
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestCheckpointBehavior:
 
+class TestCheckpointBehavior:
     def test_campaign_checkpoint_created_after_run(self, campaign, spec, logic, tmp_dir):
         campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         assert (tmp_dir / "campaign_checkpoint.json").exists()
@@ -807,11 +881,16 @@ class TestCheckpointBehavior:
 
     def test_corrupted_checkpoint_raises(self, tmp_dir, spec, logic):
         campaign = ForwardCampaign.init(
-            spec, logic, tmp_dir, universe=UNIVERSE,
-            starting_capital=STARTING_CAPITAL, campaign_id="corrupt-test")
+            spec,
+            logic,
+            tmp_dir,
+            universe=UNIVERSE,
+            starting_capital=STARTING_CAPITAL,
+            campaign_id="corrupt-test",
+        )
         (tmp_dir / "campaign_checkpoint.json").write_text("NOT JSON {{{")
         with pytest.raises(RuntimeError, match="corrupted"):
-            campaign._loop = None   # force re-load
+            campaign._loop = None  # force re-load
             campaign._get_loop()
 
 
@@ -819,8 +898,8 @@ class TestCheckpointBehavior:
 # 18. Provider failure
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestProviderFailure:
 
+class TestProviderFailure:
     def test_empty_records_returns_failed(self, campaign, spec, logic):
         result = campaign.run(AS_OF, provider_records=[])
         assert result.status == CycleStatus.FAILED
@@ -836,7 +915,7 @@ class TestProviderFailure:
         assert result.record.is_sealed
 
     def test_failed_cycle_persisted_to_disk(self, campaign, spec, logic, tmp_dir):
-        result = campaign.run(AS_OF, provider_records=[])
+        campaign.run(AS_OF, provider_records=[])
         cycle_id = make_forward_cycle_id(spec.strategy_id, spec.version, AS_OF)
         path = tmp_dir / "cycles" / f"{cycle_id}.json"
         assert path.exists()
@@ -850,7 +929,7 @@ class TestProviderFailure:
 
     def test_partial_records_not_fabricated(self, campaign, spec, logic):
         """Only 1 of 3 universe securities present."""
-        partial = [FIXTURE_RECORDS[0]]   # only AAPL
+        partial = [FIXTURE_RECORDS[0]]  # only AAPL
         result = campaign.run(AS_OF, provider_records=partial)
         # Should succeed (partial coverage) with missing securities noted
         if result.status == CycleStatus.SUCCESS:
@@ -861,13 +940,11 @@ class TestProviderFailure:
 # 19. Snapshot failure
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestSnapshotFailure:
 
+class TestSnapshotFailure:
     def test_all_rejected_records_returns_failed(self, campaign, spec, logic):
         """Records with dates far in the future → PIT violations → all rejected."""
-        future_records = [
-            dict(r, date="2099-01-01") for r in FIXTURE_RECORDS
-        ]
+        future_records = [dict(r, date="2099-01-01") for r in FIXTURE_RECORDS]
         result = campaign.run(AS_OF, provider_records=future_records)
         assert result.status in (CycleStatus.FAILED, CycleStatus.SUCCESS)
         # Either all rejected (FAILED) or some accepted after staleness filter
@@ -884,8 +961,8 @@ class TestSnapshotFailure:
 # 20. Strategy skip / not_due paths
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestStrategySkipPaths:
 
+class TestStrategySkipPaths:
     def test_not_due_returns_skipped(self, campaign, spec, logic):
         campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         # same month, different day → not_due
@@ -904,8 +981,8 @@ class TestStrategySkipPaths:
 # 21. Risk handling
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestRiskHandling:
 
+class TestRiskHandling:
     def test_risk_approved_in_record(self, campaign, spec, logic):
         result = campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         assert hasattr(result.record, "risk_approved")
@@ -923,14 +1000,26 @@ class TestRiskHandling:
 # 23. Accounting determinism
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestAccountingDeterminism:
 
+class TestAccountingDeterminism:
     def test_deterministic_nav_given_same_records(self, tmp_dir, spec, logic):
         """Same fixture records → same ending_nav in independent runs."""
-        c1 = ForwardCampaign.init(spec, logic, tmp_dir / "run1", universe=UNIVERSE,
-                                  starting_capital=STARTING_CAPITAL, campaign_id="det-1")
-        c2 = ForwardCampaign.init(spec, logic, tmp_dir / "run2", universe=UNIVERSE,
-                                  starting_capital=STARTING_CAPITAL, campaign_id="det-2")
+        c1 = ForwardCampaign.init(
+            spec,
+            logic,
+            tmp_dir / "run1",
+            universe=UNIVERSE,
+            starting_capital=STARTING_CAPITAL,
+            campaign_id="det-1",
+        )
+        c2 = ForwardCampaign.init(
+            spec,
+            logic,
+            tmp_dir / "run2",
+            universe=UNIVERSE,
+            starting_capital=STARTING_CAPITAL,
+            campaign_id="det-2",
+        )
         r1 = c1.run(AS_OF, provider_records=FIXTURE_RECORDS)
         r2 = c2.run(AS_OF, provider_records=FIXTURE_RECORDS)
         assert abs(r1.record.ending_nav - r2.record.ending_nav) < 1e-6
@@ -949,8 +1038,8 @@ class TestAccountingDeterminism:
 # 24. Deterministic replay of forward record
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestDeterministicReplay:
 
+class TestDeterministicReplay:
     def test_replay_produces_same_cycle_id(self, campaign, spec, logic, tmp_dir):
         r1 = campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         expected_id = make_forward_cycle_id(spec.strategy_id, spec.version, AS_OF)
@@ -975,8 +1064,8 @@ class TestDeterministicReplay:
 # 25. No forward-data leakage into research
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestNoForwardLeakage:
 
+class TestNoForwardLeakage:
     def test_forward_campaign_dir_separate_from_backtest_dir(self, tmp_dir):
         """Forward campaign directory is distinct from any backtest/research path."""
         campaign_dir = tmp_dir / "forward_campaign"
@@ -993,7 +1082,7 @@ class TestNoForwardLeakage:
             assert "backtest" not in f.parts
 
     def test_campaign_status_labels_data_as_forward_only(self, campaign, spec, logic):
-        result = campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
+        campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         st = campaign.status()
         assert st["live_execution"] == "NO"
         assert st["real_market_data"] == "YES"
@@ -1009,8 +1098,8 @@ class TestNoForwardLeakage:
 # 26. Offline fixture smoke: full pipeline end-to-end
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestOfflineFixtureSmoke:
 
+class TestOfflineFixtureSmoke:
     def test_full_pipeline_end_to_end(self, campaign, spec, logic, tmp_dir):
         """Smoke: init → run → ledger → performance_summary, all deterministic."""
         r1 = campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
@@ -1029,7 +1118,7 @@ class TestOfflineFixtureSmoke:
 
     def test_duplicate_run_idempotent_end_to_end(self, campaign, spec, logic, tmp_dir):
         for _ in range(3):
-            result = campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
+            campaign.run(AS_OF, provider_records=FIXTURE_RECORDS)
         ledger = ForwardLedger(tmp_dir)
         assert len(ledger.list_cycles()) == 1
 

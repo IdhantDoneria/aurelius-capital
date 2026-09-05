@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import json
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 
 from mentisrex.core.logging import get_logger
 from mentisrex.operations.config import OperationsConfig
@@ -72,7 +70,9 @@ class DailyReporter:
         success_rate = len(completed) / total if total > 0 else 1.0
 
         # Corpus totals from metadata folder (persistent across days)
-        corpus_total = sum(1 for _ in self._cfg.metadata.glob("*.json")) if self._cfg.metadata.exists() else 0
+        corpus_total = (
+            sum(1 for _ in self._cfg.metadata.glob("*.json")) if self._cfg.metadata.exists() else 0
+        )
 
         report = DailyReport(
             date=target.strftime("%Y-%m-%d"),
@@ -110,6 +110,5 @@ class DailyReporter:
         if not self._cfg.reports.exists():
             return []
         return sorted(
-            p.stem.replace("report_", "")
-            for p in self._cfg.reports.glob("report_*.json")
+            p.stem.replace("report_", "") for p in self._cfg.reports.glob("report_*.json")
         )

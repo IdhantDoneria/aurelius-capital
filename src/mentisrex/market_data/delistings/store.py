@@ -108,8 +108,20 @@ class DelistingStore:
                 (security_id, event_date, effective_date, delisting_type, reason,
                  last_trade_date, exchange, source, vendor, data_version, created_at, updated_at)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
-                [ev.security_id, ev.event_date, ev.effective_date, ev.delisting_type, ev.reason,
-                 ev.last_trade_date, ev.exchange, ev.source, ev.vendor, ev.data_version, now, now],
+                [
+                    ev.security_id,
+                    ev.event_date,
+                    ev.effective_date,
+                    ev.delisting_type,
+                    ev.reason,
+                    ev.last_trade_date,
+                    ev.exchange,
+                    ev.source,
+                    ev.vendor,
+                    ev.data_version,
+                    now,
+                    now,
+                ],
             )
 
     def events_for(self, security_id: str) -> list[dict]:
@@ -120,8 +132,17 @@ class DelistingStore:
                    FROM delisting_events WHERE security_id = ? ORDER BY effective_date""",
                 [security_id],
             ).fetchall()
-        keys = ("security_id", "event_date", "effective_date", "delisting_type", "reason",
-                "last_trade_date", "exchange", "source", "vendor")
+        keys = (
+            "security_id",
+            "event_date",
+            "effective_date",
+            "delisting_type",
+            "reason",
+            "last_trade_date",
+            "exchange",
+            "source",
+            "vendor",
+        )
         return [dict(zip(keys, r, strict=True)) for r in rows]
 
     def apply_to_master(self, security_master) -> int:

@@ -21,8 +21,14 @@ def exposure_report(snapshots) -> ExposureReport:
     lo = np.array([s.long_exposure for s in snapshots])
     sh = np.array([s.short_exposure for s in snapshots])
     cashw = np.array([1.0 - s.gross_exposure for s in snapshots])
-    return ExposureReport(float(g.mean()), float(n.mean()), float(lo.mean()),
-                          float(sh.mean()), float(cashw.mean()), float(g.max()))
+    return ExposureReport(
+        float(g.mean()),
+        float(n.mean()),
+        float(lo.mean()),
+        float(sh.mean()),
+        float(cashw.mean()),
+        float(g.max()),
+    )
 
 
 def risk_timeline(snapshots, values, *, window: int = 63, periods: int = 252) -> list[RiskSnapshot]:
@@ -31,7 +37,7 @@ def risk_timeline(snapshots, values, *, window: int = 63, periods: int = 252) ->
     for i, s in enumerate(snapshots):
         if i >= 1:
             lo = max(0, i - window)
-            seg = v[lo:i + 1]
+            seg = v[lo : i + 1]
             rr = seg[1:] / seg[:-1] - 1 if seg.size > 1 else np.array([])
             vol = float(rr.std(ddof=1) * np.sqrt(periods)) if rr.size > 1 else 0.0
         else:
@@ -40,9 +46,15 @@ def risk_timeline(snapshots, values, *, window: int = 63, periods: int = 252) ->
         gross = np.abs(w).sum() or 1.0
         shares = np.abs(w) / gross
         hhi = float((shares**2).sum()) if w.size else 0.0
-        out.append(RiskSnapshot(
-            date=s.date, volatility=vol, gross_leverage=s.gross_exposure,
-            net_leverage=s.net_exposure, concentration_hhi=hhi,
-            largest_weight=float(np.abs(w).max()) if w.size else 0.0,
-            effective_holdings=float(1.0 / hhi) if hhi > 0 else 0.0))
+        out.append(
+            RiskSnapshot(
+                date=s.date,
+                volatility=vol,
+                gross_leverage=s.gross_exposure,
+                net_leverage=s.net_exposure,
+                concentration_hhi=hhi,
+                largest_weight=float(np.abs(w).max()) if w.size else 0.0,
+                effective_holdings=float(1.0 / hhi) if hhi > 0 else 0.0,
+            )
+        )
     return out

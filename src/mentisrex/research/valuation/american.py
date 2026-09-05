@@ -13,8 +13,18 @@ from __future__ import annotations
 import math
 
 
-def crr_price(is_call: bool, s: float, k: float, r: float, q: float, vol: float, t: float,
-              *, steps: int = 200, american: bool = True) -> float:
+def crr_price(
+    is_call: bool,
+    s: float,
+    k: float,
+    r: float,
+    q: float,
+    vol: float,
+    t: float,
+    *,
+    steps: int = 200,
+    american: bool = True,
+) -> float:
     if s <= 0 or k <= 0:
         raise ValueError("spot and strike must be > 0")
     if t <= 0 or vol <= 0:
@@ -29,14 +39,14 @@ def crr_price(is_call: bool, s: float, k: float, r: float, q: float, vol: float,
     # terminal payoffs
     values = []
     for i in range(steps + 1):
-        st = s * (u ** (steps - i)) * (d ** i)
+        st = s * (u ** (steps - i)) * (d**i)
         values.append(max(0.0, (st - k) if is_call else (k - st)))
     # backward induction with early-exercise test
     for step in range(steps - 1, -1, -1):
         for i in range(step + 1):
             cont = disc * (p * values[i] + (1.0 - p) * values[i + 1])
             if american:
-                st = s * (u ** (step - i)) * (d ** i)
+                st = s * (u ** (step - i)) * (d**i)
                 ex = max(0.0, (st - k) if is_call else (k - st))
                 values[i] = max(cont, ex)
             else:
@@ -44,9 +54,21 @@ def crr_price(is_call: bool, s: float, k: float, r: float, q: float, vol: float,
     return values[0]
 
 
-def crr_greeks(is_call: bool, s: float, k: float, r: float, q: float, vol: float, t: float,
-               *, steps: int = 200, american: bool = True, bump: float = 1e-3) -> dict:
+def crr_greeks(
+    is_call: bool,
+    s: float,
+    k: float,
+    r: float,
+    q: float,
+    vol: float,
+    t: float,
+    *,
+    steps: int = 200,
+    american: bool = True,
+    bump: float = 1e-3,
+) -> dict:
     """Finite-difference Greeks on the binomial tree (delta, gamma, vega, theta, rho)."""
+
     def px(ss=s, kk=k, rr=r, qq=q, vv=vol, tt=t):
         return crr_price(is_call, ss, kk, rr, qq, vv, tt, steps=steps, american=american)
 
@@ -59,5 +81,12 @@ def crr_greeks(is_call: bool, s: float, k: float, r: float, q: float, vol: float
     rho = (px(rr=r + bump) - px(rr=r - bump)) / (2 * bump)
     dt = min(bump, t * 0.5)
     theta = (px(tt=t - dt) - p0) / dt if t > dt else 0.0
-    return {"delta": delta, "gamma": gamma, "vega": vega, "rho": rho, "theta": theta,
-            "vanna": 0.0, "volga": 0.0}
+    return {
+        "delta": delta,
+        "gamma": gamma,
+        "vega": vega,
+        "rho": rho,
+        "theta": theta,
+        "vanna": 0.0,
+        "volga": 0.0,
+    }

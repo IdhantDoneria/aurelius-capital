@@ -19,7 +19,8 @@ def requirement(inst: Instrument, quantity: float, mark: float) -> MarginRequire
         instrument_id=inst.instrument_id,
         initial=notional * inst.initial_margin_rate,
         maintenance=notional * inst.maintenance_margin_rate,
-        currency=inst.currency)
+        currency=inst.currency,
+    )
 
 
 @dataclass(frozen=True)
@@ -37,8 +38,13 @@ class MarginCall:
 
 def check_call(inst: Instrument, quantity: float, mark: float, posted: float) -> MarginCall:
     req = requirement(inst, quantity, mark)
-    return MarginCall(inst.instrument_id, posted, req.maintenance,
-                      max(0.0, req.maintenance - posted), inst.currency)
+    return MarginCall(
+        inst.instrument_id,
+        posted,
+        req.maintenance,
+        max(0.0, req.maintenance - posted),
+        inst.currency,
+    )
 
 
 def liquidation_warning(call: MarginCall, *, buffer: float = 0.0) -> bool:

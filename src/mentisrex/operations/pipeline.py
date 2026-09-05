@@ -7,12 +7,11 @@ Journals every transition for resumability on restart.
 
 from __future__ import annotations
 
-import json
 import shutil
 import time
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from mentisrex.core.logging import get_logger
 from mentisrex.operations.config import OperationsConfig
@@ -44,8 +43,8 @@ class PipelineOrchestrator:
     def __init__(
         self,
         config: OperationsConfig,
-        corpus_store: "CorpusStore",
-        kg: "KnowledgeGraph",
+        corpus_store: CorpusStore,
+        kg: KnowledgeGraph,
     ) -> None:
         self._cfg = config
         self._corpus = corpus_store
@@ -153,7 +152,9 @@ class PipelineOrchestrator:
         path = Path(job.file_path)
         raw_text = extract_text(path)  # raises PermanentIngestError on corrupt/unreadable input
         if not raw_text.strip():
-            raise PermanentIngestError("No text extractable from file (empty or unreadable content)")
+            raise PermanentIngestError(
+                "No text extractable from file (empty or unreadable content)"
+            )
         meta = extract_metadata(path, raw_text)
         job.paper_metadata = meta
         # Save extracted text for audit

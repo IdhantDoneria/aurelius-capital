@@ -1,11 +1,11 @@
 """Integration tests for the pipeline orchestrator using in-memory stores."""
 
-import tempfile
 import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from mentisrex.corpus.models import CorpusDocument
 from mentisrex.operations.config import OperationsConfig
 from mentisrex.operations.extractor import _HAS_PYPDF
@@ -44,7 +44,11 @@ def pipeline(tmp_config):
 
 
 def _write_paper(path: Path, content: str = "") -> Path:
-    path.write_text(content or "Title: Factor Momentum in Equity Markets\n\nAbstract: This paper examines momentum.\n\nMethodology: We use Fama-MacBeth regressions.\n\nResults: Sharpe ratio 1.4, t-stat 3.2.", encoding="utf-8")
+    path.write_text(
+        content
+        or "Title: Factor Momentum in Equity Markets\n\nAbstract: This paper examines momentum.\n\nMethodology: We use Fama-MacBeth regressions.\n\nResults: Sharpe ratio 1.4, t-stat 3.2.",
+        encoding="utf-8",
+    )
     return path
 
 
@@ -119,7 +123,12 @@ def test_high_priority_paper_gets_experiment_spec(tmp_config, pipeline):
     # Override min threshold to ensure spec is generated
     pipeline._cfg.min_priority_for_experiment = 0.0
     paper = tmp_config.incoming / "hipri.txt"
-    _write_paper(paper, "Title: Momentum Strategy\n\nAbstract: " + "Momentum generates alpha. " * 20 + "\n\nMethodology: Fama-MacBeth with Ken French data.\n\nResults: Sharpe 1.8 t-stat 4.2.")
+    _write_paper(
+        paper,
+        "Title: Momentum Strategy\n\nAbstract: "
+        + "Momentum generates alpha. " * 20
+        + "\n\nMethodology: Fama-MacBeth with Ken French data.\n\nResults: Sharpe 1.8 t-stat 4.2.",
+    )
     job = pipeline.process_file(paper)
     assert job.status == JobStatus.COMPLETED
     assert job.experiment_spec is not None

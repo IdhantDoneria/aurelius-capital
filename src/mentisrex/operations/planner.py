@@ -13,8 +13,14 @@ from mentisrex.operations.models import ExperimentSpec
 
 # Known available datasets in the platform
 _PLATFORM_DATASETS = {
-    "yahoo_finance", "ken_french", "fama_french", "sp500",
-    "russell", "msci", "crsp", "quandl",
+    "yahoo_finance",
+    "ken_french",
+    "fama_french",
+    "sp500",
+    "russell",
+    "msci",
+    "crsp",
+    "quandl",
 }
 
 _DATASET_NORMALIZE = {
@@ -78,17 +84,37 @@ def plan_experiment(paper_id: str, meta: dict[str, Any], priority_score: float) 
 
 def _normalize_datasets(mentioned: list[str]) -> list[str]:
     """Map human-readable dataset names to platform-normalized IDs."""
-    return [_DATASET_NORMALIZE.get(d, d.lower().replace(" ", "_").replace("-", "_")) for d in mentioned]
+    return [
+        _DATASET_NORMALIZE.get(d, d.lower().replace(" ", "_").replace("-", "_")) for d in mentioned
+    ]
 
 
 def _derive_strategy_name(title: str, meta: dict) -> str:
     """Slugify the paper title into a strategy name."""
     # Remove common stop words and punctuation
     clean = re.sub(r"[^\w\s]", "", title.lower())
-    words = [w for w in clean.split() if w not in {
-        "a", "an", "the", "in", "on", "of", "and", "or", "for",
-        "to", "with", "from", "evidence", "study", "analysis",
-    }]
+    words = [
+        w
+        for w in clean.split()
+        if w
+        not in {
+            "a",
+            "an",
+            "the",
+            "in",
+            "on",
+            "of",
+            "and",
+            "or",
+            "for",
+            "to",
+            "with",
+            "from",
+            "evidence",
+            "study",
+            "analysis",
+        }
+    ]
     slug = "_".join(words[:5])
     return slug or "paper_strategy"
 
@@ -97,7 +123,7 @@ def _derive_hypothesis(meta: dict) -> str:
     """Construct a testable hypothesis statement from paper content."""
     abstract = meta.get("abstract", "")
     features = meta.get("features_mentioned", [])
-    datasets = meta.get("datasets_mentioned", [])
+    meta.get("datasets_mentioned", [])
 
     if abstract and len(abstract) > 80:
         # Take first 2 sentences of abstract as the hypothesis basis

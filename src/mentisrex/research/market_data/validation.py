@@ -12,7 +12,6 @@ from __future__ import annotations
 from datetime import date
 
 from mentisrex.research.market_data import diagnostics as diag
-from mentisrex.research.market_data.models import Severity
 from mentisrex.research.valuation.snapshot import validate_pit
 
 
@@ -56,8 +55,10 @@ class CalibrationValidator:
     def validate(self, report) -> list:
         problems = list(report.problems)
         if report.diagnostics.max_repricing_error > self.tol:
-            problems.append(f"{report.curve_id}: max repricing error "
-                            f"{report.diagnostics.max_repricing_error:.2e} > {self.tol:.0e}")
+            problems.append(
+                f"{report.curve_id}: max repricing error "
+                f"{report.diagnostics.max_repricing_error:.2e} > {self.tol:.0e}"
+            )
         if not report.diagnostics.converged:
             problems.append(f"{report.curve_id}: calibration did not converge")
         return problems
@@ -69,7 +70,7 @@ class VolatilitySurfaceValidator:
     def validate(self, surface) -> list:
         problems = list(surface.validate())
         for k in surface.strikes:
-            for a, b in zip(surface.maturities, surface.maturities[1:]):
+            for a, b in zip(surface.maturities, surface.maturities[1:], strict=False):
                 problems += diag.calendar_spread(surface, k, a, b)
         return problems
 

@@ -111,19 +111,23 @@ def build_portfolio_diagnostics(
         max_drift = drift_summary["max_weight_drift_ever"]
         drifted = avg_drift > drift_threshold
 
-        records.append(make_diagnostic(
-            "portfolio.weight_drift",
-            DiscrepancyCategory.PORTFOLIO_DRIFT,
-            DiagnosticSeverity.WARNING if drifted else DiagnosticSeverity.INFO,
-            "avg_max_weight_drift",
-            observed=avg_drift,
-            threshold=drift_threshold,
-            sample_size=n,
-            method="absolute_threshold",
-            evidence=(f"avg_weight_drift={avg_drift:.3f} "
-                      f"max_drift={max_drift:.3f} threshold={drift_threshold:.2f}"),
-            status=ValidationStatus.WARNING if drifted else ValidationStatus.VALID,
-        ))
+        records.append(
+            make_diagnostic(
+                "portfolio.weight_drift",
+                DiscrepancyCategory.PORTFOLIO_DRIFT,
+                DiagnosticSeverity.WARNING if drifted else DiagnosticSeverity.INFO,
+                "avg_max_weight_drift",
+                observed=avg_drift,
+                threshold=drift_threshold,
+                sample_size=n,
+                method="absolute_threshold",
+                evidence=(
+                    f"avg_weight_drift={avg_drift:.3f} "
+                    f"max_drift={max_drift:.3f} threshold={drift_threshold:.2f}"
+                ),
+                status=ValidationStatus.WARNING if drifted else ValidationStatus.VALID,
+            )
+        )
 
     # position count from cycles
     position_counts = []

@@ -38,14 +38,20 @@ class RunConfiguration:
     executor: Callable[[Any], Any] | None = None
     benchmark_returns: list[float] | None = None
     artifacts_dir: str | None = None
-    policy: str = "fail_fast"                       # fail_fast | continue_on_error
+    policy: str = "fail_fast"  # fail_fast | continue_on_error
     build_matrix: bool = False
     metadata: dict = field(default_factory=dict)
 
 
 class ResearchSession:
-    def __init__(self, config: RunConfiguration, *, registry, matrix_engine=None,
-                 hooks: HookRegistry | None = None) -> None:
+    def __init__(
+        self,
+        config: RunConfiguration,
+        *,
+        registry,
+        matrix_engine=None,
+        hooks: HookRegistry | None = None,
+    ) -> None:
         self.config = config
         self.registry = registry
         self.matrix_engine = matrix_engine

@@ -53,9 +53,7 @@ def check_quality(h: HypothesisRecord) -> QualityResult:
     if len(content_tokens) < _MIN_UNIQUE_CONTENT_TOKENS:
         reasons.append("too_vague")
 
-    min_circular_reasoning_len = (
-        10  # shorter than _MIN_STATEMENT_LEN to catch near-verbatim copies
-    )
+    min_circular_reasoning_len = 10  # shorter than _MIN_STATEMENT_LEN to catch near-verbatim copies
     # Circular reasoning: statement is contained within intuition (near-verbatim)
     if (
         len(h.testable_statement) > min_circular_reasoning_len

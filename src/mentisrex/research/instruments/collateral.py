@@ -11,8 +11,9 @@ from __future__ import annotations
 from mentisrex.research.instruments.models import CollateralBalance
 
 
-def post(cash: float = 0.0, securities: float = 0.0, *, haircut: float = 0.0,
-         currency: str = "USD") -> CollateralBalance:
+def post(
+    cash: float = 0.0, securities: float = 0.0, *, haircut: float = 0.0, currency: str = "USD"
+) -> CollateralBalance:
     if not 0.0 <= haircut < 1.0:
         raise ValueError(f"haircut must be in [0,1), got {haircut}")
     return CollateralBalance(cash=cash, securities=securities, haircut=haircut, currency=currency)
@@ -27,5 +28,7 @@ def base_value(balance: CollateralBalance, base_currency: str, fx_provider=None)
     if balance.currency == base_currency:
         return balance.value
     if fx_provider is None:
-        raise ValueError(f"need fx_provider to value {balance.currency} collateral in {base_currency}")
+        raise ValueError(
+            f"need fx_provider to value {balance.currency} collateral in {base_currency}"
+        )
     return balance.value * fx_provider.rate(balance.currency, base_currency)

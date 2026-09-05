@@ -24,22 +24,58 @@ def _next_id() -> str:
     return f"H{_seq['n']:06d}"
 
 
-def make_forward(currency: str, notional_base: float, *, rate: float | None = None,
-                 maturity: date | None = None, hedge_id: str | None = None) -> FXHedge:
-    return FXHedge(hedge_id or _next_id(), validate_code(currency), float(notional_base),
-                   "forward", rate, maturity)
+def make_forward(
+    currency: str,
+    notional_base: float,
+    *,
+    rate: float | None = None,
+    maturity: date | None = None,
+    hedge_id: str | None = None,
+) -> FXHedge:
+    return FXHedge(
+        hedge_id or _next_id(),
+        validate_code(currency),
+        float(notional_base),
+        "forward",
+        rate,
+        maturity,
+    )
 
 
-def make_future(currency: str, notional_base: float, *, rate: float | None = None,
-                maturity: date | None = None, hedge_id: str | None = None) -> FXHedge:
-    return FXHedge(hedge_id or _next_id(), validate_code(currency), float(notional_base),
-                   "future", rate, maturity)
+def make_future(
+    currency: str,
+    notional_base: float,
+    *,
+    rate: float | None = None,
+    maturity: date | None = None,
+    hedge_id: str | None = None,
+) -> FXHedge:
+    return FXHedge(
+        hedge_id or _next_id(),
+        validate_code(currency),
+        float(notional_base),
+        "future",
+        rate,
+        maturity,
+    )
 
 
-def make_swap(currency: str, notional_base: float, *, rate: float | None = None,
-              maturity: date | None = None, hedge_id: str | None = None) -> FXHedge:
-    return FXHedge(hedge_id or _next_id(), validate_code(currency), float(notional_base),
-                   "swap", rate, maturity)
+def make_swap(
+    currency: str,
+    notional_base: float,
+    *,
+    rate: float | None = None,
+    maturity: date | None = None,
+    hedge_id: str | None = None,
+) -> FXHedge:
+    return FXHedge(
+        hedge_id or _next_id(),
+        validate_code(currency),
+        float(notional_base),
+        "swap",
+        rate,
+        maturity,
+    )
 
 
 def unhedged_by_currency(book, *, as_of: date | None = None, prices: dict | None = None) -> dict:

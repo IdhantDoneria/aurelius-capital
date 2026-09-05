@@ -17,7 +17,7 @@ def _slices_from_fractions(order_id, algo, quantity, fractions) -> ExecutionSche
     slices, allocated = [], 0.0
     for i, f in enumerate(fractions):
         if i == len(fractions) - 1:
-            qty = quantity - allocated          # last slice absorbs rounding
+            qty = quantity - allocated  # last slice absorbs rounding
         else:
             qty = quantity * (f / total)
             allocated += qty
@@ -37,8 +37,9 @@ def profile_schedule(order_id, quantity, profile, *, algo="vwap") -> ExecutionSc
     return _slices_from_fractions(order_id, algo, quantity, list(profile))
 
 
-def pov_schedule(order_id, quantity, interval_volume, participation_rate, *,
-                 max_slices=100, algo="pov") -> ExecutionSchedule:
+def pov_schedule(
+    order_id, quantity, interval_volume, participation_rate, *, max_slices=100, algo="pov"
+) -> ExecutionSchedule:
     """Participate at `participation_rate` of each interval's volume until the parent
     quantity is exhausted. `interval_volume` is expected shares available per slice."""
     remaining = abs(quantity)

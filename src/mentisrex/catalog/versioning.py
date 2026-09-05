@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import duckdb
 
@@ -74,7 +74,7 @@ class VersionManager:
             logger.warning("snapshot_failed", dataset_id=dataset_id, error=str(exc))
             meta["error"] = str(exc)
 
-        version_str = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        version_str = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         v = DataVersion(
             dataset_id=dataset_id,
             version=version_str,

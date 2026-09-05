@@ -73,6 +73,7 @@ class PipelineJournal:
                             except json.JSONDecodeError:
                                 pass
             from datetime import timedelta
+
             current = (datetime.combine(current, datetime.min.time()) + timedelta(days=1)).date()
         return entries
 

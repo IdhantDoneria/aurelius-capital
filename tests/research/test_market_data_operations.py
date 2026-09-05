@@ -27,34 +27,77 @@ REF = date(2024, 6, 3)
 
 # ── helpers ─────────────────────────────────────────────────────────────────────
 
-def obsmsg(sid, field, value, obs, *, eff=None, source="v", seq=None, ts=None,
-           mtype=ops.MessageType.OBSERVATION, revision=0, currency="USD", otype="close"):
-    payload = {"id": sid, "id_type": "ticker", "field": field, "type": otype, "value": value,
-               "currency": currency, "unit": "price", "source": source, "revision": revision,
-               "observation_date": obs.isoformat(), "effective_date": (eff or obs).isoformat()}
-    return ops.SourceMessage(source=source, payload=payload, msg_type=mtype, vendor_id=sid,
-                             sequence=seq, source_timestamp=ts, observation_date=obs,
-                             effective_date=eff or obs)
+
+def obsmsg(
+    sid,
+    field,
+    value,
+    obs,
+    *,
+    eff=None,
+    source="v",
+    seq=None,
+    ts=None,
+    mtype=ops.MessageType.OBSERVATION,
+    revision=0,
+    currency="USD",
+    otype="close",
+):
+    payload = {
+        "id": sid,
+        "id_type": "ticker",
+        "field": field,
+        "type": otype,
+        "value": value,
+        "currency": currency,
+        "unit": "price",
+        "source": source,
+        "revision": revision,
+        "observation_date": obs.isoformat(),
+        "effective_date": (eff or obs).isoformat(),
+    }
+    return ops.SourceMessage(
+        source=source,
+        payload=payload,
+        msg_type=mtype,
+        vendor_id=sid,
+        sequence=seq,
+        source_timestamp=ts,
+        observation_date=obs,
+        effective_date=eff or obs,
+    )
 
 
 def sim(seeds=None, *, days=5, start=date(2024, 6, 1), seed=0):
-    return ops.StreamingSimulator(ops.SimConfig(
-        seeds=seeds or {"AAPL": 190.0, "MSFT": 400.0}, start=start, days=days, seed=seed))
+    return ops.StreamingSimulator(
+        ops.SimConfig(
+            seeds=seeds or {"AAPL": 190.0, "MSFT": 400.0}, start=start, days=days, seed=seed
+        )
+    )
 
 
 def calibrated_curve():
-    return md.CurveBootstrapper().bootstrap(
-        [md.deposit(0.25, 0.05), md.swap(1, 0.05), md.swap(5, 0.05), md.swap(10, 0.05)],
-        REF, curve_id="USD").curve
+    return (
+        md.CurveBootstrapper()
+        .bootstrap(
+            [md.deposit(0.25, 0.05), md.swap(1, 0.05), md.swap(5, 0.05), md.swap(10, 0.05)],
+            REF,
+            curve_id="USD",
+        )
+        .curve
+    )
 
 
 def calibrated_surface(f=190.0):
     def smile(t):
         ks = tuple(f * m for m in (0.8, 0.9, 1.0, 1.1, 1.2))
-        return md.SmileQuotes(f, t, ks, tuple(sabr_vol(f, k, t, 0.25, 0.5, -0.3, 0.4) for k in ks),
-                              underlying="AAPL")
+        return md.SmileQuotes(
+            f, t, ks, tuple(sabr_vol(f, k, t, 0.25, 0.5, -0.3, 0.4) for k in ks), underlying="AAPL"
+        )
+
     return md.VolatilitySurfaceCalibrator(md.VolModel.SVI).calibrate_surface(
-        [smile(t) for t in (0.5, 1.0, 2.0)], "AAPL", REF)[0]
+        [smile(t) for t in (0.5, 1.0, 2.0)], "AAPL", REF
+    )[0]
 
 
 def integ_snapshot():
@@ -62,13 +105,18 @@ def integ_snapshot():
     eng = ops.MarketDataOperationsEngine(fx_provider=fx)
     eng.ingest([obsmsg("AAPL", "close", 190.0, date(2024, 6, 2))])
     return eng.reconstruct_snapshot(
-        valuation_date=REF, knowledge_date=REF, curves={"USD": calibrated_curve()},
-        vol_surfaces={"AAPL": calibrated_surface()}, dividend_yields={"AAPL": 0.005}).snapshot
+        valuation_date=REF,
+        knowledge_date=REF,
+        curves={"USD": calibrated_curve()},
+        vol_surfaces={"AAPL": calibrated_surface()},
+        dividend_yields={"AAPL": 0.005},
+    ).snapshot
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 1. Feed-message model
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_message_fingerprint_stable():
     m = obsmsg("AAPL", "close", 190.0, REF)
@@ -92,20 +140,25 @@ def test_message_knowledge_date_falls_back_to_observation():
 
 
 def test_message_infers_dates_from_payload():
-    m = ops.SourceMessage(source="v", payload={"id": "X", "field": "close", "value": 1.0,
-                                               "observation_date": "2024-06-03"})
-    assert m.observation_date == REF and m.effective_date == REF
+    m = ops.SourceMessage(
+        source="v",
+        payload={"id": "X", "field": "close", "value": 1.0, "observation_date": "2024-06-03"},
+    )
+    assert m.observation_date == REF
+    assert m.effective_date == REF
 
 
 def test_message_security_and_field_hints():
     m = obsmsg("AAPL", "bid", 189.0, REF)
-    assert m.security_hint == "AAPL" and m.field_hint == "bid"
+    assert m.security_hint == "AAPL"
+    assert m.field_hint == "bid"
 
 
 def test_message_from_observation_roundtrips_key():
     o = md.CanonicalObservation("AAPL", md.ObservationType.CLOSE, "close", 190.0, REF, REF)
     m = ops.message_from_observation(o, source="v")
-    assert m.security_hint == "AAPL" and float(m.payload["value"]) == 190.0
+    assert m.security_hint == "AAPL"
+    assert float(m.payload["value"]) == 190.0
 
 
 def test_message_types_distinct():
@@ -115,19 +168,23 @@ def test_message_types_distinct():
 def test_message_with_receive_timestamp_immutable():
     m = obsmsg("AAPL", "close", 190.0, REF)
     m2 = m.with_receive_timestamp(datetime(2024, 6, 3, 17))
-    assert m.receive_timestamp is None and m2.receive_timestamp is not None
+    assert m.receive_timestamp is None
+    assert m2.receive_timestamp is not None
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 2. Adapter runtime + capabilities
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_local_adapter_wraps_m19_source():
-    src = md.StaticSource([{"id": "AAPL", "field": "close", "value": 190.0,
-                            "observation_date": "2024-06-02"}])
+    src = md.StaticSource(
+        [{"id": "AAPL", "field": "close", "value": 190.0, "observation_date": "2024-06-02"}]
+    )
     a = ops.LocalSourceAdapter(src, capabilities=(ops.SourceCapability.HISTORICAL,))
     msgs = a.fetch(REF)
-    assert len(msgs) == 1 and msgs[0].security_hint == "AAPL"
+    assert len(msgs) == 1
+    assert msgs[0].security_hint == "AAPL"
 
 
 def test_adapter_capability_declared_and_checked():
@@ -152,8 +209,12 @@ def test_adapter_lifecycle_state():
 
 
 def test_adapter_subscription_filters_health():
-    src = md.StaticSource([{"id": "AAPL", "field": "close", "value": 1.0, "observation_date": "2024-06-02"},
-                           {"id": "MSFT", "field": "close", "value": 2.0, "observation_date": "2024-06-02"}])
+    src = md.StaticSource(
+        [
+            {"id": "AAPL", "field": "close", "value": 1.0, "observation_date": "2024-06-02"},
+            {"id": "MSFT", "field": "close", "value": 2.0, "observation_date": "2024-06-02"},
+        ]
+    )
     a = ops.LocalSourceAdapter(src)
     a.subscribe(["AAPL"])
     msgs = a.fetch(REF)
@@ -162,8 +223,10 @@ def test_adapter_subscription_filters_health():
 
 
 def test_message_log_adapter_fetch_pit():
-    msgs = [obsmsg("A", "close", 1.0, date(2024, 6, 1)),
-            obsmsg("A", "close", 2.0, date(2024, 6, 5))]
+    msgs = [
+        obsmsg("A", "close", 1.0, date(2024, 6, 1)),
+        obsmsg("A", "close", 2.0, date(2024, 6, 5)),
+    ]
     a = ops.MessageLogAdapter(msgs)
     assert len(a.fetch(date(2024, 6, 2))) == 1
 
@@ -173,7 +236,9 @@ def test_message_log_adapter_poll_streams():
     a = ops.MessageLogAdapter(msgs)
     first = a.poll(max_messages=2)
     second = a.poll(max_messages=2)
-    assert len(first) == 2 and len(second) == 2 and first[0] is not second[0]
+    assert len(first) == 2
+    assert len(second) == 2
+    assert first[0] is not second[0]
 
 
 def test_message_log_adapter_reset():
@@ -185,7 +250,8 @@ def test_message_log_adapter_reset():
 
 def test_fixture_vendor_adapter_labels_vendor():
     a = ops.FixtureVendorAdapter("bloomberg", [obsmsg("A", "close", 1.0, REF)])
-    assert a.metadata.vendor == "bloomberg" and "bloomberg" in a.metadata.name
+    assert a.metadata.vendor == "bloomberg"
+    assert "bloomberg" in a.metadata.name
 
 
 def test_production_adapter_connect_raises_with_unblock():
@@ -205,12 +271,14 @@ def test_adapter_health_tracks_counts():
     a = ops.LocalSourceAdapter(md.DeterministicMockSource({"A": 100.0}))
     a.fetch(REF)
     h = a.health()
-    assert h.message_count == 1 and h.state is ops.ConnectionState.CONNECTED
+    assert h.message_count == 1
+    assert h.state is ops.ConnectionState.CONNECTED
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 3. Ordering & sequence management
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_ordering_dedup_by_fingerprint():
     m = obsmsg("A", "close", 1.0, REF, seq=1)
@@ -271,7 +339,8 @@ def test_ordering_reject_drops_out_of_order():
     a = obsmsg("A", "close", 1.0, date(2024, 6, 1), seq=1, ts=datetime(2024, 6, 1, 16))
     b = obsmsg("A", "close", 2.0, date(2024, 6, 2), seq=2, ts=datetime(2024, 6, 2, 16))
     rep = ops.SequenceManager(ops.OrderingPolicy.REJECT).process([b, a])
-    assert len(rep.accepted) == 1 and len(rep.dropped) == 1
+    assert len(rep.accepted) == 1
+    assert len(rep.dropped) == 1
 
 
 def test_ordering_quarantine_diverts():
@@ -282,29 +351,48 @@ def test_ordering_quarantine_diverts():
 
 
 def test_ordering_latest_valid_keeps_newest_per_key():
-    a = obsmsg("A", "close", 1.0, date(2024, 6, 1), eff=date(2024, 6, 1), seq=1,
-               ts=datetime(2024, 6, 1, 16))
-    b = obsmsg("A", "close", 2.0, date(2024, 6, 1), eff=date(2024, 6, 1), seq=2,
-               ts=datetime(2024, 6, 2, 16))
+    a = obsmsg(
+        "A",
+        "close",
+        1.0,
+        date(2024, 6, 1),
+        eff=date(2024, 6, 1),
+        seq=1,
+        ts=datetime(2024, 6, 1, 16),
+    )
+    b = obsmsg(
+        "A",
+        "close",
+        2.0,
+        date(2024, 6, 1),
+        eff=date(2024, 6, 1),
+        seq=2,
+        ts=datetime(2024, 6, 2, 16),
+    )
     rep = ops.SequenceManager(ops.OrderingPolicy.LATEST_VALID).process([a, b])
-    assert len(rep.accepted) == 1 and float(rep.accepted[0].payload["value"]) == 2.0
+    assert len(rep.accepted) == 1
+    assert float(rep.accepted[0].payload["value"]) == 2.0
 
 
 def test_ordering_buffer_keeps_all():
-    msgs = [obsmsg("A", "close", float(i), date(2024, 6, 1) + timedelta(days=i), seq=i)
-            for i in range(4)]
+    msgs = [
+        obsmsg("A", "close", float(i), date(2024, 6, 1) + timedelta(days=i), seq=i)
+        for i in range(4)
+    ]
     rep = ops.SequenceManager(ops.OrderingPolicy.BUFFER).process(msgs)
     assert len(rep.accepted) == 4
 
 
 def test_ordering_empty_batch():
     rep = ops.SequenceManager().process([])
-    assert rep.accepted == () and rep.events == ()
+    assert rep.accepted == ()
+    assert rep.events == ()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 4. Arbitration
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def _two_source(vA=100.0, vB=100.5):
     a = obsmsg("X", "close", vA, REF, source="A")
@@ -315,7 +403,8 @@ def _two_source(vA=100.0, vB=100.5):
 def test_arbitration_source_priority():
     cfg = ops.ArbitrationConfig(ops.ArbitrationPolicy.SOURCE_PRIORITY, priority=("B", "A"))
     res = ops.SourceArbiter(cfg).arbitrate(_two_source())
-    assert len(res.winners) == 1 and res.winners[0].source == "B"
+    assert len(res.winners) == 1
+    assert res.winners[0].source == "B"
 
 
 def test_arbitration_primary_source():
@@ -327,7 +416,8 @@ def test_arbitration_primary_source():
 def test_arbitration_primary_missing_drops():
     cfg = ops.ArbitrationConfig(ops.ArbitrationPolicy.PRIMARY_SOURCE, primary="Z")
     res = ops.SourceArbiter(cfg).arbitrate(_two_source())
-    assert not res.winners and len(res.dropped) == 1
+    assert not res.winners
+    assert len(res.dropped) == 1
 
 
 def test_arbitration_latest_valid():
@@ -339,15 +429,17 @@ def test_arbitration_latest_valid():
 
 
 def test_arbitration_cross_source_confirmation_pass():
-    cfg = ops.ArbitrationConfig(ops.ArbitrationPolicy.CROSS_SOURCE_CONFIRMATION,
-                                tolerance_frac=1e-3, min_confirmations=2)
+    cfg = ops.ArbitrationConfig(
+        ops.ArbitrationPolicy.CROSS_SOURCE_CONFIRMATION, tolerance_frac=1e-3, min_confirmations=2
+    )
     res = ops.SourceArbiter(cfg).arbitrate(_two_source(100.0, 100.05))
     assert len(res.winners) == 1
 
 
 def test_arbitration_cross_source_confirmation_insufficient():
-    cfg = ops.ArbitrationConfig(ops.ArbitrationPolicy.CROSS_SOURCE_CONFIRMATION,
-                                tolerance_frac=1e-6, min_confirmations=2)
+    cfg = ops.ArbitrationConfig(
+        ops.ArbitrationPolicy.CROSS_SOURCE_CONFIRMATION, tolerance_frac=1e-6, min_confirmations=2
+    )
     res = ops.SourceArbiter(cfg).arbitrate(_two_source(100.0, 105.0))
     assert not res.winners
 
@@ -355,7 +447,8 @@ def test_arbitration_cross_source_confirmation_insufficient():
 def test_arbitration_reject_on_conflict():
     cfg = ops.ArbitrationConfig(ops.ArbitrationPolicy.REJECT_ON_CONFLICT, tolerance_frac=1e-6)
     res = ops.SourceArbiter(cfg).arbitrate(_two_source(100.0, 105.0))
-    assert not res.winners and len(res.dropped) == 1
+    assert not res.winners
+    assert len(res.dropped) == 1
 
 
 def test_arbitration_reject_on_conflict_agree_keeps():
@@ -366,12 +459,16 @@ def test_arbitration_reject_on_conflict_agree_keeps():
 
 def test_arbitration_policy_fingerprint_stable():
     cfg = ops.ArbitrationConfig(ops.ArbitrationPolicy.SOURCE_PRIORITY, priority=("A", "B"))
-    assert cfg.fingerprint() == ops.ArbitrationConfig(
-        ops.ArbitrationPolicy.SOURCE_PRIORITY, priority=("A", "B")).fingerprint()
+    assert (
+        cfg.fingerprint()
+        == ops.ArbitrationConfig(
+            ops.ArbitrationPolicy.SOURCE_PRIORITY, priority=("A", "B")
+        ).fingerprint()
+    )
 
 
 def test_arbitration_deterministic_key_order():
-    msgs = _two_source() + [obsmsg("Y", "close", 5.0, REF, source="A")]
+    msgs = [*_two_source(), obsmsg("Y", "close", 5.0, REF, source="A")]
     r1 = ops.SourceArbiter().arbitrate(msgs)
     r2 = ops.SourceArbiter().arbitrate(list(reversed(msgs)))
     assert [w.security_hint for w in r1.winners] == [w.security_hint for w in r2.winners]
@@ -379,21 +476,25 @@ def test_arbitration_deterministic_key_order():
 
 def test_arbitration_single_source_passthrough():
     res = ops.SourceArbiter().arbitrate([obsmsg("X", "close", 1.0, REF, source="A")])
-    assert len(res.winners) == 1 and not res.events
+    assert len(res.winners) == 1
+    assert not res.events
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 5. Cross-source reconciliation
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_reconcile_agreement():
     rep = ops.reconcile(_two_source(100.0, 100.0000001))
-    assert rep.ok and rep.agreed_keys == 1
+    assert rep.ok
+    assert rep.agreed_keys == 1
 
 
 def test_reconcile_disagreement():
     rep = ops.reconcile(_two_source(100.0, 105.0))
-    assert not rep.ok and rep.disagreements[0].kind == "value"
+    assert not rep.ok
+    assert rep.disagreements[0].kind == "value"
 
 
 def test_reconcile_max_rel_diff():
@@ -409,6 +510,7 @@ def test_reconcile_single_source_no_disagreement():
 # ══════════════════════════════════════════════════════════════════════════════
 # 6. Replay engine
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_replay_deterministic_fingerprint():
     msgs = sim(days=4).generate(ops.FaultSpec())
@@ -435,70 +537,97 @@ def test_replay_equals_direct_reconstruction():
 def test_replay_date_range_filter():
     msgs = sim(days=6).generate(ops.FaultSpec())
     res = ops.MarketDataReplayEngine(msgs).replay(
-        ops.ReplayConfig(start=date(2024, 6, 3), end=date(2024, 6, 5)), reconstruct=False)
+        ops.ReplayConfig(start=date(2024, 6, 3), end=date(2024, 6, 5)), reconstruct=False
+    )
     assert all(date(2024, 6, 3) <= c.valuation_date <= date(2024, 6, 5) for c in res.checkpoints)
 
 
 def test_replay_security_filter():
     msgs = sim({"A": 1.0, "B": 2.0}, days=3).generate(ops.FaultSpec())
     res = ops.MarketDataReplayEngine(msgs).replay(
-        ops.ReplayConfig(security_ids=("A",)), reconstruct=True)
+        ops.ReplayConfig(security_ids=("A",)), reconstruct=True
+    )
     snap = res.checkpoints[-1].reconstruction.snapshot
-    assert "A" in snap.spots and "B" not in snap.spots
+    assert "A" in snap.spots
+    assert "B" not in snap.spots
 
 
 def test_replay_knowledge_lag():
     msgs = [obsmsg("A", "close", 1.0, date(2024, 6, 1), seq=1)]
     res = ops.MarketDataReplayEngine(msgs).replay(
-        ops.ReplayConfig(dates=(date(2024, 6, 1),), knowledge_lag_days=2), reconstruct=True)
+        ops.ReplayConfig(dates=(date(2024, 6, 1),), knowledge_lag_days=2), reconstruct=True
+    )
     assert res.checkpoints[0].knowledge_date == date(2024, 6, 3)
 
 
 def test_replay_explicit_dates():
     msgs = sim(days=5).generate(ops.FaultSpec())
     res = ops.MarketDataReplayEngine(msgs).replay(
-        ops.ReplayConfig(dates=(date(2024, 6, 2), date(2024, 6, 4))), reconstruct=False)
+        ops.ReplayConfig(dates=(date(2024, 6, 2), date(2024, 6, 4))), reconstruct=False
+    )
     assert [c.valuation_date for c in res.checkpoints] == [date(2024, 6, 2), date(2024, 6, 4)]
 
 
 def test_replay_empty_log():
     res = ops.MarketDataReplayEngine([]).replay()
-    assert res.checkpoints == () and res.total_emitted == 0
+    assert res.checkpoints == ()
+    assert res.total_emitted == 0
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 7. Historical PIT reconstruction (adversarial)
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_pit_excludes_observation_after_valuation_date():
-    msgs = [obsmsg("A", "close", 100.0, date(2024, 6, 2)),
-            obsmsg("A", "close", 200.0, date(2024, 6, 10))]
+    msgs = [
+        obsmsg("A", "close", 100.0, date(2024, 6, 2)),
+        obsmsg("A", "close", 200.0, date(2024, 6, 10)),
+    ]
     rec = ops.HistoricalReconstructor().reconstruct(msgs, valuation_date=REF, knowledge_date=REF)
     assert rec.snapshot.spots["A"] == 100.0
 
 
 def test_pit_excludes_revision_known_after_boundary():
     m0 = obsmsg("A", "close", 100.0, date(2024, 6, 3), ts=datetime(2024, 6, 3, 16))
-    m1 = obsmsg("A", "close", 150.0, date(2024, 6, 3), revision=1,
-                mtype=ops.MessageType.REVISION, ts=datetime(2024, 6, 6, 16))
+    m1 = obsmsg(
+        "A",
+        "close",
+        150.0,
+        date(2024, 6, 3),
+        revision=1,
+        mtype=ops.MessageType.REVISION,
+        ts=datetime(2024, 6, 6, 16),
+    )
     rec = ops.HistoricalReconstructor().reconstruct(
-        [m0, m1], valuation_date=REF, knowledge_date=REF)
+        [m0, m1], valuation_date=REF, knowledge_date=REF
+    )
     assert rec.snapshot.spots["A"] == 100.0
 
 
 def test_pit_includes_revision_after_knowledge_advances():
     m0 = obsmsg("A", "close", 100.0, date(2024, 6, 3), ts=datetime(2024, 6, 3, 16))
-    m1 = obsmsg("A", "close", 150.0, date(2024, 6, 3), revision=1,
-                mtype=ops.MessageType.REVISION, ts=datetime(2024, 6, 6, 16))
+    m1 = obsmsg(
+        "A",
+        "close",
+        150.0,
+        date(2024, 6, 3),
+        revision=1,
+        mtype=ops.MessageType.REVISION,
+        ts=datetime(2024, 6, 6, 16),
+    )
     rec = ops.HistoricalReconstructor().reconstruct(
-        [m0, m1], valuation_date=REF, knowledge_date=date(2024, 6, 6))
+        [m0, m1], valuation_date=REF, knowledge_date=date(2024, 6, 6)
+    )
     assert rec.snapshot.spots["A"] == 150.0
 
 
 def test_pit_late_quote_does_not_leak():
     late = obsmsg("A", "close", 999.0, date(2024, 6, 2), ts=datetime(2024, 6, 9, 16))
     good = obsmsg("A", "close", 100.0, date(2024, 6, 2), ts=datetime(2024, 6, 2, 16))
-    rec = ops.HistoricalReconstructor().reconstruct([good, late], valuation_date=REF, knowledge_date=REF)
+    rec = ops.HistoricalReconstructor().reconstruct(
+        [good, late], valuation_date=REF, knowledge_date=REF
+    )
     assert rec.snapshot.spots["A"] == 100.0
 
 
@@ -512,27 +641,52 @@ def test_pit_tombstone_removes_observation():
 
 def test_pit_known_as_of_audit_trail():
     m0 = obsmsg("A", "close", 100.0, date(2024, 6, 3), ts=datetime(2024, 6, 3, 16))
-    m1 = obsmsg("A", "close", 150.0, date(2024, 6, 3), revision=1,
-                mtype=ops.MessageType.REVISION, ts=datetime(2024, 6, 6, 16))
+    m1 = obsmsg(
+        "A",
+        "close",
+        150.0,
+        date(2024, 6, 3),
+        revision=1,
+        mtype=ops.MessageType.REVISION,
+        ts=datetime(2024, 6, 6, 16),
+    )
     rec = ops.HistoricalReconstructor().reconstruct(
-        [m0, m1], valuation_date=REF, knowledge_date=date(2024, 6, 6))
+        [m0, m1], valuation_date=REF, knowledge_date=date(2024, 6, 6)
+    )
     rr = rec.known_as_of("A", "close", "close", date(2024, 6, 3))
-    assert rr is not None and rr.value == 150.0
+    assert rr is not None
+    assert rr.value == 150.0
 
 
 def test_pit_revision_store_was_restated():
     m0 = obsmsg("A", "close", 100.0, date(2024, 6, 3), ts=datetime(2024, 6, 3, 16))
-    m1 = obsmsg("A", "close", 150.0, date(2024, 6, 3), revision=1,
-                mtype=ops.MessageType.REVISION, ts=datetime(2024, 6, 6, 16))
+    m1 = obsmsg(
+        "A",
+        "close",
+        150.0,
+        date(2024, 6, 3),
+        revision=1,
+        mtype=ops.MessageType.REVISION,
+        ts=datetime(2024, 6, 6, 16),
+    )
     rec = ops.HistoricalReconstructor().reconstruct(
-        [m0, m1], valuation_date=REF, knowledge_date=date(2024, 6, 6))
+        [m0, m1], valuation_date=REF, knowledge_date=date(2024, 6, 6)
+    )
     assert rec.revision_store.was_restated("A", "close:close", date(2024, 6, 3))
 
 
 def test_pit_corrected_fx_fixing_selects_knowable():
     a = obsmsg("EURUSD", "close", 1.10, date(2024, 6, 3), source="v", ts=datetime(2024, 6, 3, 16))
-    b = obsmsg("EURUSD", "close", 1.20, date(2024, 6, 3), source="v", revision=1,
-               mtype=ops.MessageType.REVISION, ts=datetime(2024, 6, 7, 16))
+    b = obsmsg(
+        "EURUSD",
+        "close",
+        1.20,
+        date(2024, 6, 3),
+        source="v",
+        revision=1,
+        mtype=ops.MessageType.REVISION,
+        ts=datetime(2024, 6, 7, 16),
+    )
     rec = ops.HistoricalReconstructor().reconstruct([a, b], valuation_date=REF, knowledge_date=REF)
     assert rec.snapshot.spots["EURUSD"] == 1.10
 
@@ -540,34 +694,47 @@ def test_pit_corrected_fx_fixing_selects_knowable():
 def test_pit_reconstruction_fingerprint_deterministic():
     msgs = sim(days=4).generate(ops.FaultSpec(duplicate_frac=0.3))
     r1 = ops.HistoricalReconstructor().reconstruct(msgs, valuation_date=REF, knowledge_date=REF)
-    r2 = ops.HistoricalReconstructor().reconstruct(list(reversed(msgs)),
-                                                   valuation_date=REF, knowledge_date=REF)
+    r2 = ops.HistoricalReconstructor().reconstruct(
+        list(reversed(msgs)), valuation_date=REF, knowledge_date=REF
+    )
     assert r1.fingerprint == r2.fingerprint
 
 
 def test_pit_security_filter():
-    msgs = [obsmsg("A", "close", 1.0, date(2024, 6, 2)),
-            obsmsg("B", "close", 2.0, date(2024, 6, 2))]
+    msgs = [
+        obsmsg("A", "close", 1.0, date(2024, 6, 2)),
+        obsmsg("B", "close", 2.0, date(2024, 6, 2)),
+    ]
     rec = ops.HistoricalReconstructor().reconstruct(
-        msgs, valuation_date=REF, knowledge_date=REF, security_ids=["A"])
-    assert "A" in rec.snapshot.spots and "B" not in rec.snapshot.spots
+        msgs, valuation_date=REF, knowledge_date=REF, security_ids=["A"]
+    )
+    assert "A" in rec.snapshot.spots
+    assert "B" not in rec.snapshot.spots
 
 
 def test_pit_arbitration_conflict_dropped():
     a = obsmsg("A", "close", 100.0, date(2024, 6, 2), source="A")
     b = obsmsg("A", "close", 130.0, date(2024, 6, 2), source="B")
-    arb = ops.SourceArbiter(ops.ArbitrationConfig(
-        ops.ArbitrationPolicy.REJECT_ON_CONFLICT, tolerance_frac=1e-6))
+    arb = ops.SourceArbiter(
+        ops.ArbitrationConfig(ops.ArbitrationPolicy.REJECT_ON_CONFLICT, tolerance_frac=1e-6)
+    )
     rec = ops.HistoricalReconstructor(arbiter=arb).reconstruct(
-        [a, b], valuation_date=REF, knowledge_date=REF)
+        [a, b], valuation_date=REF, knowledge_date=REF
+    )
     assert "A" not in rec.snapshot.spots
 
 
 def test_pit_heartbeat_ignored():
-    hb = ops.SourceMessage(source="v", payload={}, msg_type=ops.MessageType.HEARTBEAT,
-                           observation_date=date(2024, 6, 2))
+    hb = ops.SourceMessage(
+        source="v",
+        payload={},
+        msg_type=ops.MessageType.HEARTBEAT,
+        observation_date=date(2024, 6, 2),
+    )
     good = obsmsg("A", "close", 100.0, date(2024, 6, 2))
-    rec = ops.HistoricalReconstructor().reconstruct([hb, good], valuation_date=REF, knowledge_date=REF)
+    rec = ops.HistoricalReconstructor().reconstruct(
+        [hb, good], valuation_date=REF, knowledge_date=REF
+    )
     assert rec.snapshot.spots["A"] == 100.0
 
 
@@ -575,9 +742,11 @@ def test_pit_heartbeat_ignored():
 # 8. Snapshot lifecycle
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def _rec():
     return ops.HistoricalReconstructor().reconstruct(
-        [obsmsg("A", "close", 100.0, date(2024, 6, 2))], valuation_date=REF, knowledge_date=REF)
+        [obsmsg("A", "close", 100.0, date(2024, 6, 2))], valuation_date=REF, knowledge_date=REF
+    )
 
 
 def test_seal_produces_sealed_state():
@@ -603,11 +772,13 @@ def test_seal_id_deterministic():
 
 def test_reject_produces_rejected_state():
     r = ops.reject(_rec(), "bad feed")
-    assert r.state is ops.SnapshotState.REJECTED and "rejection_reason" in r.quality_summary
+    assert r.state is ops.SnapshotState.REJECTED
+    assert "rejection_reason" in r.quality_summary
 
 
 def test_seal_verify_fails_on_tamper():
     from dataclasses import replace
+
     s = ops.seal(_rec())
     tampered = replace(s, snapshot_fingerprint="deadbeef")
     assert not tampered.verify()
@@ -621,6 +792,7 @@ def test_seal_n_observations():
 # 9. Snapshot store
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_store_put_get():
     store = ops.SnapshotStore()
     s = ops.seal(_rec())
@@ -631,7 +803,8 @@ def test_store_put_get():
 def test_store_exists_list():
     store = ops.SnapshotStore()
     sid = store.put(ops.seal(_rec()))
-    assert store.exists(sid) and store.list_ids() == [sid]
+    assert store.exists(sid)
+    assert store.list_ids() == [sid]
 
 
 def test_store_metadata():
@@ -704,17 +877,21 @@ def test_store_reload_get_needs_rehydration(tmp_path):
 # 10. Incremental ingestion == full rebuild
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_incremental_equals_full():
     msgs = sim({"A": 1.0, "B": 2.0, "C": 3.0}, days=6).generate(
-        ops.FaultSpec(revision_frac=0.3, duplicate_frac=0.2))
+        ops.FaultSpec(revision_frac=0.3, duplicate_frac=0.2)
+    )
     full = ops.MarketDataState()
     full.ingest(msgs)
     inc = ops.MarketDataState()
     for i in range(0, len(msgs), 3):
-        inc.ingest(msgs[i:i + 3])
+        inc.ingest(msgs[i : i + 3])
     vd = date(2024, 6, 6)
-    assert (full.reconstruct(valuation_date=vd, knowledge_date=vd).snapshot.fingerprint()
-            == inc.reconstruct(valuation_date=vd, knowledge_date=vd).snapshot.fingerprint())
+    assert (
+        full.reconstruct(valuation_date=vd, knowledge_date=vd).snapshot.fingerprint()
+        == inc.reconstruct(valuation_date=vd, knowledge_date=vd).snapshot.fingerprint()
+    )
 
 
 def test_incremental_state_fingerprint_order_independent():
@@ -731,7 +908,8 @@ def test_incremental_dedup_counts():
     st = ops.MarketDataState()
     st.ingest([m])
     rep = st.ingest([m])
-    assert rep.duplicates == 1 and rep.added == 0
+    assert rep.duplicates == 1
+    assert rep.added == 0
 
 
 def test_incremental_late_data_same_final_state():
@@ -743,8 +921,10 @@ def test_incremental_late_data_same_final_state():
     b = ops.MarketDataState()
     b.ingest(late + early)
     vd = date(2024, 6, 5)
-    assert (a.reconstruct(valuation_date=vd, knowledge_date=vd).snapshot.fingerprint()
-            == b.reconstruct(valuation_date=vd, knowledge_date=vd).snapshot.fingerprint())
+    assert (
+        a.reconstruct(valuation_date=vd, knowledge_date=vd).snapshot.fingerprint()
+        == b.reconstruct(valuation_date=vd, knowledge_date=vd).snapshot.fingerprint()
+    )
 
 
 def test_incremental_seal():
@@ -762,6 +942,7 @@ def test_incremental_empty_state_reconstructs():
 # ══════════════════════════════════════════════════════════════════════════════
 # 11. Monitoring (health / coverage / quality)
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_health_connected():
     msgs = [obsmsg("A", "close", 1.0, date(2024, 6, 3))]
@@ -781,8 +962,10 @@ def test_health_disconnected_source():
 
 
 def test_health_degraded_on_gaps():
-    msgs = [obsmsg("A", "close", 1.0, date(2024, 6, 3), seq=1),
-            obsmsg("A", "close", 2.0, date(2024, 6, 3), seq=50)]
+    msgs = [
+        obsmsg("A", "close", 1.0, date(2024, 6, 3), seq=1),
+        obsmsg("A", "close", 2.0, date(2024, 6, 3), seq=50),
+    ]
     ordering = ops.SequenceManager().process(msgs)
     h = ops.HealthMonitor(degraded_error_frac=0.1).assess(msgs, as_of=REF, ordering=ordering)
     assert h["v"].status in (ops.FeedStatus.DEGRADED, ops.FeedStatus.CONNECTED)
@@ -792,13 +975,15 @@ def test_health_degraded_on_gaps():
 def test_coverage_all_present():
     msgs = [obsmsg("A", "close", 1.0, REF), obsmsg("B", "close", 2.0, REF)]
     c = ops.coverage(msgs, expected_securities=["A", "B"])
-    assert c.complete and c.security_coverage == 1.0
+    assert c.complete
+    assert c.security_coverage == 1.0
 
 
 def test_coverage_missing_security():
     msgs = [obsmsg("A", "close", 1.0, REF)]
     c = ops.coverage(msgs, expected_securities=["A", "B"])
-    assert c.missing_securities == ("B",) and not c.complete
+    assert c.missing_securities == ("B",)
+    assert not c.complete
 
 
 def test_coverage_missing_fields():
@@ -815,20 +1000,23 @@ def test_coverage_missing_dates():
 
 def test_quality_monitor_reject_rate():
     good = obsmsg("A", "close", 100.0, date(2024, 6, 2))
-    bad = obsmsg("B", "close", -5.0, date(2024, 6, 2))   # non-positive price → reject
+    bad = obsmsg("B", "close", -5.0, date(2024, 6, 2))  # non-positive price → reject
     rep = ops.QualityMonitor().monitor([good, bad], as_of=REF)
-    assert rep.rejected >= 1 and rep.reject_rate > 0
+    assert rep.rejected >= 1
+    assert rep.reject_rate > 0
 
 
 def test_quality_monitor_all_clean():
     msgs = [obsmsg("A", "close", 100.0, date(2024, 6, 2))]
     rep = ops.QualityMonitor().monitor(msgs, as_of=REF)
-    assert rep.rejected == 0 and rep.accepted == 1
+    assert rep.rejected == 0
+    assert rep.accepted == 1
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 12. Streaming simulator / fault injection
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_sim_deterministic():
     a = sim(days=4, seed=7).generate(ops.FaultSpec(duplicate_frac=0.5, revision_frac=0.5))
@@ -874,7 +1062,8 @@ def test_sim_malformed_rejected_by_quality():
 
 def test_sim_conflicts_create_disagreement():
     msgs = sim({"A": 1.0}, days=5, seed=1).generate(
-        ops.FaultSpec(conflict_sources=("B",), conflict_frac=1.0))
+        ops.FaultSpec(conflict_sources=("B",), conflict_frac=1.0)
+    )
     rep = ops.reconcile(msgs)
     assert rep.disagreements
 
@@ -888,13 +1077,15 @@ def test_sim_stale_flagged():
 def test_sim_fault_free_reconstructs_cleanly():
     msgs = sim({"A": 10.0}, days=4).generate(ops.FaultSpec())
     rec = ops.HistoricalReconstructor().reconstruct(
-        msgs, valuation_date=date(2024, 6, 4), knowledge_date=date(2024, 6, 4))
+        msgs, valuation_date=date(2024, 6, 4), knowledge_date=date(2024, 6, 4)
+    )
     assert "A" in rec.snapshot.spots
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 13. Serialization / integrity
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_message_roundtrip_preserves_fingerprint():
     m = obsmsg("A", "close", 190.0, REF, ts=datetime(2024, 6, 3, 16), seq=3)
@@ -911,7 +1102,7 @@ def test_messages_json_roundtrip():
 def test_message_corruption_detected():
     m = obsmsg("A", "close", 190.0, REF)
     d = ops.message_to_dict(m)
-    d["payload"]["value"] = 999.0            # tamper
+    d["payload"]["value"] = 999.0  # tamper
     with pytest.raises(ops.DeserializationError):
         ops.message_from_dict(d)
 
@@ -929,7 +1120,8 @@ def test_sealed_envelope_json_roundtrip():
 
 def test_sealed_to_dict_has_fingerprints():
     d = ops.sealed_to_dict(ops.seal(_rec()))
-    assert d["snapshot_fingerprint"] and d["reconstruction_fingerprint"]
+    assert d["snapshot_fingerprint"]
+    assert d["reconstruction_fingerprint"]
 
 
 def test_message_roundtrip_skip_verify():
@@ -944,6 +1136,7 @@ def test_message_roundtrip_skip_verify():
 # 14. M18 valuation integration
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_m18_equity_from_m20_snapshot():
     snap = integ_snapshot()
     r = ValuationEngine().value(ins.equity("AAPL", currency="USD"), snap, ValuationConfiguration())
@@ -952,10 +1145,17 @@ def test_m18_equity_from_m20_snapshot():
 
 def test_m18_option_from_m20_snapshot():
     snap = integ_snapshot()
-    opt = ins.option("C", underlying="AAPL", strike=200.0, expiry=date(2025, 6, 3),
-                     right=ins.OptionRight.CALL, currency="USD")
+    opt = ins.option(
+        "C",
+        underlying="AAPL",
+        strike=200.0,
+        expiry=date(2025, 6, 3),
+        right=ins.OptionRight.CALL,
+        currency="USD",
+    )
     r = ValuationEngine().value(opt, snap, ValuationConfiguration())
-    assert r.price > 0 and r.greeks.delta > 0
+    assert r.price > 0
+    assert r.greeks.delta > 0
 
 
 def test_m18_future_from_m20_snapshot():
@@ -966,18 +1166,26 @@ def test_m18_future_from_m20_snapshot():
 
 def test_m18_bond_from_m20_snapshot():
     snap = integ_snapshot()
-    bond = ins.bond("B", currency="USD", maturity=date(2029, 6, 3), face=100.0, coupon=0.05,
-                    frequency=2)
+    bond = ins.bond(
+        "B", currency="USD", maturity=date(2029, 6, 3), face=100.0, coupon=0.05, frequency=2
+    )
     assert ValuationEngine().value(bond, snap, ValuationConfiguration()).price > 0
 
 
 def test_m18_portfolio_from_m20_snapshot():
     snap = integ_snapshot()
     eq = ins.equity("AAPL", currency="USD")
-    opt = ins.option("C", underlying="AAPL", strike=200.0, expiry=date(2025, 6, 3),
-                     right=ins.OptionRight.CALL, currency="USD")
-    pv = PortfolioValuationEngine().value([(eq, 100, None), (opt, 10, None)], snap,
-                                          ValuationConfiguration())
+    opt = ins.option(
+        "C",
+        underlying="AAPL",
+        strike=200.0,
+        expiry=date(2025, 6, 3),
+        right=ins.OptionRight.CALL,
+        currency="USD",
+    )
+    pv = PortfolioValuationEngine().value(
+        [(eq, 100, None), (opt, 10, None)], snap, ValuationConfiguration()
+    )
     assert pv.gross_market_value > 0
 
 
@@ -993,12 +1201,21 @@ def test_m18_valuation_reproducible_from_reconstruction():
 # 15. M19 reuse integration
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_m19_normalizer_reused_in_reconstruction():
     # percent→rate unit normalization is M19's; reconstruction must inherit it unchanged
-    msg = ops.SourceMessage(source="v", payload={"id": "R", "field": "rate", "value": 5.0,
-                            "unit": "percent", "observation_date": "2024-06-02"})
+    msg = ops.SourceMessage(
+        source="v",
+        payload={
+            "id": "R",
+            "field": "rate",
+            "value": 5.0,
+            "unit": "percent",
+            "observation_date": "2024-06-02",
+        },
+    )
     rec = ops.HistoricalReconstructor().reconstruct([msg], valuation_date=REF, knowledge_date=REF)
-    obs = [w for w in rec.winners]
+    obs = list(rec.winners)
     assert obs  # normalized through M19 without M20 re-implementing units
 
 
@@ -1024,21 +1241,24 @@ def test_m19_quality_engine_composed_by_monitor():
 # 16. Registry / lineage
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_ops_registry_has_ops_components():
     r = ops.default_ops_registry()
     names = {c.name for c in r.all()}
-    assert "ops.reconstructor" in names and "ops.replay_engine" in names
+    assert "ops.reconstructor" in names
+    assert "ops.replay_engine" in names
 
 
 def test_ops_registry_includes_m19_components():
     names = {c.name for c in ops.default_ops_registry().all()}
-    assert "bootstrap.sequential" in names   # M19 component still present (reused, not replaced)
+    assert "bootstrap.sequential" in names  # M19 component still present (reused, not replaced)
 
 
 def test_lineage_captures_fingerprints():
     s = ops.seal(_rec())
     lin = ops.lineage_of(s)
-    assert lin.snapshot_fingerprint == s.snapshot_fingerprint and lin.source_set == ("v",)
+    assert lin.snapshot_fingerprint == s.snapshot_fingerprint
+    assert lin.source_set == ("v",)
 
 
 def test_engine_lineage():
@@ -1051,6 +1271,7 @@ def test_engine_lineage():
 # ══════════════════════════════════════════════════════════════════════════════
 # 17. Engine façade + determinism
 # ══════════════════════════════════════════════════════════════════════════════
+
 
 def test_engine_ingest_from_adapters():
     eng = ops.MarketDataOperationsEngine()
@@ -1093,24 +1314,31 @@ def test_engine_state_fingerprint_deterministic():
 # 18. Financial / data invariants (consolidated)
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_invariant_duplicates_do_not_change_state():
     msgs = [obsmsg("A", "close", 100.0, date(2024, 6, 2))]
     once = ops.HistoricalReconstructor().reconstruct(msgs, valuation_date=REF, knowledge_date=REF)
-    thrice = ops.HistoricalReconstructor().reconstruct(msgs * 3, valuation_date=REF, knowledge_date=REF)
+    thrice = ops.HistoricalReconstructor().reconstruct(
+        msgs * 3, valuation_date=REF, knowledge_date=REF
+    )
     assert once.snapshot.fingerprint() == thrice.snapshot.fingerprint()
 
 
 def test_invariant_stale_cannot_become_current():
     stale = obsmsg("A", "close", 50.0, date(2024, 5, 1), ts=datetime(2024, 5, 1, 16))
     fresh = obsmsg("A", "close", 100.0, date(2024, 6, 3), ts=datetime(2024, 6, 3, 16))
-    rec = ops.HistoricalReconstructor().reconstruct([stale, fresh], valuation_date=REF, knowledge_date=REF)
+    rec = ops.HistoricalReconstructor().reconstruct(
+        [stale, fresh], valuation_date=REF, knowledge_date=REF
+    )
     assert rec.snapshot.spots["A"] == 100.0
 
 
 def test_invariant_identifier_collision_not_merged():
     # two different securities never collapse into one spot
-    msgs = [obsmsg("A", "close", 1.0, date(2024, 6, 2)),
-            obsmsg("B", "close", 2.0, date(2024, 6, 2))]
+    msgs = [
+        obsmsg("A", "close", 1.0, date(2024, 6, 2)),
+        obsmsg("B", "close", 2.0, date(2024, 6, 2)),
+    ]
     rec = ops.HistoricalReconstructor().reconstruct(msgs, valuation_date=REF, knowledge_date=REF)
     assert rec.snapshot.spots == {"A": 1.0, "B": 2.0}
 
@@ -1121,7 +1349,7 @@ def test_invariant_provenance_survives_reconstruction():
 
 
 def test_invariant_missing_critical_data_fails_closed():
-    bad = obsmsg("A", "close", -1.0, date(2024, 6, 2))   # non-positive close
+    bad = obsmsg("A", "close", -1.0, date(2024, 6, 2))  # non-positive close
     with pytest.raises(md.SnapshotBuildError):
         ops.HistoricalReconstructor().reconstruct([bad], valuation_date=REF, knowledge_date=REF)
 
@@ -1131,38 +1359,53 @@ def test_invariant_replay_equals_full_reconstruction_multi_date():
     dates = (date(2024, 6, 3), date(2024, 6, 5))
     res = ops.MarketDataReplayEngine(msgs).replay(ops.ReplayConfig(dates=dates))
     for vd in dates:
-        direct = ops.HistoricalReconstructor().reconstruct(msgs, valuation_date=vd, knowledge_date=vd)
+        direct = ops.HistoricalReconstructor().reconstruct(
+            msgs, valuation_date=vd, knowledge_date=vd
+        )
         assert res.snapshot_on(vd).fingerprint() == direct.snapshot.fingerprint()
 
 
 def test_invariant_sealed_snapshot_immutable():
     s = ops.seal(_rec())
     with pytest.raises(Exception):
-        s.snapshot_id = "x"          # frozen dataclass → cannot mutate
+        s.snapshot_id = "x"  # frozen dataclass → cannot mutate
 
 
 def test_invariant_zero_observations_empty_snapshot():
     rec = ops.HistoricalReconstructor().reconstruct([], valuation_date=REF, knowledge_date=REF)
-    assert rec.snapshot.spots == {} and rec.winners == ()
+    assert rec.snapshot.spots == {}
+    assert rec.winners == ()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 19. Edge cases / scale
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 def test_edge_single_security_history():
-    msgs = [obsmsg("A", "close", 100.0 + i, date(2024, 6, 1) + timedelta(days=i),
-                   ts=datetime(2024, 6, 1 + i, 16), seq=i + 1) for i in range(5)]
+    msgs = [
+        obsmsg(
+            "A",
+            "close",
+            100.0 + i,
+            date(2024, 6, 1) + timedelta(days=i),
+            ts=datetime(2024, 6, 1 + i, 16),
+            seq=i + 1,
+        )
+        for i in range(5)
+    ]
     rec = ops.HistoricalReconstructor().reconstruct(
-        msgs, valuation_date=date(2024, 6, 5), knowledge_date=date(2024, 6, 5))
-    assert rec.snapshot.spots["A"] == 104.0     # latest by effective date
+        msgs, valuation_date=date(2024, 6, 5), knowledge_date=date(2024, 6, 5)
+    )
+    assert rec.snapshot.spots["A"] == 104.0  # latest by effective date
 
 
 def test_edge_large_batch_reconstructs():
     seeds = {f"S{i}": 100.0 + i for i in range(200)}
     msgs = sim(seeds, days=3).generate(ops.FaultSpec())
     rec = ops.HistoricalReconstructor().reconstruct(
-        msgs, valuation_date=date(2024, 6, 3), knowledge_date=date(2024, 6, 3))
+        msgs, valuation_date=date(2024, 6, 3), knowledge_date=date(2024, 6, 3)
+    )
     assert len(rec.snapshot.spots) == 200
 
 
@@ -1172,23 +1415,26 @@ def test_edge_repeated_batch_idempotent():
     st.ingest(msgs)
     st.ingest(msgs)
     st.ingest(msgs)
-    assert len(st.messages) == len(set(m.raw_fingerprint() for m in msgs))
+    assert len(st.messages) == len({m.raw_fingerprint() for m in msgs})
 
 
 def test_edge_empty_ingest_report():
     rep = ops.MarketDataState().ingest([])
-    assert rep.added == 0 and rep.total == 0
+    assert rep.added == 0
+    assert rep.total == 0
 
 
 def test_edge_all_dropped_still_valid_snapshot():
     msgs = sim({"A": 1.0}, days=20, seed=5).generate(ops.FaultSpec(drop_frac=1.0))
     rec = ops.HistoricalReconstructor().reconstruct(
-        msgs, valuation_date=date(2024, 6, 30), knowledge_date=date(2024, 6, 30))
+        msgs, valuation_date=date(2024, 6, 30), knowledge_date=date(2024, 6, 30)
+    )
     assert isinstance(rec.snapshot.spots, dict)
 
 
 def test_edge_reconstruct_far_future_knowledge():
     msgs = [obsmsg("A", "close", 100.0, date(2024, 6, 2), ts=datetime(2024, 6, 2, 16))]
     rec = ops.HistoricalReconstructor().reconstruct(
-        msgs, valuation_date=REF, knowledge_date=date(2030, 1, 1))
+        msgs, valuation_date=REF, knowledge_date=date(2030, 1, 1)
+    )
     assert rec.snapshot.spots["A"] == 100.0

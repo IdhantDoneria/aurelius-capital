@@ -38,15 +38,21 @@ class ValidationReport:
 
     def to_dict(self) -> dict:
         d = asdict(self)
-        d.pop("visualizations", None)      # heavy series live in a separate artifact
+        d.pop("visualizations", None)  # heavy series live in a separate artifact
         return d
 
 
 VERDICTS = ("PASS", "PASS_WITH_WARNINGS", "REJECT", "REQUIRES_REVIEW")
 
 
-def decide(score_result: dict, flags: list, summaries: dict, *,
-           review_threshold: float = 50.0, p_threshold: float = 0.05) -> dict:
+def decide(
+    score_result: dict,
+    flags: list,
+    summaries: dict,
+    *,
+    review_threshold: float = 50.0,
+    p_threshold: float = 0.05,
+) -> dict:
     critical = [f for f in flags if f.severity == "critical"]
     warnings = [f for f in flags if f.severity == "warning"]
     sig = summaries.get("significance", {})
@@ -71,24 +77,52 @@ def decide(score_result: dict, flags: list, summaries: dict, *,
     missing = _core_missing(summaries)
 
     if hard:
-        return _verdict("REJECT", rs, hard, warn_msgs,
-                        "Do not deploy — reproduce or redesign.", summaries)
+        return _verdict(
+            "REJECT", rs, hard, warn_msgs, "Do not deploy — reproduce or redesign.", summaries
+        )
     if missing >= 2 or rs < review_threshold:
-        reason = [f"research score {rs:.0f} < {review_threshold:.0f}"] if rs < review_threshold else []
+        reason = (
+            [f"research score {rs:.0f} < {review_threshold:.0f}"] if rs < review_threshold else []
+        )
         reason += [f"{missing} core analyses could not be computed"] if missing >= 2 else []
-        return _verdict("REQUIRES_REVIEW", rs, [], warn_msgs,
-                        "Manual review required before deployment.", summaries, reason)
+        return _verdict(
+            "REQUIRES_REVIEW",
+            rs,
+            [],
+            warn_msgs,
+            "Manual review required before deployment.",
+            summaries,
+            reason,
+        )
     if warn_msgs:
-        return _verdict("PASS_WITH_WARNINGS", rs, [], warn_msgs,
-                        "Deploy to paper trading with monitoring on the flagged risks.", summaries)
-    return _verdict("PASS", rs, [], [], "Approved for paper trading.", summaries,
-                    [f"Sharpe {sr:.2f}, p={p:.3f}, research score {rs:.0f}/100 — all gates passed"])
+        return _verdict(
+            "PASS_WITH_WARNINGS",
+            rs,
+            [],
+            warn_msgs,
+            "Deploy to paper trading with monitoring on the flagged risks.",
+            summaries,
+        )
+    return _verdict(
+        "PASS",
+        rs,
+        [],
+        [],
+        "Approved for paper trading.",
+        summaries,
+        [f"Sharpe {sr:.2f}, p={p:.3f}, research score {rs:.0f}/100 — all gates passed"],
+    )
 
 
 def _verdict(verdict, rs, critical, warnings, rec, summaries, reasoning=None):
-    return {"verdict": verdict, "confidence_score": rs, "critical_failures": critical,
-            "warnings": warnings, "deployment_recommendation": rec,
-            "reasoning": reasoning or (critical + warnings)}
+    return {
+        "verdict": verdict,
+        "confidence_score": rs,
+        "critical_failures": critical,
+        "warnings": warnings,
+        "deployment_recommendation": rec,
+        "reasoning": reasoning or (critical + warnings),
+    }
 
 
 def _core_missing(summaries: dict) -> int:
@@ -108,7 +142,10 @@ def _core_missing(summaries: dict) -> int:
 
 
 def manifest_hash(report: ValidationReport) -> str:
-    core = {"verdict": report.overall_verdict, "score": round(report.confidence_score, 4),
-            "components": {k: round(v, 4) for k, v in report.component_scores.items()},
-            "version": report.validation_version}
+    core = {
+        "verdict": report.overall_verdict,
+        "score": round(report.confidence_score, 4),
+        "components": {k: round(v, 4) for k, v in report.component_scores.items()},
+        "version": report.validation_version,
+    }
     return hashlib.blake2b(json.dumps(core, sort_keys=True).encode(), digest_size=16).hexdigest()

@@ -11,8 +11,9 @@ import numpy as np
 from mentisrex.research.portfolio.risk import risk_diagnostics
 
 
-def build_diagnostics(weights, cov, mu=None, *, sectors=None, cost: dict | None = None,
-                      turnover: float | None = None) -> dict:
+def build_diagnostics(
+    weights, cov, mu=None, *, sectors=None, cost: dict | None = None, turnover: float | None = None
+) -> dict:
     diag = risk_diagnostics(weights, cov, mu)
     if turnover is not None:
         diag["turnover"] = turnover

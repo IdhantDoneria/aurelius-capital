@@ -17,6 +17,7 @@ from datetime import date
 
 class MarketDataSource(ABC):
     """Yields raw records (dicts) knowable on/before `as_of`. Normalization turns them canonical."""
+
     source: str = "source"
 
     @abstractmethod
@@ -38,9 +39,12 @@ def _filter(records: list[dict], security_ids, fields) -> list[dict]:
 
 class StaticSource(MarketDataSource):
     """A fixed list of raw records, returned for any `as_of` (optionally PIT-filtered)."""
+
     source = "static"
 
-    def __init__(self, records: list[dict], *, pit_filter: bool = True, source: str = "static") -> None:
+    def __init__(
+        self, records: list[dict], *, pit_filter: bool = True, source: str = "static"
+    ) -> None:
         self._records = list(records)
         self.pit_filter = pit_filter
         self.source = source
@@ -55,10 +59,11 @@ class StaticSource(MarketDataSource):
 class HistoricalSource(MarketDataSource):
     """Date-keyed raw records; `fetch(as_of)` returns every record knowable on/before `as_of`.
     Point-in-time: nothing dated after `as_of` is ever returned."""
+
     source = "historical"
 
     def __init__(self, by_date: dict, *, source: str = "historical") -> None:
-        self._by_date = dict(sorted(by_date.items()))     # date -> list[dict]
+        self._by_date = dict(sorted(by_date.items()))  # date -> list[dict]
         self.source = source
 
     def fetch(self, as_of: date, *, security_ids=None, fields=None) -> list[dict]:
@@ -73,10 +78,11 @@ class HistoricalSource(MarketDataSource):
 class DeterministicMockSource(MarketDataSource):
     """Pure-function synthetic raw records for tests/benchmarks. Reproducible from `as_of` and a
     seed map; no randomness that isn't seeded, no network."""
+
     source = "mock"
 
     def __init__(self, seeds: dict, *, currency: str = "USD", source: str = "mock") -> None:
-        self._seeds = dict(seeds)                          # security_id -> base price
+        self._seeds = dict(seeds)  # security_id -> base price
         self.currency = currency
         self.source = source
 
@@ -85,9 +91,20 @@ class DeterministicMockSource(MarketDataSource):
         for sid, base in self._seeds.items():
             drift = (as_of.toordinal() % 100) / 100.0
             px = base * (1.0 + 0.001 * drift)
-            recs.append({"id": sid, "id_type": "ticker", "type": "close", "field": "close",
-                         "value": round(px, 6), "currency": self.currency, "unit": "price",
-                         "observation_date": as_of, "effective_date": as_of, "source": self.source})
+            recs.append(
+                {
+                    "id": sid,
+                    "id_type": "ticker",
+                    "type": "close",
+                    "field": "close",
+                    "value": round(px, 6),
+                    "currency": self.currency,
+                    "unit": "price",
+                    "observation_date": as_of,
+                    "effective_date": as_of,
+                    "source": self.source,
+                }
+            )
         return _filter(recs, security_ids, fields)
 
 
