@@ -500,14 +500,20 @@ class TestSeptemberPrerequisites(unittest.TestCase):
             sep_path = data_dir / "alpaca_executions" / f"{sep_cid}.json"
         self.assertFalse(sep_path.exists())
 
-    def test_today_before_september_2026(self):
-        """Confirm that as of test execution, September 2026 is in the future."""
+    def test_today_before_october_2026(self):
+        """Confirm that as of test execution, October 2026 is in the future.
+
+        September 2026 arrived on schedule (this trip-wire tripped correctly
+        on 2026-09-05, confirming it works) and was bumped one cycle forward
+        rather than removed, so the same guard keeps protecting the next
+        not-yet-executed forward-campaign month. Bump again when it trips.
+        """
         from datetime import datetime
         today = datetime.now().date()
-        sep_1 = date(2026, 9, 1)
-        # This test confirms we have not yet reached September
-        self.assertLessEqual(today, sep_1,
-            "September 2026 has arrived — genuine cycle may now be executed.")
+        oct_1 = date(2026, 10, 1)
+        # This test confirms we have not yet reached October
+        self.assertLessEqual(today, oct_1,
+            "October 2026 has arrived — genuine cycle may now be executed.")
 
     def test_campaign_data_dir_not_contaminated(self):
         """Real FORWARD_CAMPAIGN_DIR does not contain a September execution record."""
