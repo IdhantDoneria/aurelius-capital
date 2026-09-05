@@ -1,7 +1,8 @@
 """M30 — Pre-cycle readiness: dry-runs, data-quality audit, isolation verification.
 
-All tests are deterministic and offline.  None touch the real forward campaign
-directory.  All use temporary directories and synthetic / mocked data.
+All tests are deterministic and offline, and none *write* to the real forward
+campaign directory. One (T23) reads it read-only to check a real invariant;
+every other test uses temporary directories and synthetic / mocked data.
 
 Covers:
   - End-to-end dry-run of ForwardCampaign + AlpacaCycleExecutor (T01–T05)
@@ -9,12 +10,14 @@ Covers:
   - DataQualityReport checks (T09–T15)
   - Forward campaign isolation from backtest/simulation state (T16–T20)
   - Restart/recovery (T21–T22)
-  - September 2026 prerequisites (T23)
+  - No-premature-future-cycle-execution guard (T23) — self-rolling: derives
+    "next not-yet-started month" from datetime.now() every run, so it never
+    needs a manual date bump the way a hardcoded month eventually would.
   - Strategy fingerprint guard (T24)
 
-DO NOT execute the genuine September 2026 forward cycle here.
+DO NOT execute a genuine forward cycle here.
 DO NOT write to the real FORWARD_CAMPAIGN_DIR.
-DO NOT fabricate September evidence.
+DO NOT fabricate forward-campaign evidence.
 """
 
 from __future__ import annotations
@@ -500,29 +503,35 @@ class TestSeptemberPrerequisites(unittest.TestCase):
             sep_path = data_dir / "alpaca_executions" / f"{sep_cid}.json"
         self.assertFalse(sep_path.exists())
 
-    def test_today_before_october_2026(self):
-        """Confirm that as of test execution, October 2026 is in the future.
+    def test_no_premature_future_cycle_execution(self):
+        """Real FORWARD_CAMPAIGN_DIR has no execution record for a cycle month
+        that has not started yet.
 
-        September 2026 arrived on schedule (this trip-wire tripped correctly
-        on 2026-09-05, confirming it works) and was bumped one cycle forward
-        rather than removed, so the same guard keeps protecting the next
-        not-yet-executed forward-campaign month. Bump again when it trips.
+        This replaces two earlier, hardcoded-to-September tests
+        (test_today_before_september_2026 / test_campaign_data_dir_not_
+        contaminated) that both went stale the moment September 2026 arrived
+        — one became a trip-wire needing a monthly manual date bump, the
+        other quietly stopped checking anything meaningful once "September"
+        was no longer the future. This version derives "next not-yet-started
+        month" from datetime.now() on every run and checks the one invariant
+        that actually matters — no execution record exists yet for it — so
+        it never goes stale and never needs editing again.
         """
         from datetime import datetime
         today = datetime.now().date()
-        oct_1 = date(2026, 10, 1)
-        # This test confirms we have not yet reached October
-        self.assertLessEqual(today, oct_1,
-            "October 2026 has arrived — genuine cycle may now be executed.")
+        if today.month == 12:
+            next_month = date(today.year + 1, 1, 1)
+        else:
+            next_month = date(today.year, today.month + 1, 1)
+        next_cid = make_forward_cycle_id("ew-momentum-exp", "1.0.0", next_month)
 
-    def test_campaign_data_dir_not_contaminated(self):
-        """Real FORWARD_CAMPAIGN_DIR does not contain a September execution record."""
         repo = Path(__file__).resolve().parents[2]
-        sep_cid = "ew-momentum-exp__2026_09"
-        # Search any campaign dir for September record
         for p in repo.glob("data/forward_campaign/**/*.json"):
-            if sep_cid in p.name and "alpaca_executions" in str(p):
-                self.fail(f"September execution record found unexpectedly: {p}")
+            if next_cid in p.name and "alpaca_executions" in str(p):
+                self.fail(
+                    f"Execution record found for {next_cid}, a cycle month "
+                    f"({next_month.isoformat()}) that has not started yet: {p}"
+                )
 
 
 # ── T24: strategy fingerprint guard ───────────────────────────────────────────
