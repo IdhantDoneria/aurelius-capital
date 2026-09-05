@@ -10,7 +10,7 @@ import dataclasses
 import hashlib
 import json
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Any
 
 import pytest
@@ -115,7 +115,7 @@ class FakeCycleRecord:
     risk_approved: bool = True
     risk_decision: str = ""
     n_signals: int = 2
-    recorded_at: datetime = field(default_factory=datetime.utcnow)
+    recorded_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
 
 @dataclass

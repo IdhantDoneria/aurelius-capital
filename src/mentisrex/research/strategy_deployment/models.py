@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import asdict, dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from enum import Enum
 from typing import Any
 
@@ -114,7 +114,7 @@ class StrategySpecification:
     # provenance
     model_version: str = "0.0.0"
     dependency_versions: dict = field(default_factory=dict)
-    creation_timestamp: datetime = field(default_factory=datetime.utcnow)
+    creation_timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
     # content fingerprint — set by make_spec(), never by the caller
     configuration_fingerprint: str = ""
@@ -169,7 +169,7 @@ class FeatureSet:
     features: dict                        # security_id -> {feature_name: value}
     input_fingerprint: str                # hash of snapshot identity
     strategy_fingerprint: str
-    computed_at: datetime = field(default_factory=datetime.utcnow)
+    computed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
     def fingerprint(self) -> str:
         return _fp({
@@ -205,7 +205,7 @@ class SignalSet:
     signal_records: list                  # list[SignalRecord]
     features_fingerprint: str
     strategy_fingerprint: str
-    generated_at: datetime = field(default_factory=datetime.utcnow)
+    generated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
     def fingerprint(self) -> str:
         return _fp({
@@ -270,7 +270,7 @@ class StrategyEvaluation:
     ems_requests: list                    # list[M14 OrderRequest] — execution-ready
     evaluation_fingerprint: str
     provenance: dict = field(default_factory=dict)
-    evaluated_at: datetime = field(default_factory=datetime.utcnow)
+    evaluated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     strategy_fingerprint: str = ""
     risk_approved: bool = False
     risk_decision: str = ""
@@ -347,7 +347,7 @@ def make_manifest(manifest_id: str, spec: StrategySpecification) -> DeploymentMa
         slippage_assumption=spec.slippage_assumption,
         model_version=spec.model_version,
         dependency_versions=dict(spec.dependency_versions),
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc).replace(tzinfo=None),
     )
     fp = tmp.fingerprint()
     return DeploymentManifest(**{**asdict(tmp), "created_at": tmp.created_at, "manifest_fingerprint": fp})
@@ -365,7 +365,7 @@ class ReadinessReport:
     warnings: list = field(default_factory=list)
     strategy_id: str = ""
     strategy_version: str = ""
-    validated_at: datetime = field(default_factory=datetime.utcnow)
+    validated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
 
 # ── consistency report ────────────────────────────────────────────────────────
@@ -377,4 +377,4 @@ class ConsistencyReport:
     drifted_fields: list                  # list[str] — field names that differ
     differences: dict                     # field -> {research: …, deployed: …}
     strategy_id: str = ""
-    checked_at: datetime = field(default_factory=datetime.utcnow)
+    checked_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))

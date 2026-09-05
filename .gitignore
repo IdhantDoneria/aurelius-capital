@@ -40,3 +40,6 @@ logs/
 
 # Raw data cache (EDGAR JSON, NSE bhavcopy CSVs — too large for git)
 raw/
+
+# Runtime state written by CLI runs (mentisrex.programme, etc.) — local, not source
+state/

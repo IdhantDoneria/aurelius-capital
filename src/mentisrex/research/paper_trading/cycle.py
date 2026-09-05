@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import statistics
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Any
 
 
@@ -43,7 +43,7 @@ class CycleRecord:
     risk_decision: str = ""
     n_signals: int = 0
 
-    recorded_at: datetime = field(default_factory=datetime.utcnow)
+    recorded_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
     def to_dict(self) -> dict:
         return {
@@ -91,7 +91,7 @@ class CycleRecord:
             risk_approved=d["risk_approved"],
             risk_decision=d.get("risk_decision", ""),
             n_signals=d.get("n_signals", 0),
-            recorded_at=datetime.fromisoformat(d["recorded_at"]) if d.get("recorded_at") else datetime.utcnow(),
+            recorded_at=datetime.fromisoformat(d["recorded_at"]) if d.get("recorded_at") else datetime.now(timezone.utc).replace(tzinfo=None),
         )
 
 

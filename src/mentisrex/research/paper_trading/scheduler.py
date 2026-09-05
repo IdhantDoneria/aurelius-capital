@@ -8,17 +8,17 @@ mode uses the real clock.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 
 class Clock:
     """Real-time clock. Inject a FixedClock in tests / replay."""
 
     def now(self) -> datetime:
-        return datetime.utcnow()
+        return datetime.now(timezone.utc).replace(tzinfo=None)
 
     def today(self) -> date:
-        return datetime.utcnow().date()
+        return datetime.now(timezone.utc).date()
 
 
 @dataclass(frozen=True)

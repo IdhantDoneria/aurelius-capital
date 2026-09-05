@@ -27,7 +27,7 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -141,7 +141,7 @@ class ForwardCampaign:
         data_dir.mkdir(parents=True, exist_ok=True)
 
         if not campaign_id:
-            ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+            ts = datetime.now(timezone.utc).replace(tzinfo=None).strftime("%Y%m%dT%H%M%SZ")
             campaign_id = f"FORWARD_{spec.strategy_id}_{spec.version}_{ts}"
 
         cfg = CampaignConfig(
@@ -173,7 +173,7 @@ class ForwardCampaign:
                 "strategy_fingerprint": spec.configuration_fingerprint or spec.fingerprint(),
                 "starting_capital": starting_capital,
                 "mode": "PAPER_FORWARD",
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
                 "universe": list(universe),
                 "account_id": account_id,
                 "data_limitation": (
@@ -201,7 +201,7 @@ class ForwardCampaign:
             "data_errors": 0,
             "last_nav": starting_capital,
             "last_evaluation_date": None,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
         }
         campaign._persist_health()
         return campaign
@@ -254,7 +254,7 @@ class ForwardCampaign:
         Returns:
             CycleResult with status SUCCESS | SKIPPED | FAILED | ALREADY_SEALED.
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc).replace(tzinfo=None)
         cycle_id = make_forward_cycle_id(
             self._config.strategy_id, self._config.strategy_version, as_of)
 
@@ -284,7 +284,7 @@ class ForwardCampaign:
             rec.skip_reason = (
                 f"not_due — monthly scheduler; last_eval_date={rs.last_eval_date}"
             )
-            rec.end_time = datetime.utcnow().isoformat()
+            rec.end_time = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
             self._seal_and_persist(rec, CycleStatus.SKIPPED)
             self._update_health(skipped=True)
             return CycleResult(
@@ -306,7 +306,7 @@ class ForwardCampaign:
         if build_result is None:
             rec.status = CycleStatus.FAILED
             rec.error_message = "Snapshot build failed: provider returned no usable data"
-            rec.end_time = datetime.utcnow().isoformat()
+            rec.end_time = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
             self._seal_and_persist(rec, CycleStatus.FAILED)
             self._update_health(failed=True)
             return CycleResult(
@@ -333,7 +333,7 @@ class ForwardCampaign:
                 f"({coverage:.0%}) below minimum "
                 f"{self._config.min_universe_coverage:.0%}"
             )
-            rec.end_time = datetime.utcnow().isoformat()
+            rec.end_time = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
             self._seal_and_persist(rec, CycleStatus.FAILED)
             self._update_health(failed=True)
             return CycleResult(
@@ -371,7 +371,7 @@ class ForwardCampaign:
         except Exception as exc:
             rec.status = CycleStatus.FAILED
             rec.error_message = f"Loop error: {exc}"
-            rec.end_time = datetime.utcnow().isoformat()
+            rec.end_time = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
             self._seal_and_persist(rec, CycleStatus.FAILED)
             self._update_health(failed=True)
             return CycleResult(
@@ -389,7 +389,7 @@ class ForwardCampaign:
             reason = (sr.skip_reason if sr else "") or loop_result.skip_reason or "loop_skipped"
             rec.status = CycleStatus.SKIPPED
             rec.skip_reason = reason
-            rec.end_time = datetime.utcnow().isoformat()
+            rec.end_time = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
             self._seal_and_persist(rec, CycleStatus.SKIPPED)
             self._update_health(skipped=True)
             return CycleResult(
@@ -404,7 +404,7 @@ class ForwardCampaign:
         if sr and sr.error:
             rec.status = CycleStatus.FAILED
             rec.error_message = sr.error
-            rec.end_time = datetime.utcnow().isoformat()
+            rec.end_time = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
             self._seal_and_persist(rec, CycleStatus.FAILED)
             self._update_health(failed=True)
             return CycleResult(
@@ -475,7 +475,7 @@ class ForwardCampaign:
         spec_tca = getattr(self._spec, "transaction_cost_assumption", {})
         rec.slippage_bps = float(spec_tca.get("slippage_bps", 0.0))
 
-        rec.end_time = datetime.utcnow().isoformat()
+        rec.end_time = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
         rec.knowledge_as_of = as_of
 
         # ── Checkpoint then seal ──────────────────────────────────────────────

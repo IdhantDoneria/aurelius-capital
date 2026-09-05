@@ -6,7 +6,7 @@ Returns a machine-readable ReadinessReport — never silently approves an incomp
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from mentisrex.research.strategy_deployment.models import (
     ReadinessReport,
@@ -174,5 +174,5 @@ class ReadinessValidator:
             warnings=warnings,
             strategy_id=spec.strategy_id,
             strategy_version=spec.version,
-            validated_at=datetime.utcnow(),
+            validated_at=datetime.now(timezone.utc).replace(tzinfo=None),
         )

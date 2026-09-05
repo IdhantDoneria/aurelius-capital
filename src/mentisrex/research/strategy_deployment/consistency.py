@@ -6,7 +6,7 @@ any configuration drift. Silent drift is the most dangerous failure mode.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from mentisrex.research.strategy_deployment.models import (
     ConsistencyReport,
@@ -59,5 +59,5 @@ class ConsistencyChecker:
             drifted_fields=drifted,
             differences=differences,
             strategy_id=deployed.strategy_id,
-            checked_at=datetime.utcnow(),
+            checked_at=datetime.now(timezone.utc).replace(tzinfo=None),
         )

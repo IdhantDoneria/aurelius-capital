@@ -29,7 +29,7 @@ import dataclasses
 import hashlib
 import json
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -105,7 +105,7 @@ class BenchmarkCycleRecord:
     def seal(self, status: str = "SUCCESS") -> None:
         if not self.sealed_at:
             self.status = status
-            self.sealed_at = datetime.utcnow().isoformat()
+            self.sealed_at = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
 
     @property
     def is_sealed(self) -> bool:
@@ -318,7 +318,7 @@ class BenchmarkPortfolio:
         if existing is not None:
             return existing
 
-        start_time = datetime.utcnow().isoformat()
+        start_time = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
         eval_date = evaluation_date or date(as_of.year, as_of.month, 1)
 
         # get prior cycle for starting_nav and prior price
@@ -393,7 +393,7 @@ class BenchmarkPortfolio:
             snapshot_fingerprint=snap_fp,
             is_inception_cycle=is_inception,
             start_time=start_time,
-            end_time=datetime.utcnow().isoformat(),
+            end_time=datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
         )
         rec.seal("SUCCESS")
         self._persist(rec)

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 from mentisrex.validation.audit import AuditRecord
 from mentisrex.validation.metrics import ExtendedMetrics
@@ -63,7 +63,7 @@ class ComprehensiveReport:
     # ── auditability ──────────────────────────────────────────────────────────
     audit: AuditRecord = field(
         default_factory=lambda: AuditRecord(
-            validated_at=datetime.utcnow(),
+            validated_at=datetime.now(timezone.utc).replace(tzinfo=None),
             python_version="",
             platform="",
             mentisrex_commit="",

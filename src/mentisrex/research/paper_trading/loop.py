@@ -25,7 +25,7 @@ M23 is a PAPER-TRADING runtime. No real-money trading or broker connectivity.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 from mentisrex.research.paper_trading.broker import Broker, MockBroker, SimulatedBroker
 from mentisrex.research.paper_trading.cycle import CycleRecord, ForwardPerformanceRecord
@@ -83,7 +83,7 @@ class LoopCycleResult:
     strategy_results: list              # list[StrategyCycleResult]
     skipped: bool = False
     skip_reason: str = ""
-    processed_at: datetime = field(default_factory=datetime.utcnow)
+    processed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
     def result_for(self, strategy_id: str) -> StrategyCycleResult | None:
         for r in self.strategy_results:

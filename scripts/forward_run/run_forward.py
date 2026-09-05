@@ -27,7 +27,7 @@ import argparse
 import json
 import sys
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 # ── ensure src is importable when run as a script ─────────────────────────────
@@ -222,7 +222,7 @@ def run_loop(snapshots, *, checkpoint_every: int = 4) -> PaperTradingLoop:
     MANIFEST_PATH.write_text(json.dumps(manifest_dict, indent=2, default=str))
 
     loop = build_loop(registry)
-    health = RunHealth(start_time=datetime.utcnow().isoformat())
+    health = RunHealth(start_time=datetime.now(timezone.utc).replace(tzinfo=None).isoformat())
     eval_count = 0
 
     for snapshot in snapshots:

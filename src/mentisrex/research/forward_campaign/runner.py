@@ -19,7 +19,7 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from mentisrex.research.forward_campaign.campaign import CycleResult, ForwardCampaign
@@ -101,7 +101,7 @@ class ForwardOperationsRunner:
         # update session state
         self._run_count += 1
         self._last_status = result.status
-        self._last_run_at = datetime.utcnow().isoformat()
+        self._last_run_at = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
 
         if result.status == CycleStatus.SUCCESS:
             self._session_successes += 1

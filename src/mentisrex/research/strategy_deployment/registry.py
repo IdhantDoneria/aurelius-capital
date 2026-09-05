@@ -8,7 +8,7 @@ dependency. Callers that need persistence serialize via spec.to_dict().
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 from mentisrex.research.strategy_deployment.models import (
     ALLOWED_TRANSITIONS,
@@ -25,8 +25,8 @@ class StrategyTransitionError(Exception):
 class StrategyEntry:
     spec: StrategySpecification
     state: StrategyState
-    registered_at: datetime = field(default_factory=datetime.utcnow)
-    state_updated_at: datetime = field(default_factory=datetime.utcnow)
+    registered_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    state_updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     notes: str = ""
 
 
@@ -54,7 +54,7 @@ class StrategyRegistry:
                 f"Allowed: {[s.value for s in allowed]}"
             )
         entry.state = new_state
-        entry.state_updated_at = datetime.utcnow()
+        entry.state_updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
         if notes:
             entry.notes = notes
         return entry
@@ -63,7 +63,7 @@ class StrategyRegistry:
         """Replace the specification for an existing strategy (version bump)."""
         entry = self._get(spec.strategy_id)
         entry.spec = spec
-        entry.state_updated_at = datetime.utcnow()
+        entry.state_updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
         return entry
 
     # ── read ───────────────────────────────────────────────────────────────────

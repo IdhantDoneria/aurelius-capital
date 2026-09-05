@@ -21,6 +21,12 @@ from mentisrex.programme.state import ProgrammeState, StateStore, halt, restart
 
 pytestmark = pytest.mark.unit
 
+# Snapshotted at module-collection time, i.e. before any test in the session
+# has executed. Used by test_environment_is_not_mutated_by_the_suite below to
+# tell "state/ already existed before this run" (e.g. a prior manual CLI run)
+# apart from "this test session itself wrote it" — only the latter is a bug.
+_STATE_EXISTED_BEFORE_SESSION = Path("state").exists()
+
 
 def _clean_inputs(**overrides) -> risk.RiskInputs:
     base = {
@@ -304,5 +310,16 @@ def test_quality_gate_fatals(panel, mask, config):
 
 
 def test_environment_is_not_mutated_by_the_suite():
-    """Guards against a test writing state into the working tree."""
-    assert not Path("state").exists() or os.environ.get("MRX_ALLOW_STATE") == "1"
+    """Guards against a test writing state into the working tree.
+
+    A pre-existing `state/` (e.g. left over from a manual `mentisrex.programme`
+    CLI run before pytest was ever invoked) is not this suite's doing and must
+    not fail the check — only `state/` appearing *during* this session, which
+    would mean some test wrote runtime state where it shouldn't, is a real bug.
+    """
+    if _STATE_EXISTED_BEFORE_SESSION:
+        pytest.skip("state/ predates this test session (not suite-created)")
+    assert not Path("state").exists() or os.environ.get("MRX_ALLOW_STATE") == "1", (
+        "state/ did not exist before this test session but exists now — "
+        "a test wrote runtime state into the working tree."
+    )

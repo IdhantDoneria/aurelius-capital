@@ -29,7 +29,7 @@ import json
 import shutil
 import tempfile
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Optional
 from unittest.mock import MagicMock, patch
@@ -474,7 +474,7 @@ class TestExcessReturnCalculation:
             gross_return=0.0,
             fills=10,
             status=CycleStatus.SUCCESS,
-            sealed_at=datetime.utcnow().isoformat(),
+            sealed_at=datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
         )
         (cycles_dir / f"{CYCLE_AUG}.json").write_text(
             json.dumps(aug_rec.to_dict(), indent=2, default=str))
@@ -493,7 +493,7 @@ class TestExcessReturnCalculation:
             gross_return=sep_strat_return,
             fills=3,
             status=CycleStatus.SUCCESS,
-            sealed_at=datetime.utcnow().isoformat(),
+            sealed_at=datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
         )
         (cycles_dir / f"{CYCLE_SEP}.json").write_text(
             json.dumps(sep_rec.to_dict(), indent=2, default=str))
@@ -516,7 +516,7 @@ class TestExcessReturnCalculation:
             cumulative_return=0.0,
             is_inception_cycle=True,
             status="SUCCESS",
-            sealed_at=datetime.utcnow().isoformat(),
+            sealed_at=datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
         )
         (benchmark_dir / f"{CYCLE_AUG}.json").write_text(
             json.dumps(aug_bm.to_dict(), indent=2, default=str))
@@ -540,7 +540,7 @@ class TestExcessReturnCalculation:
             cumulative_return=bmk_period_return,
             is_inception_cycle=False,
             status="SUCCESS",
-            sealed_at=datetime.utcnow().isoformat(),
+            sealed_at=datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
         )
         (benchmark_dir / f"{CYCLE_SEP}.json").write_text(
             json.dumps(sep_bm.to_dict(), indent=2, default=str))

@@ -16,7 +16,7 @@ import dataclasses
 import hashlib
 import json
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 
 class CycleStatus:
@@ -130,7 +130,7 @@ class ForwardCycleRecord:
         """Mark this record as permanently immutable. Idempotent."""
         if not self.sealed_at:
             self.status = status
-            self.sealed_at = datetime.utcnow().isoformat()
+            self.sealed_at = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
 
     @property
     def is_sealed(self) -> bool:

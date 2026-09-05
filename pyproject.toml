@@ -79,8 +79,9 @@ markers = [
     "integration: requires running Docker stack",
     "slow: benchmarks and long-running tests (excluded from default CI run)",
     "real_alpaca: requires ALPACA_PAPER_API_KEY / ALPACA_PAPER_API_SECRET (M28, excluded from offline CI)",
+    "real_data: requires live network access to a real data provider (M27, excluded from offline CI)",
 ]
-addopts = "-v --tb=short"
+addopts = "-v --tb=short -m \"not real_alpaca and not real_data\""
 
 [tool.coverage.run]
 source = ["src/mentisrex"]

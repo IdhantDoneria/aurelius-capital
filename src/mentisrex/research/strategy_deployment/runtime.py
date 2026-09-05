@@ -20,7 +20,7 @@ import hashlib
 import json
 import uuid
 from abc import ABC, abstractmethod
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Any
 
 from mentisrex.research.execution.ems.models import OrderRequest, OrderType
@@ -197,7 +197,7 @@ class StrategyRuntime:
         }
         ems_intents = intents_from_target(target_shares, current_shares)
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         spec_fp = spec.configuration_fingerprint or spec.fingerprint()
         sig_fp = signal_set.fingerprint()
 

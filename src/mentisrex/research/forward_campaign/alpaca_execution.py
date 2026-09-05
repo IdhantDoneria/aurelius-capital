@@ -23,7 +23,7 @@ import hashlib
 import json
 import time
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import Optional
@@ -253,7 +253,7 @@ class AlpacaCycleExecutionRecord:
     def seal(self, status: str = "SUCCESS") -> None:
         if not self.sealed_at:
             self.status = status
-            self.sealed_at = datetime.utcnow().isoformat()
+            self.sealed_at = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
 
     @property
     def is_sealed(self) -> bool:
@@ -449,7 +449,7 @@ class AlpacaCycleExecutor:
         if existing is not None:
             return existing
 
-        start_time = datetime.utcnow().isoformat()
+        start_time = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
         rec = AlpacaCycleExecutionRecord(
             cycle_id=cycle_id,
             campaign_id=cycle_record.campaign_id,
@@ -470,7 +470,7 @@ class AlpacaCycleExecutor:
                 cycle_id=cycle_id,
                 strategy_nav=float(cycle_record.ending_nav),
                 start=start_time,
-                end=datetime.utcnow().isoformat(),
+                end=datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
             )
             rec.summary = dataclasses.asdict(summary)
 
@@ -504,13 +504,13 @@ class AlpacaCycleExecutor:
             else:
                 rec.reconciliation_status = "FAIL"
 
-            rec.end_time = datetime.utcnow().isoformat()
+            rec.end_time = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
             rec.seal("SUCCESS")
 
         except Exception as exc:
             rec.error_message = str(exc)
             rec.reconciliation_status = "FAIL"
-            rec.end_time = datetime.utcnow().isoformat()
+            rec.end_time = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
             rec.seal("FAILED")
 
         self._persist(rec)
@@ -579,7 +579,7 @@ class AlpacaCycleExecutor:
         seq: int,
     ) -> AlpacaOrderExecution:
         """Submit one order and return an execution quality record."""
-        submission_ts = datetime.utcnow().isoformat()
+        submission_ts = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
         try:
             order_rec = self._broker.submit_order(
                 symbol=symbol,
